@@ -1,0 +1,118 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+
+interface DeckFormProps {
+	userId: string;
+}
+
+export function DeckForm({ userId }: DeckFormProps) {
+	const router = useRouter();
+	const supabase = createClient();
+	const [isLoading, setIsLoading] = useState(false);
+	const [title, setTitle] = useState("");
+	const [description, setDescription] = useState("");
+	const [isPublic, setIsPublic] = useState(false);
+
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setIsLoading(true);
+
+		try {
+			if (!title.trim()) {
+				throw new Error("タイトルを入力してください");
+			}
+
+			const { data, error } = await supabase
+				.from("decks")
+				.insert({
+					user_id: userId,
+					title,
+					description,
+					is_public: isPublic,
+				})
+				.select();
+
+			if (error) {
+				throw error;
+			}
+
+			toast.success("デッキを作成しました");
+
+			router.push(`/decks/${data[0].id}`);
+		} catch (err) {
+			// Log detailed error for debugging
+			console.error("DeckForm handleSubmit error:", err);
+			// Determine user-friendly message
+			let message = "デッキの作成中にエラーが発生しました。";
+			if (err instanceof Error && err.message) {
+				message = err.message;
+			} else if (typeof err === "object" && err !== null) {
+				// Supabase error shape
+				const supaErr = err as { message?: string };
+				if (supaErr.message) message = supaErr.message;
+			}
+			toast.error(message);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	return (
+		<form onSubmit={handleSubmit}>
+			<Card>
+				<CardContent className="pt-6 space-y-4">
+					<div className="space-y-2">
+						<Label htmlFor="title">タイトル</Label>
+						<Input
+							id="title"
+							placeholder="デッキのタイトルを入力"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							required
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="description">説明</Label>
+						<Textarea
+							id="description"
+							placeholder="デッキの説明を入力（任意）"
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+							rows={4}
+						/>
+					</div>
+					<div className="flex items-center space-x-2">
+						<Switch
+							id="is-public"
+							checked={isPublic}
+							onCheckedChange={setIsPublic}
+						/>
+						<Label htmlFor="is-public">公開する</Label>
+					</div>
+				</CardContent>
+				<CardFooter className="flex justify-between">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => router.push("/decks")}
+					>
+						キャンセル
+					</Button>
+					<Button type="submit" disabled={isLoading}>
+						{isLoading ? "作成中..." : "デッキを作成"}
+					</Button>
+				</CardFooter>
+			</Card>
+		</form>
+	);
+}
