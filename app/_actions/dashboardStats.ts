@@ -73,23 +73,28 @@ export async function getDashboardStats(userId: string): Promise<Stats> {
 			.lt("created_at", startOfWeekISO);
 	if (prevWeekCardsError) throw prevWeekCardsError;
 
-	// Study streak calculation (deck_study_logs)
-	const { data: studyLogs, error: studyLogsError } = await supabase
-		.from("deck_study_logs")
-		.select("studied_at")
-		.eq("user_id", userId)
-		.order("studied_at", { ascending: false });
-	if (studyLogsError) throw studyLogsError;
+	// Problem counts (learning_logs)
+	const { count: totalProblems, error: totalProblemsError } = await supabase
+		.from("learning_logs")
+		.select("id", { count: "exact", head: true })
+		.eq("user_id", userId);
+	if (totalProblemsError) throw totalProblemsError;
 
-	const studiedDates = new Set(
-		(studyLogs || []).map((log) => log.studied_at.split("T")[0]),
-	);
-	let streakDays = 0;
-	const cursorDate = new Date(startOfToday);
-	while (studiedDates.has(cursorDate.toISOString().split("T")[0])) {
-		streakDays++;
-		cursorDate.setDate(cursorDate.getDate() - 1);
-	}
+	const { count: previousTotalProblems, error: prevProblemsError } =
+		await supabase
+			.from("learning_logs")
+			.select("id", { count: "exact", head: true })
+			.eq("user_id", userId)
+			.lt("answered_at", startOfTodayISO);
+	if (prevProblemsError) throw prevProblemsError;
+
+	const { count: previousWeekTotalProblems, error: prevWeekProblemsError } =
+		await supabase
+			.from("learning_logs")
+			.select("id", { count: "exact", head: true })
+			.eq("user_id", userId)
+			.lt("answered_at", startOfWeekISO);
+	if (prevWeekProblemsError) throw prevWeekProblemsError;
 
 	// Action log durations
 	const { data: actionLogs, error: actionLogsError } = await supabase
@@ -120,16 +125,6 @@ export async function getDashboardStats(userId: string): Promise<Stats> {
 	}
 	const totalTime = audioTime + ocrTime + learnTime + memoTime;
 
-	// Debug: log raw action logs and computed times
-	console.debug("[getDashboardStats] raw actionLogs:", actionLogs);
-	console.debug("[getDashboardStats] computed times:", {
-		audioTime,
-		ocrTime,
-		learnTime,
-		memoTime,
-		totalTime,
-	});
-
 	return {
 		totalPages: totalPages || 0,
 		previousTotalPages: previousTotalPages || 0,
@@ -137,7 +132,9 @@ export async function getDashboardStats(userId: string): Promise<Stats> {
 		totalCards: totalCards || 0,
 		previousTotalCards: previousTotalCards || 0,
 		previousWeekTotalCards: previousWeekTotalCards || 0,
-		streakDays,
+		totalProblems: totalProblems || 0,
+		previousTotalProblems: previousTotalProblems || 0,
+		previousWeekTotalProblems: previousWeekTotalProblems || 0,
 		totalTime,
 		audioTime,
 		ocrTime,

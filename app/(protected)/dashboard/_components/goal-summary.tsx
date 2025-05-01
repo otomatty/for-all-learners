@@ -4,8 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import GoalHeatmap from "./goal-heatmap";
 import GoalDecksSection from "./goal-decks-section";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
 
 interface StudyGoal {
 	id: string;
@@ -70,11 +69,11 @@ export const GoalSummary: React.FC<GoalSummaryProps> = ({ goals, logs }) => {
 									残り {daysLeft} 日
 								</span>
 							)}
-							<Link href={`/learn/session?goalId=${goal.id}&mode=random`}>
-								<Button variant="outline" size="sm">
-									ランダム学習開始
-								</Button>
-							</Link>
+							<QuizSettingsDialog
+								goalId={goal.id}
+								goalTitle={goal.title}
+								triggerText="ランダム学習開始"
+							/>
 						</div>
 						<Progress value={goal.progress_rate} className="mt-2 w-full h-2" />
 						<div className="mt-4">

@@ -24,13 +24,28 @@ export async function getLearningLogById(id: string) {
 	return data;
 }
 
+/**
+ * Record a learning log for a user's answered question.
+ */
 export async function createLearningLog(
-	log: Omit<Database["public"]["Tables"]["learning_logs"]["Insert"], "id">,
+	log: Omit<
+		Database["public"]["Tables"]["learning_logs"]["Insert"],
+		"id" | "user_id"
+	>,
 ) {
 	const supabase = await createClient();
+	// Get authenticated user
+	const {
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
+	if (authError || !user) {
+		throw new Error(authError?.message || "Not authenticated");
+	}
+	// Insert learning log with current user_id
 	const { data, error } = await supabase
 		.from("learning_logs")
-		.insert(log)
+		.insert({ user_id: user.id, ...log })
 		.single();
 	if (error) throw error;
 	return data;

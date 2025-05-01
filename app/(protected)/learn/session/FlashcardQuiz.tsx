@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QuizFinished from "./QuizFinished";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
+import { createLearningLog } from "@/app/_actions/learning_logs";
 import type { FlashcardQuestion } from "@/lib/gemini";
 import Link from "next/link";
 
 interface FlashcardQuizProps {
-	questions: FlashcardQuestion[];
+	questions: (FlashcardQuestion & { questionId: string; cardId: string })[];
 	startTime: string;
 }
 
@@ -37,7 +38,15 @@ export default function FlashcardQuiz({
 		setShowAnswer(true);
 	};
 
-	const handleNext = () => {
+	const handleNext = async () => {
+		// Record the answered flashcard as a learning log (always correct)
+		await createLearningLog({
+			card_id: current.cardId,
+			question_id: current.questionId,
+			is_correct: true,
+			user_answer: current.answer,
+			practice_mode: "one",
+		});
 		setShowAnswer(false);
 		if (currentIndex + 1 < total) {
 			setCurrentIndex((prev) => prev + 1);

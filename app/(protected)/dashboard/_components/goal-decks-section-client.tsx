@@ -54,11 +54,7 @@ export default function ClientGoalDecksSection({
 	return (
 		<div className="space-y-4">
 			{/* デッキ一覧と記録ボタン */}
-			<DecksTable
-				decks={initialDecks}
-				onLog={handleLog}
-				onRemove={handleRemove}
-			/>
+			<DecksTable decks={initialDecks} onRemove={handleRemove} />
 
 			{/* テーブル下部の+ボタンでデッキ追加 */}
 			<AddDeckLinkDialog

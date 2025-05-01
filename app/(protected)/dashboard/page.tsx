@@ -7,6 +7,7 @@ import { QuickActionTiles } from "./_components/QuickActionTiles";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
+import UserIdSetter from "@/components/UserIdSetter";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
@@ -32,12 +33,16 @@ export default async function DashboardPage() {
 	const safeLogs = JSON.parse(JSON.stringify(logs || []));
 
 	return (
-		<div className="space-y-4">
-			<GoalSummary goals={safeStudyGoals} logs={safeLogs} />
-			<QuickActionTiles />
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				<DashboardSummary stats={stats} />
+		<>
+			{/* Set the current user ID for downstream components */}
+			<UserIdSetter userId={user.id} />
+			<div className="space-y-4">
+				<GoalSummary goals={safeStudyGoals} logs={safeLogs} />
+				<QuickActionTiles />
+				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+					<DashboardSummary stats={stats} />
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

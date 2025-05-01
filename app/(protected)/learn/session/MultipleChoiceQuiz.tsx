@@ -4,10 +4,14 @@ import React, { useState, useEffect } from "react";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import { useRouter } from "next/navigation";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
+import { createLearningLog } from "@/app/_actions/learning_logs";
 import QuizFinished from "./QuizFinished";
 
 interface MultipleChoiceQuizProps {
-	questions: MultipleChoiceQuestion[];
+	questions: (MultipleChoiceQuestion & {
+		questionId: string;
+		cardId: string;
+	})[];
 	startTime: string;
 }
 
@@ -18,8 +22,14 @@ export default function MultipleChoiceQuiz({
 	const router = useRouter();
 	const [timeRecorded, setTimeRecorded] = useState(false);
 	const startedAt = Number(startTime);
-	const [quizQuestions, setQuizQuestions] =
-		useState<MultipleChoiceQuestion[]>(questions);
+	// Use enriched question type with questionId and cardId
+	type EnrichedMCQ = MultipleChoiceQuestion & {
+		questionId: string;
+		cardId: string;
+	};
+	const [quizQuestions, setQuizQuestions] = useState<EnrichedMCQ[]>(
+		questions as EnrichedMCQ[],
+	);
 	const [wrongAnswers, setWrongAnswers] = useState<
 		{ question: MultipleChoiceQuestion; selectedIndex: number }[]
 	>([]);
@@ -56,11 +66,20 @@ export default function MultipleChoiceQuiz({
 		setShowAnswer(true);
 	};
 
-	const handleNext = () => {
-		if (
-			selectedIndex !== null &&
-			selectedIndex !== currentQuestion.correctAnswerIndex
-		) {
+	const handleNext = async () => {
+		// Record learning log for the answered question
+		const isCorrect = selectedIndex === currentQuestion.correctAnswerIndex;
+		const userAnswer =
+			selectedIndex !== null ? currentQuestion.options[selectedIndex] : "";
+		await createLearningLog({
+			card_id: currentQuestion.cardId,
+			question_id: currentQuestion.questionId,
+			is_correct: isCorrect,
+			user_answer: userAnswer,
+			practice_mode: "mcq",
+		});
+		// Update wrong answers state if incorrect
+		if (selectedIndex !== null && !isCorrect) {
 			setWrongAnswers((prev) => [
 				...prev,
 				{ question: currentQuestion, selectedIndex },
@@ -77,7 +96,7 @@ export default function MultipleChoiceQuiz({
 
 	const handleRetryWrong = () => {
 		const newQuestions = wrongAnswers.map((wa) => wa.question);
-		setQuizQuestions(newQuestions);
+		setQuizQuestions(newQuestions as EnrichedMCQ[]);
 		setWrongAnswers([]);
 		setCurrentIndex(0);
 		setSelectedIndex(null);

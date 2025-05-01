@@ -10,7 +10,7 @@ import {
 	CardDescription,
 	CardFooter,
 } from "@/components/ui/card";
-import { BookOpen, BrainCircuit, Clock, CalendarDays } from "lucide-react";
+import { BookOpen, BrainCircuit, Clock } from "lucide-react";
 import { PieChart, Pie, Cell } from "recharts";
 import {
 	type ChartConfig,
@@ -47,13 +47,6 @@ export function DashboardSummary({ stats }: DashboardSummaryProps) {
 		{ name: "OCR", value: stats.ocrTime },
 		{ name: "メモ", value: stats.memoTime },
 	].filter((d) => d.value > 0) as { name: DurationKey; value: number }[];
-	// Segment colors mapping for DurationKey
-	const SEGMENT_COLORS: Record<DurationKey, string> = {
-		学習: "hsl(var(--chart-1))",
-		音読: "hsl(var(--chart-2))",
-		OCR: "hsl(var(--chart-3))",
-		メモ: "hsl(var(--chart-4))",
-	};
 	const chartConfig = {
 		value: { label: "時間" },
 		学習: { label: "学習", color: "var(--chart-1)" },
@@ -100,12 +93,23 @@ export function DashboardSummary({ stats }: DashboardSummaryProps) {
 				</CardContent>
 			</Card>
 			<Card>
-				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-sm font-medium">連続学習日数</CardTitle>
-					<CalendarDays className="h-4 w-4 text-muted-foreground" />
+				<CardHeader className="flex items-center justify-between pb-2">
+					<CardTitle className="text-sm font-medium">今日の問題数</CardTitle>
+					<Clock className="h-4 w-4 text-muted-foreground" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold">{stats.streakDays}日</div>
+					<div className="text-2xl font-bold">
+						{stats.totalProblems - stats.previousTotalProblems}問
+					</div>
+					<div className="text-sm text-muted-foreground">
+						<span className="text-green-500">
+							+{stats.totalProblems - stats.previousTotalProblems} (昨日)
+						</span>
+						<span className="mx-2">|</span>
+						<span className="text-blue-500">
+							+{stats.totalProblems - stats.previousWeekTotalProblems} (先週)
+						</span>
+					</div>
 				</CardContent>
 			</Card>
 			<Card>

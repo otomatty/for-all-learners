@@ -5,7 +5,9 @@ export interface Stats {
 	totalCards: number;
 	previousTotalCards: number;
 	previousWeekTotalCards: number;
-	streakDays: number;
+	totalProblems: number;
+	previousTotalProblems: number;
+	previousWeekTotalProblems: number;
 	totalTime: number;
 	audioTime: number;
 	ocrTime: number;

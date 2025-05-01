@@ -33,24 +33,39 @@ export default async function SessionPage({
 		shuffle: searchParams.shuffle === "true",
 	};
 
-	// Generate questions via server action
-	const rawQuestions = (await getQuizQuestions(params)) as QuestionData[];
+	// Fetch questions enriched with questionId and cardId
+	const rawQuestions = await getQuizQuestions(params);
 
 	return (
 		<div className="p-4 space-y-6">
 			{params.mode === "mcq" ? (
 				<MultipleChoiceQuiz
-					questions={rawQuestions as MultipleChoiceQuestion[]}
+					questions={
+						rawQuestions as (MultipleChoiceQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
 					startTime={startTime}
 				/>
 			) : params.mode === "one" ? (
 				<FlashcardQuiz
-					questions={rawQuestions as FlashcardQuestion[]}
+					questions={
+						rawQuestions as (FlashcardQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
 					startTime={startTime}
 				/>
 			) : params.mode === "fill" ? (
 				<ClozeQuiz
-					questions={rawQuestions as ClozeQuestion[]}
+					questions={
+						rawQuestions as (ClozeQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
 					startTime={startTime}
 				/>
 			) : (

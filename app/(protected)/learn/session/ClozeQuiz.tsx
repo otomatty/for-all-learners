@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import type { ClozeQuestion } from "@/lib/gemini";
+import { createLearningLog } from "@/app/_actions/learning_logs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QuizFinished from "./QuizFinished";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 
 interface ClozeQuizProps {
-	questions: ClozeQuestion[];
+	questions: (ClozeQuestion & { questionId: string; cardId: string })[];
 	startTime: string;
 }
 
@@ -84,7 +85,19 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 
 	// 回答確認・次へ処理
 	const handleCheck = () => setShowResult(true);
-	const handleNext = () => {
+	const handleNext = async () => {
+		// Record learning log for current cloze question
+		const userAnswer = inputs.join(",");
+		const isCorrect = blanksList.every(
+			(_blank, idx) => inputs[idx]?.trim() === answersList[idx]?.trim(),
+		);
+		await createLearningLog({
+			card_id: current.cardId,
+			question_id: current.questionId,
+			is_correct: isCorrect,
+			user_answer: userAnswer,
+			practice_mode: "fill",
+		});
 		const next = currentIndex + 1;
 		if (next < total) {
 			setCurrentIndex(next);

@@ -23,7 +23,7 @@ export interface QuizParams {
  */
 export async function getQuizQuestions(
 	params: QuizParams,
-): Promise<QuestionData[]> {
+): Promise<(QuestionData & { questionId: string; cardId: string })[]> {
 	const supabase = await createClient();
 
 	// Helper to extract plain text from Tiptap JSON content
@@ -97,11 +97,17 @@ export async function getQuizQuestions(
 			type: qType,
 			question_data: q as unknown as Json,
 		}));
-		const { error: insertError } = await supabase
+		const { data: insertedQuestions, error: insertError } = await supabase
 			.from("questions")
-			.insert(records);
+			.insert(records)
+			.select("id, card_id");
 		if (insertError) throw insertError;
-		return bulkQuestions;
+		// Enrich question data with cardId and questionId for client-side logging
+		return bulkQuestions.map((q, idx) => ({
+			...q,
+			questionId: insertedQuestions[idx].id,
+			cardId: insertedQuestions[idx].card_id,
+		}));
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
 		throw new Error(`問題の一括生成と保存に失敗しました: ${msg}`);
