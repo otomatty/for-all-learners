@@ -113,7 +113,7 @@ Back: ${back}`;
 	console.debug("Cleaned JSON from Gemini:", jsonStr);
 
 	try {
-		const parsed = JSON.parse(jsonStr) as any;
+		const parsed = JSON.parse(jsonStr) as Omit<QuestionData, "type">;
 		return { type, ...parsed } as QuestionData;
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -198,7 +198,7 @@ Use valid JSON array only.\n`;
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
 
 	try {
-		const arr = JSON.parse(jsonStr) as any[];
+		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;
 		return arr.map((q) => ({ type, ...q }) as QuestionData);
 	} catch (err: unknown) {
 		const msg = err instanceof Error ? err.message : String(err);

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useState, useEffect } from "react";
 import type { ClozeQuestion } from "@/lib/gemini";
 import { createLearningLog } from "@/app/_actions/learning_logs";
 import Link from "next/link";
@@ -123,11 +124,14 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 				throw new Error(`Blank "${blank}" not present in text at index ${idx}`);
 			}
 			const [before, after] = remainingText.split(blank);
-			parts.push(before);
-			// eslint-disable-next-line react/no-array-index-key
+			// wrap text part with span to assign unique key
+			parts.push(
+				<span key={`text-${current.questionId}-${idx}`}>{before}</span>,
+			);
+			// input part with question-specific key
 			parts.push(
 				<input
-					key={`blank-${idx}`}
+					key={`input-${current.questionId}-${idx}`}
 					type="text"
 					value={inputs[idx] || ""}
 					disabled={showResult}
@@ -138,11 +142,14 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 					}}
 					className="border-b border-gray-400 focus:outline-none mx-1 w-24"
 					placeholder="…"
-				/>, // eslint-disable-line react/no-array-index-key
+				/>,
 			);
 			remainingText = after;
 		});
-		parts.push(remainingText);
+		// wrap final remaining text
+		parts.push(
+			<span key={`text-${current.questionId}-last`}>{remainingText}</span>,
+		);
 	} catch (error) {
 		console.error("[ClozeQuiz] Error rendering blanks:", error, current);
 		return (
@@ -168,11 +175,7 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 			<h3 className="text-xl font-semibold">
 				問題 {currentIndex + 1} / {total}
 			</h3>
-			<p className="mt-2 text-lg">
-				{parts.map((part, idx) => (
-					<React.Fragment key={`part-${idx}`}>{part}</React.Fragment>
-				))}
-			</p>
+			<p className="mt-2 text-lg">{parts}</p>
 			{!showResult ? (
 				<button
 					type="button"
