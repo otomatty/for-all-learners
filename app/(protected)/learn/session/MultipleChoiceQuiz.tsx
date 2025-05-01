@@ -170,7 +170,7 @@ export default function MultipleChoiceQuiz({
 					</p>
 				</div>
 			)}
-			<div className="flex justify-end">
+			<div className="mt-4 flex justify-end">
 				<button
 					type="button"
 					className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"

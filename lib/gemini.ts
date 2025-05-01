@@ -135,7 +135,7 @@ export async function generateBulkQuestions(
 ): Promise<QuestionData[]> {
 	// Prefix to enforce pure JSON output
 	const JSON_ONLY_PREFIX =
-		"Respond with ONLY valid JSON array. No markdown fences or extra text.\n";
+		"Respond with ONLY a valid JSON array including commas between objects. No markdown fences or extra text.\n";
 	// Difficulty prompt
 	const difficultyPrompt = ` (Difficulty: ${difficulty})`;
 	// Question descriptor
@@ -183,6 +183,7 @@ Use valid JSON array only.\n`;
 		contents: prompt,
 	});
 	const raw = apiResponse.text;
+	console.debug("Raw Gemini bulk response:", raw);
 	if (!raw) throw new Error("Empty response from Gemini client");
 
 	// Extract JSON array
@@ -196,6 +197,9 @@ Use valid JSON array only.\n`;
 	}
 	// Remove trailing commas
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
+	// Correct missing commas between objects if model output glued them together
+	jsonStr = jsonStr.replace(/}\s*{/g, "},{");
+	console.debug("Cleaned bulk JSON string:", jsonStr);
 
 	try {
 		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;

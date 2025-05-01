@@ -28,7 +28,7 @@ export default function QuizFinished({
 	return (
 		<>
 			<Confetti className="fixed inset-0 pointer-events-none" />
-			<div className="relative z-10 max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 space-y-6">
+			<div className="relative z-10 max-w-md mx-auto bg-white md:rounded-lg md:shadow-lg md:p-6 space-y-6">
 				<h2 className="text-3xl font-bold">クイズ完了！</h2>
 				<p className="text-lg">
 					合計 {total} 問中 <span className="font-semibold">{score}</span>{" "}

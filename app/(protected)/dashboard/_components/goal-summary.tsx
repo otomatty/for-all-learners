@@ -53,45 +53,40 @@ export const GoalSummary: React.FC<GoalSummaryProps> = ({ goals, logs }) => {
 
 	return (
 		<Card className="p-4">
-			<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-				{goals.map((goal) => {
-					const deadline = goal.deadline ? new Date(goal.deadline) : null;
-					const daysLeft = deadline
-						? Math.ceil(
-								(deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-							)
-						: null;
-					return (
-						<div key={goal.id} className="md:px-8">
-							<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-								<h3 className="text-lg font-semibold">{goal.title}</h3>
-								{deadline && (
-									<span className="text-sm text-gray-500">
-										残り {daysLeft} 日
-									</span>
-								)}
-								<QuizSettingsDialog
-									goalId={goal.id}
-									goalTitle={goal.title}
-									triggerText="ランダム学習開始"
-								/>
-							</div>
-							<Progress
-								value={goal.progress_rate}
-								className="mt-2 w-full h-2"
+			{goals.map((goal) => {
+				const deadline = goal.deadline ? new Date(goal.deadline) : null;
+				const daysLeft = deadline
+					? Math.ceil(
+							(deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+						)
+					: null;
+				return (
+					<div key={goal.id} className="md:px-8">
+						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+							<h3 className="text-lg font-semibold">{goal.title}</h3>
+							{deadline && (
+								<span className="text-sm text-gray-500">
+									残り {daysLeft} 日
+								</span>
+							)}
+							<QuizSettingsDialog
+								goalId={goal.id}
+								goalTitle={goal.title}
+								triggerText="ランダム学習開始"
 							/>
-							<div className="mt-4">
-								<GoalHeatmap
-									startDate={startDate}
-									endDate={now}
-									values={heatmapValues}
-								/>
-								<GoalDecksSection goalId={goal.id} />
-							</div>
 						</div>
-					);
-				})}
-			</div>
+						<Progress value={goal.progress_rate} className="mt-2 w-full h-2" />
+						<div className="mt-4">
+							<GoalHeatmap
+								startDate={startDate}
+								endDate={now}
+								values={heatmapValues}
+							/>
+							<GoalDecksSection goalId={goal.id} />
+						</div>
+					</div>
+				);
+			})}
 		</Card>
 	);
 };
