@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -18,6 +17,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { transcribeAudio } from "@/app/_actions/transcribe";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import { createCards } from "@/app/_actions/cards";
+import { createClient } from "@/lib/supabase/client";
+import type { JSONContent } from "@tiptap/core";
+import { createActionLog } from "@/app/_actions/actionLogs";
 
 interface AudioCardGeneratorProps {
 	deckId: string;
@@ -28,9 +31,10 @@ export function AudioCardGenerator({
 	deckId,
 	userId,
 }: AudioCardGeneratorProps) {
-	const router = useRouter();
 	const supabase = createClient();
+	const router = useRouter();
 	const [isRecording, setIsRecording] = useState(false);
+	const recordingStartRef = useRef<number>(0);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -68,6 +72,7 @@ export function AudioCardGenerator({
 			};
 
 			mediaRecorderRef.current.start();
+			recordingStartRef.current = Date.now();
 			setIsRecording(true);
 		} catch (error) {
 			console.error("Error accessing microphone:", error);
@@ -77,11 +82,21 @@ export function AudioCardGenerator({
 		}
 	};
 
-	const stopRecording = () => {
+	const stopRecording = async () => {
 		if (mediaRecorderRef.current && isRecording) {
 			mediaRecorderRef.current.stop();
 			setIsRecording(false);
-			// ストリームを停止
+			const durationMs = Date.now() - recordingStartRef.current;
+			const durationSec = Math.floor(durationMs / 1000);
+			try {
+				await createActionLog("audio", durationSec);
+				toast.success("学習時間を記録しました", {
+					description: `音読時間: ${durationSec}秒`,
+				});
+			} catch (error) {
+				console.error("Failed to record learning time:", error);
+				toast.error("学習時間の記録に失敗しました");
+			}
 			for (const track of mediaRecorderRef.current.stream.getTracks()) {
 				track.stop();
 			}
@@ -174,20 +189,37 @@ export function AudioCardGenerator({
 		setIsSaving(true);
 
 		try {
-			// 選択されたカードをデータベースに保存
-			const cardsToInsert = selectedCardsList.map((card) => ({
-				user_id: userId,
-				deck_id: deckId,
-				front_content: card.front_content,
-				back_content: card.back_content,
-				source_audio_url: card.source_audio_url,
-			}));
+			// 選択されたカードをデータベースに保存 (JSONContent にラップ)
+			const cardsToInsert = selectedCardsList.map((card) => {
+				const frontJson: JSONContent = {
+					type: "doc",
+					content: [
+						{
+							type: "paragraph",
+							content: [{ type: "text", text: card.front_content }],
+						},
+					],
+				};
+				const backJson: JSONContent = {
+					type: "doc",
+					content: [
+						{
+							type: "paragraph",
+							content: [{ type: "text", text: card.back_content }],
+						},
+					],
+				};
+				return {
+					user_id: userId,
+					deck_id: deckId,
+					front_content: frontJson,
+					back_content: backJson,
+					source_audio_url: card.source_audio_url,
+				};
+			});
 
-			const { error } = await supabase.from("cards").insert(cardsToInsert);
-
-			if (error) {
-				throw error;
-			}
+			// Use server action to insert cards
+			const data = await createCards(cardsToInsert);
 
 			toast.success("カードを保存しました", {
 				description: `${selectedCardsList.length}件のカードを保存しました。`,

@@ -28,8 +28,13 @@ export async function createCard(
 	card: Omit<Database["public"]["Tables"]["cards"]["Insert"], "id">,
 ) {
 	const supabase = await createClient();
-	const { data, error } = await supabase.from("cards").insert(card).single();
+	const { data, error } = await supabase
+		.from("cards")
+		.insert(card)
+		.select()
+		.single();
 	if (error) throw error;
+	if (!data) throw new Error("createCard: no data returned");
 	return data;
 }
 
@@ -42,8 +47,10 @@ export async function updateCard(
 		.from("cards")
 		.update(updates)
 		.eq("id", id)
+		.select()
 		.single();
 	if (error) throw error;
+	if (!data) throw new Error("updateCard: no data returned");
 	return data;
 }
 
@@ -53,8 +60,10 @@ export async function deleteCard(id: string) {
 		.from("cards")
 		.delete()
 		.eq("id", id)
+		.select()
 		.single();
 	if (error) throw error;
+	if (!data) throw new Error("deleteCard: no data returned");
 	return data;
 }
 
@@ -65,5 +74,15 @@ export async function getCardsByUser(userId: string) {
 		.select("id")
 		.eq("user_id", userId);
 	if (error) throw error;
+	return data;
+}
+
+export async function createCards(
+	cards: Array<Omit<Database["public"]["Tables"]["cards"]["Insert"], "id">>,
+) {
+	const supabase = await createClient();
+	const { data, error } = await supabase.from("cards").insert(cards).select();
+	if (error) throw error;
+	if (!data) throw new Error("createCards: no data returned");
 	return data;
 }

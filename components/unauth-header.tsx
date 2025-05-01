@@ -11,9 +11,7 @@ export function UnauthHeader() {
 			<div className="container mx-auto flex items-center justify-between py-4 px-6">
 				<Link href="/" className="flex items-center space-x-2">
 					<BrainCircuit className="w-8 h-8 text-indigo-600" />
-					<span className="text-xl font-extrabold text-gray-800">
-						ForAllLearners
-					</span>
+					<span className="text-xl font-extrabold text-gray-800">F.A.L.</span>
 				</Link>
 				<div className="flex items-center space-x-4">
 					<ThemeToggle />

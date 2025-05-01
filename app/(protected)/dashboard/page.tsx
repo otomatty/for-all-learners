@@ -2,15 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getAccountById } from "@/app/_actions/accounts";
 import { redirect } from "next/navigation";
 import { DashboardSummary } from "./_components/dashboard-summary";
-import { ReviewCards } from "./_components/review-cards";
-import { RecentActivity } from "./_components/recent-activity";
-import {
-	getReviewCardsByUser,
-	getRecentActivityByUser,
-	getLearningLogsByUser,
-} from "@/app/_actions/learning_logs";
-import { getCardsByUser } from "@/app/_actions/cards";
-import { getPagesByUser } from "@/app/_actions/pages";
+import { GoalSummary } from "./_components/goal-summary";
+import { QuickActionTiles } from "./_components/QuickActionTiles";
+import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
+import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
+import { getDashboardStats } from "@/app/_actions/dashboardStats";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
@@ -23,34 +19,24 @@ export default async function DashboardPage() {
 		redirect("/auth/login");
 	}
 
-	// Fetch user and dashboard data
+	// Fetch account info, dashboard stats, and study data
 	await getAccountById(user.id);
-	const [pages, cards, logs, reviewCards, recentActivity] = await Promise.all([
-		getPagesByUser(user.id),
-		getCardsByUser(user.id),
+	const [stats, studyGoals, logs] = await Promise.all([
+		getDashboardStats(user.id),
+		getStudyGoalsByUser(user.id),
 		getLearningLogsByUser(user.id),
-		getReviewCardsByUser(user.id),
-		getRecentActivityByUser(user.id),
 	]);
 
-	const stats = {
-		totalPages: pages.length,
-		totalCards: cards.length,
-		cardsToReview: reviewCards.length,
-		totalPractices: logs.length,
-	};
+	// シリアライズしてプロトタイプを剥がす
+	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals || []));
+	const safeLogs = JSON.parse(JSON.stringify(logs || []));
 
 	return (
 		<div className="space-y-4">
+			<GoalSummary goals={safeStudyGoals} logs={safeLogs} />
+			<QuickActionTiles />
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<DashboardSummary stats={stats} />
-			</div>
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-				<ReviewCards className="col-span-4" reviewCards={reviewCards || []} />
-				<RecentActivity
-					className="col-span-3"
-					recentActivity={recentActivity || []}
-				/>
 			</div>
 		</div>
 	);

@@ -36,6 +36,38 @@ export type Database = {
         }
         Relationships: []
       }
+      action_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          duration: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          duration: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          duration?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_page_links: {
         Row: {
           card_id: string
@@ -80,6 +112,7 @@ export type Database = {
           front_content: Json
           id: string
           source_audio_url: string | null
+          source_ocr_image_url: string | null
           updated_at: string | null
           user_id: string
         }
@@ -90,6 +123,7 @@ export type Database = {
           front_content?: Json
           id?: string
           source_audio_url?: string | null
+          source_ocr_image_url?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -100,6 +134,7 @@ export type Database = {
           front_content?: Json
           id?: string
           source_audio_url?: string | null
+          source_ocr_image_url?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -159,6 +194,45 @@ export type Database = {
           },
         ]
       }
+      deck_study_logs: {
+        Row: {
+          created_at: string
+          deck_id: string
+          id: string
+          studied_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deck_id: string
+          id?: string
+          studied_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deck_id?: string
+          id?: string
+          studied_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deck_study_logs_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deck_study_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decks: {
         Row: {
           created_at: string | null
@@ -193,6 +267,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_deck_links: {
+        Row: {
+          created_at: string | null
+          deck_id: string
+          goal_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          deck_id: string
+          goal_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          deck_id?: string
+          goal_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_deck_links_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
             referencedColumns: ["id"]
           },
         ]
@@ -377,6 +480,91 @@ export type Database = {
           },
         ]
       }
+      quiz_settings: {
+        Row: {
+          created_at: string
+          difficulty: string
+          id: string
+          name: string
+          question_count: number
+          question_types: string[]
+          shuffle_order: boolean
+          time_limit_sec: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string
+          id?: string
+          name: string
+          question_count?: number
+          question_types: string[]
+          shuffle_order?: boolean
+          time_limit_sec?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          id?: string
+          name?: string
+          question_count?: number
+          question_types?: string[]
+          shuffle_order?: boolean
+          time_limit_sec?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raw_inputs: {
+        Row: {
+          created_at: string
+          id: string
+          source_url: string
+          text_content: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_url: string
+          text_content: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_url?: string
+          text_content?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_inputs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       share_links: {
         Row: {
           created_at: string | null
@@ -406,6 +594,53 @@ export type Database = {
           token?: string
         }
         Relationships: []
+      }
+      study_goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          progress_rate: number
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          progress_rate?: number
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          progress_rate?: number
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

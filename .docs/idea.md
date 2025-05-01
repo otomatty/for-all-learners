@@ -16,14 +16,16 @@
 | UIコンポーネント     | shadcn/ui                                           | 再利用可能なUIコンポーネント群                                       |
 | スタイリング         | Tailwind CSS                                        | ユーティリティファーストCSSフレームワーク                            |
 | LLM連携            | **Google Gemini API (例: Gemini 1.5 Pro / Flash等)** | カード生成補助、問題バリエーション生成に使用                         |
-| 音声認識・文字起こし | **Google Gemini API (マルチモーダル入力)** または **Google Cloud Speech-to-Text API** | 音声データからのテキスト抽出に使用                                   |
-| デプロイ環境         | Vercel (推奨) / Netlify / Google Cloud Run / その他 | Next.jsとの親和性が高い                                              |
+| 音声認識・文字起こし | **Google Gemini API (マルチモーダル入力)** または **Google Cloud Speech-to-Text API** | 音声データからのテキスト抽出に使用 |
+| デプロイ環境         | Vercel (推奨) / Netlify / Google Cloud Run / その他 | Next.jsとの親和性が高い        |
+| 音声入力（音読）      | 録音UI, Google Gemini API（マルチモーダル）, Cloud Speech-to-Text API | ユーザーによる音読入力をサポート |
+| OCR入力              | 画像アップロード, Google Cloud Vision API / Tesseract         | 参考書ページのOCRテキスト抽出に使用 |
 
 **3. データモデル概要 (Supabase Database)**
 
-*   **users:** ユーザー情報 (Supabase Auth (Google Provider) と連携)
+*   **accounts:** ユーザー情報 (Supabase Auth (Google Provider) と連携)
 *   **decks:** デッキ情報 (id, user_id, title, description, created_at, updated_at, is_public, ...)
-*   **cards:** カード情報 (id, deck_id, user_id, front_content TEXT, back_content TEXT, source_audio_url, created_at, updated_at, ...)
+*   **cards:** カード情報 (id, deck_id, user_id, front_content TEXT, back_content TEXT, source_audio_url, source_ocr_image_url, created_at, updated_at, ...)
 *   **questions:** 問題バリエーション情報 (id, card_id, user_id, type VARCHAR(20), question_data JSONB, created_at, ...)
 *   **pages:** ページ情報 (id, user_id, title, content_tiptap, created_at, updated_at, is_public, ...)
 *   **card_page_links:** カードとページのリンク管理 (id, card_id, page_id, created_at)
@@ -31,6 +33,7 @@
 *   **share_links:** 共有リンク管理 (id, resource_type enum('deck','note'), resource_id, token, permission_level enum('owner','editor','viewer'), created_at, ...)
 *   **deck_shares:** デッキ共有管理 (id, deck_id, user_id, permission_level enum('owner','editor','viewer'), created_at, ...)
 *   **page_shares:** ページ共有管理 (id, page_id, user_id, permission_level enum('owner','editor','viewer'), created_at, ...)
+*   **raw_inputs:** 生入力データ管理 (id, user_id, type ENUM('audio','ocr'), source_url, text_content TEXT, created_at, updated_at)
 
 **4. 機能要件**
 
@@ -52,7 +55,7 @@
 
 **4.3. カード生成（問題生成）機能**
 *   **4.3.1. 生成開始:** ユーザーはデッキ詳細ページ（カード一覧が表示されているページ）で「カード（問題）を作成する」ボタンをクリックする。
-*   **4.3.2. 入力形式選択:** ユーザーは「手動で入力する」または「音読から生成する」を選択する。
+*   **4.3.2. 入力形式選択:** ユーザーは「手動入力」「音読入力」「OCR入力」のいずれかを選択する。
 *   **4.3.3. 手動入力フロー:**
     1.  カード作成フォームが表示される（「表 (Front)」と「裏 (Back)」の入力欄）。
     2.  ユーザーは「表」に問題文や用語などを入力する。
@@ -68,33 +71,38 @@
     4.  非同期でカード候補リストを受信・表示。
     5.  ユーザーは候補を編集・削除し、「保存」ボタンで選択したカードデータを保存。
     6.  (Optional/Background) 保存されたカードに対し問題バリエーションを生成・保存。
-*   **4.3.5. エラーハンドリング:** APIエラー等をユーザーに通知。
+*   **4.3.5. OCR入力フロー:**
+    1.  ユーザーは参考書ページの画像をアップロード。
+    2.  OCR API（例: Google Cloud Vision API）に画像を送信し、テキストを抽出。
+        * 認識結果が空またはエラーの場合は「OCR によるテキスト抽出に失敗しました」とユーザーに通知し、フローを中断する。
+    3.  抽出したテキストを使って Gemini API に「問い（Front）」「答え（Back）」のペアを複数生成させる。
+    4.  非同期でカード候補リストを受信・表示。
+    5.  ユーザーは候補を編集・削除し、「保存」ボタンで選択したカードデータを保存。
+    6.  (Optional/Background) 保存されたカードに対し問題バリエーションを生成・保存。
+*   **4.3.6. エラーハンドリング:** APIエラー等をユーザーに通知。
 
-**4.4. 問題演習機能**
-*   **4.4.1. 演習開始:** デッキ、演習モード、回答形式を選択して開始。
-*   **4.4.2. カード・問題表示:** カードの「表」と、選択された回答形式に応じたUI（フラッシュカード、4択、穴埋め、自由記述）を表示。
-*   **4.4.3. 解答入力:** 各形式に応じて解答を入力。
-*   **4.4.4. 正誤判定・フィードバック:** 正誤判定と解説（カードの「裏」など）を表示。自由記述は自己採点。
-*   **4.4.5. 学習記録の保存:** 結果を`learning_logs`に記録。
+**4.4. 学習機能（演習・復習）**
+*  **4.4.1. 演習開始:** デッキ、モード、回答形式を選択して演習を開始。
+*  **4.4.2. 問題表示・解答入力:** カードの「表」に対して解答を入力し、正誤判定とフィードバックを受ける。
+*  **4.4.3. 復習日計算:** 学習結果に応じてAnki式（SuperMemo2）アルゴリズムで次回復習日を更新。
+*  **4.4.4. 復習演習:** 指定された復習対象カードを再度演習。
+*  **4.4.5. リマインダー:** アプリ内通知やメールで復習を促進。
+*  **4.4.6. 学習記録保存:** 全演習履歴を`learning_logs`に記録し、連続学習は`deck_study_logs`に登録。
 
-**4.5. 復習機能 (間隔反復)**
-*   **4.5.1. 次回復習日の計算 (Anki式/SuperMemo2):** 学習記録に基づき、Anki公式アルゴリズム(SuperMemo2)を用いてカードの次回復習推奨日を計算・更新。
-*   **4.5.2. 復習対象の提示:** ダッシュボード等で復習対象カードを提示。
-*   **4.5.3. 復習演習:** 対象カードで問題演習を行う。
-
-**4.6. ページ管理機能**
-*   **4.6.1. ページ作成・編集・削除:** キーワードやトピックに対応したページをTiptapエディタで作成・管理。
-*   **4.6.2. ページ一覧表示:** 自身が作成したページ、共有されたページを一元的に一覧表示する。
-*   **4.6.3. リンク作成機能:** カード作成・編集時にキーワードを指定して既存ページへのリンクを埋め込む、または新規ページを作成できるようにする。
-*   **4.6.4. ページ表示:** リンクされたページの内容を表示し、関連ページ間での内部リンクも可能とする。
-*   **4.6.5. ページ共有機能:**
+**4.5. ページ管理機能**
+*   **4.5.1. ページ作成・編集・削除:** キーワードやトピックに対応したページをTiptapエディタで作成・管理。
+*   **4.5.2. ページ一覧表示:** 自身が作成したページ、共有されたページを一元的に一覧表示する。
+*   **4.5.3. リンク作成機能:** カード作成・編集時にキーワードを指定して既存ページへのリンクを埋め込む、または新規ページを作成できるようにする。
+*   **4.5.4. ページ表示:** リンクされたページの内容を表示し、関連ページ間での内部リンクも可能とする。
+*   **4.5.5. カードテキスト内部リンク機能:** カード作成・編集時にテキスト内のキーワードを既存ページと双方向リンクする機能を提供。
+*   **4.5.6. ページ共有機能:**
     *   共有リンクを発行し、URLを知るユーザーがアクセス可能（権限: 'editor','viewer'）。
     *   生成した共有リンクは `share_links` テーブルで管理し、有効期限や無効化も考慮。
     *   招待制共有の場合、受信ユーザーを `page_shares` テーブルに追加し、権限を付与する。
 
-**4.7. 学習進捗管理機能**
-*   **4.7.1. ダッシュボード表示:** 学習サマリー、復習カード表示。
-*   **4.7.2. 学習記録の可視化:** デッキ別、カード別、回答形式別の成績などをグラフ等で可視化。
+**4.6. 学習進捗管理機能**
+*   **4.6.1. ダッシュボード表示:** 学習サマリーと学習機能指標（合計時間、ストリーク、演習・復習回数）。
+*   **4.6.2. 進捗可視化:** デッキ別、カード別、形式別の学習履歴や成績をグラフで可視化。
 
 **5. 非機能要件**
 
@@ -111,29 +119,27 @@
 *   **/decks:** デッキ一覧ページ (My Decks, Shared Decks)
 *   **/decks/new:** 新規デッキ作成ページ
 *   **/decks/[deckId]:** デッキ詳細ページ（カード一覧、デッキ編集・共有設定、**「カード作成」ボタン配置**）
-*   **/decks/[deckId]/cards/new:** 新規カード作成ページ (**手動入力フォーム**)
-*   **/decks/[deckId]/cards/generate-audio:** 音読によるカード生成ページ (**録音UI、生成結果リスト表示**)
-*   **/decks/[deckId]/cards/[cardId]:** カード詳細・編集ページ
-*   **/practice/[deckId]:** デッキ演習**設定**ページ (**演習モード・回答形式選択**)
-*   **/practice/session:** 問題演習画面 (カード表示、問題解答)
-*   **/review:** 復習専用ページ（復習対象カード一覧、演習開始）
+*   **/decks/[deckId]/audio:** 音読によるカード生成ページ (**録音UI、生成結果リスト表示**)
+
+*   **/learn:** 学習機能（演習・復習）トップ。
+*   **/learn/session:** 学習セッション画面。
+
 *   **/pages:** ページ一覧ページ (My Pages, Shared Pages)
 *   **/pages/new:** 新規ページ作成ページ (Tiptapエディタ)
-*   **/pages/[pageId]:** ページ表示ページ
-*   **/pages/[pageId]/edit:** ページ編集ページ (Tiptapエディタ)
+*   **/pages/[pageId]:** ページ表示・編集ページ
 *   **/settings:** 設定ページ（アカウント情報、Optional: APIキー設定など）
 *   **(Optional) /share/[shareId]:** 共有コンテンツ閲覧ページ（非ログインユーザー向け）
 *   **(Backend Route - No UI) /auth/callback:** Google認証コールバック処理エンドポイント
 
 **7. 使用技術スタック詳細**
 
-*   **フレームワーク:** Next.js (v14以降, App Router)
+*   **フレームワーク:** Next.js (v15以降, App Router)
 *   **BaaS:** Supabase (**Authentication (Google)**, PostgreSQL Database, Storage, Edge Functions)
 *   **エディタ:** Tiptap
 *   **パッケージ管理:** bun
 *   **状態管理:** Jotai
 *   **UI:** shadcn/ui + Tailwind CSS
-*   **LLM:** **Google Gemini API (例: Gemini 1.5 Pro / Flash等)**
+*   **LLM:** **Google Gemini API (例: Gemini 2.5 Pro / Flash等)**
 *   **音声認識:** **Google Gemini API (マルチモーダル入力) / Google Cloud Speech-to-Text API**
 
 **8. 備考・考慮事項**
@@ -147,6 +153,7 @@
 *   **★詳細定義が必要な項目:** 共有機能の仕様、学習記録の詳細、復習アルゴリズム、進捗可視化、問題バリエーション生成のタイミングとトリガー、演習時の回答形式と問題データの紐付けロジック。
 *   **非同期処理のUI:** ユーザーに進捗状況を分かりやすく示すUIが必要。
 *   **Googleログイン設定:** SupabaseプロジェクトとGoogle Cloud ConsoleでのOAuthクライアント設定が必要。
+*   **OCR APIコスト:** OCRサービス利用料と制限も考慮する。
 
 ---
 

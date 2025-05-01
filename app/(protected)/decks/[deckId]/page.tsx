@@ -7,10 +7,13 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { CardForm } from "./_components/card-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SyncButton } from "./_components/sync-button";
 
 export default async function DeckPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
+	// Debug: raw cards fetched from database
+	// (after cards are loaded below)
 	// Await dynamic route params
 	const { deckId } = await params;
 	const supabase = await createClient();
@@ -31,6 +34,7 @@ export default async function DeckPage({
 
 	// デッキ内のカードを取得
 	const cards = await getCardsByDeck(deckId);
+	console.debug("[DeckPage] raw cards:", cards);
 
 	// サーバーサイドでユーザーの全ページを取得し、タイトル→IDマップを作成
 	const { data: userPages } = await supabase
@@ -38,20 +42,27 @@ export default async function DeckPage({
 		.select("id,title")
 		.eq("user_id", user.id);
 	const pagesMap = new Map<string, string>(
-		(userPages ?? []).map((p: any) => [p.title, p.id]),
+		(userPages ?? []).map((p: { title: string; id: string }) => [
+			p.title,
+			p.id,
+		]),
 	);
 
 	// JSONContent の型をインポート
 	// サーバーコンポーネントなので型だけ
 	type JSONContent = import("@tiptap/core").JSONContent;
+	// tiptap マークの型定義
+	type MarkJSON = { type: string; attrs?: Record<string, unknown> };
+
 	// front_content 内の pageLink マークに pageId を埋め込む関数
 	function transformPageLinks(doc: JSONContent): JSONContent {
-		const recurse = (node: any): any => {
+		const recurse = (node: JSONContent): JSONContent => {
 			// マークの更新
 			if (node.marks) {
-				node.marks = node.marks.map((mark: any) => {
+				const marks = node.marks as MarkJSON[];
+				node.marks = marks.map((mark) => {
 					if (mark.type === "pageLink") {
-						const name = mark.attrs.pageName as string;
+						const name = mark.attrs?.pageName as string;
 						const id = pagesMap.get(name) ?? null;
 						return { ...mark, attrs: { pageName: name, pageId: id } };
 					}
@@ -73,6 +84,7 @@ export default async function DeckPage({
 		...card,
 		front_content: transformPageLinks(card.front_content as JSONContent),
 	}));
+	console.debug("[DeckPage] decoratedCards:", decoratedCards);
 
 	// デッキの所有者かどうかを確認
 	const isOwner = deck.user_id === user.id;
@@ -110,6 +122,7 @@ export default async function DeckPage({
 					<Button asChild>
 						<Link href={`/decks/${deckId}/audio`}>音読する</Link>
 					</Button>
+					<SyncButton deckId={deckId} />
 				</div>
 			)}
 			<CardsList cards={decoratedCards} deckId={deckId} canEdit={canEdit} />

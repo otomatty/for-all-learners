@@ -17,7 +17,11 @@ export const PageLink = Mark.create({
 		return [{ tag: "a[data-page-name]" }];
 	},
 	renderHTML({ HTMLAttributes }) {
-		return ["a", mergeAttributes(HTMLAttributes), 0];
+		// Include href for static HTML rendering
+		const href = HTMLAttributes.pageId
+			? `/pages/${HTMLAttributes.pageId}`
+			: undefined;
+		return ["a", mergeAttributes(HTMLAttributes, { href }), 0];
 	},
 	addInputRules() {
 		return [
@@ -29,6 +33,9 @@ export const PageLink = Mark.create({
 		];
 	},
 	addNodeView() {
-		return ReactNodeViewRenderer(PageLinkView);
+		console.debug("[PageLink] addNodeView invoked");
+		return ReactNodeViewRenderer(PageLinkView, {
+			stopEvent: () => false,
+		});
 	},
 });

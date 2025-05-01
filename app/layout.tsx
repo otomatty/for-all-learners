@@ -6,8 +6,9 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-	title: "資格学習支援アプリ",
-	description: "効率的かつ効果的に資格学習を進めるためのアプリケーション",
+	title: "F.A.L. | 「理解」するための学習アプリ",
+	description:
+		"F.A.L(For All Learners)は、「理解する」学習のために設計されたAIをベースにしたアプリです。",
 };
 
 export default function RootLayout({

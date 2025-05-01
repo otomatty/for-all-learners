@@ -62,8 +62,26 @@ export async function getPagesByUser(userId: string) {
 	const supabase = await createClient();
 	const { data, error } = await supabase
 		.from("pages")
-		.select("id")
-		.eq("user_id", userId);
+		.select("*")
+		.eq("user_id", userId)
+		.order("updated_at", { ascending: false });
+	if (error) throw error;
+	return data;
+}
+
+export async function getSharedPagesByUser(userId: string): Promise<
+	Array<
+		Database["public"]["Tables"]["page_shares"]["Row"] & {
+			pages: Database["public"]["Tables"]["pages"]["Row"];
+		}
+	>
+> {
+	const supabase = await createClient();
+	const { data, error } = await supabase
+		.from("page_shares")
+		.select("*, pages(*)")
+		.eq("shared_with_user_id", userId)
+		.order("pages(updated_at)", { ascending: false });
 	if (error) throw error;
 	return data;
 }

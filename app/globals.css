@@ -210,9 +210,9 @@
 @layer components {
   /* リンク色の分岐: hrefありは青、なしは赤 */
   .rich-content a[href] {
-    @apply text-blue-500 underline;
+    @apply text-blue-500 underline cursor-pointer;
   }
   .rich-content a:not([href]) {
-    @apply text-red-500 underline;
+    @apply text-red-500 underline cursor-pointer;
   }
 }

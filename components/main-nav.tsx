@@ -12,19 +12,17 @@ export function MainNav() {
 		<div className="mr-4 flex">
 			<Link href="/" className="mr-6 flex items-center space-x-2">
 				<BrainCircuit className="h-6 w-6" />
-				<span className="font-bold">For All Learners</span>
+				<span className="font-bold">F.A.L.</span>
 			</Link>
 			<nav className="flex items-center space-x-6 text-sm font-medium">
 				<Link
-					href="/dashboard"
+					href="/learn"
 					className={cn(
 						"transition-colors hover:text-foreground/80",
-						pathname === "/dashboard"
-							? "text-foreground"
-							: "text-foreground/60",
+						pathname === "/learn" ? "text-foreground" : "text-foreground/60",
 					)}
 				>
-					ダッシュボード
+					学習を始める
 				</Link>
 				<Link
 					href="/decks"
@@ -38,24 +36,15 @@ export function MainNav() {
 					デッキ
 				</Link>
 				<Link
-					href="/notes"
+					href="/pages"
 					className={cn(
 						"transition-colors hover:text-foreground/80",
-						pathname?.startsWith("/notes")
+						pathname?.startsWith("/pages")
 							? "text-foreground"
 							: "text-foreground/60",
 					)}
 				>
 					ノート
-				</Link>
-				<Link
-					href="/review"
-					className={cn(
-						"transition-colors hover:text-foreground/80",
-						pathname === "/review" ? "text-foreground" : "text-foreground/60",
-					)}
-				>
-					復習
 				</Link>
 			</nav>
 		</div>

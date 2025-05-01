@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useForm } from "react-hook-form";
 import {
 	Form,
@@ -21,6 +20,8 @@ import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import { PageLink } from "@/lib/tiptap-extensions/page-link";
 import type { JSONContent } from "@tiptap/core";
+import { syncCardLinks } from "@/app/_actions/syncCardLinks";
+import { createCard } from "@/app/_actions/cards";
 
 interface CardFormProps {
 	deckId: string;
@@ -34,7 +35,6 @@ type CardFormValues = {
 
 export function CardForm({ deckId, userId }: CardFormProps) {
 	const router = useRouter();
-	const supabase = createClient();
 	const form = useForm<CardFormValues>({
 		defaultValues: {
 			frontContent: { type: "doc", content: [] },
@@ -79,25 +79,28 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 				toast.error("裏面に少なくとも1文字以上入力してください");
 				return;
 			}
-			const { data, error } = await supabase
-				.from("cards")
-				.insert({
-					user_id: userId,
-					deck_id: deckId,
-					front_content: frontContent,
-					back_content: backContent,
-				})
-				.select()
-				.single();
-			if (error) {
-				toast.error(error.message || "カードの作成に失敗しました");
-				return;
+			// Use server action to create a card
+			const data = await createCard({
+				user_id: userId,
+				deck_id: deckId,
+				front_content: frontContent,
+				back_content: backContent,
+			});
+			// Synchronize page links for the new card
+			try {
+				await syncCardLinks(data.id, frontContent);
+			} catch (syncErr) {
+				console.error("リンク同期エラー:", syncErr);
 			}
 			toast.success("カードを作成しました");
 			router.push(`/decks/${deckId}`);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("カード作成エラー:", err);
-			toast.error(err.message || "カードの作成中にエラーが発生しました。");
+			toast.error(
+				err instanceof Error
+					? err.message
+					: "カードの作成中にエラーが発生しました。",
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -112,8 +115,8 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 		setIsGenerating(true);
 		try {
 			setTimeout(() => {
-				const firstNode = frontJSON.content[0];
-				const text = firstNode.type === "text" ? firstNode.text : "";
+				const firstNode = frontJSON.content?.[0];
+				const text = firstNode?.type === "text" ? firstNode.text : "";
 				const generatedText = `「${text}」に対する回答例:\n\n${text}は、ITパスポート試験の重要な概念です。詳細な説明...`;
 				const generatedJSON: JSONContent = {
 					type: "doc",
@@ -128,9 +131,13 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 				toast.success("回答を生成しました");
 				setIsGenerating(false);
 			}, 2000);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("回答生成エラー:", err);
-			toast.error(err.message || "回答生成中にエラーが発生しました。");
+			toast.error(
+				err instanceof Error
+					? err.message
+					: "回答生成中にエラーが発生しました。",
+			);
 			setIsGenerating(false);
 		}
 	};

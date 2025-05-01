@@ -25,21 +25,21 @@ export default async function DecksPage() {
 
 	return (
 		<>
-			{/* 新規／編集デッキフォーム */}
-			<div className="flex justify-end mb-4">
-				<ResponsiveDialog
-					triggerText="新規デッキ"
-					dialogTitle="デッキを作成／編集"
-					dialogDescription="デッキタイトルと説明を入力してください"
-				>
-					<DeckForm userId={user.id} />
-				</ResponsiveDialog>
-			</div>
 			<Tabs defaultValue="my-decks" className="space-y-4">
-				<TabsList>
-					<TabsTrigger value="my-decks">マイデッキ</TabsTrigger>
-					<TabsTrigger value="shared-decks">共有デッキ</TabsTrigger>
-				</TabsList>
+				{/* 新規／編集デッキフォーム */}
+				<div className="flex justify-between mb-4">
+					<TabsList>
+						<TabsTrigger value="my-decks">マイデッキ</TabsTrigger>
+						<TabsTrigger value="shared-decks">共有デッキ</TabsTrigger>
+					</TabsList>
+					<ResponsiveDialog
+						triggerText="新規デッキ"
+						dialogTitle="デッキを作成／編集"
+						dialogDescription="デッキタイトルと説明を入力してください"
+					>
+						<DeckForm userId={user.id} />
+					</ResponsiveDialog>
+				</div>
 				<TabsContent value="my-decks" className="space-y-4">
 					<DecksList decks={myDecks || []} />
 				</TabsContent>

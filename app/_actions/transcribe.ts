@@ -3,6 +3,17 @@
 import { geminiClient } from "@/lib/gemini/client";
 import { createUserContent, createPartFromUri } from "@google/genai";
 
+// Define types for Gemini response to avoid using any
+interface GeminiContentParts {
+	parts: { text: string }[];
+}
+
+type GeminiCandidateContent = string | GeminiContentParts;
+
+interface GenerateContentResponse {
+	candidates?: { content: GeminiCandidateContent }[];
+}
+
 /**
  * Server action to transcribe an audio file at a public URL via Gemini API.
  */
@@ -37,9 +48,7 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 	console.log("Transcription response:", response);
 
 	// Extract transcript from response candidates
-	const { candidates } = response as unknown as {
-		candidates?: { content: any }[];
-	};
+	const { candidates } = response as unknown as GenerateContentResponse;
 	const candidateContent = candidates?.[0]?.content;
 	if (candidateContent == null) {
 		throw new Error("Transcription failed: no content returned");
