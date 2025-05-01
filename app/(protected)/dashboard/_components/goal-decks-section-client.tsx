@@ -4,6 +4,7 @@ import React, { useState, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Deck, DeckStudyLog } from "@/app/_actions/goal-decks";
 import { DecksTable } from "./decks-table";
+import { MobileDecksList } from "./mobile-decks-list";
 import { AddStudySessionDialog } from "./add-study-session-dialog";
 import { AddDeckLinkDialog } from "./add-deck-link-dialog";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
@@ -53,8 +54,14 @@ export default function ClientGoalDecksSection({
 
 	return (
 		<div className="space-y-4">
-			{/* デッキ一覧と記録ボタン */}
-			<DecksTable decks={initialDecks} onRemove={handleRemove} />
+			{/* デスクトップ: テーブル一覧 */}
+			<div className="hidden md:block">
+				<DecksTable decks={initialDecks} onRemove={handleRemove} />
+			</div>
+			{/* モバイル: リスト一覧 */}
+			<div className="block md:hidden">
+				<MobileDecksList decks={initialDecks} onRemove={handleRemove} />
+			</div>
 
 			{/* テーブル下部の+ボタンでデッキ追加 */}
 			<AddDeckLinkDialog

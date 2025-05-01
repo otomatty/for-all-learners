@@ -3,17 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BrainCircuit } from "lucide-react";
 
 export function MainNav() {
 	const pathname = usePathname();
 
 	return (
 		<div className="mr-4 flex">
-			<Link href="/" className="mr-6 flex items-center space-x-2">
-				<BrainCircuit className="h-6 w-6" />
-				<span className="font-bold">F.A.L.</span>
-			</Link>
 			<nav className="flex items-center space-x-6 text-sm font-medium">
 				<Link
 					href="/learn"
