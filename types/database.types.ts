@@ -12,25 +12,31 @@ export type Database = {
       accounts: {
         Row: {
           avatar_url: string | null
+          birthdate: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
+          gender: string | null
           id: string
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          birthdate?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          gender?: string | null
           id: string
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          birthdate?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           updated_at?: string | null
         }
@@ -635,6 +641,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "study_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          items_per_page: number
+          locale: string
+          mode: string
+          notifications: Json
+          theme: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items_per_page?: number
+          locale?: string
+          mode?: string
+          notifications?: Json
+          theme?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items_per_page?: number
+          locale?: string
+          mode?: string
+          notifications?: Json
+          theme?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "accounts"

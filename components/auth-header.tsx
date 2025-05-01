@@ -6,12 +6,16 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { Logo } from "@/components/site-logo";
 
-export function AuthHeader() {
+interface AuthHeaderProps {
+	version?: string;
+}
+
+export function AuthHeader({ version }: AuthHeaderProps) {
 	return (
-		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b">
+		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
 			<div className="container mx-auto flex items-center justify-between py-4 px-6">
 				<div className="flex justify-between items-center w-full">
-					<Logo />
+					<Logo version={version} />
 					<div className="hidden md:flex">
 						<MainNav />
 					</div>

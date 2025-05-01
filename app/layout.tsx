@@ -2,6 +2,7 @@ import type React from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { getUserSettings } from "@/app/_actions/user_settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,15 +12,26 @@ export const metadata = {
 		"F.A.L(For All Learners)は、「理解する」学習のために設計されたAIをベースにしたアプリです。",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
-}: Readonly<{
+}: {
 	children: React.ReactNode;
-}>) {
+}) {
+	// サーバーサイドでユーザー設定を取得
+	const { theme, mode } = await getUserSettings();
+	const themeClass = `theme-${theme}`;
+	const darkClass = mode === "dark" ? "dark" : "";
+
 	return (
-		<html lang="ja" suppressHydrationWarning>
+		<html
+			lang="ja"
+			className={`${darkClass} ${themeClass}`}
+			suppressHydrationWarning
+		>
 			<body className={inter.className} suppressHydrationWarning>
-				<Providers>{children}</Providers>
+				<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
+					{children}
+				</Providers>
 			</body>
 		</html>
 	);

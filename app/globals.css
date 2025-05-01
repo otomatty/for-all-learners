@@ -80,7 +80,7 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
+ 
 
 @layer base {
   * {
@@ -214,5 +214,80 @@
   }
   .rich-content a:not([href]) {
     @apply text-red-500 underline cursor-pointer;
+  }
+}
+
+ /* Custom theme classes for color themes */
+  .theme-ocean {
+    --background: #E0F7FA;
+    --foreground: #006064;
+    --primary:    #0288D1;
+    --secondary:  #26C6DA;
+    --accent:     #00B8D4;
+  }
+  .theme-forest {
+    --background: #E8F5E9;
+    --foreground: #1B5E20;
+    --primary:    #388E3C;
+    --secondary:  #81C784;
+    --accent:     #66BB6A;
+  }
+  .theme-sunset {
+    --background: #FFF3E0;
+    --foreground: #E65100;
+    --primary:    #FB8C00;
+    --secondary:  #FFB74D;
+    --accent:     #FF9800;
+  }
+  .theme-night-sky {
+    --background: #1A237E;
+    --foreground: #E8EAF6;
+    --primary:    #3949AB;
+    --secondary:  #5C6BC0;
+    --accent:     #7986CB;
+  }
+  .theme-desert {
+    --background: #FFFDE7;
+    --foreground: #3E2723;
+    --primary:    #FFB300;
+    --secondary:  #FFD54F;
+    --accent:     #FFA000;
+  }
+
+  /* Dark mode overrides for custom themes */
+  .dark.theme-ocean {
+    --background: #004D40;
+    --foreground: #B2DFDB;
+    --primary:    #26A69A;
+    --secondary:  #4DB6AC;
+    --accent:     #80CBC4;
+  }
+  .dark.theme-forest {
+    --background: #1B5E20;
+    --foreground: #C8E6C9;
+    --primary:    #306230;
+    --secondary:  #66BB6A;
+    --accent:     #A5D6A7;
+  }
+  .dark.theme-sunset {
+    --background: #3E2723;
+    --foreground: #FFE0B2;
+    --primary:    #FB8C00;
+    --secondary:  #FFB74D;
+    --accent:     #FFCC80;
+  }
+  .dark.theme-night-sky {
+    --background: #0D0D33;
+    --foreground: #ECEFF1;
+    --primary:    #3949AB;
+    --secondary:  #5C6BC0;
+    --accent:     #7986CB;
+  }
+  .dark.theme-desert {
+    --background: #5D4037;
+    --foreground: #FFF8E1;
+    --primary:    #FFB300;
+    --secondary:  #FFE082;
+    --accent:     #FFB74D;
   }
 }

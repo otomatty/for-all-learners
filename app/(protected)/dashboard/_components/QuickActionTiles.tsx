@@ -154,7 +154,7 @@ export const QuickActionTiles: React.FC = () => {
 				</CardFooter>
 			</Card>
 			{/* Step 2: カード復習 */}
-			<Card className="flex flex-col hover:shadow-lg transition-shadow">
+			<Card className="flex flex-col justify-between hover:shadow-lg transition-shadow">
 				<CardHeader className="flex flex-col">
 					<span className="text-sm text-gray-500">Step 2</span>
 					<div className="flex items-center space-x-2 mt-2">

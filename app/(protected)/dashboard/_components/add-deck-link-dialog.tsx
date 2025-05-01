@@ -77,7 +77,13 @@ export function AddDeckLinkDialog({
 	}, [goalId, newDeckTitle, onSuccess]);
 
 	return (
-		<ResponsiveDialog triggerText={triggerText} dialogTitle="デッキ追加">
+		<ResponsiveDialog
+			triggerText={triggerText}
+			dialogTitle="デッキ追加"
+			triggerButtonProps={{
+				className: "w-full border-none shadow-none",
+			}}
+		>
 			<div className="space-y-2 p-4">
 				<Select value={selectedDeckId} onValueChange={setSelectedDeckId}>
 					<SelectTrigger>

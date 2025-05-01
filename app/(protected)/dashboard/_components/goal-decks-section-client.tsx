@@ -53,7 +53,7 @@ export default function ClientGoalDecksSection({
 	}, [router]);
 
 	return (
-		<div className="space-y-4">
+		<div>
 			{/* デスクトップ: テーブル一覧 */}
 			<div className="hidden md:block">
 				<DecksTable decks={initialDecks} onRemove={handleRemove} />
@@ -64,11 +64,13 @@ export default function ClientGoalDecksSection({
 			</div>
 
 			{/* テーブル下部の+ボタンでデッキ追加 */}
-			<AddDeckLinkDialog
-				goalId={goalId}
-				onSuccess={handleAddLinkSuccess}
-				triggerText="＋ デッキを追加する"
-			/>
+			<div className="flex justify-center">
+				<AddDeckLinkDialog
+					goalId={goalId}
+					onSuccess={handleAddLinkSuccess}
+					triggerText="＋ デッキを追加する"
+				/>
+			</div>
 
 			{/* 選択されたデッキの記録ダイアログ */}
 			{selectedDeckId && (

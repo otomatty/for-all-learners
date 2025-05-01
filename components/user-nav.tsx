@@ -14,22 +14,39 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { User } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
+import { LogOut, Settings, UserRound } from "lucide-react";
+
+// Type for data fetched from the accounts table
+type Account = Database["public"]["Tables"]["accounts"]["Row"];
 
 export function UserNav() {
 	const router = useRouter();
 	const supabase = createClient();
-	const [user, setUser] = useState<User | null>(null);
+	const [account, setAccount] = useState<Account | null>(null);
 
 	useEffect(() => {
-		const getUser = async () => {
-			const { data } = await supabase.auth.getUser();
-			if (data?.user) {
-				setUser(data.user);
+		const fetchUserAndAccount = async () => {
+			const { data: authData, error: authError } =
+				await supabase.auth.getUser();
+			if (authError || !authData?.user) {
+				console.error("[UserNav][AuthError]", authError);
+				return;
 			}
+			const userId = authData.user.id;
+			const { data: accountData, error: accountError } = await supabase
+				.from("accounts")
+				.select("*")
+				.eq("id", userId)
+				.single();
+			if (accountError) {
+				console.error("[UserNav][AccountFetchError]", accountError);
+				return;
+			}
+			setAccount(accountData);
 		};
 
-		getUser();
+		fetchUserAndAccount();
 	}, [supabase]);
 
 	const handleSignOut = async () => {
@@ -37,7 +54,7 @@ export function UserNav() {
 		router.push("/");
 	};
 
-	if (!user) {
+	if (!account) {
 		return null;
 	}
 
@@ -47,11 +64,11 @@ export function UserNav() {
 				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
-							src={user.user_metadata?.avatar_url || "/placeholder.svg"}
-							alt={user.email}
+							src={account.avatar_url || "https://placehold.co/400x400"}
+							alt={account.email || ""}
 						/>
 						<AvatarFallback>
-							{user.email?.charAt(0).toUpperCase()}
+							{account.email?.charAt(0).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
 				</Button>
@@ -60,21 +77,32 @@ export function UserNav() {
 				<DropdownMenuLabel className="font-normal">
 					<div className="flex flex-col space-y-1">
 						<p className="text-sm font-medium leading-none">
-							{user.user_metadata?.full_name || user.email}
+							{account.full_name || account.email}
 						</p>
 						<p className="text-xs leading-none text-muted-foreground">
-							{user.email}
+							{account.email}
 						</p>
 					</div>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
+					<DropdownMenuItem onClick={() => router.push("/profiles")}>
+						<UserRound className="w-4 h-4 mr-2" />
+						プロフィール
+					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => router.push("/settings")}>
+						<Settings className="w-4 h-4 mr-2" />
 						設定
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={handleSignOut}>ログアウト</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={handleSignOut}
+					className="text-red-500 hover:bg-red-500 hover:text-white"
+				>
+					<LogOut className="w-4 h-4 mr-2" />
+					ログアウト
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

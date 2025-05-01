@@ -8,6 +8,8 @@ CREATE TABLE accounts (
   email TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
+  gender VARCHAR(10) CHECK (gender IN ('male','female','other','prefer_not_to_say')),
+  birthdate DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -253,3 +255,25 @@ CREATE POLICY "Users can manage own quiz_settings" ON quiz_settings
   WITH CHECK (user_id = auth.uid());
 -- インデックス設定
 CREATE INDEX idx_quiz_settings_user ON quiz_settings(user_id);
+
+-- ユーザー設定テーブル (テーマなど個人設定)
+CREATE TABLE user_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES accounts(id),
+  theme VARCHAR(50) NOT NULL DEFAULT 'ocean', -- 'ocean','forest','sunset','night-sky','desert'
+  mode VARCHAR(10) NOT NULL DEFAULT 'light' CHECK (mode IN ('light','dark')),
+  locale TEXT NOT NULL DEFAULT 'en', -- 言語設定
+  timezone TEXT NOT NULL DEFAULT 'UTC', -- タイムゾーン設定
+  notifications JSONB NOT NULL DEFAULT '{}'::jsonb, -- 通知設定(JSON形式)
+  items_per_page INTEGER NOT NULL DEFAULT 20, -- ページあたりの表示件数
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX idx_user_settings_user ON user_settings(user_id);
+
+-- RLSポリシー設定: ユーザーが自身の設定のみ操作可能にする
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own user_settings" ON user_settings
+  FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());

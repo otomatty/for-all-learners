@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BookOpen, BrainCircuit, Clock, Share2 } from "lucide-react";
 import { UnauthHeader } from "@/components/unauth-header";
+import { version } from "../package.json";
 
 export default async function Home() {
 	const supabase = await createClient();
@@ -14,7 +15,7 @@ export default async function Home() {
 
 	return (
 		<div className="flex flex-col min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-			<UnauthHeader />
+			<UnauthHeader version={version} />
 
 			<main className="flex-1 container mx-auto px-6 py-16 text-center text-white">
 				<h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">

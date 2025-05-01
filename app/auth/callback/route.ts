@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getAccountById, createAccount } from "@/app/_actions/accounts";
+import { getUserSettings } from "@/app/_actions/user_settings";
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
@@ -40,28 +42,36 @@ export async function GET(request: Request) {
 		}
 	}
 
-	// After successful auth, seed or upsert user in accounts table
+	// After successful auth, register account and initialize settings using server actions
 	const {
 		data: { user },
 		error: userError,
 	} = await supabase.auth.getUser();
-	if (user) {
-		const { error: upsertError } = await supabase
-			.from("accounts")
-			.upsert({
-				id: user.id,
-				email: user.email,
-				full_name: user.user_metadata?.full_name ?? null,
-				avatar_url: user.user_metadata?.avatar_url ?? null,
-			})
-			.single();
-		if (upsertError) {
-			console.error("Error upserting account:", upsertError);
-		}
-	} else if (userError) {
+	if (!user) {
 		console.error("Error retrieving user:", userError);
+		return NextResponse.redirect(
+			`${requestUrl.origin}/auth/login?error=auth_failed`,
+		);
 	}
+	// Account existence check and creation
+	const account = await getAccountById(user.id);
+	if (!account) {
+		if (!user.email) {
+			console.error("ユーザーにメールアドレスがありません");
+			return NextResponse.redirect(
+				`${requestUrl.origin}/auth/login?error=no_email`,
+			);
+		}
+		await createAccount({
+			id: user.id,
+			email: user.email,
+			full_name: user.user_metadata?.full_name ?? null,
+			avatar_url: user.user_metadata?.avatar_url ?? null,
+		});
+	}
+	// Ensure user settings are initialized
+	await getUserSettings();
 
-	// After seeding account, redirect to dashboard
+	// After successful auth, redirect to dashboard
 	return NextResponse.redirect(`${requestUrl.origin}/dashboard`);
 }
