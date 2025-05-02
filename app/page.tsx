@@ -30,7 +30,7 @@ export default async function Home() {
 					variant="default"
 					className="bg-white text-indigo-600 hover:bg-gray-100"
 				>
-					<Link href="/auth/login">Googleで始める</Link>
+					<Link href="/auth/login"> 学習を始める</Link>
 				</Button>
 
 				<section className="mt-16 grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 text-gray-700">

@@ -11,13 +11,13 @@ interface UnauthHeaderProps {
 
 export function UnauthHeader({ version }: UnauthHeaderProps) {
 	return (
-		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b">
+		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md ">
 			<div className="container mx-auto flex items-center justify-between py-4 px-6">
 				<Logo version={version} />
 				<div className="flex items-center space-x-4">
 					<ThemeToggle />
 					<Button asChild variant="outline">
-						<Link href="/auth/login">Googleログイン</Link>
+						<Link href="/auth/login">ログイン</Link>
 					</Button>
 				</div>
 			</div>

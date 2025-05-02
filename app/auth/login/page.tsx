@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { BrainCircuit } from "lucide-react";
 import { UnauthHeader } from "@/components/unauth-header";
 import { loginWithGoogle } from "@/app/_actions/auth";
+import { version } from "../../../package.json";
 
 export default async function LoginPage() {
 	const supabase = await createClient();
@@ -17,7 +18,7 @@ export default async function LoginPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen bg-gray-100">
-			<UnauthHeader />
+			<UnauthHeader version={version} />
 
 			<div className="flex flex-1 items-center justify-center px-4">
 				<div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -31,10 +32,7 @@ export default async function LoginPage() {
 						</p>
 					</div>
 					<form action={loginWithGoogle} className="grid gap-6">
-						<Button
-							type="submit"
-							className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
-						>
+						<Button type="submit" variant="outline">
 							<img
 								src="/images/google-logo.svg"
 								alt="Google Logo"
