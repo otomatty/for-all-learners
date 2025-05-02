@@ -14,6 +14,9 @@ interface QuizSettingsDialogProps {
 	deckTitle?: string;
 	goalTitle?: string;
 	triggerText?: string;
+	reviewMode?: boolean;
+	disabled?: boolean;
+	reviewCount?: number;
 }
 
 export function QuizSettingsDialog({
@@ -22,6 +25,9 @@ export function QuizSettingsDialog({
 	goalId,
 	goalTitle,
 	triggerText = "学習を開始する",
+	reviewMode = false,
+	disabled = false,
+	reviewCount,
 }: QuizSettingsDialogProps) {
 	const router = useRouter();
 	const [questionType, setQuestionType] = useState<string>("one");
@@ -41,11 +47,26 @@ export function QuizSettingsDialog({
 		if (shuffle) params.append("shuffle", "true");
 		const startTime = Date.now().toString();
 		params.append("startTime", startTime);
+		if (reviewMode) {
+			params.append("review", "true");
+		}
 		router.push(`/learn/session?${params.toString()}`);
 	};
 
+	const displayText =
+		reviewMode && typeof reviewCount === "number"
+			? `${triggerText} (${reviewCount})`
+			: triggerText;
+
 	return (
-		<ResponsiveDialog triggerText={triggerText} dialogTitle="学習モード設定">
+		<ResponsiveDialog
+			triggerText={displayText}
+			dialogTitle="学習モード設定"
+			triggerButtonProps={{
+				className: "w-full relative",
+				disabled: disabled || (reviewMode && (reviewCount ?? 0) === 0),
+			}}
+		>
 			{(deckTitle || goalTitle) && (
 				<div className="mb-4">
 					{deckTitle && (

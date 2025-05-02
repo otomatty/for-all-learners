@@ -5,11 +5,13 @@ import { BrainCircuit } from "lucide-react";
 
 interface LogoProps {
 	version?: string;
+	/** ロゴのリンク先 */
+	href?: string;
 }
 
-export function Logo({ version }: LogoProps) {
+export function Logo({ version, href = "/" }: LogoProps) {
 	return (
-		<Link href="/" className="mr-6 flex items-center space-x-2">
+		<Link href={href} className="mr-6 flex items-center space-x-2">
 			<BrainCircuit className="h-6 w-6" />
 			<span className="font-bold">F.A.L.</span>
 			{version && (

@@ -28,6 +28,7 @@ interface Deck {
 	id: string;
 	title: string;
 	card_count: number;
+	todayReviewCount: number;
 }
 interface DecksTableProps {
 	decks: Deck[];
@@ -42,7 +43,9 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 				<TableRow>
 					<TableHead>デッキ名</TableHead>
 					<TableHead>カード数</TableHead>
-					<TableHead />
+					<TableHead>今日のカード数</TableHead>
+					<TableHead>学習を始める</TableHead>
+					<TableHead>復習する</TableHead>
 					<TableHead>操作</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -58,11 +61,22 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 							</Link>
 						</TableCell>
 						<TableCell>{deck.card_count}</TableCell>
+						<TableCell>{deck.todayReviewCount}</TableCell>
 						<TableCell>
 							<QuizSettingsDialog
 								deckId={deck.id}
 								deckTitle={deck.title}
 								triggerText="学習を始める"
+							/>
+						</TableCell>
+						<TableCell>
+							<QuizSettingsDialog
+								deckId={deck.id}
+								deckTitle={deck.title}
+								triggerText="復習する"
+								reviewMode={true}
+								reviewCount={deck.todayReviewCount}
+								disabled={deck.todayReviewCount === 0}
 							/>
 						</TableCell>
 						<TableCell>

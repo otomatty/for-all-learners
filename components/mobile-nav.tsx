@@ -14,14 +14,20 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/user-nav";
 
-export function MobileNav() {
+export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 	const pathname = usePathname();
 
-	const navItems = [
-		{ href: "/learn", label: "学習を始める" },
-		{ href: "/decks", label: "デッキ" },
-		{ href: "/pages", label: "ノート" },
-	];
+	const navItems = isAdmin
+		? [
+				{ href: "/admin/users", label: "ユーザー一覧" },
+				{ href: "/admin/announcements", label: "お知らせ" },
+				{ href: "/admin/contact", label: "お問い合わせ" },
+			]
+		: [
+				{ href: "/learn", label: "学習を始める" },
+				{ href: "/decks", label: "デッキ" },
+				{ href: "/pages", label: "ノート" },
+			];
 
 	return (
 		<div className="md:hidden">
@@ -56,7 +62,7 @@ export function MobileNav() {
 					</nav>
 					<div className="mt-4 px-4 flex flex-col space-y-2">
 						<ThemeToggle />
-						<UserNav />
+						<UserNav isAdmin={isAdmin} />
 					</div>
 				</SheetContent>
 			</Sheet>

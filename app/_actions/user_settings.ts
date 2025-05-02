@@ -16,19 +16,19 @@ export async function getUserSettings(): Promise<
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		throw new Error(authError?.message ?? "Not authenticated");
+		console.warn("Not authenticated, returning default user settings");
+		// Return default settings for unauthenticated users
+		return {
+			theme: "light",
+			mode: "system",
+		} as Database["public"]["Tables"]["user_settings"]["Row"];
 	}
 
 	const { data, error } = await supabase
 		.from("user_settings")
 		.select("*")
 		.eq("user_id", user.id)
-		.single();
-
-	if (error?.message.includes("No rows")) {
-		// Delegate to initializer
-		return await initializeUserSettings();
-	}
+		.maybeSingle();
 
 	if (error) {
 		console.error("getUserSettings fetch error:", error);
@@ -36,7 +36,8 @@ export async function getUserSettings(): Promise<
 	}
 
 	if (!data) {
-		throw new Error("User settings not found");
+		// 初期設定がなければ初期化
+		return await initializeUserSettings();
 	}
 
 	return data;
@@ -97,5 +98,22 @@ export async function initializeUserSettings(): Promise<
 		console.error("initializeUserSettings error:", error);
 		throw new Error(error?.message ?? "Failed to initialize user settings");
 	}
+	return data;
+}
+
+/**
+ * Fetches user settings for the specified user ID.
+ * @param userId - UUID of the user whose settings to fetch
+ */
+export async function getUserSettingsByUser(
+	userId: string,
+): Promise<Database["public"]["Tables"]["user_settings"]["Row"]> {
+	const supabase = await createClient();
+	const { data, error } = await supabase
+		.from("user_settings")
+		.select("*")
+		.eq("user_id", userId)
+		.single();
+	if (error) throw error;
 	return data;
 }

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import { useRouter } from "next/navigation";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
-import { createLearningLog } from "@/app/_actions/learning_logs";
+import { reviewCard } from "@/app/_actions/review";
 import QuizFinished from "./QuizFinished";
 
 interface MultipleChoiceQuizProps {
@@ -20,6 +20,9 @@ export default function MultipleChoiceQuiz({
 	startTime,
 }: MultipleChoiceQuizProps) {
 	const router = useRouter();
+	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
+		[],
+	);
 	const [timeRecorded, setTimeRecorded] = useState(false);
 	const startedAt = Number(startTime);
 	// Use enriched question type with questionId and cardId
@@ -66,18 +69,13 @@ export default function MultipleChoiceQuiz({
 		setShowAnswer(true);
 	};
 
-	const handleNext = async () => {
-		// Record learning log for the answered question
+	const handleNext = () => {
 		const isCorrect = selectedIndex === currentQuestion.correctAnswerIndex;
-		const userAnswer =
-			selectedIndex !== null ? currentQuestion.options[selectedIndex] : "";
-		await createLearningLog({
-			card_id: currentQuestion.cardId,
-			question_id: currentQuestion.questionId,
-			is_correct: isCorrect,
-			user_answer: userAnswer,
-			practice_mode: "mcq",
-		});
+		// 結果をバッファに追加
+		setResults((prev) => [
+			...prev,
+			{ cardId: currentQuestion.cardId, quality: isCorrect ? 5 : 2 },
+		]);
 		// Update wrong answers state if incorrect
 		if (selectedIndex !== null && !isCorrect) {
 			setWrongAnswers((prev) => [
@@ -117,7 +115,15 @@ export default function MultipleChoiceQuiz({
 				total={total}
 				wrongAnswers={summary}
 				onRetryWrong={handleRetryWrong}
-				onFinish={() => router.push("/learn")}
+				onFinish={async () => {
+					// 全レビュー結果をサーバーに反映
+					await Promise.all(
+						results.map(({ cardId, quality }) =>
+							reviewCard(cardId, quality, "mcq"),
+						),
+					);
+					router.push("/learn");
+				}}
 			/>
 		);
 	}

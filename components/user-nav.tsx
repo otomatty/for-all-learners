@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +15,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Database } from "@/types/database.types";
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, Settings, UserRound, Shield, Home } from "lucide-react";
 
 // Type for data fetched from the accounts table
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 
-export function UserNav() {
+export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const supabase = createClient();
 	const [account, setAccount] = useState<Account | null>(null);
 
@@ -94,6 +95,18 @@ export function UserNav() {
 						<Settings className="w-4 h-4 mr-2" />
 						設定
 					</DropdownMenuItem>
+					{isAdmin && !pathname?.startsWith("/admin") && (
+						<DropdownMenuItem onClick={() => router.push("/admin")}>
+							<Shield className="w-4 h-4 mr-2" />
+							管理者画面へ
+						</DropdownMenuItem>
+					)}
+					{isAdmin && pathname?.startsWith("/admin") && (
+						<DropdownMenuItem onClick={() => router.push("/")}>
+							<Home className="w-4 h-4 mr-2" />
+							アプリへ
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem

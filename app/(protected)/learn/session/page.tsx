@@ -6,7 +6,6 @@ import type {
 	MultipleChoiceQuestion,
 	FlashcardQuestion,
 	ClozeQuestion,
-	QuestionData,
 } from "@/lib/gemini";
 import Link from "next/link";
 

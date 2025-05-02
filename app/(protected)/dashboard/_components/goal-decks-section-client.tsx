@@ -2,12 +2,20 @@
 
 import React, { useState, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Deck, DeckStudyLog } from "@/app/_actions/goal-decks";
+import type { DeckStudyLog } from "@/app/_actions/goal-decks";
 import { DecksTable } from "./decks-table";
 import { MobileDecksList } from "./mobile-decks-list";
 import { AddStudySessionDialog } from "./add-study-session-dialog";
 import { AddDeckLinkDialog } from "./add-deck-link-dialog";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
+
+// Deck type for client component, including today's review count
+interface Deck {
+	id: string;
+	title: string;
+	card_count: number;
+	todayReviewCount: number;
+}
 
 interface ClientGoalDecksSectionProps {
 	goalId: string;

@@ -34,8 +34,12 @@ export async function addStudyGoal({
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
+		console.error("addStudyGoal auth error:", authError);
 		return { success: false, error: authError?.message ?? "Not authenticated" };
 	}
+
+	// deadline が空文字の場合は null にする
+	const sanitizedDeadline = deadline?.trim() === "" ? null : deadline;
 
 	const { data, error } = await supabase
 		.from("study_goals")
@@ -43,13 +47,14 @@ export async function addStudyGoal({
 			user_id: user.id,
 			title,
 			description,
-			deadline,
+			deadline: sanitizedDeadline,
 			progress_rate: 0,
-			status: "not_started",
+			status: "in_progress",
 		})
 		.select()
 		.single();
 	if (error || !data) {
+		console.error("addStudyGoal insert error:", error);
 		return {
 			success: false,
 			error: error?.message || "Failed to add study goal",

@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QuizFinished from "./QuizFinished";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
-import { createLearningLog } from "@/app/_actions/learning_logs";
+import { reviewCard } from "@/app/_actions/review";
 import type { FlashcardQuestion } from "@/lib/gemini";
-import Link from "next/link";
 
 interface FlashcardQuizProps {
 	questions: (FlashcardQuestion & { questionId: string; cardId: string })[];
@@ -17,6 +16,9 @@ export default function FlashcardQuiz({
 	questions,
 	startTime,
 }: FlashcardQuizProps) {
+	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
+		[],
+	);
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [showAnswer, setShowAnswer] = useState(false);
 	const total = questions.length;
@@ -38,15 +40,9 @@ export default function FlashcardQuiz({
 		setShowAnswer(true);
 	};
 
-	const handleNext = async () => {
-		// Record the answered flashcard as a learning log (always correct)
-		await createLearningLog({
-			card_id: current.cardId,
-			question_id: current.questionId,
-			is_correct: true,
-			user_answer: current.answer,
-			practice_mode: "one",
-		});
+	const handleNext = () => {
+		// Flashcard は常に正解とみなし、quality=5
+		setResults((prev) => [...prev, { cardId: current.cardId, quality: 5 }]);
 		setShowAnswer(false);
 		if (currentIndex + 1 < total) {
 			setCurrentIndex((prev) => prev + 1);
@@ -60,7 +56,15 @@ export default function FlashcardQuiz({
 			<QuizFinished
 				score={total}
 				total={total}
-				onFinish={() => router.push("/learn")}
+				onFinish={async () => {
+					// 一括レビュー処理
+					await Promise.all(
+						results.map(({ cardId, quality }) =>
+							reviewCard(cardId, quality, "one"),
+						),
+					);
+					router.push("/learn");
+				}}
 			/>
 		);
 	}

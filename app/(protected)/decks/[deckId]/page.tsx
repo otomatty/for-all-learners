@@ -12,8 +12,6 @@ import { SyncButton } from "./_components/sync-button";
 export default async function DeckPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
-	// Debug: raw cards fetched from database
-	// (after cards are loaded below)
 	// Await dynamic route params
 	const { deckId } = await params;
 	const supabase = await createClient();
@@ -34,7 +32,6 @@ export default async function DeckPage({
 
 	// デッキ内のカードを取得
 	const cards = await getCardsByDeck(deckId);
-	console.debug("[DeckPage] raw cards:", cards);
 
 	// サーバーサイドでユーザーの全ページを取得し、タイトル→IDマップを作成
 	const { data: userPages } = await supabase
@@ -84,7 +81,6 @@ export default async function DeckPage({
 		...card,
 		front_content: transformPageLinks(card.front_content as JSONContent),
 	}));
-	console.debug("[DeckPage] decoratedCards:", decoratedCards);
 
 	// デッキの所有者かどうかを確認
 	const isOwner = deck.user_id === user.id;

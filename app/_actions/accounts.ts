@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import type { User } from "@supabase/supabase-js";
 export async function getAccountById(id: string) {
 	const supabase = await createClient();
 	const { data, error } = await supabase

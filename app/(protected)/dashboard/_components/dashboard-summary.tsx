@@ -27,7 +27,6 @@ interface DashboardSummaryProps {
 type DurationKey = "学習" | "音読" | "OCR" | "メモ";
 
 export function DashboardSummary({ stats }: DashboardSummaryProps) {
-	console.debug("[DashboardSummary] stats:", stats);
 	// Helper to format duration
 	const formatDuration = (sec?: number): string => {
 		if (sec == null) return "<missing>";

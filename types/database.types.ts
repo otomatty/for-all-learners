@@ -74,6 +74,96 @@ export type Database = {
           },
         ]
       }
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_login: string | null
+          permissions: Json
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          permissions?: Json
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_login?: string | null
+          permissions?: Json
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audio_transcriptions: {
+        Row: {
+          created_at: string
+          deck_id: string
+          duration_sec: number | null
+          file_path: string
+          id: string
+          model_name: string | null
+          signed_url: string | null
+          title: string | null
+          transcript: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deck_id: string
+          duration_sec?: number | null
+          file_path: string
+          id?: string
+          model_name?: string | null
+          signed_url?: string | null
+          title?: string | null
+          transcript: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deck_id?: string
+          duration_sec?: number | null
+          file_path?: string
+          id?: string
+          model_name?: string | null
+          signed_url?: string | null
+          title?: string | null
+          transcript?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_transcriptions_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_transcriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_page_links: {
         Row: {
           card_id: string
@@ -115,8 +205,12 @@ export type Database = {
           back_content: Json
           created_at: string | null
           deck_id: string
+          ease_factor: number
           front_content: Json
           id: string
+          next_review_at: string | null
+          repetition_count: number
+          review_interval: number
           source_audio_url: string | null
           source_ocr_image_url: string | null
           updated_at: string | null
@@ -126,8 +220,12 @@ export type Database = {
           back_content?: Json
           created_at?: string | null
           deck_id: string
+          ease_factor?: number
           front_content?: Json
           id?: string
+          next_review_at?: string | null
+          repetition_count?: number
+          review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
           updated_at?: string | null
@@ -137,8 +235,12 @@ export type Database = {
           back_content?: Json
           created_at?: string | null
           deck_id?: string
+          ease_factor?: number
           front_content?: Json
           id?: string
+          next_review_at?: string | null
+          repetition_count?: number
+          review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
           updated_at?: string | null
@@ -700,10 +802,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_superadmin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      admin_role: "superadmin" | "admin" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -818,6 +923,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      admin_role: ["superadmin", "admin", "moderator"],
+    },
   },
 } as const

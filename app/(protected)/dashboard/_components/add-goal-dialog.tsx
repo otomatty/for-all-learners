@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import type React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
@@ -20,7 +20,13 @@ interface GoalFormFields {
 	deadline?: string;
 }
 
-export function AddGoalDialog() {
+export interface AddGoalDialogProps {
+	triggerButtonProps?: React.ComponentProps<
+		typeof import("@/components/ui/button").Button
+	>;
+}
+
+export function AddGoalDialog({ triggerButtonProps }: AddGoalDialogProps) {
 	const router = useRouter();
 	const form = useForm<GoalFormFields>({
 		defaultValues: { title: "", description: "", deadline: "" },
@@ -33,7 +39,11 @@ export function AddGoalDialog() {
 	};
 
 	return (
-		<ResponsiveDialog triggerText="目標を追加" dialogTitle="学習目標を追加">
+		<ResponsiveDialog
+			triggerText="目標を追加する"
+			dialogTitle="学習目標を追加する"
+			triggerButtonProps={triggerButtonProps}
+		>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-4">
 					<FormItem>

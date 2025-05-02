@@ -2,7 +2,6 @@
 -- Fresh schema for ITパスポート学習支援アプリ Ver.4 with independent pages and page linking
 
 -- ユーザーテーブル（Supabase Authと連携） を accountsテーブルにリネーム
-DROP TABLE IF EXISTS users;
 CREATE TABLE accounts (
   id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
   email TEXT UNIQUE,
@@ -212,6 +211,32 @@ CREATE INDEX IF NOT EXISTS idx_raw_inputs_user ON raw_inputs(user_id);
 -- raw_inputs RLS ポリシー設定
 ALTER TABLE raw_inputs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage own raw_inputs" ON raw_inputs
+  FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- 音声文字起こしテーブル
+CREATE TABLE audio_transcriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES accounts(id),
+  deck_id UUID NOT NULL REFERENCES decks(id),
+  file_path TEXT NOT NULL,
+  signed_url TEXT,
+  transcript TEXT NOT NULL,
+  title TEXT,  -- AI自動生成タイトル
+  duration_sec INTEGER,
+  model_name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- インデックス設定
+CREATE INDEX IF NOT EXISTS idx_audio_transcriptions_user ON audio_transcriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_audio_transcriptions_deck ON audio_transcriptions(deck_id);
+
+-- RLSポリシー設定
+ALTER TABLE audio_transcriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own audio_transcriptions" ON audio_transcriptions
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());

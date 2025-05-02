@@ -18,9 +18,11 @@ import { Label } from "@/components/ui/label";
 import { transcribeAudio } from "@/app/_actions/transcribe";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
 import { createCards } from "@/app/_actions/cards";
+import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
 import { createClient } from "@/lib/supabase/client";
 import type { JSONContent } from "@tiptap/core";
 import { createActionLog } from "@/app/_actions/actionLogs";
+import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
 
 interface AudioCardGeneratorProps {
 	deckId: string;
@@ -137,7 +139,21 @@ export function AudioCardGenerator({
 
 			// 1. サーバーアクションで文字起こしを実行 (URLを渡す)
 			const transcript = await transcribeAudio(audioFileUrl);
-			console.log("文字起こし結果:", transcript);
+			// タイトルを自動生成
+			const title = await generateTitleFromTranscript(transcript);
+			// 1.1. 音声文字起こしレコードをDBに保存
+			await createAudioTranscription({
+				user_id: userId,
+				deck_id: deckId,
+				file_path: filePath,
+				signed_url: audioFileUrl,
+				transcript,
+				title,
+				duration_sec: Math.floor(
+					(Date.now() - recordingStartRef.current) / 1000,
+				),
+				model_name: "gemini-2.5-flash-preview-04-17",
+			});
 			toast.success("文字起こし完了", {
 				description: `${transcript.substring(0, 50)}...`,
 			});

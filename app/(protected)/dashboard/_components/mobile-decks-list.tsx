@@ -22,6 +22,7 @@ interface Deck {
 	id: string;
 	title: string;
 	card_count: number;
+	todayReviewCount: number;
 }
 
 interface MobileDecksListProps {
@@ -50,56 +51,71 @@ export function MobileDecksList({ decks, onRemove }: MobileDecksListProps) {
 							>
 								{deck.title}
 							</Link>
-							<p className="text-sm text-muted-foreground mt-1">
-								{deck.card_count} 枚
-							</p>
+							<div className="flex flex-row justify-between space-x-2">
+								<div>
+									<p className="text-sm text-muted-foreground mt-1">
+										合計カード数: {deck.card_count} 枚
+									</p>
+									<p className="text-sm text-muted-foreground mt-1">
+										今日のレビュー数: {deck.todayReviewCount} 枚
+									</p>
+								</div>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant="ghost" size="icon">
+											<MoreHorizontal className="h-4 w-4" />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										{userId && (
+											<DropdownMenuItem>
+												<ResponsiveDialog
+													triggerText="編集"
+													dialogTitle="デッキを編集"
+													dialogDescription="デッキタイトルと説明を編集してください"
+													triggerButtonProps={{
+														variant: "ghost",
+														className: "w-full justify-start",
+														onClick: (e) => e.stopPropagation(),
+													}}
+												>
+													<DeckForm userId={userId} />
+												</ResponsiveDialog>
+											</DropdownMenuItem>
+										)}
+										<DropdownMenuItem asChild>
+											<Link href={`/decks/${deck.id}/audio`}>音読</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild>
+											<Link href={`/decks/${deck.id}/ocr`}>写真</Link>
+										</DropdownMenuItem>
+										<DropdownMenuSeparator />
+										{onRemove && (
+											<DropdownMenuItem
+												className="text-destructive"
+												onClick={() => onRemove(deck.id)}
+											>
+												削除
+											</DropdownMenuItem>
+										)}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
 						</div>
-						<div className="flex items-center space-x-2">
+						<div className="mt-2 space-y-2">
 							<QuizSettingsDialog
 								deckId={deck.id}
 								deckTitle={deck.title}
 								triggerText="学習を始める"
 							/>
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon">
-										<MoreHorizontal className="h-4 w-4" />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end">
-									{userId && (
-										<DropdownMenuItem>
-											<ResponsiveDialog
-												triggerText="編集"
-												dialogTitle="デッキを編集"
-												dialogDescription="デッキタイトルと説明を編集してください"
-												triggerButtonProps={{
-													variant: "ghost",
-													className: "w-full justify-start",
-													onClick: (e) => e.stopPropagation(),
-												}}
-											>
-												<DeckForm userId={userId} />
-											</ResponsiveDialog>
-										</DropdownMenuItem>
-									)}
-									<DropdownMenuItem asChild>
-										<Link href={`/decks/${deck.id}/audio`}>音読</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem asChild>
-										<Link href={`/decks/${deck.id}/ocr`}>写真</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									{onRemove && (
-										<DropdownMenuItem
-											className="text-destructive"
-											onClick={() => onRemove(deck.id)}
-										>
-											削除
-										</DropdownMenuItem>
-									)}
-								</DropdownMenuContent>
-							</DropdownMenu>
+							<QuizSettingsDialog
+								deckId={deck.id}
+								deckTitle={deck.title}
+								triggerText="復習する"
+								reviewMode={true}
+								reviewCount={deck.todayReviewCount}
+								disabled={deck.todayReviewCount === 0}
+							/>
 						</div>
 					</div>
 					{index < decks.length - 1 && <Separator />}

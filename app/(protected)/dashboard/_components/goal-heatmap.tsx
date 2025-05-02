@@ -34,12 +34,16 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({
 						if (value.count >= 2) return "color-scale-2";
 						return "color-scale-1";
 					}}
+					tooltipDataAttrs={(value: HeatmapValue | null) => ({
+						title: value ? `${value.date}` : "",
+					})}
 					showWeekdayLabels
 				/>
 			</div>
 			{/* スマホ表示: TODO */}
-			<div className="block sm:hidden p-4 text-center text-gray-500">
+			<div className="block sm:hidden p-4 text-center text-gray-500 bg-gray-100">
 				{/* TODO: モバイル用 Heatmap コンポーネントを実装 */}
+				ここにはモバイル用のヒートマップが表示されます。
 			</div>
 		</>
 	);

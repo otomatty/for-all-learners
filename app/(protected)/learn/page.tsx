@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
-import { GoalSummary } from "../dashboard/_components/goal-summary";
+import GoalSummary from "../dashboard/_components/goal-summary";
 import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
 
 export default async function LearnPage() {

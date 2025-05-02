@@ -57,3 +57,17 @@ export async function deleteQuestion(id: string) {
 	if (error) throw error;
 	return data;
 }
+
+/**
+ * Fetches all question variations created by a specific user.
+ * @param userId - UUID of the user whose questions to fetch
+ */
+export async function getQuestionsByUser(userId: string) {
+	const supabase = await createClient();
+	const { data, error } = await supabase
+		.from("questions")
+		.select("*")
+		.eq("user_id", userId);
+	if (error) throw error;
+	return data;
+}

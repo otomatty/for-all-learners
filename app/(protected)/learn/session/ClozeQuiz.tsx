@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import type { ClozeQuestion } from "@/lib/gemini";
-import { createLearningLog } from "@/app/_actions/learning_logs";
+import { reviewCard } from "@/app/_actions/review";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QuizFinished from "./QuizFinished";
@@ -19,6 +19,10 @@ interface ClozeQuizProps {
  * @param questions - ClozeQuestion の配列
  */
 export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
+	// 各カードのレビュー結果を蓄積
+	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
+		[],
+	);
 	// Hooks: always at top
 	const total = questions.length;
 	const [currentIndex, setCurrentIndex] = useState(0);
@@ -79,26 +83,31 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 				score={0}
 				total={total}
 				wrongAnswers={[]}
-				onFinish={() => router.push("/learn")}
+				onFinish={async () => {
+					// 一括レビュー処理
+					await Promise.all(
+						results.map(({ cardId, quality }) =>
+							reviewCard(cardId, quality, "fill"),
+						),
+					);
+					router.push("/learn");
+				}}
 			/>
 		);
 	}
 
 	// 回答確認・次へ処理
 	const handleCheck = () => setShowResult(true);
-	const handleNext = async () => {
-		// Record learning log for current cloze question
+	const handleNext = () => {
 		const userAnswer = inputs.join(",");
 		const isCorrect = blanksList.every(
 			(_blank, idx) => inputs[idx]?.trim() === answersList[idx]?.trim(),
 		);
-		await createLearningLog({
-			card_id: current.cardId,
-			question_id: current.questionId,
-			is_correct: isCorrect,
-			user_answer: userAnswer,
-			practice_mode: "fill",
-		});
+		// 結果をバッファに追加
+		setResults((prev) => [
+			...prev,
+			{ cardId: current.cardId, quality: isCorrect ? 5 : 2 },
+		]);
 		const next = currentIndex + 1;
 		if (next < total) {
 			setCurrentIndex(next);

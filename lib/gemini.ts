@@ -200,6 +200,10 @@ Use valid JSON array only.\n`;
 	// Correct missing commas between objects if model output glued them together
 	jsonStr = jsonStr.replace(/}\s*{/g, "},{");
 	console.debug("Cleaned bulk JSON string:", jsonStr);
+	// Remove stray quotes and misplaced newlines before commas to ensure valid JSON
+	jsonStr = jsonStr.replace(/"\s*\n\s*"/g, '","');
+	jsonStr = jsonStr.replace(/"\s*,/g, '",');
+	console.debug("Final cleaned bulk JSON string:", jsonStr);
 
 	try {
 		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;
