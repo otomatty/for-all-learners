@@ -29,6 +29,32 @@ interface ImageCardGeneratorProps {
 
 type CardWithId = GeneratedCard & { id: string };
 
+// Function to convert image Blob to WebP format
+async function convertImageToWebp(blob: Blob, quality = 0.8): Promise<Blob> {
+	return new Promise<Blob>((resolve, reject) => {
+		const img = new Image();
+		img.onload = () => {
+			const canvas = document.createElement("canvas");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			const ctx = canvas.getContext("2d");
+			if (!ctx) return reject(new Error("Canvas context not available"));
+			ctx.drawImage(img, 0, 0);
+			canvas.toBlob(
+				(webpBlob) => {
+					if (webpBlob) resolve(webpBlob);
+					else reject(new Error("WebP conversion failed"));
+				},
+				"image/webp",
+				quality,
+			);
+		};
+		img.onerror = () =>
+			reject(new Error("Failed to load image for conversion"));
+		img.src = URL.createObjectURL(blob);
+	});
+}
+
 export function ImageCardGenerator({
 	deckId,
 	userId,
@@ -74,11 +100,13 @@ export function ImageCardGenerator({
 		}
 		setIsProcessing(true);
 		try {
+			// Convert image to WebP to reduce size
+			const webpBlob = await convertImageToWebp(imageBlob, 0.8);
 			const timestamp = Date.now();
-			const filePath = `ocr-images/${userId}/${timestamp}.png`;
+			const filePath = `ocr-images/${userId}/${timestamp}.webp`;
 			const { data: uploadData, error: uploadError } = await supabase.storage
 				.from("ocr-images")
-				.upload(filePath, imageBlob, { metadata: { userId } });
+				.upload(filePath, webpBlob, { metadata: { userId } });
 			if (uploadError) throw uploadError;
 
 			const { data: signedData, error: signedError } = await supabase.storage
@@ -221,7 +249,13 @@ export function ImageCardGenerator({
 					</div>
 					{imageUrl && (
 						<div className="flex justify-center">
-							<img src={imageUrl} alt="preview" className="max-w-md rounded" />
+							<div className="w-full max-w-md overflow-hidden">
+								<img
+									src={imageUrl}
+									alt="preview"
+									className="w-full h-auto object-contain rounded"
+								/>
+							</div>
 						</div>
 					)}
 				</CardContent>
