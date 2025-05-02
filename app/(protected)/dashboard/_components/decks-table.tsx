@@ -29,6 +29,8 @@ interface Deck {
 	title: string;
 	card_count: number;
 	todayReviewCount: number;
+	description: string;
+	is_public: boolean;
 }
 interface DecksTableProps {
 	decks: Deck[];
@@ -88,7 +90,7 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end">
 									{userId && (
-										<DropdownMenuItem>
+										<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 											<ResponsiveDialog
 												triggerText="編集"
 												dialogTitle="デッキを編集"
@@ -99,15 +101,21 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 													onClick: (e) => e.stopPropagation(),
 												}}
 											>
-												<DeckForm userId={userId} />
+												<DeckForm
+													userId={userId}
+													deckId={deck.id}
+													initialTitle={deck.title}
+													initialDescription={deck.description}
+													initialIsPublic={deck.is_public}
+												/>
 											</ResponsiveDialog>
 										</DropdownMenuItem>
 									)}
 									<DropdownMenuItem asChild>
-										<Link href={`/decks/${deck.id}/audio`}>音読</Link>
+										<Link href={`/decks/${deck.id}/audio`}>音読する</Link>
 									</DropdownMenuItem>
 									<DropdownMenuItem asChild>
-										<Link href={`/decks/${deck.id}/ocr`}>写真</Link>
+										<Link href={`/decks/${deck.id}/ocr`}>写真を読み込む</Link>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									{onRemove && (
@@ -115,7 +123,7 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 											className="text-destructive"
 											onClick={() => onRemove(deck.id)}
 										>
-											削除
+											削除する
 										</DropdownMenuItem>
 									)}
 								</DropdownMenuContent>

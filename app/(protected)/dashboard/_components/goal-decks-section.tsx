@@ -1,13 +1,9 @@
 import React from "react";
-import {
-	getGoalDecks,
-	getDeckStudyLogs,
-	type Deck,
-	type DeckStudyLog,
-} from "@/app/_actions/goal-decks";
+import { getGoalDecks, getDeckStudyLogs } from "@/app/_actions/goal-decks";
 import ClientGoalDecksSection from "./goal-decks-section-client";
 import { createClient } from "@/lib/supabase/server";
 import { getTodayReviewCountsByDeck } from "@/app/_actions/learning_logs";
+import type { Deck as ClientDeck } from "./goal-decks-section-client";
 
 interface GoalDecksSectionProps {
 	goalId: string;
@@ -36,8 +32,8 @@ export default async function ServerGoalDecksSection({
 		getTodayReviewCountsByDeck(userId),
 	]);
 
-	// デッキごとに今日のレビュー数をマージ
-	const initialDecks = decks.map((d) => ({
+	// デッキごとに今日のレビュー数をマージ (ClientDeck型で型付け)
+	const initialDecks: ClientDeck[] = decks.map((d) => ({
 		...d,
 		todayReviewCount:
 			todayCounts.find((t) => t.deck_id === d.id)?.review_count ?? 0,

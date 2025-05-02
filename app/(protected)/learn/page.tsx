@@ -1,74 +1,80 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
+import FlashcardQuiz from "./_components/FlashcardQuiz";
+import MultipleChoiceQuiz from "./_components/MultipleChoiceQuiz";
+import ClozeQuiz from "./_components/ClozeQuiz";
+import type {
+	MultipleChoiceQuestion,
+	FlashcardQuestion,
+	ClozeQuestion,
+} from "@/lib/gemini";
 import Link from "next/link";
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardContent,
-	CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
-import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
-import GoalSummary from "../dashboard/_components/goal-summary";
-import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
 
-export default async function LearnPage() {
-	const supabase = await createClient();
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
-	if (authError || !user) {
-		redirect("/auth/login");
-	}
+interface SessionPageProps {
+	// searchParams must be awaited in Next.js dynamic pages
+	searchParams: Promise<{ [key: string]: string | undefined }>;
+}
 
-	const { data: decks, error: decksError } = await supabase
-		.from("decks")
-		.select("id, title")
-		.eq("user_id", user.id);
-	if (decksError) throw decksError;
+export default async function SessionPage({
+	searchParams: searchParamsPromise,
+}: SessionPageProps) {
+	// Await dynamic searchParams promise
+	const searchParams = await searchParamsPromise;
+	// Quiz session start time (ms since epoch)
+	const startTime = searchParams.startTime ?? Date.now().toString();
+	// Build parameters from query
+	const params: QuizParams = {
+		deckId: searchParams.deckId,
+		goalId: searchParams.goalId,
+		mode: (searchParams.mode as QuizParams["mode"]) ?? "one",
+		count: Number.parseInt(searchParams.count ?? "10", 10),
+		difficulty:
+			(searchParams.difficulty as QuizParams["difficulty"]) ?? "normal",
+		shuffle: searchParams.shuffle === "true",
+	};
 
-	// 目標と学習ログを取得
-	const goals = await getStudyGoalsByUser(user.id);
-	const logs = await getLearningLogsByUser(user.id);
+	// Fetch questions enriched with questionId and cardId
+	const rawQuestions = await getQuizQuestions(params);
 
 	return (
-		<Tabs defaultValue="decks">
-			<TabsList>
-				<TabsTrigger value="decks">デッキ</TabsTrigger>
-				<TabsTrigger value="goals">目標</TabsTrigger>
-			</TabsList>
-
-			<TabsContent value="decks">
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{decks?.map((deck) => (
-						<Card key={deck.id}>
-							<CardHeader>
-								<CardTitle>{deck.title}</CardTitle>
-							</CardHeader>
-							<CardContent>{/* TODO: カード数など詳細を表示 */}</CardContent>
-							<CardFooter>
-								<QuizSettingsDialog deckId={deck.id} deckTitle={deck.title} />
-							</CardFooter>
-						</Card>
-					))}
-					{decks && decks.length === 0 && (
-						<div className="p-4 text-center">
-							まだデッキがありません。
-							<Link href="/decks/new">
-								<Button>新規デッキ作成</Button>
-							</Link>
-						</div>
-					)}
+		<div className="p-4 space-y-6">
+			{params.mode === "mcq" ? (
+				<MultipleChoiceQuiz
+					questions={
+						rawQuestions as (MultipleChoiceQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
+					startTime={startTime}
+				/>
+			) : params.mode === "one" ? (
+				<FlashcardQuiz
+					questions={
+						rawQuestions as (FlashcardQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
+					startTime={startTime}
+				/>
+			) : params.mode === "fill" ? (
+				<ClozeQuiz
+					questions={
+						rawQuestions as (ClozeQuestion & {
+							questionId: string;
+							cardId: string;
+						})[]
+					}
+					startTime={startTime}
+				/>
+			) : (
+				<div className="text-center p-6 space-y-4">
+					<p className="text-red-500">無効なモードです。</p>
+					<Link href="/learn" className="text-blue-500">
+						学習モード選択に戻る
+					</Link>
 				</div>
-			</TabsContent>
-
-			<TabsContent value="goals">
-				<GoalSummary goals={goals} logs={logs} />
-			</TabsContent>
-		</Tabs>
+			)}
+		</div>
 	);
 }

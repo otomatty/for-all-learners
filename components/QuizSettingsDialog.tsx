@@ -50,7 +50,7 @@ export function QuizSettingsDialog({
 		if (reviewMode) {
 			params.append("review", "true");
 		}
-		router.push(`/learn/session?${params.toString()}`);
+		router.push(`/learn?${params.toString()}`);
 	};
 
 	const displayText =

@@ -10,18 +10,31 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-
+import { updateDeck } from "@/app/_actions/decks";
 interface DeckFormProps {
 	userId: string;
+	// If deckId is provided, the form will update an existing deck
+	deckId?: string;
+	// Initial values for editing
+	initialTitle?: string;
+	initialDescription?: string;
+	initialIsPublic?: boolean;
 }
 
-export function DeckForm({ userId }: DeckFormProps) {
+export function DeckForm({
+	userId,
+	deckId,
+	initialTitle,
+	initialDescription,
+	initialIsPublic = false,
+}: DeckFormProps) {
 	const router = useRouter();
 	const supabase = createClient();
 	const [isLoading, setIsLoading] = useState(false);
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
-	const [isPublic, setIsPublic] = useState(false);
+	// Initialize form state (use initial values for edit)
+	const [title, setTitle] = useState(initialTitle ?? "");
+	const [description, setDescription] = useState(initialDescription ?? "");
+	const [isPublic, setIsPublic] = useState(initialIsPublic);
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -32,23 +45,21 @@ export function DeckForm({ userId }: DeckFormProps) {
 				throw new Error("タイトルを入力してください");
 			}
 
-			const { data, error } = await supabase
-				.from("decks")
-				.insert({
-					user_id: userId,
-					title,
-					description,
-					is_public: isPublic,
-				})
-				.select();
-
-			if (error) {
-				throw error;
+			if (deckId) {
+				// 更新: サーバーアクションを利用
+				await updateDeck(deckId, { title, description, is_public: isPublic });
+				toast.success("デッキ情報を更新しました");
+				router.refresh();
+			} else {
+				// 作成: 型付けしたSupabaseコール
+				const { data, error } = await supabase
+					.from("decks")
+					.insert({ user_id: userId, title, description, is_public: isPublic })
+					.select();
+				if (error) throw error;
+				toast.success("デッキを作成しました");
+				router.push(`/decks/${data[0].id}`);
 			}
-
-			toast.success("デッキを作成しました");
-
-			router.push(`/decks/${data[0].id}`);
 		} catch (err) {
 			// Log detailed error for debugging
 			console.error("DeckForm handleSubmit error:", err);

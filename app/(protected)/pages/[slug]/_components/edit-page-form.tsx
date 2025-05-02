@@ -13,6 +13,9 @@ import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import type { JSONContent } from "@tiptap/core";
 import type { Database } from "@/types/database.types";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Sparkles } from "lucide-react";
+import { generatePageInfo } from "@/app/_actions/generatePageInfo";
+import { marked } from "marked";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -33,6 +36,33 @@ export default function EditPageForm({
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 	const [title, setTitle] = useState(page.title);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isDirty, setIsDirty] = useState(false);
+	const [isGenerating, setIsGenerating] = useState(false);
+
+	// タイトルからGemini生成を呼び出すハンドラー
+	const handleGenerate = useCallback(async () => {
+		if (!title.trim()) {
+			toast.error("まずタイトルを入力してよ");
+			return;
+		}
+		if (!editor) return;
+		setIsGenerating(true);
+		try {
+			// サーバーで生成されたMarkdownを取得
+			const markdown = await generatePageInfo(title);
+			// MarkdownをHTMLに変換
+			const html = marked.parse(markdown);
+			// HTMLコンテンツをエディタにセット
+			editor.commands.setContent(html);
+			toast.success("コンテンツ生成完了");
+		} catch (error) {
+			console.error("generatePageInfo error:", error);
+			toast.error("生成に失敗しました");
+		} finally {
+			setIsGenerating(false);
+		}
+	}, [title]);
+
 	// Ref for debounce timer
 	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 	// Debounced save function for autosave
@@ -138,13 +168,36 @@ export default function EditPageForm({
 	return (
 		<>
 			<div className="space-y-6 max-w-3xl mx-auto">
-				<Input
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					placeholder="ページタイトルを入力"
-					variant="borderless"
-					className="text-4xl font-bold w-full"
-				/>
+				<div className="flex items-center">
+					<Input
+						value={title}
+						onChange={(e) => {
+							const newTitle = e.target.value;
+							setTitle(newTitle);
+							// 初期タイトル(page.title)と比較して変更状態を更新
+							setIsDirty(newTitle.trim() !== page.title.trim());
+						}}
+						placeholder="ページタイトルを入力"
+						variant="borderless"
+						className="text-4xl font-bold flex-1"
+					/>
+					{/* 変更があったときのみ表示し、左からフェードイン */}
+					<button
+						type="button"
+						onClick={handleGenerate}
+						disabled={isGenerating || !isDirty}
+						title="タイトルからコンテンツ生成"
+						className={`ml-2 p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out ${
+							isDirty
+								? "opacity-100 translate-x-0 visible"
+								: "opacity-0 -translate-x-4 invisible"
+						}`}
+					>
+						<Sparkles
+							className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
+						/>
+					</button>
+				</div>
 				{editor && (
 					<div className="relative">
 						<BubbleMenu
@@ -201,7 +254,10 @@ export default function EditPageForm({
 								</button>
 							</div>
 						</BubbleMenu>
-						<EditorContent editor={editor} />
+						<EditorContent
+							placeholder="ページ内容を入力してください"
+							editor={editor}
+						/>
 					</div>
 				)}
 			</div>

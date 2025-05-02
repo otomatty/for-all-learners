@@ -87,7 +87,7 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem onClick={() => router.push("/profiles")}>
+					<DropdownMenuItem onClick={() => router.push("/profile")}>
 						<UserRound className="w-4 h-4 mr-2" />
 						プロフィール
 					</DropdownMenuItem>

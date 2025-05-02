@@ -1,13 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { CardsList } from "./_components/cards-list";
-import { getDeckById } from "@/app/_actions/decks";
+import { getDeckById, getDecksByUser } from "@/app/_actions/decks";
 import { getCardsByDeck } from "@/app/_actions/cards";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { CardForm } from "./_components/card-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SyncButton } from "./_components/sync-button";
+import DeckSelector from "./_components/deck-selector";
+import ActionMenu from "./_components/action-menu";
 
 export default async function DeckPage({
 	params,
@@ -22,6 +24,10 @@ export default async function DeckPage({
 	if (!user) {
 		redirect("/auth/login");
 	}
+
+	// Fetch all user decks for selector
+	const userDecks = await getDecksByUser(user.id);
+	const decksList = userDecks.map(({ id, title }) => ({ id, title }));
 
 	// デッキ情報を取得
 	const deck = await getDeckById(deckId);
@@ -106,23 +112,15 @@ export default async function DeckPage({
 
 	return (
 		<>
+			<DeckSelector decks={decksList} currentDeckId={deckId} />
 			{canEdit && (
-				<div className="flex justify-end mb-4 space-x-2">
-					<ResponsiveDialog
-						triggerText="手動で入力する"
-						dialogTitle="カードを作成"
-						dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
-					>
-						<CardForm deckId={deckId} userId={user.id} />
-					</ResponsiveDialog>
-					<Button asChild>
-						<Link href={`/decks/${deckId}/audio`}>音読する</Link>
-					</Button>
-					<Button asChild>
-						<Link href={`/decks/${deckId}/ocr`}>画像を読み込む</Link>
-					</Button>
-					<SyncButton deckId={deckId} />
-				</div>
+				<ActionMenu
+					deckId={deckId}
+					userId={user.id}
+					deckTitle={deck.title}
+					deckDescription={deck.description ?? ""}
+					deckIsPublic={deck.is_public ?? false}
+				/>
 			)}
 			<CardsList cards={decoratedCards} deckId={deckId} canEdit={canEdit} />
 		</>
