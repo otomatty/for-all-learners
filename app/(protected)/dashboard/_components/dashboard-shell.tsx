@@ -14,7 +14,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 				<div className="container flex h-14 items-center">
 					<MainNav />
 					<div className="flex flex-1 items-center justify-end space-x-4">
-						<UserNav />
+						<UserNav isAdmin={true} />
 					</div>
 				</div>
 			</header>

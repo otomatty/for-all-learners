@@ -9,7 +9,7 @@ import Settings from "./_components/Settings";
 import AudioRecordings from "./_components/AudioRecordings";
 
 interface UserDetailPageProps {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
