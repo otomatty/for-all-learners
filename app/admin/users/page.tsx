@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
-import type { Database } from "@/types/database.types";
 
 import { ActiveUsersCard } from "@/app/admin/_components/ActiveUsersCard";
 import { NewUsersCard } from "@/app/admin/_components/NewUsersCard";

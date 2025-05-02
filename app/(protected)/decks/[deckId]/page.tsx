@@ -109,7 +109,7 @@ export default async function DeckPage({
 			{canEdit && (
 				<div className="flex justify-end mb-4 space-x-2">
 					<ResponsiveDialog
-						triggerText="新規カード"
+						triggerText="手動で入力する"
 						dialogTitle="カードを作成"
 						dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
 					>
@@ -117,6 +117,9 @@ export default async function DeckPage({
 					</ResponsiveDialog>
 					<Button asChild>
 						<Link href={`/decks/${deckId}/audio`}>音読する</Link>
+					</Button>
+					<Button asChild>
+						<Link href={`/decks/${deckId}/ocr`}>画像を読み込む</Link>
 					</Button>
 					<SyncButton deckId={deckId} />
 				</div>

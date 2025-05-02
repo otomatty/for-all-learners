@@ -36,7 +36,7 @@ export default async function LearnPage() {
 	const logs = await getLearningLogsByUser(user.id);
 
 	return (
-		<Tabs defaultValue="decks" className="p-6">
+		<Tabs defaultValue="decks">
 			<TabsList>
 				<TabsTrigger value="decks">デッキ</TabsTrigger>
 				<TabsTrigger value="goals">目標</TabsTrigger>

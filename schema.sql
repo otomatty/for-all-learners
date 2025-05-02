@@ -302,3 +302,27 @@ CREATE POLICY "Users can manage own user_settings" ON user_settings
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+
+-- accounts テーブルに対する RLS 設定とポリシー追加
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can select accounts"
+  ON accounts FOR SELECT USING (public.is_admin_user());
+
+-- decks テーブルに対する RLS 設定とポリシー追加
+ALTER TABLE decks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can select decks"
+  ON decks FOR SELECT USING (public.is_admin_user());
+
+-- cards テーブルに対する RLS 設定とポリシー追加
+ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can select cards"
+  ON public.cards FOR SELECT USING (public.is_admin_user());
+
+-- questions テーブルに対する RLS 設定とポリシー追加
+ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can select questions"
+  ON questions FOR SELECT USING (public.is_admin_user());

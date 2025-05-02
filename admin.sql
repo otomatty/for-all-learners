@@ -54,3 +54,61 @@ CREATE POLICY "Update own admin record"
   FOR UPDATE
   USING ( user_id = auth.uid() )
   WITH CHECK ( user_id = auth.uid() );
+
+-- 管理者ユーザー判定関数を追加
+CREATE OR REPLACE FUNCTION public.is_admin_user() RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.admin_users
+     WHERE user_id   = auth.uid()
+       AND role      IN ('admin','superadmin')
+       AND is_active = TRUE
+  );
+$$;
+
+-- 管理者が全行SELECT可能なポリシーを追加
+CREATE POLICY "Admins can select study_goals"
+  ON study_goals FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select goal_deck_links"
+  ON goal_deck_links FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select deck_study_logs"
+  ON deck_study_logs FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select raw_inputs"
+  ON raw_inputs FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select audio_transcriptions"
+  ON audio_transcriptions FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select action_logs"
+  ON action_logs FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select quiz_settings"
+  ON quiz_settings FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select user_settings"
+  ON user_settings FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select pages"
+  ON pages FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select page_shares"
+  ON page_shares FOR SELECT USING (public.is_admin_user());
+
+CREATE POLICY "Admins can select card_page_links"
+  ON card_page_links FOR SELECT USING (public.is_admin_user());
+
+-- Supabase Storage の RLS 設定と管理者向け SELECT ポリシー追加
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can select storage objects"
+  ON storage.objects FOR SELECT
+  USING (
+    public.is_admin_user()
+    AND bucket_id IN ('audio-recordings','avatars','ocr-images')
+  );
+
+-- 必要であれば他の操作（INSERT/UPDATE/DELETE）も同様にポリシーを追加できます

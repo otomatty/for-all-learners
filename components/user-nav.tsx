@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Database } from "@/types/database.types";
 import { LogOut, Settings, UserRound, Shield, Home } from "lucide-react";
+import { logout } from "@/app/_actions/auth";
 
 // Type for data fetched from the accounts table
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
@@ -51,8 +52,7 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 	}, [supabase]);
 
 	const handleSignOut = async () => {
-		await supabase.auth.signOut();
-		router.push("/");
+		await logout();
 	};
 
 	if (!account) {
