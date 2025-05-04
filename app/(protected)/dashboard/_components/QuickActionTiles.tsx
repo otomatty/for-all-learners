@@ -128,9 +128,10 @@ export const QuickActionTiles: React.FC = () => {
 							</div>
 							<div>
 								<Label>生成方法を選択</Label>
-								<div className="flex gap-2">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 									<Button
 										size="lg"
+										className="w-full"
 										onClick={() =>
 											router.push(`/decks/${selectedDeckId}/audio`)
 										}
@@ -141,6 +142,7 @@ export const QuickActionTiles: React.FC = () => {
 									</Button>
 									<Button
 										size="lg"
+										className="w-full"
 										onClick={() => router.push(`/decks/${selectedDeckId}/ocr`)}
 										disabled={!selectedDeckId}
 									>

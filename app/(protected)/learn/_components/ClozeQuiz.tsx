@@ -1,24 +1,28 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ClozeQuestion } from "@/lib/gemini";
 import { reviewCard } from "@/app/_actions/review";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import QuizFinished from "./QuizFinished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
+import { Progress } from "@/components/ui/progress";
 
 interface ClozeQuizProps {
 	questions: (ClozeQuestion & { questionId: string; cardId: string })[];
 	startTime: string;
+	timeLimit: number;
 }
 
 /**
  * Cloze (穴埋め) クイズコンポーネント
  * @param questions - ClozeQuestion の配列
  */
-export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
+export default function ClozeQuiz({
+	questions,
+	startTime,
+	timeLimit,
+}: ClozeQuizProps) {
 	// 各カードのレビュー結果を蓄積
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
@@ -27,10 +31,22 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 	const total = questions.length;
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [showResult, setShowResult] = useState(false);
-	const router = useRouter();
 	const [timeRecorded, setTimeRecorded] = useState(false);
 	const startedAtMs = Number(startTime);
 	const finished = currentIndex >= total;
+	// 残り時間を ms 単位で管理して滑らかに更新
+	const expireTimeRef = useRef<number>(Date.now() + timeLimit * 1000);
+	const [remainingMs, setRemainingMs] = useState<number>(timeLimit * 1000);
+	// Track summary of each practiced question
+	const [questionSummaries, setQuestionSummaries] = useState<AnswerSummary[]>(
+		[],
+	);
+	// Timestamp when current question started
+	const [questionStartTime, setQuestionStartTime] = useState<number>(() =>
+		Date.now(),
+	);
+	// track when the user submitted or time expired
+	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
 
 	// Determine current question safely
 	const current = questions[currentIndex] ?? {
@@ -82,24 +98,72 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 			<QuizFinished
 				score={0}
 				total={total}
-				wrongAnswers={[]}
-				onFinish={async () => {
-					// 一括レビュー処理
-					await Promise.all(
-						results.map(({ cardId, quality }) =>
-							reviewCard(cardId, quality, "fill"),
-						),
-					);
-					router.push("/learn");
-				}}
+				questionSummaries={questionSummaries}
 			/>
 		);
 	}
 
-	// 回答確認・次へ処理
-	const handleCheck = () => setShowResult(true);
-	const handleNext = () => {
-		const userAnswer = inputs.join(",");
+	// 質問開始時に expire 時刻を更新 (timeLimit変更時のみ)
+	useEffect(() => {
+		expireTimeRef.current = Date.now() + timeLimit * 1000;
+		setRemainingMs(timeLimit * 1000);
+	}, [timeLimit]);
+
+	// requestAnimationFrame ベースで残り時間を ms 単位で滑らかに更新し、自動次へ
+	useEffect(() => {
+		if (finished || showResult) return;
+		let frame: number;
+		const update = () => {
+			const diff = expireTimeRef.current - Date.now();
+			if (diff <= 0) {
+				setRemainingMs(0);
+				// record expiry as answer time, then show results
+				setAnswerTimestamp(Date.now());
+				setShowResult(true);
+			} else {
+				setRemainingMs(diff);
+				frame = requestAnimationFrame(update);
+			}
+		};
+		frame = requestAnimationFrame(update);
+		return () => cancelAnimationFrame(frame);
+	}, [showResult, finished]);
+
+	// Review results on finish
+	useEffect(() => {
+		if (finished) {
+			(async () => {
+				await Promise.all(
+					results.map(({ cardId, quality }) =>
+						reviewCard(cardId, quality, "fill"),
+					),
+				);
+			})();
+		}
+	}, [finished, results.map]);
+
+	// 回答確認・次へ処理 (stable via useCallback)
+	const handleCheck = useCallback(() => {
+		const now = Date.now();
+		setAnswerTimestamp(now);
+		setShowResult(true);
+	}, []);
+	const handleNext = useCallback(() => {
+		// compute time until answer submission (excludes idle)
+		const spent = Math.floor(
+			((answerTimestamp ?? Date.now()) - questionStartTime) / 1000,
+		);
+		setQuestionSummaries((prev) => [
+			...prev,
+			{
+				prompt: current.question,
+				yourAnswer: inputs.join(", "),
+				correctAnswer: answersList.join(", "),
+				timeSpent: spent,
+			},
+		]);
+		// reset answer timestamp for next question
+		setAnswerTimestamp(null);
 		const isCorrect = blanksList.every(
 			(_blank, idx) => inputs[idx]?.trim() === answersList[idx]?.trim(),
 		);
@@ -112,10 +176,22 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 		if (next < total) {
 			setCurrentIndex(next);
 			setShowResult(false);
+			// Reset start time for next question
+			setQuestionStartTime(Date.now());
 		} else {
 			setCurrentIndex(total);
 		}
-	};
+	}, [
+		blanksList,
+		inputs,
+		answersList,
+		current.question,
+		current.cardId,
+		currentIndex,
+		total,
+		questionStartTime,
+		answerTimestamp,
+	]);
 
 	// Prepare parts with error handling
 	let parts: React.ReactNode[];
@@ -181,6 +257,11 @@ export default function ClozeQuiz({ questions, startTime }: ClozeQuizProps) {
 
 	return (
 		<div className="max-w-xl mx-auto p-4 space-y-4">
+			{/* プログレスバーで残り時間を視覚化 */}
+			<Progress
+				value={(remainingMs / (timeLimit * 1000)) * 100}
+				className="mb-2"
+			/>
 			<h3 className="text-xl font-semibold">
 				問題 {currentIndex + 1} / {total}
 			</h3>

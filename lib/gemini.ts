@@ -122,22 +122,23 @@ Back: ${back}`;
 }
 
 /**
- * Generate multiple questions in batch using Google GenAI client.
+ * Generate multiple questions in batch using Google GenAI client in specified locale.
  * @param pairs - Array of objects containing front and back text.
  * @param type - Question type (flashcard, multiple_choice, cloze).
  * @param difficulty - Difficulty (easy, normal, hard).
+ * @param locale - Locale code for language (e.g., 'en', 'ja'). Defaults to 'en'.
  * @returns Array of parsed question data.
  */
 export async function generateBulkQuestions(
 	pairs: { front: string; back: string }[],
 	type: QuestionType,
-	difficulty: "easy" | "normal" | "hard" = "normal",
+	locale = "en",
 ): Promise<QuestionData[]> {
 	// Prefix to enforce pure JSON output
 	const JSON_ONLY_PREFIX =
 		"Respond with ONLY a valid JSON array including commas between objects. No markdown fences or extra text.\n";
-	// Difficulty prompt
-	const difficultyPrompt = ` (Difficulty: ${difficulty})`;
+	// Difficulty and language prompts
+	const languagePrompt = ` (Language: ${locale})`;
 	// Question descriptor
 	const typeName =
 		type === "multiple_choice"
@@ -150,23 +151,26 @@ export async function generateBulkQuestions(
 	let header: string;
 	switch (type) {
 		case "multiple_choice":
-			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} multiple-choice questions${difficultyPrompt} based on the following flashcards. Provide ONLY a JSON array of objects, each with keys:
+			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} multiple-choice questions${languagePrompt} based on the following flashcards. Use exactly this Japanese question template, replacing {prompt} with the prompt text:
+"\"{prompt}\" の内容を最もよく表している選択肢はどれですか？"\n
+Avoid any vague pronouns such as "上記の説明" or "それ". Provide ONLY a JSON array of objects, each with keys:
 "prompt" (string),
 "question" (string),
 "options" (array of 4 strings),
 "correctAnswerIndex" (integer),
 "explanation" (string).
-Use valid JSON array only.\n`;
+Use valid JSON array only.
+`;
 			break;
 		case "cloze":
-			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} cloze (fill-in-the-blank) questions${difficultyPrompt} based on the following flashcards. Provide ONLY a JSON array of objects, each with keys:
+			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} cloze (fill-in-the-blank) questions${languagePrompt} based on the following flashcards. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
 "text" (string, include blank placeholders in curly braces),
 "blanks" (array of strings, each placeholder including curly braces),
 "answers" (array of strings for each blank without braces).
 Use valid JSON array only.\n`;
 			break;
 		default:
-			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} flashcard questions${difficultyPrompt} based on the following flashcards. Provide ONLY a JSON array of objects, each with keys:
+			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} flashcard questions${languagePrompt} based on the following flashcards. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
 "prompt" (string),
 "answer" (string).
 Use valid JSON array only.\n`;

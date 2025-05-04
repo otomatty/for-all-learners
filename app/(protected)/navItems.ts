@@ -1,7 +1,7 @@
 import type { NavItem } from "@/components/app-nav-dropdown";
 
 export const navItems: NavItem[] = [
-	{ label: "デッキ", href: "/decks", icon: "Grid", status: "enabled" },
+	{ label: "デッキ", href: "/decks", icon: "LayoutList", status: "enabled" },
 	{
 		label: "ノート",
 		href: "/pages",
@@ -18,15 +18,15 @@ export const navItems: NavItem[] = [
 	},
 
 	{
-		label: "メッセージ",
-		href: "/messages",
-		icon: "MessageSquare",
+		label: "フォーラム",
+		href: "/forum",
+		icon: "MessagesSquare",
 		status: "enabled",
 	},
 	{
 		label: "プロフィール",
 		href: "/profile",
-		icon: "User",
+		icon: "CircleUserRound",
 		status: "enabled",
 	},
 	{
@@ -37,5 +37,5 @@ export const navItems: NavItem[] = [
 		hasNotification: true,
 	},
 	{ label: "設定", href: "/settings", icon: "Settings", status: "enabled" },
-	{ label: "ヘルプ", href: "/help", icon: "Star", status: "enabled" },
+	{ label: "ヘルプ", href: "/help", icon: "CircleHelp", status: "enabled" },
 ];

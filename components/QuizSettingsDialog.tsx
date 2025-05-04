@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { startQuizAction } from "@/app/_actions/startQuiz";
 
 interface QuizSettingsDialogProps {
 	deckId?: string;
@@ -31,27 +30,6 @@ export function QuizSettingsDialog({
 }: QuizSettingsDialogProps) {
 	const router = useRouter();
 	const [questionType, setQuestionType] = useState<string>("one");
-	const [questionCount, setQuestionCount] = useState<number>(10);
-	const [difficulty, setDifficulty] = useState<string>("normal");
-	const [timeLimit, setTimeLimit] = useState<number>(0);
-	const [shuffle, setShuffle] = useState<boolean>(false);
-
-	const startLearning = () => {
-		const params = new URLSearchParams();
-		if (deckId) params.append("deckId", deckId);
-		if (goalId) params.append("goalId", goalId);
-		params.append("mode", questionType);
-		params.append("count", questionCount.toString());
-		params.append("difficulty", difficulty);
-		if (timeLimit > 0) params.append("timeLimit", timeLimit.toString());
-		if (shuffle) params.append("shuffle", "true");
-		const startTime = Date.now().toString();
-		params.append("startTime", startTime);
-		if (reviewMode) {
-			params.append("review", "true");
-		}
-		router.push(`/learn?${params.toString()}`);
-	};
 
 	const displayText =
 		reviewMode && typeof reviewCount === "number"
@@ -67,17 +45,12 @@ export function QuizSettingsDialog({
 				disabled: disabled || (reviewMode && (reviewCount ?? 0) === 0),
 			}}
 		>
-			{(deckTitle || goalTitle) && (
-				<div className="mb-4">
-					{deckTitle && (
-						<p className="text-lg font-semibold">デッキ: {deckTitle}</p>
-					)}
-					{goalTitle && (
-						<p className="text-lg font-semibold">目標: {goalTitle}</p>
-					)}
-				</div>
-			)}
-			<div className="space-y-4 p-4">
+			<form action={startQuizAction} className="space-y-4 p-4">
+				<input type="hidden" name="deckId" value={deckId ?? ""} />
+				<input type="hidden" name="goalId" value={goalId ?? ""} />
+				<input type="hidden" name="mode" value={questionType} />
+				<input type="hidden" name="count" value="10" />
+				<input type="hidden" name="shuffle" value="true" />
 				<div>
 					<Label className="font-medium">問題形式</Label>
 					<div className="flex space-x-4 mt-2">
@@ -113,51 +86,10 @@ export function QuizSettingsDialog({
 						</label>
 					</div>
 				</div>
-				<div>
-					<Label className="font-medium">問題数</Label>
-					<Input
-						type="number"
-						min={1}
-						value={questionCount}
-						onChange={(e) => setQuestionCount(Number(e.target.value))}
-						className="w-24 mt-2"
-					/>
-				</div>
-				<div>
-					<Label className="font-medium">難易度</Label>
-					<select
-						value={difficulty}
-						onChange={(e) => setDifficulty(e.target.value)}
-						className="mt-2 p-2 border rounded"
-					>
-						<option value="easy">易しい</option>
-						<option value="normal">普通</option>
-						<option value="hard">難しい</option>
-					</select>
-				</div>
-				<div>
-					<Label className="font-medium">
-						制限時間 (秒) <span className="text-sm ml-2">(0: 無制限)</span>
-					</Label>
-					<Input
-						type="number"
-						min={0}
-						value={timeLimit}
-						onChange={(e) => setTimeLimit(Number(e.target.value))}
-						className="w-24 mt-2"
-					/>
-				</div>
-				<div className="flex items-center">
-					<Checkbox
-						checked={shuffle}
-						onCheckedChange={(checked) => setShuffle(!!checked)}
-					/>
-					<Label className="ml-2">シャッフル</Label>
-				</div>
 				<div className="flex justify-end">
-					<Button onClick={startLearning}>開始</Button>
+					<Button type="submit">開始</Button>
 				</div>
-			</div>
+			</form>
 		</ResponsiveDialog>
 	);
 }

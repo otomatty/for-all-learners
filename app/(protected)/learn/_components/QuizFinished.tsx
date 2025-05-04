@@ -2,29 +2,37 @@
 
 import React from "react";
 import { Confetti } from "@/components/magicui/confetti";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-// Summary type for wrong answers
-interface AnswerSummary {
+// Summary type for all practiced questions including time spent
+export interface AnswerSummary {
 	prompt: string;
 	correctAnswer: string;
 	yourAnswer: string;
+	timeSpent: number;
 }
 
 interface QuizFinishedProps {
 	score: number;
 	total: number;
-	wrongAnswers?: AnswerSummary[];
-	onRetryWrong?: () => void;
-	onFinish?: () => void;
+	questionSummaries: AnswerSummary[];
 }
 
 export default function QuizFinished({
 	score,
 	total,
-	wrongAnswers = [],
-	onRetryWrong,
-	onFinish,
+	questionSummaries,
 }: QuizFinishedProps) {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+	// build new query params preserving settings and new startTime
+	const params = new URLSearchParams(searchParams.toString());
+	params.set("startTime", Date.now().toString());
+	const goHome = () => router.push("/dashboard");
+	const continueQuiz = () => {
+		router.push(`${pathname}?${params.toString()}`);
+	};
 	return (
 		<>
 			<Confetti className="fixed inset-0 pointer-events-none" />
@@ -35,48 +43,42 @@ export default function QuizFinished({
 					問正解しました。
 				</p>
 
-				{wrongAnswers.length > 0 ? (
-					<div className="text-left space-y-4">
-						<h3 className="text-xl font-semibold">間違えた問題の復習</h3>
-						<ul className="space-y-4">
-							{wrongAnswers.map((wa, idx) => (
-								<li key={wa.prompt} className="border p-4 rounded bg-red-50">
-									<p className="font-medium">問題：{wa.prompt}</p>
-									<p>
-										あなたの回答：
-										<span className="text-red-500">{wa.yourAnswer}</span>
-									</p>
-									<p>
-										正解：
-										<span className="text-green-500">{wa.correctAnswer}</span>
-									</p>
-								</li>
-							))}
-						</ul>
-						<button
-							type="button"
-							className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded"
-							onClick={onRetryWrong}
-						>
-							間違えた問題に再チャレンジ
-						</button>
-					</div>
-				) : (
-					<div className="space-y-4">
-						<p className="text-lg text-green-600">
-							満点です！おめでとうございます！
-						</p>
-					</div>
-				)}
-				{onFinish && (
+				<div className="text-left space-y-4">
+					<h3 className="text-xl font-semibold">演習した問題一覧</h3>
+					<ul className="space-y-4">
+						{questionSummaries.map((wa) => (
+							<li key={wa.prompt} className="border p-4 rounded">
+								<p className="font-medium">問題：{wa.prompt}</p>
+								<p>
+									あなたの回答：
+									<span className="text-red-500">{wa.yourAnswer}</span>
+								</p>
+								<p>
+									正解：
+									<span className="text-green-500">{wa.correctAnswer}</span>
+								</p>
+								<p>所要時間：{wa.timeSpent}秒</p>
+							</li>
+						))}
+					</ul>
+				</div>
+
+				<div className="flex justify-end space-x-2 mt-4">
 					<button
 						type="button"
-						className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-						onClick={onFinish}
+						className="px-4 py-2 bg-gray-500 text-white rounded"
+						onClick={goHome}
 					>
-						学習ページに戻る
+						ホームに戻る
 					</button>
-				)}
+					<button
+						type="button"
+						className="px-4 py-2 bg-blue-500 text-white rounded"
+						onClick={continueQuiz}
+					>
+						学習を続ける
+					</button>
+				</div>
 			</div>
 		</>
 	);

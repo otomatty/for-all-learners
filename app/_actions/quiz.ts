@@ -13,7 +13,6 @@ export interface QuizParams {
 	goalId?: string;
 	mode: QuizMode;
 	count: number;
-	difficulty: "easy" | "normal" | "hard";
 	shuffle: boolean;
 }
 
@@ -67,6 +66,14 @@ export async function getQuizQuestions(
 	if (authError || !user) throw new Error("認証情報の取得に失敗しました");
 	const userId = user.id;
 
+	// Get user locale from settings (fallback to 'ja')
+	const { data: settings, error: settingsError } = await supabase
+		.from("user_settings")
+		.select("locale")
+		.eq("user_id", userId)
+		.single();
+	const locale = settings?.locale ?? "ja";
+
 	// シャッフルと抽出
 	const list = params.shuffle ? cards.sort(() => Math.random() - 0.5) : cards;
 	const subset = list.slice(0, params.count);
@@ -85,11 +92,8 @@ export async function getQuizQuestions(
 		back: extractText(card.back_content),
 	}));
 	try {
-		const bulkQuestions = await generateBulkQuestions(
-			pairs,
-			qType,
-			params.difficulty,
-		);
+		// Generate questions in user's locale
+		const bulkQuestions = await generateBulkQuestions(pairs, qType, locale);
 		// Save generated questions in 'questions' table
 		const records = bulkQuestions.map((q, idx) => ({
 			card_id: subset[idx].id,

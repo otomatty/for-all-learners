@@ -35,6 +35,13 @@ CREATE TABLE public.cards (
   source_ocr_image_url text NULL,
   created_at timestamp with time zone NULL DEFAULT now(),
   updated_at timestamp with time zone NULL DEFAULT now(),
+  ease_factor double precision NOT NULL DEFAULT 2.5,
+  repetition_count integer NOT NULL DEFAULT 0,
+  review_interval integer NOT NULL DEFAULT 0,
+  next_review_at timestamp with time zone NULL,
+  stability double precision NOT NULL DEFAULT 0.0,
+  difficulty double precision NOT NULL DEFAULT 1.0,
+  last_reviewed_at timestamp with time zone NULL,
   CONSTRAINT cards_pkey PRIMARY KEY (id),
   CONSTRAINT cards_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES decks (id),
   CONSTRAINT cards_user_id_fkey FOREIGN KEY (user_id) REFERENCES accounts (id)
@@ -82,7 +89,11 @@ CREATE TABLE learning_logs (
   user_answer TEXT,
   practice_mode VARCHAR(20) NOT NULL,
   review_interval INTEGER,
-  next_review_at TIMESTAMP WITH TIME ZONE
+  next_review_at TIMESTAMP WITH TIME ZONE,
+  quality smallint NOT NULL DEFAULT 0,
+  response_time integer NOT NULL DEFAULT 0,
+  effort_time integer NOT NULL DEFAULT 0,
+  attempt_count integer NOT NULL DEFAULT 1
 );
 
 -- デッキ共有テーブル

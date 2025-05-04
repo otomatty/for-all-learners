@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
-import { useRouter } from "next/navigation";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
-import QuizFinished from "./QuizFinished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
+import { Progress } from "@/components/ui/progress";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {
@@ -13,15 +13,22 @@ interface MultipleChoiceQuizProps {
 		cardId: string;
 	})[];
 	startTime: string;
+	timeLimit: number;
 }
 
 export default function MultipleChoiceQuiz({
 	questions,
 	startTime,
+	timeLimit,
 }: MultipleChoiceQuizProps) {
-	const router = useRouter();
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
+	);
+	const [questionSummaries, setQuestionSummaries] = useState<AnswerSummary[]>(
+		[],
+	);
+	const [questionStartTime, setQuestionStartTime] = useState<number>(() =>
+		Date.now(),
 	);
 	const [timeRecorded, setTimeRecorded] = useState(false);
 	const startedAt = Number(startTime);
@@ -30,12 +37,28 @@ export default function MultipleChoiceQuiz({
 		questionId: string;
 		cardId: string;
 	};
-	const [quizQuestions, setQuizQuestions] = useState<EnrichedMCQ[]>(
-		questions as EnrichedMCQ[],
+	// Shuffle helper to randomize options and update correctAnswerIndex
+	const shuffleQuestions = (qs: EnrichedMCQ[]): EnrichedMCQ[] => {
+		return qs.map((q) => {
+			// pair options with original indices
+			const indexed = q.options.map((opt, idx) => ({ opt, idx }));
+			// Fisher–Yates shuffle
+			for (let i = indexed.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+			}
+			// extract new options and compute new correct index
+			const newOptions = indexed.map((o) => o.opt);
+			const newCorrect = indexed.findIndex(
+				(o) => o.idx === q.correctAnswerIndex,
+			);
+			return { ...q, options: newOptions, correctAnswerIndex: newCorrect };
+		});
+	};
+	// initialize with shuffled options for each question
+	const [quizQuestions, setQuizQuestions] = useState<EnrichedMCQ[]>(() =>
+		shuffleQuestions(questions as EnrichedMCQ[]),
 	);
-	const [wrongAnswers, setWrongAnswers] = useState<
-		{ question: MultipleChoiceQuestion; selectedIndex: number }[]
-	>([]);
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	const [showAnswer, setShowAnswer] = useState(false);
@@ -43,6 +66,12 @@ export default function MultipleChoiceQuiz({
 	const [score, setScore] = useState(0);
 	const total = quizQuestions.length;
 	const currentQuestion = quizQuestions[currentIndex];
+	// 残り時間を ms 単位で管理して滑らかに更新
+	const expireTimeRef = useRef<number>(Date.now() + timeLimit * 1000);
+	const [remainingMs, setRemainingMs] = useState<number>(timeLimit * 1000);
+	const remaining = Math.ceil(remainingMs / 1000);
+	// track when the user answered or time expired
+	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
 
 	// Log learning duration when quiz finishes
 	useEffect(() => {
@@ -59,6 +88,32 @@ export default function MultipleChoiceQuiz({
 		console.debug("[MultipleChoiceQuiz] currentQuestion:", currentQuestion);
 	}, [questions, currentQuestion]);
 
+	// 質問開始時（timeLimit変更時）に expire 時刻を更新
+	useEffect(() => {
+		expireTimeRef.current = Date.now() + timeLimit * 1000;
+		setRemainingMs(timeLimit * 1000);
+	}, [timeLimit]);
+
+	// 滑らかに残り時間を更新し、自動次へ (lint: ignore exhaustive-deps)
+	useEffect(() => {
+		if (isFinished || showAnswer) return;
+		let frame: number;
+		const update = () => {
+			const diff = expireTimeRef.current - Date.now();
+			if (diff <= 0) {
+				setRemainingMs(0);
+				// record expiry as answer time, then show answer
+				setAnswerTimestamp(Date.now());
+				setShowAnswer(true);
+			} else {
+				setRemainingMs(diff);
+				frame = requestAnimationFrame(update);
+			}
+		};
+		frame = requestAnimationFrame(update);
+		return () => cancelAnimationFrame(frame);
+	}, [showAnswer, isFinished]);
+
 	const handleOptionClick = (index: number) => {
 		if (showAnswer) return;
 		setSelectedIndex(index);
@@ -66,70 +121,77 @@ export default function MultipleChoiceQuiz({
 		if (isCorrect) {
 			setScore((prev) => prev + 1);
 		}
+		// record when user answered
+		const now = Date.now();
+		setAnswerTimestamp(now);
 		setShowAnswer(true);
 	};
 
-	const handleNext = () => {
+	function handleNext() {
+		// compute time until answer submission (excludes idle)
+		const spent = Math.floor(
+			((answerTimestamp ?? Date.now()) - questionStartTime) / 1000,
+		);
+		// reset answer timestamp for next question
+		setAnswerTimestamp(null);
+		setQuestionSummaries((prev) => [
+			...prev,
+			{
+				prompt: currentQuestion.question,
+				yourAnswer: currentQuestion.options[selectedIndex ?? 0],
+				correctAnswer:
+					currentQuestion.options[currentQuestion.correctAnswerIndex],
+				timeSpent: spent,
+			},
+		]);
+		// Record quality
 		const isCorrect = selectedIndex === currentQuestion.correctAnswerIndex;
-		// 結果をバッファに追加
 		setResults((prev) => [
 			...prev,
 			{ cardId: currentQuestion.cardId, quality: isCorrect ? 5 : 2 },
 		]);
-		// Update wrong answers state if incorrect
-		if (selectedIndex !== null && !isCorrect) {
-			setWrongAnswers((prev) => [
-				...prev,
-				{ question: currentQuestion, selectedIndex },
-			]);
-		}
 		setSelectedIndex(null);
 		setShowAnswer(false);
 		if (currentIndex + 1 < total) {
 			setCurrentIndex((prev) => prev + 1);
+			setQuestionStartTime(Date.now());
+			// reset timer for next question
+			expireTimeRef.current = Date.now() + timeLimit * 1000;
+			setRemainingMs(timeLimit * 1000);
 		} else {
 			setIsFinished(true);
 		}
-	};
+	}
 
-	const handleRetryWrong = () => {
-		const newQuestions = wrongAnswers.map((wa) => wa.question);
-		setQuizQuestions(newQuestions as EnrichedMCQ[]);
-		setWrongAnswers([]);
-		setCurrentIndex(0);
-		setSelectedIndex(null);
-		setShowAnswer(false);
-		setIsFinished(false);
-		setScore(0);
-	};
-
+	// On finish, perform review and render summary
+	useEffect(() => {
+		if (isFinished) {
+			(async () => {
+				await Promise.all(
+					results.map(({ cardId, quality }) =>
+						reviewCard(cardId, quality, "mcq"),
+					),
+				);
+			})();
+		}
+	}, [isFinished, results]);
 	if (isFinished) {
-		const summary = wrongAnswers.map((wa) => ({
-			prompt: wa.question.prompt,
-			correctAnswer: wa.question.options[wa.question.correctAnswerIndex],
-			yourAnswer: wa.question.options[wa.selectedIndex],
-		}));
 		return (
 			<QuizFinished
 				score={score}
 				total={total}
-				wrongAnswers={summary}
-				onRetryWrong={handleRetryWrong}
-				onFinish={async () => {
-					// 全レビュー結果をサーバーに反映
-					await Promise.all(
-						results.map(({ cardId, quality }) =>
-							reviewCard(cardId, quality, "mcq"),
-						),
-					);
-					router.push("/learn");
-				}}
+				questionSummaries={questionSummaries}
 			/>
 		);
 	}
 
 	return (
 		<div className="max-w-xl mx-auto">
+			{/* プログレスバーで残り時間を表示 */}
+			<Progress
+				value={(remainingMs / (timeLimit * 1000)) * 100}
+				className="mb-2"
+			/>
 			{/* 問題文 */}
 			<div className="mb-4">
 				<h3 className="text-xl font-semibold">

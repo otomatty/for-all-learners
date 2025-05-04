@@ -205,14 +205,17 @@ export type Database = {
           back_content: Json
           created_at: string | null
           deck_id: string
+          difficulty: number
           ease_factor: number
           front_content: Json
           id: string
+          last_reviewed_at: string | null
           next_review_at: string | null
           repetition_count: number
           review_interval: number
           source_audio_url: string | null
           source_ocr_image_url: string | null
+          stability: number
           updated_at: string | null
           user_id: string
         }
@@ -220,14 +223,17 @@ export type Database = {
           back_content?: Json
           created_at?: string | null
           deck_id: string
+          difficulty?: number
           ease_factor?: number
           front_content?: Json
           id?: string
+          last_reviewed_at?: string | null
           next_review_at?: string | null
           repetition_count?: number
           review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
+          stability?: number
           updated_at?: string | null
           user_id: string
         }
@@ -235,14 +241,17 @@ export type Database = {
           back_content?: Json
           created_at?: string | null
           deck_id?: string
+          difficulty?: number
           ease_factor?: number
           front_content?: Json
           id?: string
+          last_reviewed_at?: string | null
           next_review_at?: string | null
           repetition_count?: number
           review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
+          stability?: number
           updated_at?: string | null
           user_id?: string
         }
@@ -411,36 +420,48 @@ export type Database = {
       learning_logs: {
         Row: {
           answered_at: string | null
+          attempt_count: number
           card_id: string
+          effort_time: number
           id: string
           is_correct: boolean
           next_review_at: string | null
           practice_mode: string
+          quality: number
           question_id: string | null
+          response_time: number
           review_interval: number | null
           user_answer: string | null
           user_id: string
         }
         Insert: {
           answered_at?: string | null
+          attempt_count?: number
           card_id: string
+          effort_time?: number
           id?: string
           is_correct: boolean
           next_review_at?: string | null
           practice_mode: string
+          quality?: number
           question_id?: string | null
+          response_time?: number
           review_interval?: number | null
           user_answer?: string | null
           user_id: string
         }
         Update: {
           answered_at?: string | null
+          attempt_count?: number
           card_id?: string
+          effort_time?: number
           id?: string
           is_correct?: boolean
           next_review_at?: string | null
           practice_mode?: string
+          quality?: number
           question_id?: string | null
+          response_time?: number
           review_interval?: number | null
           user_answer?: string | null
           user_id?: string
@@ -802,6 +823,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_superadmin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

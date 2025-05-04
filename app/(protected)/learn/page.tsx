@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
 import FlashcardQuiz from "./_components/FlashcardQuiz";
 import MultipleChoiceQuiz from "./_components/MultipleChoiceQuiz";
@@ -9,28 +10,23 @@ import type {
 } from "@/lib/gemini";
 import Link from "next/link";
 
-interface SessionPageProps {
-	// searchParams must be awaited in Next.js dynamic pages
-	searchParams: Promise<{ [key: string]: string | undefined }>;
-}
-
-export default async function SessionPage({
-	searchParams: searchParamsPromise,
-}: SessionPageProps) {
-	// Await dynamic searchParams promise
-	const searchParams = await searchParamsPromise;
-	// Quiz session start time (ms since epoch)
-	const startTime = searchParams.startTime ?? Date.now().toString();
-	// Build parameters from query
-	const params: QuizParams = {
-		deckId: searchParams.deckId,
-		goalId: searchParams.goalId,
-		mode: (searchParams.mode as QuizParams["mode"]) ?? "one",
-		count: Number.parseInt(searchParams.count ?? "10", 10),
-		difficulty:
-			(searchParams.difficulty as QuizParams["difficulty"]) ?? "normal",
-		shuffle: searchParams.shuffle === "true",
-	};
+export default async function SessionPage() {
+	const cookieStore = await cookies();
+	const raw = cookieStore.get("quizSettings")?.value;
+	if (!raw) {
+		return (
+			<div className="text-center p-6 space-y-4">
+				<p className="text-red-500">設定が見つかりませんでした。</p>
+				<Link href="/dashboard" className="text-blue-500">
+					ホームに戻る
+				</Link>
+			</div>
+		);
+	}
+	const params = JSON.parse(raw) as QuizParams;
+	const startTime = Date.now().toString();
+	const defaultTimeLimit = params.mode === "mcq" ? 10 : 20;
+	const timeLimit = defaultTimeLimit;
 
 	// Fetch questions enriched with questionId and cardId
 	const rawQuestions = await getQuizQuestions(params);
@@ -46,6 +42,7 @@ export default async function SessionPage({
 						})[]
 					}
 					startTime={startTime}
+					timeLimit={timeLimit}
 				/>
 			) : params.mode === "one" ? (
 				<FlashcardQuiz
@@ -56,6 +53,7 @@ export default async function SessionPage({
 						})[]
 					}
 					startTime={startTime}
+					timeLimit={timeLimit}
 				/>
 			) : params.mode === "fill" ? (
 				<ClozeQuiz
@@ -66,12 +64,13 @@ export default async function SessionPage({
 						})[]
 					}
 					startTime={startTime}
+					timeLimit={timeLimit}
 				/>
 			) : (
 				<div className="text-center p-6 space-y-4">
 					<p className="text-red-500">無効なモードです。</p>
-					<Link href="/learn" className="text-blue-500">
-						学習モード選択に戻る
+					<Link href="/dashboard" className="text-blue-500">
+						ホームに戻る
 					</Link>
 				</div>
 			)}
