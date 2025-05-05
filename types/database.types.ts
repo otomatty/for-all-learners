@@ -779,6 +779,7 @@ export type Database = {
           locale: string
           mode: string
           notifications: Json
+          play_help_video_audio: boolean
           theme: string
           timezone: string
           updated_at: string
@@ -791,6 +792,7 @@ export type Database = {
           locale?: string
           mode?: string
           notifications?: Json
+          play_help_video_audio?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -803,6 +805,7 @@ export type Database = {
           locale?: string
           mode?: string
           notifications?: Json
+          play_help_video_audio?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -823,6 +826,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      extract_tiptap_text: {
+        Args: { doc: Json }
+        Returns: string
+      }
       is_admin_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -830,6 +837,24 @@ export type Database = {
       is_superadmin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      search_all: {
+        Args: { p_query: string; p_limit?: number }
+        Returns: {
+          id: string
+          type: string
+          title: string
+          snippet: string
+          rank: number
+        }[]
+      }
+      search_suggestions: {
+        Args: { query: string }
+        Returns: {
+          type: string
+          id: string
+          suggestion: string
+        }[]
       }
     }
     Enums: {

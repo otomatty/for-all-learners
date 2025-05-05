@@ -302,6 +302,7 @@ CREATE TABLE user_settings (
   timezone TEXT NOT NULL DEFAULT 'UTC', -- タイムゾーン設定
   notifications JSONB NOT NULL DEFAULT '{}'::jsonb, -- 通知設定(JSON形式)
   items_per_page INTEGER NOT NULL DEFAULT 20, -- ページあたりの表示件数
+  play_help_video_audio BOOLEAN NOT NULL DEFAULT FALSE, -- ヘルプ動画の音声を再生するかどうか
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

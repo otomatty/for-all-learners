@@ -26,13 +26,17 @@ import {
  *
  * @property {React.ReactNode} children - モーダルまたはドロワー内にレンダリングするコンテンツ
  * @property {string} [triggerText='Edit'] - トリガーボタンに表示するテキスト
+ * @property {string} [triggerIcon] - トリガーボタンに表示するアイコン
  * @property {string} [dialogTitle='Dialog'] - ダイアログ/ドロワー上部に表示するタイトル
  * @property {string} [dialogDescription=''] - タイトル下に表示する説明文
  * @property {React.ComponentProps<typeof Button>} [triggerButtonProps] - トリガーボタンに渡す追加のButtonプロパティ
  */
 interface ResponsiveDialogProps {
 	children: React.ReactNode;
+	/** トリガーボタンに表示するテキスト */
 	triggerText?: string;
+	/** トリガーボタンに表示するアイコン */
+	triggerIcon?: React.ReactNode;
 	dialogTitle?: string;
 	dialogDescription?: string;
 	triggerButtonProps?: React.ComponentProps<typeof Button>;
@@ -61,6 +65,7 @@ interface ResponsiveDialogProps {
 export function ResponsiveDialog({
 	children,
 	triggerText = "Edit",
+	triggerIcon,
 	dialogTitle = "Dialog",
 	dialogDescription = "",
 	triggerButtonProps,
@@ -73,12 +78,17 @@ export function ResponsiveDialog({
 		...triggerButtonProps,
 	};
 
+	// アイコンが指定されていれば優先的に表示
+	const triggerElement = triggerIcon ? (
+		<Button {...buttonProps}>{triggerIcon}</Button>
+	) : (
+		<Button {...buttonProps}>{triggerText}</Button>
+	);
+
 	if (isMobile) {
 		return (
 			<Drawer open={open} onOpenChange={setOpen}>
-				<DrawerTrigger asChild>
-					<Button {...buttonProps}>{triggerText}</Button>
-				</DrawerTrigger>
+				<DrawerTrigger asChild>{triggerElement}</DrawerTrigger>
 				<DrawerContent className="sm:max-w-[425px]">
 					<DrawerHeader>
 						<DrawerTitle>{dialogTitle}</DrawerTitle>
@@ -92,9 +102,7 @@ export function ResponsiveDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button {...buttonProps}>{triggerText}</Button>
-			</DialogTrigger>
+			<DialogTrigger asChild>{triggerElement}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader className="text-left">
 					<DialogTitle>{dialogTitle}</DialogTitle>

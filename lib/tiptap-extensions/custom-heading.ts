@@ -8,6 +8,7 @@ export const CustomHeading = Heading.extend({
 			1: "text-4xl font-bold mt-6 mb-4",
 			2: "text-3xl font-semibold mt-5 mb-3",
 			3: "text-2xl font-medium mt-4 mb-2",
+			4: "text-xl font-normal mt-3 mb-1",
 		};
 		const sizeClass = sizeClassMap[level] || "";
 		return [

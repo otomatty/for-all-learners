@@ -3,11 +3,6 @@ import { redirect } from "next/navigation";
 import { CardsList } from "./_components/cards-list";
 import { getDeckById, getDecksByUser } from "@/app/_actions/decks";
 import { getCardsByDeck } from "@/app/_actions/cards";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { CardForm } from "./_components/card-form";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { SyncButton } from "./_components/sync-button";
 import DeckSelector from "./_components/deck-selector";
 import ActionMenu from "./_components/action-menu";
 

@@ -117,3 +117,24 @@ export async function getUserSettingsByUser(
 	if (error) throw error;
 	return data;
 }
+
+/**
+ * Fetches the user's help video audio playback preference.
+ * @returns true if help video audio should be played, false otherwise.
+ */
+export async function getHelpVideoAudioSetting(): Promise<boolean> {
+	const settings = await getUserSettings();
+	// 新規カラム play_help_video_audio が存在しない場合はデフォルト false
+	return settings.play_help_video_audio ?? false;
+}
+
+/**
+ * Toggles the user's help video audio playback preference and returns the updated value.
+ * @param current 現在の音声再生設定
+ */
+export async function toggleHelpVideoAudioSetting(
+	current: boolean,
+): Promise<boolean> {
+	const updated = await updateUserSettings({ play_help_video_audio: !current });
+	return updated.play_help_video_audio;
+}

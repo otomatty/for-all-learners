@@ -35,31 +35,30 @@ export function useTextSelection(): TextSelectionInfo & {
 
 	useEffect(() => {
 		const handleMouseUp = () => {
-			console.debug("[useTextSelection] mouseup event fired");
+			// 文字列が選択されている場合のみ処理を実行
 			const selection = window.getSelection();
 			if (!selection) return;
 			const text = selection.toString().trim();
 			console.debug("[useTextSelection] selected text:", text);
 			if (text) {
+				// 選択テキストがある場合はバウンディングボックスを計算して状態を更新
+				console.debug(
+					"[useTextSelection] computing bounding rect for text selection",
+				);
 				const range = selection.getRangeAt(0);
-				// Try to get bounding rect, fallback to clientRects for non-editable content
 				let rect = range.getBoundingClientRect();
-				console.debug("[useTextSelection] initial bounding rect:", rect);
 				if ((rect.width === 0 && rect.height === 0) || Number.isNaN(rect.x)) {
 					const clientRects = range.getClientRects();
-					console.debug("[useTextSelection] clientRects:", clientRects);
 					if (clientRects.length > 0) {
 						rect = clientRects[0];
-						console.debug(
-							"[useTextSelection] fallback rect from clientRects:",
-							rect,
-						);
 					}
 				}
 				setSelectedText(text);
 				setSelectionRect(rect);
 			} else {
-				console.debug("[useTextSelection] no text selected");
+				console.debug(
+					"[useTextSelection] no text selected, clearing selection state",
+				);
 				setSelectedText(null);
 				setSelectionRect(null);
 			}

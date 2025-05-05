@@ -85,13 +85,7 @@ export function RichContent({ content, highlight }: RichContentProps) {
 		],
 		editable: false,
 		content: processedDoc,
-		editorProps: {
-			handleDOMEvents: {
-				click: (_view, event) => {
-					return false;
-				},
-			},
-		},
+		editorProps: {},
 	});
 
 	if (!editor) return null;

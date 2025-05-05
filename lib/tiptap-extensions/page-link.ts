@@ -1,6 +1,65 @@
 import { Mark, markInputRule, mergeAttributes } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
-import PageLinkView from "./PageLinkView";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+
+// Create a single plugin key and instance to avoid duplicate instances
+const pageLinkPluginKey = new PluginKey("pageLinkPlugin");
+const pageLinkPlugin = new Plugin({
+	key: pageLinkPluginKey,
+	props: {
+		handleDOMEvents: {
+			click: (view, event: MouseEvent) => {
+				const anchor = (event.target as HTMLElement).closest(
+					"a[data-page-name]",
+				);
+				if (!anchor) return false;
+				event.preventDefault();
+				event.stopPropagation();
+				const pageName = anchor.getAttribute("data-page-name") ?? "";
+				const pageId = anchor.getAttribute("data-page-id");
+				(async () => {
+					const supabase = createClient();
+					const {
+						data: { user },
+						error: authError,
+					} = await supabase.auth.getUser();
+					if (authError || !user) {
+						toast.error("ログインしてください");
+						return;
+					}
+					let id = pageId ?? "";
+					if (!id) {
+						const { data: newPage, error: insertError } = await supabase
+							.from("pages")
+							.insert({
+								user_id: user.id,
+								title: pageName,
+								content_tiptap: { type: "doc", content: [] },
+								is_public: false,
+							})
+							.select("id")
+							.single();
+						if (insertError || !newPage) {
+							toast.error("ページの作成に失敗しました");
+							return;
+						}
+						id = newPage.id;
+						const { tr } = view.state;
+						const markType = view.state.schema.marks.pageLink;
+						const mark = markType.create({ pageName, pageId: id });
+						const pos = view.posAtDOM(anchor, 0);
+						view.dispatch(
+							tr.addMark(pos, pos + (anchor.textContent ?? "").length, mark),
+						);
+					}
+					window.location.href = `/pages/${id}?newPage=true`;
+				})();
+				return true;
+			},
+		},
+	},
+});
 
 export const PageLink = Mark.create({
 	name: "pageLink",
@@ -17,11 +76,21 @@ export const PageLink = Mark.create({
 		return [{ tag: "a[data-page-name]" }];
 	},
 	renderHTML({ HTMLAttributes }) {
-		// Include href for static HTML rendering
-		const href = HTMLAttributes.pageId
-			? `/pages/${HTMLAttributes.pageId}`
-			: undefined;
-		return ["a", mergeAttributes(HTMLAttributes, { href }), 0];
+		// pageIdの有無で色を切り替え: 存在すれば青、なければ赤
+		const { pageName, pageId } = HTMLAttributes;
+		const href = pageId ? `/pages/${pageId}` : undefined;
+		const className = pageId
+			? "text-blue-500 cursor-pointer"
+			: "text-red-500 cursor-pointer";
+		return [
+			"a",
+			mergeAttributes(HTMLAttributes, {
+				"data-page-name": pageName,
+				...(pageId ? { "data-page-id": pageId, href } : {}),
+				class: className,
+			}),
+			0,
+		];
 	},
 	addInputRules() {
 		return [
@@ -32,10 +101,7 @@ export const PageLink = Mark.create({
 			}),
 		];
 	},
-	addNodeView() {
-		console.debug("[PageLink] addNodeView invoked");
-		return ReactNodeViewRenderer(PageLinkView, {
-			stopEvent: () => false,
-		});
+	addProseMirrorPlugins() {
+		return [pageLinkPlugin];
 	},
 });

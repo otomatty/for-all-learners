@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -13,9 +13,10 @@ import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import type { JSONContent } from "@tiptap/core";
 import type { Database } from "@/types/database.types";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Volume2, Pause, RotateCcw } from "lucide-react";
 import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import { marked } from "marked";
+import { Button } from "@/components/ui/button";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -29,6 +30,9 @@ export default function EditPageForm({
 	userId,
 	initialContent,
 }: EditPageFormProps) {
+	// Detect if this is a newly created page via query param
+	const searchParams = useSearchParams();
+	const isNewPage = searchParams.get("newPage") === "true";
 	const router = useRouter();
 	const supabase = createClient();
 	// Determine content for editor: use injected initialContent or original
@@ -63,57 +67,6 @@ export default function EditPageForm({
 		}
 	}, [title]);
 
-	// Ref for debounce timer
-	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-	// Debounced save function for autosave
-	const savePage = useCallback(async () => {
-		if (!editor) return;
-		setIsLoading(true);
-		try {
-			const content = editor.getJSON() as JSONContent;
-			const { data: updated, error } = await supabase
-				.from("pages")
-				.update({ title, content_tiptap: content })
-				.eq("id", page.id)
-				.select()
-				.single();
-			if (error) throw error;
-			toast.success("ページを保存しました");
-			// Redirect to page by ID to preserve slug
-			if (updated.id) {
-				router.push(`/pages/${encodeURIComponent(updated.id)}`);
-			} else {
-				router.refresh();
-			}
-		} catch (err) {
-			console.error("EditPageForm save error:", err);
-			toast.error("保存に失敗しました");
-		} finally {
-			setIsLoading(false);
-		}
-	}, [title, page.id, supabase, router]);
-	// Autosave on editor updates
-	useEffect(() => {
-		if (!editor) return;
-		const onUpdate = () => {
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-			saveTimeout.current = setTimeout(savePage, 2000);
-		};
-		editor.on("update", onUpdate);
-		return () => {
-			editor.off("update", onUpdate);
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		};
-	}, [savePage]);
-	// Autosave on title changes
-	useEffect(() => {
-		if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		saveTimeout.current = setTimeout(savePage, 2000);
-		return () => {
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		};
-	}, [savePage]);
-
 	// Offline detection state (SSR safe)
 	const [isOnline, setIsOnline] = useState<boolean>(true);
 	useEffect(() => {
@@ -129,6 +82,7 @@ export default function EditPageForm({
 		};
 	}, []);
 
+	// Initialize TipTap editor before defining savePage and autosave hooks
 	const editor = useEditor({
 		extensions: [
 			StarterKit.configure({ heading: false }),
@@ -149,8 +103,54 @@ export default function EditPageForm({
 		},
 	});
 
+	// Ref for debounce timer
+	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+	// Debounced save function for autosave
+	const savePage = useCallback(async () => {
+		if (!editor) return;
+		setIsLoading(true);
+		try {
+			const content = editor.getJSON() as JSONContent;
+			const { data: updated, error } = await supabase
+				.from("pages")
+				.update({ title, content_tiptap: content })
+				.eq("id", page.id)
+				.select()
+				.single();
+			if (error) throw error;
+			toast.success("ページを保存しました");
+		} catch (err) {
+			console.error("EditPageForm save error:", err);
+			toast.error("保存に失敗しました");
+		} finally {
+			setIsLoading(false);
+		}
+	}, [editor, title, page.id, supabase]);
+	// Autosave on editor updates
+	useEffect(() => {
+		if (!editor) return;
+		const onUpdate = () => {
+			if (saveTimeout.current) clearTimeout(saveTimeout.current);
+			saveTimeout.current = setTimeout(savePage, 2000);
+		};
+		editor.on("update", onUpdate);
+		return () => {
+			editor.off("update", onUpdate);
+			if (saveTimeout.current) clearTimeout(saveTimeout.current);
+		};
+	}, [savePage, editor]);
+	// Autosave on title changes
+	useEffect(() => {
+		if (!editor) return;
+		if (saveTimeout.current) clearTimeout(saveTimeout.current);
+		saveTimeout.current = setTimeout(savePage, 2000);
+		return () => {
+			if (saveTimeout.current) clearTimeout(saveTimeout.current);
+		};
+	}, [savePage, editor]);
+
 	// Function to wrap selection with pageLink mark
-	const wrapSelectionWithPageLink = () => {
+	const wrapSelectionWithPageLink = async () => {
 		if (!editor) return;
 		const { from, to } = editor.state.selection;
 		const text = editor.state.doc.textBetween(from, to, "");
@@ -158,12 +158,85 @@ export default function EditPageForm({
 			toast.error("テキストを選択してページリンクを作成してください");
 			return;
 		}
-		editor
-			.chain()
-			.focus()
-			.toggleMark("pageLink", { pageName: text, pageId: null })
-			.run();
+		try {
+			// Check if a page with the same title exists
+			const { data: pages, error } = await supabase
+				.from("pages")
+				.select("id")
+				.eq("title", text)
+				.limit(1);
+			if (error) {
+				console.error("ページチェックエラー:", error);
+				toast.error("リンク作成中にエラーが発生しました");
+				return;
+			}
+			const pageId = pages?.[0]?.id ?? null;
+			// 選択したテキストに pageLink マークを付与する（pageId があればリンク先設定）
+			editor
+				.chain()
+				.focus()
+				.toggleMark("pageLink", { pageName: text, pageId })
+				.run();
+		} catch (err) {
+			console.error("リンク作成例外:", err);
+			toast.error("リンク作成中にエラーが発生しました");
+		}
 	};
+
+	/**
+	 * ページの内容を読み上げる
+	 */
+	const handleReadAloud = useCallback(() => {
+		if (!editor) return;
+		const text = editor.getText();
+		if (!text) {
+			toast.error("読み上げるテキストがありません");
+			return;
+		}
+		try {
+			speechSynthesis.cancel();
+			const utterance = new SpeechSynthesisUtterance(text);
+			utterance.lang = "ja-JP";
+			speechSynthesis.speak(utterance);
+		} catch (err) {
+			console.error("handleReadAloud error:", err);
+			toast.error("読み上げ機能を利用できません");
+		}
+	}, [editor]);
+
+	/**
+	 * 読み上げを一時停止する
+	 */
+	const handlePause = useCallback(() => {
+		try {
+			if (speechSynthesis.speaking && !speechSynthesis.paused) {
+				speechSynthesis.pause();
+				toast.success("読み上げを一時停止しました");
+			} else {
+				toast.error("一時停止できる読み上げがありません");
+			}
+		} catch (err) {
+			console.error("handlePause error:", err);
+			toast.error("一時停止に失敗しました");
+		}
+	}, []);
+
+	/**
+	 * 読み上げをリセット（停止）する
+	 */
+	const handleReset = useCallback(() => {
+		try {
+			if (speechSynthesis.speaking || speechSynthesis.paused) {
+				speechSynthesis.cancel();
+				toast.success("読み上げを停止しました");
+			} else {
+				toast.error("停止できる読み上げがありません");
+			}
+		} catch (err) {
+			console.error("handleReset error:", err);
+			toast.error("停止に失敗しました");
+		}
+	}, []);
 
 	return (
 		<>
@@ -185,10 +258,10 @@ export default function EditPageForm({
 					<button
 						type="button"
 						onClick={handleGenerate}
-						disabled={isGenerating || !isDirty}
+						disabled={isGenerating || (!isDirty && !isNewPage)}
 						title="タイトルからコンテンツ生成"
 						className={`ml-2 p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out ${
-							isDirty
+							isDirty || isNewPage
 								? "opacity-100 translate-x-0 visible"
 								: "opacity-0 -translate-x-4 invisible"
 						}`}
@@ -197,6 +270,36 @@ export default function EditPageForm({
 							className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
 						/>
 					</button>
+					{/* 読み上げボタン */}
+					<Button
+						type="button"
+						onClick={handleReadAloud}
+						title="ページを読み上げる"
+						variant="outline"
+						className="ml-2"
+					>
+						<Volume2 className="w-6 h-6" />
+					</Button>
+					{/* 一時停止ボタン */}
+					<Button
+						type="button"
+						onClick={handlePause}
+						title="一時停止"
+						variant="outline"
+						className="ml-2"
+					>
+						<Pause className="w-6 h-6" />
+					</Button>
+					{/* リセットボタン */}
+					<Button
+						type="button"
+						onClick={handleReset}
+						title="リセット"
+						variant="outline"
+						className="ml-2"
+					>
+						<RotateCcw className="w-6 h-6" />
+					</Button>
 				</div>
 				{editor && (
 					<div className="relative">

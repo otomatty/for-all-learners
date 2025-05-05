@@ -3,6 +3,7 @@ import { AuthHeader } from "@/components/auth-header";
 import { Container } from "@/components/container";
 import { version } from "../../package.json";
 import { isAdmin } from "@/app/_actions/admin";
+import { getHelpVideoAudioSetting } from "@/app/_actions/user_settings";
 import { navItems } from "./navItems";
 
 interface ProtectedLayoutProps {
@@ -13,10 +14,16 @@ export default async function ProtectedLayout({
 	children,
 }: ProtectedLayoutProps) {
 	const admin = await isAdmin();
+	const playAudio = await getHelpVideoAudioSetting();
 
 	return (
 		<>
-			<AuthHeader version={version} isAdmin={admin} appNavItems={navItems} />
+			<AuthHeader
+				version={version}
+				isAdmin={admin}
+				appNavItems={navItems}
+				playAudio={playAudio}
+			/>
 			<Container>{children}</Container>
 		</>
 	);
