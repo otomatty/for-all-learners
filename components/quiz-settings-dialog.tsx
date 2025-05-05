@@ -45,7 +45,7 @@ export function QuizSettingsDialog({
 				disabled: disabled || (reviewMode && (reviewCount ?? 0) === 0),
 			}}
 		>
-			<form action={startQuizAction} className="space-y-4 p-4">
+			<form action={startQuizAction} className="space-y-4 p-4 max-w-md">
 				<input type="hidden" name="deckId" value={deckId ?? ""} />
 				<input type="hidden" name="goalId" value={goalId ?? ""} />
 				<input type="hidden" name="mode" value={questionType} />

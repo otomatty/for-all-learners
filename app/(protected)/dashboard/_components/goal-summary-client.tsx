@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { AddGoalDialog } from "./add-goal-dialog";
 import GoalHeatmap from "./goal-heatmap";
-import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
+import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import TimeProgress from "./time-progress";
 
 interface StudyGoal {

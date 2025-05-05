@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useAtomValue } from "jotai";
 import { userIdAtom } from "@/stores/user";
-import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
+import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {

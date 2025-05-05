@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { QuizSettingsDialog } from "@/components/QuizSettingsDialog";
+import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
