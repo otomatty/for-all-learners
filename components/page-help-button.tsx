@@ -53,6 +53,7 @@ export function PageHelpButton({
 			triggerIcon={triggerIcon}
 			triggerButtonProps={{ variant: "ghost", size: "sm" }}
 			dialogTitle="操作ガイド"
+			className="!max-w-5xl"
 		>
 			<div className="space-y-4">
 				{config.mode === "video" ? (

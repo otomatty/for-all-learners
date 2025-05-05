@@ -7,7 +7,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { Logo } from "@/components/site-logo";
 import { usePathname } from "next/navigation";
 import AppNavDropdown, { type NavItem } from "@/components/app-nav-dropdown";
-import { PageHelpButton } from "@/components/PageHelpButton";
+import { PageHelpButton } from "@/components/page-help-button";
 import {
 	Tooltip,
 	TooltipTrigger,
@@ -15,7 +15,7 @@ import {
 	TooltipProvider,
 } from "@/components/ui/tooltip";
 import { HelpCircleIcon } from "lucide-react";
-import { SearchBar } from "@/components/SearchBar";
+import { SearchBar } from "@/components/search-bar";
 
 interface AuthHeaderProps {
 	version?: string;

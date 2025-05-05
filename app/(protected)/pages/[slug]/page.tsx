@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import EditPageForm from "./_components/edit-page-form";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
+import { BackLink } from "@/components/ui/back-link";
 
 // Add imports for page link transformation and content viewer
 import type { JSONContent } from "@tiptap/core";
@@ -50,7 +51,13 @@ export default async function PageDetail({
 	);
 
 	return (
-		// Use the form editor as the primary view, with links initialized
-		<EditPageForm page={page} userId={user.id} initialContent={decoratedDoc} />
+		<>
+			<BackLink title="戻る" className="mb-4" />
+			<EditPageForm
+				page={page}
+				userId={user.id}
+				initialContent={decoratedDoc}
+			/>
+		</>
 	);
 }

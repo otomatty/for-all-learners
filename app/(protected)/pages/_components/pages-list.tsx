@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
-import { ja } from "date-fns/locale";
 import {
 	Card,
 	CardContent,
@@ -11,10 +9,28 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 interface PagesListProps {
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
+}
+
+/**
+ * Extracts plain text from Tiptap JSON content.
+ * @param node - Tiptap JSON node.
+ * @returns Plain text representation.
+ */
+function extractTextFromTiptap(node: Json): string {
+	if (typeof node === "string") return node;
+	if (Array.isArray(node)) return node.map(extractTextFromTiptap).join("");
+	if (node !== null && typeof node === "object") {
+		const obj = node as Record<string, Json>;
+		if ("text" in obj && typeof obj.text === "string") return obj.text;
+		if ("content" in obj && Array.isArray(obj.content)) {
+			return obj.content.map(extractTextFromTiptap).join("");
+		}
+	}
+	return "";
 }
 
 export function PagesList({ pages }: PagesListProps) {
@@ -33,25 +49,23 @@ export function PagesList({ pages }: PagesListProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{pages.map((page) => (
 				<Link key={page.id} href={`/pages/${encodeURIComponent(page.id)}`}>
-					<Card className="h-full overflow-hidden transition-all hover:shadow-md">
-						<CardHeader className="pb-2">
+					<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">
+						<CardHeader className="px-4">
 							<CardTitle className="line-clamp-1">{page.title}</CardTitle>
 						</CardHeader>
-						<CardContent>
-							<p className="line-clamp-2 text-sm text-muted-foreground">
-								{/* 内容プレビュー未実装 */}
-							</p>
+						<CardContent className="px-4">
+							{(() => {
+								const text = extractTextFromTiptap(page.content_tiptap)
+									.replace(/\s+/g, " ")
+									.trim();
+								if (!text) return null;
+								return (
+									<p className="line-clamp-6 text-sm text-muted-foreground">
+										{text}
+									</p>
+								);
+							})()}
 						</CardContent>
-						<CardFooter className="flex justify-between">
-							<div className="text-xs text-muted-foreground">
-								{formatDistanceToNow(new Date(page.updated_at || ""), {
-									addSuffix: true,
-									locale: ja,
-								})}
-								に更新
-							</div>
-							{page.is_public && <Badge variant="outline">公開</Badge>}
-						</CardFooter>
 					</Card>
 				</Link>
 			))}

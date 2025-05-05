@@ -40,6 +40,7 @@ interface ResponsiveDialogProps {
 	dialogTitle?: string;
 	dialogDescription?: string;
 	triggerButtonProps?: React.ComponentProps<typeof Button>;
+	className?: string;
 }
 
 /**
@@ -68,6 +69,7 @@ export function ResponsiveDialog({
 	triggerIcon,
 	dialogTitle = "Dialog",
 	dialogDescription = "",
+	className,
 	triggerButtonProps,
 }: ResponsiveDialogProps) {
 	const [open, setOpen] = React.useState(false);
@@ -103,7 +105,7 @@ export function ResponsiveDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{triggerElement}</DialogTrigger>
-			<DialogContent>
+			<DialogContent className={className}>
 				<DialogHeader className="text-left">
 					<DialogTitle>{dialogTitle}</DialogTitle>
 					<DialogDescription>{dialogDescription}</DialogDescription>

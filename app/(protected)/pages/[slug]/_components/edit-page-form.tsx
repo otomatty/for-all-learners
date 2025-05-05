@@ -17,6 +17,7 @@ import { Sparkles, Volume2, Pause, RotateCcw } from "lucide-react";
 import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
+import { ContentSkeleton } from "./content-skeleton";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -255,21 +256,21 @@ export default function EditPageForm({
 						className="text-4xl font-bold flex-1"
 					/>
 					{/* 変更があったときのみ表示し、左からフェードイン */}
-					<button
-						type="button"
-						onClick={handleGenerate}
-						disabled={isGenerating || (!isDirty && !isNewPage)}
-						title="タイトルからコンテンツ生成"
-						className={`ml-2 p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out ${
-							isDirty || isNewPage
-								? "opacity-100 translate-x-0 visible"
-								: "opacity-0 -translate-x-4 invisible"
-						}`}
-					>
-						<Sparkles
-							className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
-						/>
-					</button>
+					<div className="ml-2">
+						{isGenerating ? (
+							<ContentSkeleton />
+						) : (
+							<button
+								type="button"
+								onClick={handleGenerate}
+								disabled={!isDirty && !isNewPage}
+								title="タイトルからコンテンツ生成"
+								className="p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out"
+							>
+								<Sparkles className="w-10 h-10 text-yellow-500" />
+							</button>
+						)}
+					</div>
 					{/* 読み上げボタン */}
 					<Button
 						type="button"

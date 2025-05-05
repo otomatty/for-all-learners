@@ -7,7 +7,7 @@ import { QuickActionTiles } from "./_components/QuickActionTiles";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
-import UserIdSetter from "@/components/UserIdSetter";
+import UserIdSetter from "@/components/user-id-setter";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();

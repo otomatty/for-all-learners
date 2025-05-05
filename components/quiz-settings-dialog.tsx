@@ -6,6 +6,7 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { startQuizAction } from "@/app/_actions/startQuiz";
+import { List, Grid, Type } from "lucide-react";
 
 interface QuizSettingsDialogProps {
 	deckId?: string;
@@ -31,6 +32,14 @@ export function QuizSettingsDialog({
 	const router = useRouter();
 	const [questionType, setQuestionType] = useState<string>("one");
 
+	// 選択された問題形式ごとの説明文
+	const descriptions: Record<string, string> = {
+		one: "単一の質問に対して解答を入力します。",
+		mcq: "提示された4つの選択肢から正しい答えを1つ選びます。",
+		fill: "空欄を埋めて正しい語句を入力します。",
+	};
+	const description = descriptions[questionType];
+
 	const displayText =
 		reviewMode && typeof reviewCount === "number"
 			? `${triggerText} (${reviewCount})`
@@ -52,39 +61,36 @@ export function QuizSettingsDialog({
 				<input type="hidden" name="count" value="10" />
 				<input type="hidden" name="shuffle" value="true" />
 				<div>
-					<Label className="font-medium">問題形式</Label>
-					<div className="flex space-x-4 mt-2">
-						<label className="flex items-center">
-							<input
-								type="radio"
-								name="questionType"
-								value="one"
-								checked={questionType === "one"}
-								onChange={() => setQuestionType("one")}
-							/>
-							<span className="ml-1">一問一答</span>
-						</label>
-						<label className="flex items-center">
-							<input
-								type="radio"
-								name="questionType"
-								value="mcq"
-								checked={questionType === "mcq"}
-								onChange={() => setQuestionType("mcq")}
-							/>
-							<span className="ml-1">4択</span>
-						</label>
-						<label className="flex items-center">
-							<input
-								type="radio"
-								name="questionType"
-								value="fill"
-								checked={questionType === "fill"}
-								onChange={() => setQuestionType("fill")}
-							/>
-							<span className="ml-1">穴埋め</span>
-						</label>
+					<Label className="font-medium mb-2">問題形式</Label>
+					<div className="grid grid-cols-3 gap-4">
+						<button
+							type="button"
+							onClick={() => setQuestionType("one")}
+							className={`p-4 flex flex-col items-center border rounded-lg focus:outline-none transition ${questionType === "one" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+						>
+							<List className="w-6 h-6 mb-2" />
+							<span className="text-sm">一問一答</span>
+						</button>
+						<button
+							type="button"
+							onClick={() => setQuestionType("mcq")}
+							className={`p-4 flex flex-col items-center border rounded-lg focus:outline-none transition ${questionType === "mcq" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+						>
+							<Grid className="w-6 h-6 mb-2" />
+							<span className="text-sm">4択</span>
+						</button>
+						<button
+							type="button"
+							onClick={() => setQuestionType("fill")}
+							className={`p-4 flex flex-col items-center border rounded-lg focus:outline-none transition ${questionType === "fill" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+						>
+							<Type className="w-6 h-6 mb-2" />
+							<span className="text-sm">穴埋め</span>
+						</button>
 					</div>
+
+					{/* 選択中の問題形式説明 */}
+					<p className="mt-2 text-sm text-muted-foreground">{description}</p>
 				</div>
 				<div className="flex justify-end">
 					<Button type="submit">開始</Button>
