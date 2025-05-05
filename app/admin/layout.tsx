@@ -20,7 +20,12 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 	return (
 		<>
 			{/* ヘッダーに管理者情報を渡す */}
-			<AuthHeader version={version} isAdmin={admin} appNavItems={[]} />
+			<AuthHeader
+				version={version}
+				isAdmin={admin}
+				appNavItems={[]}
+				playAudio={false}
+			/>
 			<Container>{children}</Container>
 		</>
 	);

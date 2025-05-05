@@ -115,7 +115,7 @@ export function SearchBar() {
 	}, []);
 
 	return (
-		<div className="relative w-full max-w-md" ref={containerRef}>
+		<div className="relative w-full" ref={containerRef}>
 			<input
 				type="text"
 				className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"

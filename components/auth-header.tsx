@@ -36,11 +36,11 @@ export function AuthHeader({
 	const showAdminNav = isAdmin && pathname.startsWith("/admin");
 	return (
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
-			<div className="container mx-auto flex items-center justify-between py-4 px-6">
-				<div className="flex items-center w-full gap-4">
+			<div className="container mx-auto flex items-center justify-between py-4 px-6 gap-8">
+				<div className="flex items-center flex-1 gap-8">
 					<Logo version={version} href={showAdminNav ? "/admin" : "/"} />
-					<div className="flex-1 max-w-md">
-						<SearchBar />
+					<div className="w-full max-w-md">
+						{showAdminNav ? <div /> : <SearchBar />}
 					</div>
 				</div>
 				<div className="hidden md:flex gap-4 items-center">
