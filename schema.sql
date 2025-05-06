@@ -77,6 +77,26 @@ CREATE TABLE pages (
 ALTER TABLE pages
   ADD CONSTRAINT pages_user_scrapbox_unique UNIQUE (user_id, scrapbox_page_id);
 
+-- トリガー関数: アプリケーション更新時のみ updated_at を NOW() に更新 (Cosense同期時はスキップ)
+CREATE OR REPLACE FUNCTION auto_update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Cosense 同期時には scrapbox_page_content_synced_at が更新されるのでスキップ
+  IF TG_OP = 'UPDATE'
+     AND NEW.updated_at = OLD.updated_at
+     AND NEW.scrapbox_page_content_synced_at = OLD.scrapbox_page_content_synced_at THEN
+    NEW.updated_at = NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- pages テーブル用トリガーを追加
+CREATE TRIGGER trg_pages_updated_at
+BEFORE UPDATE ON pages
+FOR EACH ROW
+EXECUTE FUNCTION auto_update_timestamp();
+
 -- カードとページのリンク管理テーブル
 CREATE TABLE card_page_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -311,6 +331,9 @@ CREATE TABLE user_settings (
   items_per_page INTEGER NOT NULL DEFAULT 20, -- ページあたりの表示件数
   play_help_video_audio BOOLEAN NOT NULL DEFAULT FALSE, -- ヘルプ動画の音声を再生するかどうか
   cosense_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  notion_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  gyazo_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  quizlet_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -374,3 +397,57 @@ CREATE TABLE user_cosense_projects (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pages_user_scrapbox
   ON public.pages(user_id, scrapbox_page_id)
   WHERE scrapbox_page_id IS NOT NULL;
+
+-- RPC 関数: 配列で渡された scrapbox_page_id と user_id で pages テーブルの updated_at を取得
+CREATE OR REPLACE FUNCTION get_pages_by_ids(
+  ids TEXT[],
+  uid UUID
+)
+RETURNS TABLE(
+  scrapbox_page_id TEXT,
+  updated_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT p.scrapbox_page_id, p.updated_at
+    FROM pages p
+   WHERE p.user_id = uid
+     AND p.scrapbox_page_id = ANY(ids);
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Gyazo integration tables
+CREATE TABLE gyazo_albums (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  album_id TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_gyazo_albums (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  gyazo_album_id UUID NOT NULL REFERENCES gyazo_albums(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, gyazo_album_id)
+);
+
+-- Quizlet integration tables
+CREATE TABLE quizlet_sets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  set_id TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_quizlet_sets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  quizlet_set_id UUID NOT NULL REFERENCES quizlet_sets(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, quizlet_set_id)
+);

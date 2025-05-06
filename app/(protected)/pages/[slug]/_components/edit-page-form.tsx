@@ -84,6 +84,8 @@ export default function EditPageForm({
 
 	// Ref for debounce timer
 	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+	// Ref to skip initial editor update autosave
+	const isFirstUpdate = useRef(true);
 	// Debounced save function for autosave
 	const savePage = useCallback(async () => {
 		if (!editor) return;
@@ -127,10 +129,14 @@ export default function EditPageForm({
 		}
 	}, [title, editor, savePage]);
 
-	// Autosave on editor updates
+	// Autosave on editor updates, skip initial update
 	useEffect(() => {
 		if (!editor) return;
 		const onUpdate = () => {
+			if (isFirstUpdate.current) {
+				isFirstUpdate.current = false;
+				return;
+			}
 			if (saveTimeout.current) clearTimeout(saveTimeout.current);
 			saveTimeout.current = setTimeout(savePage, 2000);
 		};
@@ -140,15 +146,16 @@ export default function EditPageForm({
 			if (saveTimeout.current) clearTimeout(saveTimeout.current);
 		};
 	}, [savePage, editor]);
-	// Autosave on title changes
+	// Autosave on title changes, only when title is dirty
 	useEffect(() => {
 		if (!editor) return;
+		if (!isDirty) return;
 		if (saveTimeout.current) clearTimeout(saveTimeout.current);
 		saveTimeout.current = setTimeout(savePage, 2000);
 		return () => {
 			if (saveTimeout.current) clearTimeout(saveTimeout.current);
 		};
-	}, [savePage, editor]);
+	}, [isDirty, savePage, editor]);
 
 	// Function to wrap selection with pageLink mark
 	const wrapSelectionWithPageLink = useCallback(async () => {

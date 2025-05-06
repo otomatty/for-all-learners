@@ -27,6 +27,7 @@ import {
 	AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { RefreshCwIcon, TrashIcon } from "lucide-react";
+import { toast } from "sonner";
 
 export interface CosenseProject {
 	id: string;
@@ -62,11 +63,11 @@ export default function CosenseSyncSettings({
 	);
 	const [showSyncDialog, setShowSyncDialog] = useState<boolean>(false);
 	const [syncError, setSyncError] = useState<string | null>(null);
+	const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<span className="font-medium">Cosense 同期</span>
 				<Switch
 					checked={enabled}
 					onCheckedChange={(value) => {
@@ -201,7 +202,9 @@ export default function CosenseSyncSettings({
 															setShowSyncDialog(true);
 														}}
 													>
-														<RefreshCwIcon className="w-4 h-4" />
+														<RefreshCwIcon
+															className={`w-4 h-4 ${syncingProjectId === proj.id ? "animate-spin" : ""}`}
+														/>
 													</Button>
 													<Button
 														variant="destructive"
@@ -314,6 +317,7 @@ export default function CosenseSyncSettings({
 											setSyncError("プロジェクトが選択されていません");
 											return;
 										}
+										setSyncingProjectId(projectToSync.id);
 										try {
 											const res = await fetch(
 												`/api/cosense/sync/list/${projectToSync.id}`,
@@ -331,11 +335,14 @@ export default function CosenseSyncSettings({
 													p.id === projectToSync.id
 														? {
 																...p,
-																page_count: data.syncedCount,
+																page_count: data.totalCount,
 																lastSyncedAt: data.lastSyncedAt,
 															}
 														: p,
 												),
+											);
+											toast.success(
+												`${projectToSync.project_name} の同期が完了しました`,
 											);
 											setShowSyncDialog(false);
 											setProjectToSync(null);
@@ -344,6 +351,8 @@ export default function CosenseSyncSettings({
 											setSyncError(
 												err instanceof Error ? err.message : "不明なエラー",
 											);
+										} finally {
+											setSyncingProjectId(null);
 										}
 									}}
 								>

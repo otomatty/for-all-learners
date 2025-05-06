@@ -1,6 +1,8 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
@@ -11,15 +13,18 @@ interface ProvidersProps {
 }
 
 export function Providers({ children, theme, mode }: ProvidersProps) {
+	const [queryClient] = useState(() => new QueryClient());
 	return (
-		<ThemeProvider
-			attribute="class"
-			defaultTheme={`theme-${theme}`}
-			enableSystem={mode === "system"}
-			disableTransitionOnChange
-		>
-			{children}
-			<Toaster />
-		</ThemeProvider>
+		<QueryClientProvider client={queryClient}>
+			<ThemeProvider
+				attribute="class"
+				defaultTheme={`theme-${theme}`}
+				enableSystem={mode === "system"}
+				disableTransitionOnChange
+			>
+				{children}
+				<Toaster />
+			</ThemeProvider>
+		</QueryClientProvider>
 	);
 }

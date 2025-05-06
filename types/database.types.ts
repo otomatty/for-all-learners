@@ -438,6 +438,30 @@ export type Database = {
           },
         ]
       }
+      gyazo_albums: {
+        Row: {
+          album_id: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       learning_logs: {
         Row: {
           answered_at: string | null
@@ -686,6 +710,30 @@ export type Database = {
           },
         ]
       }
+      quizlet_sets: {
+        Row: {
+          created_at: string
+          id: string
+          set_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          set_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          set_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       raw_inputs: {
         Row: {
           created_at: string
@@ -849,16 +897,97 @@ export type Database = {
           },
         ]
       }
+      user_gyazo_albums: {
+        Row: {
+          created_at: string
+          gyazo_album_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gyazo_album_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gyazo_album_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_gyazo_albums_gyazo_album_id_fkey"
+            columns: ["gyazo_album_id"]
+            isOneToOne: false
+            referencedRelation: "gyazo_albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_gyazo_albums_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quizlet_sets: {
+        Row: {
+          created_at: string
+          id: string
+          quizlet_set_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quizlet_set_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quizlet_set_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quizlet_sets_quizlet_set_id_fkey"
+            columns: ["quizlet_set_id"]
+            isOneToOne: false
+            referencedRelation: "quizlet_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quizlet_sets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
           cosense_sync_enabled: boolean
           created_at: string
+          gyazo_sync_enabled: boolean
           id: string
           items_per_page: number
           locale: string
           mode: string
           notifications: Json
+          notion_sync_enabled: boolean
           play_help_video_audio: boolean
+          quizlet_sync_enabled: boolean
           theme: string
           timezone: string
           updated_at: string
@@ -867,12 +996,15 @@ export type Database = {
         Insert: {
           cosense_sync_enabled?: boolean
           created_at?: string
+          gyazo_sync_enabled?: boolean
           id?: string
           items_per_page?: number
           locale?: string
           mode?: string
           notifications?: Json
+          notion_sync_enabled?: boolean
           play_help_video_audio?: boolean
+          quizlet_sync_enabled?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -881,12 +1013,15 @@ export type Database = {
         Update: {
           cosense_sync_enabled?: boolean
           created_at?: string
+          gyazo_sync_enabled?: boolean
           id?: string
           items_per_page?: number
           locale?: string
           mode?: string
           notifications?: Json
+          notion_sync_enabled?: boolean
           play_help_video_audio?: boolean
+          quizlet_sync_enabled?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -910,6 +1045,13 @@ export type Database = {
       extract_tiptap_text: {
         Args: { doc: Json }
         Returns: string
+      }
+      get_pages_by_ids: {
+        Args: { ids: string[]; uid: string }
+        Returns: {
+          scrapbox_page_id: string
+          updated_at: string
+        }[]
       }
       is_admin_user: {
         Args: Record<PropertyKey, never>

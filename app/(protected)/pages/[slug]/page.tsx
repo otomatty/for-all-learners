@@ -40,7 +40,7 @@ export default async function PageDetail({
 		getSharedPagesByUser(user.id),
 	]);
 	const sharedPages = sharedPageShares.map((share) => share.pages);
-	const allPages = [...(myPages ?? []), ...(sharedPages ?? [])];
+	const allPages = [...(myPages?.pages ?? []), ...(sharedPages ?? [])];
 	const pagesMap = new Map<string, string>(
 		allPages.map((p) => [p.title, p.id]),
 	);

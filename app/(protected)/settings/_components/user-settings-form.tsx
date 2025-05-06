@@ -16,16 +16,13 @@ import {
 	AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import ThemeSelector from "./theme-selector";
-import ModeToggle from "./mode-toggle";
-import LocaleSelector from "./locale-selector";
-import TimezoneSelector from "./timezone-selector";
-import NotificationSettings from "./notification-settings";
-import ItemsPerPageSelector from "./items-per-page-selector";
+import AppearanceSettings from "./appearance";
+import GeneralSettings from "./general";
+import NotificationSettings from "./notifications";
+import PaginationSettings from "./pagination";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import CosenseSyncSettings, {
-	type CosenseProject,
-} from "./cosense-sync-settings";
+import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
+import ExternalServices from "./external-sync-settings";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
@@ -99,6 +96,25 @@ export default function UserSettingsForm({
 				const after = settings.cosense_sync_enabled ? "有効" : "無効";
 				changes.push(`Cosense 同期: ${before} → ${after}`);
 			}
+			if (
+				settings.notion_sync_enabled !== initialSettings.notion_sync_enabled
+			) {
+				const before = initialSettings.notion_sync_enabled ? "有効" : "無効";
+				const after = settings.notion_sync_enabled ? "有効" : "無効";
+				changes.push(`Notion 同期: ${before} → ${after}`);
+			}
+			if (settings.gyazo_sync_enabled !== initialSettings.gyazo_sync_enabled) {
+				const before = initialSettings.gyazo_sync_enabled ? "有効" : "無効";
+				const after = settings.gyazo_sync_enabled ? "有効" : "無効";
+				changes.push(`Gyazo 同期: ${before} → ${after}`);
+			}
+			if (
+				settings.quizlet_sync_enabled !== initialSettings.quizlet_sync_enabled
+			) {
+				const before = initialSettings.quizlet_sync_enabled ? "有効" : "無効";
+				const after = settings.quizlet_sync_enabled ? "有効" : "無効";
+				changes.push(`Quizlet 同期: ${before} → ${after}`);
+			}
 			// 設定更新
 			await updateUserSettings({
 				theme: settings.theme,
@@ -108,6 +124,9 @@ export default function UserSettingsForm({
 				notifications: settings.notifications,
 				items_per_page: settings.items_per_page,
 				cosense_sync_enabled: settings.cosense_sync_enabled,
+				notion_sync_enabled: settings.notion_sync_enabled,
+				gyazo_sync_enabled: settings.gyazo_sync_enabled,
+				quizlet_sync_enabled: settings.quizlet_sync_enabled,
 			});
 			// トースト通知
 			if (changes.length > 0) {
@@ -156,83 +175,60 @@ export default function UserSettingsForm({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-			<Tabs defaultValue="appearance">
+			<Tabs defaultValue="general">
 				<TabsList className="mb-4">
-					<TabsTrigger value="appearance">外観</TabsTrigger>
 					<TabsTrigger value="general">全般</TabsTrigger>
+					<TabsTrigger value="appearance">外観</TabsTrigger>
 					<TabsTrigger value="notifications">通知</TabsTrigger>
 					<TabsTrigger value="pagination">ページ表示</TabsTrigger>
 					<TabsTrigger value="external">外部サービス</TabsTrigger>
 				</TabsList>
-				<div className="space-y-6 p-4">
-					<TabsContent value="appearance">
-						<h2 className="text-lg font-medium">外観設定 (Appearance)</h2>
-						<div className="mt-2 space-y-4">
-							<ThemeSelector
-								value={settings.theme}
-								onChange={(value) => setSettings({ ...settings, theme: value })}
-							/>
-							<ModeToggle
-								checked={settings.mode === "dark"}
-								onCheckedChange={(checked) =>
-									setSettings({ ...settings, mode: checked ? "dark" : "light" })
-								}
-							/>
-						</div>
-					</TabsContent>
+				<div className="space-y-6">
 					<TabsContent value="general">
 						<h2 className="text-lg font-medium">全般設定 (General)</h2>
 						<div className="mt-2 space-y-4">
-							<LocaleSelector
-								value={settings.locale}
-								onChange={(value) =>
-									setSettings({ ...settings, locale: value })
-								}
-							/>
-							<TimezoneSelector
-								value={settings.timezone}
-								onChange={(value) =>
-									setSettings({ ...settings, timezone: value })
-								}
+							<GeneralSettings settings={settings} setSettings={setSettings} />
+						</div>
+					</TabsContent>
+					<TabsContent value="appearance">
+						<h2 className="text-lg font-medium">外観設定 (Appearance)</h2>
+						<div className="mt-2 space-y-4">
+							<AppearanceSettings
+								settings={settings}
+								setSettings={setSettings}
 							/>
 						</div>
 					</TabsContent>
 					<TabsContent value="notifications">
 						<h2 className="text-lg font-medium">通知設定 (Notifications)</h2>
-						<NotificationSettings
-							notifications={settings.notifications as Record<string, boolean>}
-							onChange={(notifications) =>
-								setSettings({ ...settings, notifications })
-							}
-						/>
+						<div className="mt-2 space-y-4">
+							<NotificationSettings
+								settings={settings}
+								setSettings={setSettings}
+							/>
+						</div>
 					</TabsContent>
 					<TabsContent value="pagination">
 						<h2 className="text-lg font-medium">
 							ページあたり件数 (Pagination)
 						</h2>
-						<ItemsPerPageSelector
-							value={settings.items_per_page}
-							onChange={(value) =>
-								setSettings({ ...settings, items_per_page: value })
-							}
-						/>
-					</TabsContent>
-					<TabsContent value="external">
-						<h2 className="text-lg font-medium">
-							外部サービス (External Services)
-						</h2>
-						<div className="mt-2">
-							<CosenseSyncSettings
-								initialProjects={initialProjects}
-								initialEnabled={settings.cosense_sync_enabled as boolean}
-								onEnabledChange={(value) =>
-									setSettings({ ...settings, cosense_sync_enabled: value })
-								}
+						<div className="mt-2 space-y-4">
+							<PaginationSettings
+								settings={settings}
+								setSettings={setSettings}
 							/>
 						</div>
 					</TabsContent>
+					<TabsContent value="external">
+						<ExternalServices
+							settings={settings}
+							setSettings={setSettings}
+							isPending={isPending}
+							initialProjects={initialProjects}
+						/>
+					</TabsContent>
 				</div>
-				<div className="px-4">
+				<div className="mt-4">
 					<Button onClick={handleSave} disabled={isPending}>
 						保存
 					</Button>

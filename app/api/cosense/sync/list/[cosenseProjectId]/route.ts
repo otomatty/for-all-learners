@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { JSONContent } from "@tiptap/core";
 
-export async function GET({
-	params,
-}: { params: Promise<{ cosenseProjectId: string }> }) {
+export async function GET(
+	request: NextRequest,
+	{ params }: { params: Promise<{ cosenseProjectId: string }> },
+) {
 	try {
 		const supabase = await createClient();
 		const {
@@ -52,8 +53,13 @@ export async function GET({
 		// Paginate through Scrapbox pages with limit and skip
 		const limit = 1000;
 		let skip = 0;
-		const allPages: { id: string; title: string; descriptions: string[] }[] =
-			[];
+		const allPages: {
+			id: string;
+			title: string;
+			descriptions: string[];
+			created: number;
+			updated: number;
+		}[] = [];
 		let totalCount = 0;
 		while (true) {
 			const url = new URL(
@@ -84,10 +90,48 @@ export async function GET({
 		}
 		const pages = allPages;
 
-		// Supabase に upsert
+		// Sync filtering: skip pages edited more recently locally
+		const scrapboxIds = pages.map((p) => p.id);
+		// RPCを使用して既存ページのupdated_atを取得
+		const { data: existingPages, error: existingPagesError } =
+			await supabase.rpc("get_pages_by_ids", {
+				ids: scrapboxIds,
+				uid: user.id,
+			});
+		if (existingPagesError) {
+			console.error(
+				"[Cosense Sync List] Failed to fetch existing pages",
+				existingPagesError,
+			);
+		}
+		const existingMap = new Map(
+			(existingPages ?? []).map(
+				(e) => [e.scrapbox_page_id, e.updated_at] as [string, string],
+			),
+		);
+		const filteredPages = pages.filter((item) => {
+			const incomingMs = item.updated * 1000;
+			const existingUpdated = existingMap.get(item.id);
+			const existingMs = existingUpdated
+				? new Date(existingUpdated).getTime()
+				: 0;
+			return incomingMs > existingMs;
+		});
+		const skippedCount = pages.length - filteredPages.length;
+
+		// Supabase に upsert (filtered)
 		const now = new Date().toISOString();
-		const records = pages.map(
-			(item: { id: string; title: string; descriptions: string[] }) => {
+		const records = filteredPages.map(
+			(item: {
+				id: string;
+				title: string;
+				descriptions: string[];
+				created: number;
+				updated: number;
+			}) => {
+				// Scrapbox API のタイムスタンプ（秒）を ISO 文字列に変換
+				const createdAt = new Date(item.created * 1000).toISOString();
+				const updatedAt = new Date(item.updated * 1000).toISOString();
 				// descriptions を TipTap JSON にマッピング
 				const content: JSONContent = {
 					type: "doc",
@@ -103,6 +147,8 @@ export async function GET({
 					scrapbox_page_id: item.id,
 					scrapbox_page_list_synced_at: now,
 					scrapbox_page_content_synced_at: now,
+					created_at: createdAt,
+					updated_at: updatedAt,
 				};
 			},
 		);
@@ -130,7 +176,12 @@ export async function GET({
 		}
 
 		return NextResponse.json(
-			{ syncedCount: records.length, lastSyncedAt: now },
+			{
+				totalCount,
+				syncedCount: records.length,
+				lastSyncedAt: now,
+				skippedCount,
+			},
 			{ status: 200 },
 		);
 	} catch (err) {
