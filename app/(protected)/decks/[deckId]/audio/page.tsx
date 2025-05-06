@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
 import { AudioCardGenerator } from "../_components/audio-card-generator";
-
+import { Container } from "@/components/container";
 export default async function AudioPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
@@ -43,5 +43,9 @@ export default async function AudioPage({
 		redirect(`/decks/${deckId}`);
 	}
 
-	return <AudioCardGenerator deckId={deckId} userId={user.id} />;
+	return (
+		<Container>
+			<AudioCardGenerator deckId={deckId} userId={user.id} />
+		</Container>
+	);
 }

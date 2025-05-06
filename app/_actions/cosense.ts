@@ -52,11 +52,13 @@ export async function getUserCosenseProjects(): Promise<
  * Adds a new Cosense project (upserting by project_name) and links it to the authenticated user.
  * @param projectName Cosense プロジェクト名
  * @param pageCountArg Optional page count to skip Scrapbox fetch
+ * @param scrapboxSessionCookie Optional Scrapbox session cookie
  * @returns Linked project info with id, project_name, and lastSyncedAt
  */
 export async function addUserCosenseProject(
 	projectName: string,
 	pageCountArg?: number,
+	scrapboxSessionCookie?: string,
 ): Promise<{
 	id: string;
 	project_name: string;
@@ -151,6 +153,7 @@ export async function addUserCosenseProject(
 			cosense_project_id: project.id,
 			page_count: pageCount,
 			accessible: accessible,
+			scrapbox_session_cookie: scrapboxSessionCookie ?? null,
 		})
 		.select(
 			"id, updated_at, cosense_projects(project_name), page_count, accessible",

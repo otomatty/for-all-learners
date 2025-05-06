@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
 	AlertDialogAction,
 	AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { RefreshCwIcon, TrashIcon } from "lucide-react";
 
 export interface CosenseProject {
 	id: string;
@@ -55,6 +57,11 @@ export default function CosenseSyncSettings({
 	);
 	const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
+	const [projectToSync, setProjectToSync] = useState<CosenseProject | null>(
+		null,
+	);
+	const [showSyncDialog, setShowSyncDialog] = useState<boolean>(false);
+	const [syncError, setSyncError] = useState<string | null>(null);
 
 	return (
 		<div className="space-y-4">
@@ -137,6 +144,7 @@ export default function CosenseSyncSettings({
 										const newProj = await addUserCosenseProject(
 											newProjName,
 											pageCount,
+											rawCookieHeader,
 										);
 										setProjects((prev) => [...prev, newProj]);
 										setNewProjName("");
@@ -170,22 +178,43 @@ export default function CosenseSyncSettings({
 								<TableBody>
 									{projects.map((proj) => (
 										<TableRow key={proj.id}>
-											<TableCell>{proj.project_name}</TableCell>
+											<TableCell>
+												<Link
+													href={`https://scrapbox.io/${proj.project_name}`}
+													target="_blank"
+													className="text-blue-500 hover:text-blue-600"
+												>
+													{proj.project_name}
+												</Link>
+											</TableCell>
 											<TableCell>{proj.lastSyncedAt}</TableCell>
 											<TableCell>{proj.page_count}</TableCell>
 											<TableCell>{proj.accessible ? "有効" : "無効"}</TableCell>
 											<TableCell>
-												<Button
-													variant="destructive"
-													size="sm"
-													onClick={() => {
-														setSelectedProject(proj);
-														setDeleteError(null);
-														setShowDeleteDialog(true);
-													}}
-												>
-													削除
-												</Button>
+												<div className="flex space-x-2">
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() => {
+															setProjectToSync(proj);
+															setSyncError(null);
+															setShowSyncDialog(true);
+														}}
+													>
+														<RefreshCwIcon className="w-4 h-4" />
+													</Button>
+													<Button
+														variant="destructive"
+														size="icon"
+														onClick={() => {
+															setSelectedProject(proj);
+															setDeleteError(null);
+															setShowDeleteDialog(true);
+														}}
+													>
+														<TrashIcon className="w-4 h-4" />
+													</Button>
+												</div>
 											</TableCell>
 										</TableRow>
 									))}
@@ -205,12 +234,11 @@ export default function CosenseSyncSettings({
 					>
 						<AlertDialogContent>
 							<AlertDialogHeader>
-								<AlertDialogTitle>
-									プロジェクトを削除しますか？
-								</AlertDialogTitle>
+								<AlertDialogTitle>プロジェクトを削除する</AlertDialogTitle>
 								<AlertDialogDescription>
-									{selectedProject?.project_name}{" "}
-									のリンクを本当に削除しますか？この操作は取り消せません。
+									{selectedProject?.project_name} のリンクを本当に削除しますか？
+									<br />
+									この操作は取り消せません。
 								</AlertDialogDescription>
 								{deleteError && (
 									<div className="text-red-500">エラー: {deleteError}</div>
@@ -245,6 +273,81 @@ export default function CosenseSyncSettings({
 									}}
 								>
 									削除
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+					{/* Sync confirmation dialog */}
+					<AlertDialog
+						open={showSyncDialog}
+						onOpenChange={(open) => {
+							if (!open) {
+								setShowSyncDialog(false);
+								setProjectToSync(null);
+							}
+						}}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>プロジェクトを同期する</AlertDialogTitle>
+								<AlertDialogDescription>
+									{projectToSync?.project_name} のページ情報を登録しますか？
+									<br />
+									この操作を行うと、Cosenseに登録されているページ情報を取得し、F.A.L.のページに追加します。
+								</AlertDialogDescription>
+								{syncError && (
+									<div className="text-red-500">エラー: {syncError}</div>
+								)}
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel
+									onClick={() => {
+										setShowSyncDialog(false);
+										setProjectToSync(null);
+									}}
+								>
+									キャンセル
+								</AlertDialogCancel>
+								<AlertDialogAction
+									onClick={async () => {
+										if (!projectToSync) {
+											setSyncError("プロジェクトが選択されていません");
+											return;
+										}
+										try {
+											const res = await fetch(
+												`/api/cosense/sync/list/${projectToSync.id}`,
+											);
+											if (!res.ok) {
+												const text = await res
+													.clone()
+													.text()
+													.catch(() => "");
+												throw new Error(`Sync failed: ${res.status} ${text}`);
+											}
+											const data = await res.json();
+											setProjects((prev) =>
+												prev.map((p) =>
+													p.id === projectToSync.id
+														? {
+																...p,
+																page_count: data.syncedCount,
+																lastSyncedAt: data.lastSyncedAt,
+															}
+														: p,
+												),
+											);
+											setShowSyncDialog(false);
+											setProjectToSync(null);
+										} catch (err: unknown) {
+											console.error("Sync error:", err);
+											setSyncError(
+												err instanceof Error ? err.message : "不明なエラー",
+											);
+										}
+									}}
+								>
+									同期
 								</AlertDialogAction>
 							</AlertDialogFooter>
 						</AlertDialogContent>

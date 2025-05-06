@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/adminClient";
-
+import { Container } from "@/components/container";
 /**
  * 検索結果項目の型定義
  */
@@ -60,7 +60,7 @@ export default async function SearchPage({
 	}
 
 	return (
-		<div className="p-4">
+		<Container>
 			<h1 className="text-2xl font-bold mb-4">検索結果: {query}</h1>
 			{rows.length === 0 ? (
 				<p>該当する結果がありません。</p>
@@ -81,6 +81,6 @@ export default async function SearchPage({
 					})}
 				</ul>
 			)}
-		</div>
+		</Container>
 	);
 }

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
+import { Container } from "@/components/container";
 
 export default async function DecksPage() {
 	const supabase = await createClient();
@@ -24,7 +25,7 @@ export default async function DecksPage() {
 	const sharedDecks = sharedDeckShares.map((share) => share.decks);
 
 	return (
-		<>
+		<Container>
 			<Tabs defaultValue="my-decks" className="space-y-4">
 				{/* 新規／編集デッキフォーム */}
 				<div className="flex justify-between mb-4">
@@ -47,6 +48,6 @@ export default async function DecksPage() {
 					<DecksList decks={sharedDecks || []} />
 				</TabsContent>
 			</Tabs>
-		</>
+		</Container>
 	);
 }

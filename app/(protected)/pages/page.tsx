@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/container";
 
 export default async function PagesPage() {
 	const supabase = await createClient();
@@ -23,7 +24,7 @@ export default async function PagesPage() {
 	const sharedPages = sharedPageShares.map((share) => share.pages);
 
 	return (
-		<>
+		<Container className="max-w-7xl">
 			<Tabs defaultValue="my-pages" className="space-y-4">
 				<div className="flex justify-between mb-4">
 					<TabsList>
@@ -42,6 +43,6 @@ export default async function PagesPage() {
 					<PagesList pages={sharedPages || []} />
 				</TabsContent>
 			</Tabs>
-		</>
+		</Container>
 	);
 }

@@ -9,7 +9,7 @@ import type {
 	ClozeQuestion,
 } from "@/lib/gemini";
 import Link from "next/link";
-
+import { Container } from "@/components/container";
 export default async function SessionPage() {
 	const cookieStore = await cookies();
 	const raw = cookieStore.get("quizSettings")?.value;
@@ -32,7 +32,7 @@ export default async function SessionPage() {
 	const rawQuestions = await getQuizQuestions(params);
 
 	return (
-		<div className="p-4 space-y-6">
+		<Container>
 			{params.mode === "mcq" ? (
 				<MultipleChoiceQuiz
 					questions={
@@ -74,6 +74,6 @@ export default async function SessionPage() {
 					</Link>
 				</div>
 			)}
-		</div>
+		</Container>
 	);
 }

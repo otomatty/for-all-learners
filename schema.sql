@@ -73,6 +73,10 @@ CREATE TABLE pages (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add unique constraint to support ON CONFLICT on (user_id, scrapbox_page_id)
+ALTER TABLE pages
+  ADD CONSTRAINT pages_user_scrapbox_unique UNIQUE (user_id, scrapbox_page_id);
+
 -- カードとページのリンク管理テーブル
 CREATE TABLE card_page_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

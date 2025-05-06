@@ -5,7 +5,7 @@ import { getDeckById, getDecksByUser } from "@/app/_actions/decks";
 import { getCardsByDeck } from "@/app/_actions/cards";
 import DeckSelector from "./_components/deck-selector";
 import ActionMenu from "./_components/action-menu";
-
+import { Container } from "@/components/container";
 export default async function DeckPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
@@ -106,7 +106,7 @@ export default async function DeckPage({
 	const canEdit = isOwner || permission === "edit";
 
 	return (
-		<>
+		<Container>
 			<DeckSelector decks={decksList} currentDeckId={deckId} />
 			{canEdit && (
 				<ActionMenu
@@ -118,6 +118,6 @@ export default async function DeckPage({
 				/>
 			)}
 			<CardsList cards={decoratedCards} deckId={deckId} canEdit={canEdit} />
-		</>
+		</Container>
 	);
 }

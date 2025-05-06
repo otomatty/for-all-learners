@@ -24,7 +24,7 @@ export default async function ProtectedLayout({
 				appNavItems={navItems}
 				playAudio={playAudio}
 			/>
-			<Container>{children}</Container>
+			{children}
 		</>
 	);
 }

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
 import { ImageCardGenerator } from "../_components/image-card-generator";
-
+import { Container } from "@/components/container";
 export default async function OcrPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
@@ -41,5 +41,9 @@ export default async function OcrPage({
 		redirect(`/decks/${deckId}`);
 	}
 
-	return <ImageCardGenerator deckId={deckId} userId={user.id} />;
+	return (
+		<Container>
+			<ImageCardGenerator deckId={deckId} userId={user.id} />
+		</Container>
+	);
 }

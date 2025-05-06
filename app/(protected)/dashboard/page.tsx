@@ -8,6 +8,7 @@ import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
 import UserIdSetter from "@/components/user-id-setter";
+import { Container } from "@/components/container";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
 	const safeLogs = JSON.parse(JSON.stringify(logs || []));
 
 	return (
-		<>
+		<Container>
 			{/* Set the current user ID for downstream components */}
 			<UserIdSetter userId={user.id} />
 			<div className="space-y-4">
@@ -43,6 +44,6 @@ export default async function DashboardPage() {
 					<DashboardSummary stats={stats} />
 				</div>
 			</div>
-		</>
+		</Container>
 	);
 }

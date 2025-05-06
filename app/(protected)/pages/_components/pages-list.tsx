@@ -46,12 +46,12 @@ export function PagesList({ pages }: PagesListProps) {
 	}
 
 	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
 			{pages.map((page) => (
 				<Link key={page.id} href={`/pages/${encodeURIComponent(page.id)}`}>
 					<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">
 						<CardHeader className="px-4">
-							<CardTitle className="line-clamp-1">{page.title}</CardTitle>
+							<CardTitle>{page.title}</CardTitle>
 						</CardHeader>
 						<CardContent className="px-4">
 							{(() => {
@@ -60,7 +60,7 @@ export function PagesList({ pages }: PagesListProps) {
 									.trim();
 								if (!text) return null;
 								return (
-									<p className="line-clamp-6 text-sm text-muted-foreground">
+									<p className="line-clamp-5 text-sm text-muted-foreground">
 										{text}
 									</p>
 								);

@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import EditPageForm from "./_components/edit-page-form";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
 import { BackLink } from "@/components/ui/back-link";
+import { Container } from "@/components/container";
 
 // Add imports for page link transformation and content viewer
 import type { JSONContent } from "@tiptap/core";
@@ -51,13 +52,13 @@ export default async function PageDetail({
 	);
 
 	return (
-		<div className="space-y-6 max-w-3xl mx-auto">
+		<Container className="max-w-3xl">
 			<BackLink title="戻る" className="mb-4" path="/pages" />
 			<EditPageForm
 				page={page}
 				userId={user.id}
 				initialContent={decoratedDoc}
 			/>
-		</div>
+		</Container>
 	);
 }
