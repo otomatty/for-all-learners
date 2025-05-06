@@ -18,11 +18,12 @@ export const navItems: NavItem[] = [
 	},
 
 	{
-		label: "フォーラム",
+		label: "掲示板",
 		href: "/forum",
 		icon: "MessagesSquare",
 		status: "enabled",
 	},
+	{ label: "使い方", href: "/help", icon: "CircleHelp", status: "enabled" },
 	{
 		label: "プロフィール",
 		href: "/profile",
@@ -37,5 +38,4 @@ export const navItems: NavItem[] = [
 		hasNotification: true,
 	},
 	{ label: "設定", href: "/settings", icon: "Settings", status: "enabled" },
-	{ label: "ヘルプ", href: "/help", icon: "CircleHelp", status: "enabled" },
 ];

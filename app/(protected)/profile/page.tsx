@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getAccountById, createAccount } from "@/app/_actions/accounts";
 import ProfileForm from "./_components/profile-form";
 import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
+
 export default async function ProfilePage() {
 	const supabase = await createClient();
 	const {
@@ -23,6 +25,9 @@ export default async function ProfilePage() {
 
 	return (
 		<Container className="max-w-3xl">
+			<div className="mb-6">
+				<BackLink path="/dashboard" title="ホームに戻る" />
+			</div>
 			<h1 className="text-2xl font-bold mb-6">プロフィール</h1>
 			{account ? (
 				<ProfileForm initialAccount={account} />

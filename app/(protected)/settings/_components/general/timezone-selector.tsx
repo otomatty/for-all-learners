@@ -10,6 +10,7 @@ import {
 	SelectLabel,
 	SelectItem,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface TimezoneSelectorProps {
 	value: string;
@@ -31,20 +32,23 @@ export default function TimezoneSelector({
 	onChange,
 }: TimezoneSelectorProps) {
 	return (
-		<Select value={value} onValueChange={onChange}>
-			<SelectTrigger className="w-full">
-				<SelectValue placeholder="タイムゾーンを選択" />
-			</SelectTrigger>
-			<SelectContent>
-				<SelectGroup>
-					<SelectLabel>タイムゾーン</SelectLabel>
-					{timezones.map((tz) => (
-						<SelectItem key={tz.value} value={tz.value}>
-							{tz.label}
-						</SelectItem>
-					))}
-				</SelectGroup>
-			</SelectContent>
-		</Select>
+		<div className="space-y-2">
+			<Label htmlFor="timezone-selector">タイムゾーン</Label>
+			<Select value={value} onValueChange={onChange}>
+				<SelectTrigger className="w-full">
+					<SelectValue placeholder="タイムゾーンを選択" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectGroup>
+						<SelectLabel>タイムゾーン</SelectLabel>
+						{timezones.map((tz) => (
+							<SelectItem key={tz.value} value={tz.value}>
+								{tz.label}
+							</SelectItem>
+						))}
+					</SelectGroup>
+				</SelectContent>
+			</Select>
+		</div>
 	);
 }

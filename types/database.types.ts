@@ -936,6 +936,33 @@ export type Database = {
           },
         ]
       }
+      user_llm_settings: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string
+          id: string
+          provider: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string
+          id?: string
+          provider: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string
+          id?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_quizlet_sets: {
         Row: {
           created_at: string
@@ -1042,6 +1069,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_user_llm_api_key: {
+        Args: { encrypted_base64: string; key: string }
+        Returns: string
+      }
+      encrypt_user_llm_api_key: {
+        Args: { data: string; key: string }
+        Returns: string
+      }
       extract_tiptap_text: {
         Args: { doc: Json }
         Returns: string

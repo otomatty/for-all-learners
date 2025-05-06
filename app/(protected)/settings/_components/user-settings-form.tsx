@@ -23,6 +23,7 @@ import PaginationSettings from "./pagination";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
 import ExternalServices from "./external-sync-settings";
+import LlmSettings from "./llm-settings";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
@@ -182,6 +183,7 @@ export default function UserSettingsForm({
 					<TabsTrigger value="notifications">通知</TabsTrigger>
 					<TabsTrigger value="pagination">ページ表示</TabsTrigger>
 					<TabsTrigger value="external">外部サービス</TabsTrigger>
+					<TabsTrigger value="llm">LLM</TabsTrigger>
 				</TabsList>
 				<div className="space-y-6">
 					<TabsContent value="general">
@@ -226,6 +228,9 @@ export default function UserSettingsForm({
 							isPending={isPending}
 							initialProjects={initialProjects}
 						/>
+					</TabsContent>
+					<TabsContent value="llm">
+						<LlmSettings />
 					</TabsContent>
 				</div>
 				<div className="mt-4">

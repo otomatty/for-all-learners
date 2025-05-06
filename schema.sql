@@ -451,3 +451,45 @@ CREATE TABLE user_quizlet_sets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, quizlet_set_id)
 );
+
+-- ユーザーごとのLLM設定テーブル
+CREATE TABLE user_llm_settings (
+  id                uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id           uuid              NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider          text              NOT NULL CHECK (provider IN ('gemini','openai','claude','deepseek')),
+  api_key_encrypted text              NOT NULL,
+  created_at        timestamptz       NOT NULL DEFAULT now(),
+  updated_at        timestamptz       NOT NULL DEFAULT now(),
+  UNIQUE(user_id, provider)
+);
+
+ALTER TABLE user_llm_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own llm settings"
+  ON user_llm_settings
+  FOR ALL
+  USING ( auth.uid() = user_id )
+  WITH CHECK ( auth.uid() = user_id );
+
+-- RPC wrapper functions for pgcrypto
+CREATE OR REPLACE FUNCTION encrypt_user_llm_api_key(
+  data TEXT,
+  key TEXT
+)
+RETURNS TEXT LANGUAGE SQL STABLE AS $$
+  SELECT ENCODE(pgp_sym_encrypt(data, key), 'base64');
+$$;
+
+CREATE OR REPLACE FUNCTION decrypt_user_llm_api_key(
+  encrypted_base64 TEXT,
+  key TEXT
+)
+RETURNS TEXT LANGUAGE SQL STABLE AS $$
+  SELECT CONVERT_FROM(
+    -- ensure decryption result is bytea
+    pgp_sym_decrypt(
+      DECODE(encrypted_base64, 'base64')::bytea,
+      key
+    )::bytea,
+    'UTF8'
+  );
+$$;

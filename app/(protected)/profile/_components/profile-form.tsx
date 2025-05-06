@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 
@@ -98,92 +99,100 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 	};
 
 	return (
-		<div className="space-y-6 p-4 bg-white rounded shadow">
-			<div className="flex items-center justify-center space-x-4">
-				<div
-					className="relative group w-24 h-24 cursor-pointer"
-					onClick={() => fileInputRef.current?.click()}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							fileInputRef.current?.click();
-						}
-					}}
-				>
-					<Avatar className="w-full h-full rounded-full">
-						{previewUrl || account.avatar_url ? (
-							<AvatarImage
-								src={previewUrl ?? account.avatar_url ?? ""}
-								alt="アバター"
-							/>
-						) : (
-							<AvatarFallback>{account.full_name?.[0] ?? "?"}</AvatarFallback>
-						)}
-					</Avatar>
-					<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white rounded-full">
-						写真を変更
+		<Card className="p-4">
+			<CardContent className="space-y-6 p-4">
+				<div className="flex flex-col items-center justify-center gap-2">
+					<div
+						className="relative group w-32 h-32 cursor-pointer m-0"
+						onClick={() => fileInputRef.current?.click()}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								fileInputRef.current?.click();
+							}
+						}}
+					>
+						<Avatar className="w-full h-full rounded-full">
+							{previewUrl || account.avatar_url ? (
+								<AvatarImage
+									src={previewUrl ?? account.avatar_url ?? ""}
+									alt="アバター"
+								/>
+							) : (
+								<AvatarFallback>{account.full_name?.[0] ?? "?"}</AvatarFallback>
+							)}
+						</Avatar>
+
+						<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white rounded-full">
+							写真を変更
+						</div>
 					</div>
+
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="image/*"
+						className="hidden"
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							if (file) {
+								setSelectedFile(file);
+								setPreviewUrl(URL.createObjectURL(file));
+							}
+						}}
+					/>
+					<p className="text-sm text-gray-500">
+						写真をクリックすると変更できます
+					</p>
 				</div>
-				<input
-					ref={fileInputRef}
-					type="file"
-					accept="image/*"
-					className="hidden"
-					onChange={(e) => {
-						const file = e.target.files?.[0];
-						if (file) {
-							setSelectedFile(file);
-							setPreviewUrl(URL.createObjectURL(file));
+				<div className="space-y-2">
+					<Label htmlFor="full_name">名前</Label>
+					<Input
+						id="full_name"
+						value={account.full_name ?? ""}
+						onChange={(e) =>
+							setAccount({ ...account, full_name: e.target.value })
 						}
-					}}
-				/>
-			</div>
-			<div>
-				<Label htmlFor="email">メールアドレス</Label>
-				<Input id="email" value={account.email ?? ""} readOnly />
-			</div>
-			<div>
-				<Label htmlFor="full_name">名前</Label>
-				<Input
-					id="full_name"
-					value={account.full_name ?? ""}
-					onChange={(e) =>
-						setAccount({ ...account, full_name: e.target.value })
-					}
-				/>
-			</div>
-			<div>
-				<Label htmlFor="gender">性別</Label>
-				<Select
-					value={account.gender ?? ""}
-					onValueChange={(value) =>
-						setAccount({ ...account, gender: value as Account["gender"] })
-					}
-				>
-					<SelectTrigger id="gender">
-						<SelectValue placeholder="選択してください" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="male">男性</SelectItem>
-						<SelectItem value="female">女性</SelectItem>
-						<SelectItem value="other">その他</SelectItem>
-						<SelectItem value="prefer_not_to_say">未回答</SelectItem>
-					</SelectContent>
-				</Select>
-			</div>
-			<div>
-				<Label htmlFor="birthdate">生年月日</Label>
-				<Input
-					id="birthdate"
-					type="date"
-					value={account.birthdate ?? ""}
-					onChange={(e) =>
-						setAccount({ ...account, birthdate: e.target.value })
-					}
-				/>
-			</div>
-			<Button onClick={handleSave} disabled={isPending}>
-				保存
-			</Button>
-		</div>
+					/>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="email">メールアドレス</Label>
+					<Input id="email" value={account.email ?? ""} readOnly />
+				</div>
+
+				<div className="space-y-2">
+					<Label htmlFor="gender">性別</Label>
+					<Select
+						value={account.gender ?? ""}
+						onValueChange={(value) =>
+							setAccount({ ...account, gender: value as Account["gender"] })
+						}
+					>
+						<SelectTrigger id="gender">
+							<SelectValue placeholder="選択してください" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="male">男性</SelectItem>
+							<SelectItem value="female">女性</SelectItem>
+							<SelectItem value="other">その他</SelectItem>
+							<SelectItem value="prefer_not_to_say">未回答</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="birthdate">生年月日</Label>
+					<Input
+						id="birthdate"
+						type="date"
+						value={account.birthdate ?? ""}
+						onChange={(e) =>
+							setAccount({ ...account, birthdate: e.target.value })
+						}
+					/>
+				</div>
+				<Button onClick={handleSave} disabled={isPending}>
+					保存
+				</Button>
+			</CardContent>
+		</Card>
 	);
 }
