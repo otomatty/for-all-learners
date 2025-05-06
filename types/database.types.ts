@@ -272,6 +272,27 @@ export type Database = {
           },
         ]
       }
+      cosense_projects: {
+        Row: {
+          created_at: string
+          id: string
+          project_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deck_shares: {
         Row: {
           created_at: string | null
@@ -535,6 +556,9 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean
+          scrapbox_page_content_synced_at: string | null
+          scrapbox_page_id: string | null
+          scrapbox_page_list_synced_at: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -544,6 +568,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          scrapbox_page_content_synced_at?: string | null
+          scrapbox_page_id?: string | null
+          scrapbox_page_list_synced_at?: string | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -553,6 +580,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          scrapbox_page_content_synced_at?: string | null
+          scrapbox_page_id?: string | null
+          scrapbox_page_list_synced_at?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
@@ -771,8 +801,57 @@ export type Database = {
           },
         ]
       }
+      user_cosense_projects: {
+        Row: {
+          accessible: boolean
+          cosense_project_id: string
+          created_at: string
+          id: string
+          page_count: number
+          scrapbox_session_cookie: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accessible?: boolean
+          cosense_project_id: string
+          created_at?: string
+          id?: string
+          page_count?: number
+          scrapbox_session_cookie?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accessible?: boolean
+          cosense_project_id?: string
+          created_at?: string
+          id?: string
+          page_count?: number
+          scrapbox_session_cookie?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cosense_projects_cosense_project_id_fkey"
+            columns: ["cosense_project_id"]
+            isOneToOne: false
+            referencedRelation: "cosense_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_cosense_projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
+          cosense_sync_enabled: boolean
           created_at: string
           id: string
           items_per_page: number
@@ -786,6 +865,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cosense_sync_enabled?: boolean
           created_at?: string
           id?: string
           items_per_page?: number
@@ -799,6 +879,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cosense_sync_enabled?: boolean
           created_at?: string
           id?: string
           items_per_page?: number

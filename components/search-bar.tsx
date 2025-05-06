@@ -118,7 +118,7 @@ export function SearchBar() {
 		<div className="relative w-full" ref={containerRef}>
 			<input
 				type="text"
-				className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+				className="w-full border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring focus:border-blue-300"
 				placeholder="キーワードで検索…"
 				value={query}
 				onChange={handleChange}

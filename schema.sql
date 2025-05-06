@@ -65,6 +65,9 @@ CREATE TABLE pages (
   user_id UUID REFERENCES accounts(id) NOT NULL,
   title TEXT NOT NULL,
   content_tiptap JSONB NOT NULL,
+  scrapbox_page_id TEXT,
+  scrapbox_page_list_synced_at TIMESTAMPTZ,
+  scrapbox_page_content_synced_at TIMESTAMPTZ,
   is_public BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -303,6 +306,7 @@ CREATE TABLE user_settings (
   notifications JSONB NOT NULL DEFAULT '{}'::jsonb, -- 通知設定(JSON形式)
   items_per_page INTEGER NOT NULL DEFAULT 20, -- ページあたりの表示件数
   play_help_video_audio BOOLEAN NOT NULL DEFAULT FALSE, -- ヘルプ動画の音声を再生するかどうか
+  cosense_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -338,3 +342,31 @@ ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Admins can select questions"
   ON questions FOR SELECT USING (public.is_admin_user());
+
+-- Cosense (Scrapbox) 同期用テーブル
+CREATE TABLE cosense_projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE user_cosense_projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  cosense_project_id UUID NOT NULL REFERENCES cosense_projects(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, cosense_project_id),
+  -- Scrapbox プロジェクトのページ数
+  page_count INTEGER NOT NULL DEFAULT 0,
+  -- 認証不要・アクセス可能か
+  accessible BOOLEAN NOT NULL DEFAULT TRUE,
+  -- 手動入力されたScrapboxセッションクッキー
+  scrapbox_session_cookie TEXT,
+);
+
+-- インデックス: user と scrapbox_page_id の組み合わせで高速 upsert
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pages_user_scrapbox
+  ON public.pages(user_id, scrapbox_page_id)
+  WHERE scrapbox_page_id IS NOT NULL;

@@ -19,6 +19,7 @@ import { marked } from "marked";
 import { Button } from "@/components/ui/button";
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
+import type { KeyboardEvent } from "react";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -44,30 +45,6 @@ export default function EditPageForm({
 	const [isLoading, setIsLoading] = useState(false);
 	const [isDirty, setIsDirty] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
-
-	// タイトルからGemini生成を呼び出すハンドラー
-	const handleGenerate = useCallback(async () => {
-		if (!title.trim()) {
-			toast.error("まずタイトルを入力してよ");
-			return;
-		}
-		if (!editor) return;
-		setIsGenerating(true);
-		try {
-			// サーバーで生成されたMarkdownを取得
-			const markdown = await generatePageInfo(title);
-			// MarkdownをHTMLに変換
-			const html = marked.parse(markdown);
-			// HTMLコンテンツをエディタにセット
-			editor.commands.setContent(html);
-			toast.success("コンテンツ生成完了");
-		} catch (error) {
-			console.error("generatePageInfo error:", error);
-			toast.error("生成に失敗しました");
-		} finally {
-			setIsGenerating(false);
-		}
-	}, [title]);
 
 	// Offline detection state (SSR safe)
 	const [isOnline, setIsOnline] = useState<boolean>(true);
@@ -128,6 +105,28 @@ export default function EditPageForm({
 			setIsLoading(false);
 		}
 	}, [editor, title, page.id, supabase]);
+
+	// タイトルからGemini生成を呼び出すハンドラー
+	const handleGenerate = useCallback(async () => {
+		if (!title.trim()) {
+			toast.error("タイトルを入力してください");
+			return;
+		}
+		setIsGenerating(true);
+		try {
+			const markdown = await generatePageInfo(title);
+			const html = marked.parse(markdown);
+			editor?.commands.setContent(html);
+			await savePage();
+			toast.success("コンテンツ生成完了");
+		} catch (error) {
+			console.error("generatePageInfo error:", error);
+			toast.error("生成に失敗しました");
+		} finally {
+			setIsGenerating(false);
+		}
+	}, [title, editor, savePage]);
+
 	// Autosave on editor updates
 	useEffect(() => {
 		if (!editor) return;
@@ -152,7 +151,7 @@ export default function EditPageForm({
 	}, [savePage, editor]);
 
 	// Function to wrap selection with pageLink mark
-	const wrapSelectionWithPageLink = async () => {
+	const wrapSelectionWithPageLink = useCallback(async () => {
 		if (!editor) return;
 		const { from, to } = editor.state.selection;
 		const text = editor.state.doc.textBetween(from, to, "");
@@ -183,7 +182,28 @@ export default function EditPageForm({
 			console.error("リンク作成例外:", err);
 			toast.error("リンク作成中にエラーが発生しました");
 		}
-	};
+	}, [editor, supabase]);
+
+	// Keyboard shortcuts: Mod-k for page link, Mod-Shift-l/o for bullet/ordered list
+	const handleKeyDown = useCallback(
+		(e: KeyboardEvent) => {
+			if (!editor) return;
+			const key = e.key.toLowerCase();
+			if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key === "k") {
+				e.preventDefault();
+				wrapSelectionWithPageLink();
+			}
+			if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "l") {
+				e.preventDefault();
+				editor.chain().focus().toggleBulletList().run();
+			}
+			if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "o") {
+				e.preventDefault();
+				editor.chain().focus().toggleOrderedList().run();
+			}
+		},
+		[editor, wrapSelectionWithPageLink],
+	);
 
 	/**
 	 * ページの内容を読み上げる
@@ -315,6 +335,7 @@ export default function EditPageForm({
 							<EditorContent
 								placeholder="ページ内容を入力してください"
 								editor={editor}
+								onKeyDown={handleKeyDown}
 							/>
 						)}
 					</div>
