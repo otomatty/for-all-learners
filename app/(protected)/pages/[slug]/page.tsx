@@ -51,13 +51,13 @@ export default async function PageDetail({
 	);
 
 	return (
-		<>
-			<BackLink title="戻る" className="mb-4" />
+		<div className="space-y-6 max-w-3xl mx-auto">
+			<BackLink title="戻る" className="mb-4" path="/pages" />
 			<EditPageForm
 				page={page}
 				userId={user.id}
 				initialContent={decoratedDoc}
 			/>
-		</>
+		</div>
 	);
 }

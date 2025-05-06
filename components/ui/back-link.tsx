@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export interface BackLinkProps {
 	/** テキストリンクとして表示するタイトル */
@@ -27,23 +29,31 @@ export function BackLink({ title, path, className = "" }: BackLinkProps) {
 	}, [path, router]);
 
 	const content = (
-		<span className="inline-flex items-center text-sm text-blue-600 hover:underline">
-			<span className="mr-1">←</span>
+		<>
+			<ArrowLeft className="w-4 h-4 mr-1 transition-transform duration-200 hover:-translate-x-1" />
 			{title}
-		</span>
+		</>
 	);
 
 	if (path) {
 		return (
-			<Link href={path} className={className}>
-				{content}
-			</Link>
+			<Button
+				asChild
+				variant="ghost"
+				className={`inline-flex items-center ${className}`}
+			>
+				<Link href={path}>{content}</Link>
+			</Button>
 		);
 	}
 
 	return (
-		<button type="button" onClick={handleClick} className={className}>
+		<Button
+			variant="ghost"
+			onClick={handleClick}
+			className={`inline-flex items-center ${className}`}
+		>
 			{content}
-		</button>
+		</Button>
 	);
 }

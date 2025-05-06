@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import { PageLink } from "@/lib/tiptap-extensions/page-link";
@@ -18,6 +18,7 @@ import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
 import { ContentSkeleton } from "./content-skeleton";
+import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -256,21 +257,21 @@ export default function EditPageForm({
 						className="text-4xl font-bold flex-1"
 					/>
 					{/* 変更があったときのみ表示し、左からフェードイン */}
-					<div className="ml-2">
-						{isGenerating ? (
-							<ContentSkeleton />
-						) : (
-							<button
-								type="button"
-								onClick={handleGenerate}
-								disabled={!isDirty && !isNewPage}
-								title="タイトルからコンテンツ生成"
-								className="p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out"
-							>
-								<Sparkles className="w-10 h-10 text-yellow-500" />
-							</button>
-						)}
-					</div>
+					<button
+						type="button"
+						onClick={handleGenerate}
+						disabled={isGenerating || (!isDirty && !isNewPage)}
+						title="タイトルからコンテンツ生成"
+						className={`ml-2 p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out ${
+							isDirty || isNewPage
+								? "opacity-100 translate-x-0 visible"
+								: "opacity-0 -translate-x-4 invisible"
+						}`}
+					>
+						<Sparkles
+							className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
+						/>
+					</button>
 					{/* 読み上げボタン */}
 					<Button
 						type="button"
@@ -304,64 +305,18 @@ export default function EditPageForm({
 				</div>
 				{editor && (
 					<div className="relative">
-						<BubbleMenu
+						<EditPageBubbleMenu
 							editor={editor}
-							shouldShow={({ state }) => {
-								const { from, to } = state.selection;
-								return from < to;
-							}}
-							tippyOptions={{ duration: 100 }}
-						>
-							<div className="flex space-x-1 bg-white shadow-md rounded p-1">
-								<button
-									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleHeading({ level: 1 }).run()
-									}
-									className="px-2 py-1 hover:bg-gray-100"
-								>
-									H1
-								</button>
-								<button
-									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleHeading({ level: 2 }).run()
-									}
-									className="px-2 py-1 hover:bg-gray-100"
-								>
-									H2
-								</button>
-								<button
-									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleHeading({ level: 3 }).run()
-									}
-									className="px-2 py-1 hover:bg-gray-100"
-								>
-									H3
-								</button>
-								<button
-									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleBulletList().run()
-									}
-									className="px-2 py-1 hover:bg-gray-100"
-								>
-									UL
-								</button>
-								<button
-									type="button"
-									onClick={wrapSelectionWithPageLink}
-									className="px-2 py-1 hover:bg-gray-100"
-								>
-									Link
-								</button>
-							</div>
-						</BubbleMenu>
-						<EditorContent
-							placeholder="ページ内容を入力してください"
-							editor={editor}
+							wrapSelectionWithPageLink={wrapSelectionWithPageLink}
 						/>
+						{isGenerating ? (
+							<ContentSkeleton />
+						) : (
+							<EditorContent
+								placeholder="ページ内容を入力してください"
+								editor={editor}
+							/>
+						)}
 					</div>
 				)}
 			</div>

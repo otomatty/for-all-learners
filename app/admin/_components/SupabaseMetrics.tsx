@@ -1,5 +1,5 @@
 import { getSupabaseMetrics } from "@/app/_actions/supabase_metrics";
-import { parsePrometheusMetrics } from "@/app/lib/metricsParser";
+import { parsePrometheusMetrics } from "@/lib/metricsParser";
 /**
  * Supabase Admin APIから取得したメトリクスを表示するカードコンポーネント。
  */
