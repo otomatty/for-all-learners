@@ -4,6 +4,7 @@ import React, { useCallback } from "react";
 import type { Database } from "@/types/database.types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PagesList } from "./pages-list";
+import { PagesListSkeleton } from "./pages-list-skeleton";
 
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 
@@ -63,11 +64,7 @@ export function PagesListContainer({
 	return (
 		<div>
 			{isError && <div className="text-red-500">Error: {error?.message}</div>}
-			{isLoading ? (
-				<div className="text-center py-4">Loading...</div>
-			) : (
-				<PagesList pages={pages} />
-			)}
+			{isLoading ? <PagesListSkeleton /> : <PagesList pages={pages} />}
 			<div ref={sentinelRef} />
 		</div>
 	);
