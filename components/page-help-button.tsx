@@ -6,7 +6,7 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { pageHelpConfig, type PageHelpConfig } from "@/lib/pageHelpConfig";
 import type { ReactNode } from "react";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
-
+import Link from "next/link";
 /**
  * ヘルプダイアログを表示するボタンコンポーネント
  * @param triggerIcon ボタンに表示するアイコン（指定しない場合はテキスト）
@@ -83,6 +83,13 @@ export function PageHelpButton({
 					</ol>
 				)}
 			</div>
+			<Link
+				href="/help"
+				className="text-sm text-blue-600 underline"
+				target="_blank"
+			>
+				使い方を見る
+			</Link>
 		</ResponsiveDialog>
 	);
 }

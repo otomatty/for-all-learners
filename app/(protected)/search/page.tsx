@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
+import parse from "html-react-parser";
+import sanitizeHtml from "sanitize-html";
 /**
  * 検索結果項目の型定義
  */
@@ -11,6 +14,8 @@ interface SuggestionRow {
 	id: string;
 	/** 表示テキスト */
 	suggestion: string;
+	/** 抜粋（ハイライト付きHTML） */
+	excerpt: string;
 }
 
 /**
@@ -32,7 +37,7 @@ export default async function SearchPage({
 	// RPC で検索候補を取得
 	const { data: rpcData, error: rpcError } = await supabase.rpc(
 		"search_suggestions",
-		{ query },
+		{ p_query: query },
 	);
 	if (rpcError || !rpcData) {
 		return (
@@ -61,7 +66,10 @@ export default async function SearchPage({
 
 	return (
 		<Container>
-			<h1 className="text-2xl font-bold mb-4">検索結果: {query}</h1>
+			<div className="mb-6">
+				<BackLink path="/dashboard" title="ホームに戻る" />
+			</div>
+			<h1 className="text-2xl font-bold mb-6">検索結果: {query}</h1>
 			{rows.length === 0 ? (
 				<p>該当する結果がありません。</p>
 			) : (
@@ -73,9 +81,19 @@ export default async function SearchPage({
 								: `/pages/${encodeURIComponent(r.id)}`;
 						return (
 							<li key={`${r.type}-${r.id}`}>
-								<Link href={href} className="text-blue-600 hover:underline">
-									{r.suggestion}
-								</Link>
+								<div className="space-y-1">
+									<Link href={href} className="text-blue-600 hover:underline">
+										{r.suggestion}
+									</Link>
+									<p className="text-sm text-gray-600">
+										{parse(
+											sanitizeHtml(r.excerpt, {
+												allowedTags: ["mark"],
+												allowedAttributes: {},
+											}),
+										)}
+									</p>
+								</div>
 							</li>
 						);
 					})}

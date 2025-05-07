@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 	// Use RPC for combined search
 	const { data: rpcData, error: rpcError } = await supabase.rpc(
 		"search_suggestions",
-		{ query: q },
+		{ p_query: q },
 	);
 	console.log("[search-suggestions] rpcError:", rpcError);
 	console.log("[search-suggestions] rpcData:", rpcData);

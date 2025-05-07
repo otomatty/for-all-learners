@@ -1107,11 +1107,12 @@ export type Database = {
         }[]
       }
       search_suggestions: {
-        Args: { query: string }
+        Args: { p_query: string }
         Returns: {
           type: string
           id: string
           suggestion: string
+          excerpt: string
         }[]
       }
     }
