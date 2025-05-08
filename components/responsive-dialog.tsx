@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,8 @@ import {
  * @property {string} [dialogTitle='Dialog'] - ダイアログ/ドロワー上部に表示するタイトル
  * @property {string} [dialogDescription=''] - タイトル下に表示する説明文
  * @property {React.ComponentProps<typeof Button>} [triggerButtonProps] - トリガーボタンに渡す追加のButtonプロパティ
+ * @property {boolean} open - ダイアログ/ドロワーが開いているかどうか
+ * @property {(open: boolean) => void} onOpenChange - ダイアログ/ドロワーの開閉状態が変更されたときに呼び出されるコールバック
  */
 interface ResponsiveDialogProps {
 	children: React.ReactNode;
@@ -41,6 +43,8 @@ interface ResponsiveDialogProps {
 	dialogDescription?: string;
 	triggerButtonProps?: React.ComponentProps<typeof Button>;
 	className?: string;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }
 
 /**
@@ -71,8 +75,9 @@ export function ResponsiveDialog({
 	dialogDescription = "",
 	className,
 	triggerButtonProps,
+	open,
+	onOpenChange,
 }: ResponsiveDialogProps) {
-	const [open, setOpen] = React.useState(false);
 	const isMobile = useIsMobile();
 
 	const buttonProps: React.ComponentProps<typeof Button> = {
@@ -89,8 +94,9 @@ export function ResponsiveDialog({
 
 	if (isMobile) {
 		return (
-			<Drawer open={open} onOpenChange={setOpen}>
-				<DrawerTrigger asChild>{triggerElement}</DrawerTrigger>
+			<Drawer open={open} onOpenChange={onOpenChange}>
+				{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
+				{/* <DrawerTrigger asChild>{triggerElement}</DrawerTrigger> */}
 				<DrawerContent className="sm:max-w-[425px]">
 					<DrawerHeader>
 						<DrawerTitle>{dialogTitle}</DrawerTitle>
@@ -103,8 +109,9 @@ export function ResponsiveDialog({
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{triggerElement}</DialogTrigger>
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
+			{/* <DialogTrigger asChild>{triggerElement}</DialogTrigger> */}
 			<DialogContent className={className}>
 				<DialogHeader className="text-left">
 					<DialogTitle>{dialogTitle}</DialogTitle>

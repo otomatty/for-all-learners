@@ -46,6 +46,8 @@ export default function ActionMenu({
 }: ActionMenuProps) {
 	const router = useRouter();
 	const [showDelete, setShowDelete] = useState(false);
+	const [showCardFormDialog, setShowCardFormDialog] = useState(false);
+	const [showDeckFormDialog, setShowDeckFormDialog] = useState(false);
 
 	const handleDelete = async () => {
 		try {
@@ -69,6 +71,8 @@ export default function ActionMenu({
 					dialogTitle="カードを作成"
 					dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
 					triggerButtonProps={{ variant: "outline", size: "sm" }}
+					open={showCardFormDialog}
+					onOpenChange={setShowCardFormDialog}
 				>
 					<CardForm deckId={deckId} userId={userId} />
 				</ResponsiveDialog>
@@ -84,6 +88,8 @@ export default function ActionMenu({
 					dialogTitle="デッキを編集"
 					dialogDescription="デッキ情報を編集してください"
 					triggerButtonProps={{ variant: "outline", size: "sm" }}
+					open={showDeckFormDialog}
+					onOpenChange={setShowDeckFormDialog}
 				>
 					<DeckForm
 						userId={userId}
@@ -115,37 +121,19 @@ export default function ActionMenu({
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
-						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-							<ResponsiveDialog
-								triggerText="手動で入力する"
-								dialogTitle="カードを作成"
-								dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
-								triggerButtonProps={{ variant: "ghost", size: "sm" }}
-							>
-								<CardForm deckId={deckId} userId={userId} />
-							</ResponsiveDialog>
+						<DropdownMenuItem onSelect={() => setShowCardFormDialog(true)}>
+							{/* ResponsiveDialogの内部トリガーは不要 */}
+							手動で入力する
 						</DropdownMenuItem>
 						<DropdownMenuItem>
 							<SyncButton deckId={deckId} />
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-							<ResponsiveDialog
-								triggerText="編集"
-								dialogTitle="デッキを編集"
-								dialogDescription="デッキ情報を編集してください"
-								triggerButtonProps={{ variant: "ghost", size: "sm" }}
-							>
-								<DeckForm
-									userId={userId}
-									deckId={deckId}
-									initialTitle={deckTitle}
-									initialDescription={deckDescription}
-									initialIsPublic={deckIsPublic}
-								/>
-							</ResponsiveDialog>
+						<DropdownMenuItem onSelect={() => setShowDeckFormDialog(true)}>
+							{/* ResponsiveDialogの内部トリガーは不要 */}
+							編集
 						</DropdownMenuItem>
-						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+						<DropdownMenuItem onSelect={() => setShowDelete(true)}>
 							削除する
 						</DropdownMenuItem>
 					</DropdownMenuContent>
