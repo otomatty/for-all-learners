@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/container";
 import PagesPageClient from "./page-client";
 import { getPagesByUser } from "@/app/_actions/pages";
+import { BackLink } from "@/components/ui/back-link";
 
 export default async function PagesPage() {
 	const supabase = await createClient();
@@ -18,6 +19,9 @@ export default async function PagesPage() {
 
 	return (
 		<Container className="max-w-7xl">
+			<div className="mb-6">
+				<BackLink path="/dashboard" title="ホームに戻る" />
+			</div>
 			<PagesPageClient userId={user.id} totalCount={totalCount} />
 		</Container>
 	);

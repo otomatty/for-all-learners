@@ -4,7 +4,15 @@ import type { Database } from "@/types/database.types";
 import type { NextRequest } from "next/server";
 
 // Define public routes for unauthenticated users
-const PUBLIC_PATHS = ["/", "/auth/login", "/auth/callback"];
+const PUBLIC_PATHS = [
+	"/",
+	"/auth/login",
+	"/auth/callback",
+	"/features",
+	"/pricing",
+	"/guides",
+	"/faq",
+];
 
 export async function middleware(req: NextRequest) {
 	const { pathname } = req.nextUrl;

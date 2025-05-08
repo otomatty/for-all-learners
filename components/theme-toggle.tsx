@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, SunMoon } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
@@ -40,10 +40,16 @@ export function ThemeToggle() {
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem onClick={() => setTheme("light")}>
-						Light
+						<Sun className="mr-2 h-4 w-4" />
+						ライト
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => setTheme("dark")}>
-						Dark
+						<Moon className="mr-2 h-4 w-4" />
+						ダーク
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => setTheme("system")}>
+						<SunMoon className="mr-2 h-4 w-4" />
+						システム
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>

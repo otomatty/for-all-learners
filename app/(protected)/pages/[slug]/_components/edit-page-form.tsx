@@ -10,6 +10,10 @@ import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import { PageLink } from "@/lib/tiptap-extensions/page-link";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
+import {
+	CustomBulletList,
+	CustomOrderedList,
+} from "@/lib/tiptap-extensions/custom-list";
 import type { JSONContent } from "@tiptap/core";
 import type { Database } from "@/types/database.types";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -64,8 +68,14 @@ export default function EditPageForm({
 	// Initialize TipTap editor before defining savePage and autosave hooks
 	const editor = useEditor({
 		extensions: [
-			StarterKit.configure({ heading: false }),
+			StarterKit.configure({
+				heading: false,
+				bulletList: false,
+				orderedList: false,
+			}),
 			CustomHeading,
+			CustomBulletList,
+			CustomOrderedList,
 			LinkExtension,
 			PageLink,
 			Placeholder.configure({

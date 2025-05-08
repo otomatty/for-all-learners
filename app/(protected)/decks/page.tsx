@@ -6,6 +6,7 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
 
 export default async function DecksPage() {
 	const supabase = await createClient();
@@ -26,6 +27,9 @@ export default async function DecksPage() {
 
 	return (
 		<Container>
+			<div className="mb-6">
+				<BackLink path="/dashboard" title="ホームに戻る" />
+			</div>
 			<Tabs defaultValue="my-decks" className="space-y-4">
 				{/* 新規／編集デッキフォーム */}
 				<div className="flex justify-between mb-4">

@@ -70,7 +70,7 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 				<SelectContent className="text-lg font-semibold border-border">
 					{goals.map((goal) => (
 						<SelectItem key={goal.id} value={goal.id}>
-							<span className="p-4">{goal.title}</span>
+							<span className="py-2">{goal.title}</span>
 						</SelectItem>
 					))}
 					<SelectItem value="new-goal">

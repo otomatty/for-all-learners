@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Logo } from "@/components/site-logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PublicNavigation } from "@/components/public-navigation";
 
 interface UnauthHeaderProps {
 	version?: string;
@@ -14,6 +15,7 @@ export function UnauthHeader({ version }: UnauthHeaderProps) {
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md ">
 			<div className="container mx-auto flex items-center justify-between py-4 px-6">
 				<Logo version={version} />
+				<PublicNavigation />
 				<div className="flex items-center space-x-4">
 					<ThemeToggle />
 					<Button asChild variant="outline">

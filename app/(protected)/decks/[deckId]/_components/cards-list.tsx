@@ -166,11 +166,11 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 
 	if (localCards.length === 0) {
 		const emptyMessage = (
-			<div className="flex flex-col items-center justify-center h-40 border rounded-lg hover:shadow-lg transition-shadow">
+			<div className="flex flex-col items-center justify-center h-40 border border-border rounded-lg transition-shadow bg-muted">
 				<p className="text-muted-foreground">カードがありません</p>
 				{canEdit && (
 					<p className="text-sm text-muted-foreground">
-						「新規カード」ボタンからカードを作成してください
+						「音読する」「画像を読み込む」ボタンからカードを作成してください
 					</p>
 				)}
 			</div>
