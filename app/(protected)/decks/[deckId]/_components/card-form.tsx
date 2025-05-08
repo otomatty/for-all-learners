@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
@@ -9,17 +9,12 @@ import {
 	FormItem,
 	FormLabel,
 	FormControl,
+	FormMessage, // FormMessageを追加
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
-import { PageLink } from "@/lib/tiptap-extensions/page-link";
-import type { JSONContent } from "@tiptap/core";
-import { syncCardLinks } from "@/app/_actions/syncCardLinks";
+import { Textarea } from "@/components/ui/textarea"; // Textareaを追加
 import { createCard } from "@/app/_actions/cards";
 
 interface CardFormProps {
@@ -28,53 +23,33 @@ interface CardFormProps {
 }
 
 type CardFormValues = {
-	frontContent: JSONContent;
-	backContent: JSONContent;
+	frontContent: string; // 型をstringに変更
+	backContent: string; // 型をstringに変更
 };
 
 export function CardForm({ deckId, userId }: CardFormProps) {
 	const router = useRouter();
 	const form = useForm<CardFormValues>({
 		defaultValues: {
-			frontContent: { type: "doc", content: [] },
-			backContent: { type: "doc", content: [] },
+			frontContent: "", // 初期値を空文字列に変更
+			backContent: "", // 初期値を空文字列に変更
 		},
 	});
 	const [side, setSide] = useState<"front" | "back">("front");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
-	const frontEditor = useEditor({
-		extensions: [
-			StarterKit,
-			LinkExtension.configure({
-				HTMLAttributes: { className: "text-blue-500 underline" },
-			}),
-			PageLink,
-		],
-		content: form.getValues("frontContent"),
-		onUpdate: ({ editor }) => form.setValue("frontContent", editor.getJSON()),
-	});
-	const backEditor = useEditor({
-		extensions: [
-			StarterKit,
-			LinkExtension.configure({
-				HTMLAttributes: { className: "text-blue-500 underline" },
-			}),
-			PageLink,
-		],
-		content: form.getValues("backContent"),
-		onUpdate: ({ editor }) => form.setValue("backContent", editor.getJSON()),
-	});
 
 	const onSubmit = async (values: CardFormValues) => {
 		setIsLoading(true);
 		try {
 			const { frontContent, backContent } = values;
-			if (!frontContent.content?.length) {
+			if (!frontContent.trim()) {
+				// 文字列の長さをチェック
 				toast.error("表面に少なくとも1文字以上入力してください");
 				return;
 			}
-			if (!backContent.content?.length) {
+			if (!backContent.trim()) {
+				// 文字列の長さをチェック
 				toast.error("裏面に少なくとも1文字以上入力してください");
 				return;
 			}
@@ -82,15 +57,15 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 			const data = await createCard({
 				user_id: userId,
 				deck_id: deckId,
-				front_content: frontContent,
-				back_content: backContent,
+				front_content: frontContent, // 文字列を渡す
+				back_content: backContent, // 文字列を渡す
 			});
-			// Synchronize page links for the new card
-			try {
-				await syncCardLinks(data.id, frontContent);
-			} catch (syncErr) {
-				console.error("リンク同期エラー:", syncErr);
-			}
+			// syncCardLinksはTiptapのJSONContentを前提としているため削除
+			// try {
+			// 	await syncCardLinks(data.id, frontContent);
+			// } catch (syncErr) {
+			// 	console.error("リンク同期エラー:", syncErr);
+			// }
 			toast.success("カードを作成しました");
 			router.push(`/decks/${deckId}`);
 		} catch (err: unknown) {
@@ -106,27 +81,16 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 	};
 
 	const generateAnswer = async () => {
-		const frontJSON = frontEditor?.getJSON();
-		if (!frontJSON?.content?.length) {
+		const frontText = form.getValues("frontContent").trim(); // 文字列として取得
+		if (!frontText) {
 			toast.error("表面の内容を入力してください");
 			return;
 		}
 		setIsGenerating(true);
 		try {
 			setTimeout(() => {
-				const firstNode = frontJSON.content?.[0];
-				const text = firstNode?.type === "text" ? firstNode.text : "";
-				const generatedText = `「${text}」に対する回答例:\n\n${text}は、ITパスポート試験の重要な概念です。詳細な説明...`;
-				const generatedJSON: JSONContent = {
-					type: "doc",
-					content: [
-						{
-							type: "paragraph",
-							content: [{ type: "text", text: generatedText }],
-						},
-					],
-				};
-				form.setValue("backContent", generatedJSON);
+				const generatedText = `「${frontText}」に対する回答例:\n\n${frontText}は、ITパスポート試験の重要な概念です。詳細な説明...`;
+				form.setValue("backContent", generatedText); // 文字列として設定
 				toast.success("回答を生成しました");
 				setIsGenerating(false);
 			}, 2000);
@@ -144,96 +108,90 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 	return (
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onSubmit)}>
-				<Card>
-					<CardContent>
-						<div className="flex space-x-2 mb-4">
-							<Button
-								variant={side === "front" ? "default" : "outline"}
-								size="sm"
-								type="button"
-								onClick={() => setSide("front")}
-							>
-								表面
-							</Button>
-							<Button
-								variant={side === "back" ? "default" : "outline"}
-								size="sm"
-								type="button"
-								onClick={() => setSide("back")}
-							>
-								裏面
-							</Button>
-						</div>
-						{side === "front" && (
-							<FormField
-								name="frontContent"
-								control={form.control}
-								render={() => (
-									<FormItem>
-										<FormLabel>表面（問題・用語など）</FormLabel>
-										<FormControl>
-											{frontEditor && (
-												<EditorContent
-													editor={frontEditor}
-													className="min-h-[100px] border p-2 rounded"
-												/>
-											)}
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+				<div className="flex space-x-2 mb-4">
+					<Button
+						variant={side === "front" ? "default" : "outline"}
+						size="sm"
+						type="button"
+						onClick={() => setSide("front")}
+					>
+						表面
+					</Button>
+					<Button
+						variant={side === "back" ? "default" : "outline"}
+						size="sm"
+						type="button"
+						onClick={() => setSide("back")}
+					>
+						裏面
+					</Button>
+				</div>
+				{side === "front" && (
+					<FormField
+						control={form.control}
+						name="frontContent"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>表面（問題・用語など）</FormLabel>
+								<FormControl>
+									<Textarea
+										placeholder="表面の内容を入力してください" // placeholderを追加
+										className="min-h-[100px] border p-2 rounded"
+										{...field} // fieldプロップスを渡す
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
 						)}
-						{side === "back" && (
-							<FormField
-								name="backContent"
-								control={form.control}
-								render={() => (
-									<FormItem>
-										<FormLabel>裏面（回答・解説など）</FormLabel>
-										<div className="mb-2">
-											<Button
-												variant="outline"
-												size="sm"
-												type="button"
-												onClick={generateAnswer}
-												disabled={isGenerating}
-											>
-												{isGenerating ? (
-													<>
-														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-														生成中...
-													</>
-												) : (
-													"回答を生成する"
-												)}
-											</Button>
-										</div>
-										<FormControl>
-											{backEditor && (
-												<EditorContent
-													editor={backEditor}
-													className="min-h-[150px] border p-2 rounded"
-												/>
-											)}
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+					/>
+				)}
+				{side === "back" && (
+					<FormField
+						control={form.control}
+						name="backContent"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>裏面（回答・解説など）</FormLabel>
+								<div className="mb-2">
+									<Button
+										variant="outline"
+										size="sm"
+										type="button"
+										onClick={generateAnswer}
+										disabled={isGenerating}
+									>
+										{isGenerating ? (
+											<>
+												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+												生成中...
+											</>
+										) : (
+											"回答を生成する"
+										)}
+									</Button>
+								</div>
+								<FormControl>
+									<Textarea
+										placeholder="裏面の内容を入力してください" // placeholderを追加
+										className="min-h-[150px] border p-2 rounded"
+										{...field} // fieldプロップスを渡す
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
 						)}
-					</CardContent>
-					<CardFooter className="flex justify-end space-x-2">
-						<Button
-							variant="outline"
-							type="button"
-							onClick={() => router.push(`/decks/${deckId}`)}
-						>
-							キャンセル
-						</Button>
-						<Button type="submit" disabled={isLoading}>
-							{isLoading ? "作成中..." : "カードを作成"}
-						</Button>
-					</CardFooter>
-				</Card>
+					/>
+				)}
+				<Button
+					variant="outline"
+					type="button"
+					onClick={() => router.push(`/decks/${deckId}`)}
+				>
+					キャンセル
+				</Button>
+				<Button type="submit" disabled={isLoading}>
+					{isLoading ? "作成中..." : "カードを作成"}
+				</Button>
 			</form>
 		</Form>
 	);

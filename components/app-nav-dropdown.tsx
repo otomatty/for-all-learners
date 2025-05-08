@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ interface AppNavDropdownProps {
 export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const pathname = usePathname();
 
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
@@ -87,6 +89,7 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 										)}
 										onClick={(e) => {
 											if (isDisabled) e.preventDefault();
+											setOpen(false); // ここでドロップダウンを閉じる
 										}}
 									>
 										{item.status === "demo" && (

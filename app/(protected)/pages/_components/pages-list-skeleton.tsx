@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-const SKELETON_COUNT = 6;
+const SKELETON_COUNT = 36;
 const skeletonKeys = Array.from(
 	{ length: SKELETON_COUNT },
 	(_, i) => `skeleton-${i}`,
@@ -16,7 +16,9 @@ export function PagesListSkeleton() {
 					key={key}
 					className="p-4 border border-border rounded-md animate-pulse space-y-2"
 				>
-					<Skeleton className="h-5 w-3/4" />
+					<Skeleton className="h-6 w-3/4" />
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-4 w-2/3" />
