@@ -6,6 +6,8 @@ import { getCardsByDeck } from "@/app/_actions/cards";
 import DeckSelector from "./_components/deck-selector";
 import ActionMenu from "./_components/action-menu";
 import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
+
 export default async function DeckPage({
 	params,
 }: { params: Promise<{ deckId: string }> }) {
@@ -107,6 +109,9 @@ export default async function DeckPage({
 
 	return (
 		<Container>
+			<div className="mb-6">
+				<BackLink title="デッキ一覧に戻る" path="/decks" />
+			</div>
 			<DeckSelector decks={decksList} currentDeckId={deckId} />
 			{canEdit && (
 				<ActionMenu
