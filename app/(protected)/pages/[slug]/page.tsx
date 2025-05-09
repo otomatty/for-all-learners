@@ -52,7 +52,7 @@ export default async function PageDetail({
 	);
 
 	return (
-		<Container className="max-w-3xl">
+		<Container className="max-w-5xl">
 			<BackLink title="戻る" className="mb-4" path="/pages" />
 			<EditPageForm
 				page={page}

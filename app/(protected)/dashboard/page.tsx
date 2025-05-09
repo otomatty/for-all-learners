@@ -3,7 +3,7 @@ import { getAccountById } from "@/app/_actions/accounts";
 import { redirect } from "next/navigation";
 import { DashboardSummary } from "./_components/dashboard-summary";
 import GoalSummary from "./_components/goal-summary";
-import { QuickActionTiles } from "./_components/QuickActionTiles";
+import { QuickActionTiles } from "./_components/quick-action-tiles";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";

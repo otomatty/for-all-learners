@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { pageHelpConfig, type PageHelpConfig } from "@/lib/pageHelpConfig";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
 import Link from "next/link";
 /**
@@ -23,6 +24,7 @@ export function PageHelpButton({
 	triggerIcon,
 	playAudio = false,
 }: PageHelpButtonProps) {
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	// 音声設定をローカル state で管理
 	const [localPlayAudio, setLocalPlayAudio] = useState(playAudio);
 	const pathname = usePathname();
@@ -47,49 +49,65 @@ export function PageHelpButton({
 		setLocalPlayAudio(updated);
 	}
 
-	return (
-		<ResponsiveDialog
-			triggerText="ヘルプ"
-			triggerIcon={triggerIcon}
-			triggerButtonProps={{ variant: "ghost", size: "sm" }}
-			dialogTitle="操作ガイド"
-			className="!max-w-5xl"
+	const triggerButton = triggerIcon ? (
+		<button
+			type="button"
+			onClick={() => setIsDialogOpen(true)}
+			className="p-2 rounded-md hover:bg-accent" // Basic styling, adjust as needed
 		>
-			<div className="space-y-4">
-				{config.mode === "video" ? (
-					<>
-						<iframe
-							title="ヘルプ動画"
-							width="100%"
-							height="600"
-							src={`https://www.youtube.com/embed/${config.videoId}?autoplay=1&mute=${localPlayAudio ? 0 : 1}`}
-							allow="autoplay; encrypted-media; gyroscope; accelerometer"
-							allowFullScreen
-							className="rounded-md"
-						/>
-						<button
-							type="button"
-							className="mt-2 text-sm text-blue-600 underline"
-							onClick={handleToggleAudio}
-						>
-							音声: {localPlayAudio ? "オン" : "オフ"}（クリックで切り替え）
-						</button>
-					</>
-				) : (
-					<ol className="list-decimal pl-4 space-y-2">
-						{config.steps.map((step) => (
-							<li key={step}>{step}</li>
-						))}
-					</ol>
-				)}
-			</div>
-			<Link
-				href="/help"
-				className="text-sm text-blue-600 underline"
-				target="_blank"
+			{triggerIcon}
+		</button>
+	) : (
+		<Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(true)}>
+			ヘルプ
+		</Button>
+	);
+
+	return (
+		<>
+			{triggerButton}
+			<ResponsiveDialog
+				open={isDialogOpen}
+				onOpenChange={setIsDialogOpen}
+				dialogTitle="操作ガイド"
+				className="!max-w-5xl"
 			>
-				使い方を見る
-			</Link>
-		</ResponsiveDialog>
+				<div className="space-y-4">
+					{config.mode === "video" ? (
+						<>
+							<iframe
+								title="ヘルプ動画"
+								width="100%"
+								height="600"
+								src={`https://www.youtube.com/embed/${config.videoId}?autoplay=1&mute=${localPlayAudio ? 0 : 1}`}
+								allow="autoplay; encrypted-media; gyroscope; accelerometer"
+								allowFullScreen
+								className="rounded-md"
+							/>
+							<button
+								type="button"
+								className="mt-2 text-sm text-blue-600 underline"
+								onClick={handleToggleAudio}
+							>
+								音声: {localPlayAudio ? "オン" : "オフ"}（クリックで切り替え）
+							</button>
+						</>
+					) : (
+						<ol className="list-decimal pl-4 space-y-2">
+							{config.steps.map((step) => (
+								<li key={step}>{step}</li>
+							))}
+						</ol>
+					)}
+				</div>
+				<Link
+					href="/help"
+					className="text-sm text-blue-600 underline"
+					target="_blank"
+				>
+					使い方を見る
+				</Link>
+			</ResponsiveDialog>
+		</>
 	);
 }

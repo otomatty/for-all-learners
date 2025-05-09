@@ -8,6 +8,9 @@ import React from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image"; // Imageエクステンションをインポート
+import TextAlign from "@tiptap/extension-text-align"; // TextAlignをインポート
+import Typography from "@tiptap/extension-typography"; // Typographyをインポート
 import { PageLink } from "@/lib/tiptap-extensions/page-link";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import type { JSONContent } from "@tiptap/core";
@@ -76,10 +79,21 @@ export function RichContent({ content, highlight }: RichContentProps) {
 	const processedDoc = highlight ? transformContent(doc, highlight) : doc;
 	const editor = useEditor({
 		extensions: [
-			StarterKit,
+			StarterKit.configure({
+				// 必要に応じてStarterKitのオプションを設定
+			}),
 			LinkExtension.configure({
 				HTMLAttributes: { className: "text-blue-500 underline" },
+				openOnClick: false,
+				autolink: true,
 			}),
+			Image.configure({
+				inline: false,
+			}),
+			TextAlign.configure({
+				types: ["heading", "paragraph"],
+			}),
+			Typography,
 			PageLink,
 			Highlight,
 		],

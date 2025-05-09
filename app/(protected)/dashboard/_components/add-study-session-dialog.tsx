@@ -22,27 +22,36 @@ export function AddStudySessionDialog({
 		new Date().toISOString().slice(0, 10),
 	);
 	const [isPending, startTransition] = useTransition();
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	return (
-		<ResponsiveDialog triggerText="記録" dialogTitle="学習記録">
-			<div className="space-y-2">
-				<Input
-					type="date"
-					value={date}
-					onChange={(e) => setDate(e.currentTarget.value)}
-				/>
-				<Button
-					disabled={isPending}
-					onClick={() =>
-						startTransition(async () => {
-							await addDeckStudyLog(deckId, date);
-							onSuccess();
-						})
-					}
-				>
-					登録
-				</Button>
-			</div>
-		</ResponsiveDialog>
+		<>
+			<Button onClick={() => setIsDialogOpen(true)}>記録</Button>
+			<ResponsiveDialog
+				open={isDialogOpen}
+				onOpenChange={setIsDialogOpen}
+				dialogTitle="学習記録"
+			>
+				<div className="space-y-2">
+					<Input
+						type="date"
+						value={date}
+						onChange={(e) => setDate(e.currentTarget.value)}
+					/>
+					<Button
+						disabled={isPending}
+						onClick={() =>
+							startTransition(async () => {
+								await addDeckStudyLog(deckId, date);
+								onSuccess();
+								setIsDialogOpen(false); // Close dialog on success
+							})
+						}
+					>
+						登録
+					</Button>
+				</div>
+			</ResponsiveDialog>
+		</>
 	);
 }

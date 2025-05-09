@@ -2,8 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DecksList } from "@/app/(protected)/decks/_components/decks-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { CreateDeckDialogButton } from "@/app/(protected)/decks/_components/create-deck-dialog-button";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
@@ -37,13 +36,7 @@ export default async function DecksPage() {
 						<TabsTrigger value="my-decks">マイデッキ</TabsTrigger>
 						<TabsTrigger value="shared-decks">共有デッキ</TabsTrigger>
 					</TabsList>
-					<ResponsiveDialog
-						triggerText="新規デッキ"
-						dialogTitle="デッキを作成／編集"
-						dialogDescription="デッキタイトルと説明を入力してください"
-					>
-						<DeckForm userId={user.id} />
-					</ResponsiveDialog>
+					<CreateDeckDialogButton userId={user.id} />
 				</div>
 				<TabsContent value="my-decks" className="space-y-4">
 					<DecksList decks={myDecks || []} />

@@ -25,6 +25,7 @@ import {
 	CommandItem,
 } from "@/components/ui/command";
 export const QuickActionTiles: React.FC = () => {
+	const [isQuickActionDialogOpen, setIsQuickActionDialogOpen] = useState(false);
 	// State for deck list and selection
 	const [decks, setDecks] = useState<
 		Database["public"]["Tables"]["decks"]["Row"][]
@@ -78,13 +79,17 @@ export const QuickActionTiles: React.FC = () => {
 				</CardHeader>
 				<CardFooter>
 					{/* Open dialog to select deck and workflow */}
+					<Button
+						variant="default"
+						className="w-full"
+						onClick={() => setIsQuickActionDialogOpen(true)}
+					>
+						問題を作成する
+					</Button>
 					<ResponsiveDialog
-						triggerText="問題を作成する"
+						open={isQuickActionDialogOpen}
+						onOpenChange={setIsQuickActionDialogOpen}
 						dialogTitle="問題を作成する"
-						triggerButtonProps={{
-							variant: "default",
-							className: "w-full",
-						}}
 					>
 						<div className="space-y-4">
 							<div>

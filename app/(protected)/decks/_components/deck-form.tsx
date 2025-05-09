@@ -19,6 +19,7 @@ interface DeckFormProps {
 	initialTitle?: string;
 	initialDescription?: string;
 	initialIsPublic?: boolean;
+	onSuccess?: () => void;
 }
 
 export function DeckForm({
@@ -27,6 +28,7 @@ export function DeckForm({
 	initialTitle,
 	initialDescription,
 	initialIsPublic = false,
+	onSuccess,
 }: DeckFormProps) {
 	const router = useRouter();
 	const supabase = createClient();
@@ -49,6 +51,7 @@ export function DeckForm({
 				// 更新: サーバーアクションを利用
 				await updateDeck(deckId, { title, description, is_public: isPublic });
 				toast.success("デッキ情報を更新しました");
+				onSuccess?.();
 				router.refresh();
 			} else {
 				// 作成: 型付けしたSupabaseコール
@@ -58,6 +61,7 @@ export function DeckForm({
 					.select();
 				if (error) throw error;
 				toast.success("デッキを作成しました");
+				onSuccess?.();
 				router.push(`/decks/${data[0].id}`);
 			}
 		} catch (err) {
@@ -79,51 +83,45 @@ export function DeckForm({
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<Card>
-				<CardContent className="pt-6 space-y-4">
-					<div className="space-y-2">
-						<Label htmlFor="title">タイトル</Label>
-						<Input
-							id="title"
-							placeholder="デッキのタイトルを入力"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							required
-						/>
-					</div>
-					<div className="space-y-2">
-						<Label htmlFor="description">説明</Label>
-						<Textarea
-							id="description"
-							placeholder="デッキの説明を入力（任意）"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							rows={4}
-						/>
-					</div>
-					<div className="flex items-center space-x-2">
-						<Switch
-							id="is-public"
-							checked={isPublic}
-							onCheckedChange={setIsPublic}
-						/>
-						<Label htmlFor="is-public">公開する</Label>
-					</div>
-				</CardContent>
-				<CardFooter className="flex justify-between">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => router.push("/decks")}
-					>
-						キャンセル
-					</Button>
-					<Button type="submit" disabled={isLoading}>
-						{isLoading ? "作成中..." : "デッキを作成"}
-					</Button>
-				</CardFooter>
-			</Card>
+		<form onSubmit={handleSubmit} className="space-y-4">
+			<div className="space-y-2">
+				<Label htmlFor="title">タイトル</Label>
+				<Input
+					id="title"
+					placeholder="デッキのタイトルを入力"
+					value={title}
+					onChange={(e) => setTitle(e.target.value)}
+					required
+				/>
+			</div>
+			<div className="space-y-2">
+				<Label htmlFor="description">説明</Label>
+				<Textarea
+					id="description"
+					placeholder="デッキの説明を入力（任意）"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					rows={4}
+				/>
+			</div>
+			<div className="flex items-center space-x-2">
+				<Switch
+					id="is-public"
+					checked={isPublic}
+					onCheckedChange={setIsPublic}
+				/>
+				<Label htmlFor="is-public">公開する</Label>
+			</div>
+			<Button
+				type="button"
+				variant="outline"
+				onClick={() => router.push("/decks")}
+			>
+				キャンセル
+			</Button>
+			<Button type="submit" disabled={isLoading}>
+				{isLoading ? "作成中..." : "デッキを作成"}
+			</Button>
 		</form>
 	);
 }

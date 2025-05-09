@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useAtomValue } from "jotai";
 import { userIdAtom } from "@/stores/user";
@@ -23,6 +23,8 @@ interface Deck {
 	title: string;
 	card_count: number;
 	todayReviewCount: number;
+	description?: string; // Add optional description
+	is_public?: boolean; // Add optional is_public
 }
 
 interface MobileDecksListProps {
@@ -32,6 +34,7 @@ interface MobileDecksListProps {
 
 export function MobileDecksList({ decks, onRemove }: MobileDecksListProps) {
 	const userId = useAtomValue(userIdAtom);
+	const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
 
 	if (decks.length === 0) {
 		return (
@@ -68,20 +71,32 @@ export function MobileDecksList({ decks, onRemove }: MobileDecksListProps) {
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end">
 										{userId && (
-											<DropdownMenuItem>
+											<>
+												<DropdownMenuItem
+													onSelect={() => setEditingDeckId(deck.id)}
+												>
+													編集
+												</DropdownMenuItem>
 												<ResponsiveDialog
-													triggerText="編集"
+													open={editingDeckId === deck.id}
+													onOpenChange={(isOpen) => {
+														if (!isOpen) {
+															setEditingDeckId(null);
+														}
+													}}
 													dialogTitle="デッキを編集"
 													dialogDescription="デッキタイトルと説明を編集してください"
-													triggerButtonProps={{
-														variant: "ghost",
-														className: "w-full justify-start",
-														onClick: (e) => e.stopPropagation(),
-													}}
 												>
-													<DeckForm userId={userId} />
+													<DeckForm
+														userId={userId}
+														deckId={deck.id}
+														initialTitle={deck.title}
+														initialDescription={deck.description}
+														initialIsPublic={deck.is_public}
+														onSuccess={() => setEditingDeckId(null)}
+													/>
 												</ResponsiveDialog>
-											</DropdownMenuItem>
+											</>
 										)}
 										<DropdownMenuItem asChild>
 											<Link href={`/decks/${deck.id}/audio`}>音読</Link>

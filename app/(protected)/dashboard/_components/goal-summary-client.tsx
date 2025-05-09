@@ -3,17 +3,10 @@
 import type React from "react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { AddGoalDialog } from "./add-goal-dialog";
 import GoalHeatmap from "./goal-heatmap";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import TimeProgress from "./time-progress";
+import GoalSelect from "./goal-select";
 
 interface StudyGoal {
 	id: string;
@@ -60,29 +53,11 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 
 	return (
 		<div className="mt-4">
-			<Select
-				value={selectedGoalId}
-				onValueChange={(value) => setSelectedGoalId(value)}
-			>
-				<SelectTrigger className="border rounded w-fit text-lg font-semibold border-border p-4">
-					<SelectValue placeholder="学習目標を選択" />
-				</SelectTrigger>
-				<SelectContent className="text-lg font-semibold border-border">
-					{goals.map((goal) => (
-						<SelectItem key={goal.id} value={goal.id}>
-							<span className="py-2">{goal.title}</span>
-						</SelectItem>
-					))}
-					<SelectItem value="new-goal">
-						<AddGoalDialog
-							triggerButtonProps={{
-								variant: "ghost",
-								className: "w-full p-0 m-0 bg-transparent hover:bg-transparent",
-							}}
-						/>
-					</SelectItem>
-				</SelectContent>
-			</Select>
+			<GoalSelect
+				goals={goals}
+				selectedGoalId={selectedGoalId}
+				onGoalChange={setSelectedGoalId}
+			/>
 			{createdAt && deadlineVal && (
 				<TimeProgress createdAt={createdAt} deadline={deadlineVal} />
 			)}

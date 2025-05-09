@@ -35,6 +35,7 @@ export function AddDeckLinkDialog({
 	onSuccess,
 	triggerText = "デッキを追加",
 }: AddDeckLinkDialogProps) {
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [availableDecks, setAvailableDecks] = useState<Deck[]>([]);
 	const [selectedDeckId, setSelectedDeckId] = useState<string>("");
 	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
@@ -43,16 +44,20 @@ export function AddDeckLinkDialog({
 	const CREATE_NEW_VALUE = "__new__";
 
 	useEffect(() => {
-		startTransition(async () => {
-			const decks = await getAvailableDecksForGoal(goalId);
-			setAvailableDecks(decks);
-		});
-	}, [goalId]);
+		if (isDialogOpen) {
+			// Open時のみ実行
+			startTransition(async () => {
+				const decks = await getAvailableDecksForGoal(goalId);
+				setAvailableDecks(decks);
+			});
+		}
+	}, [goalId, isDialogOpen]);
 
 	const handleAdd = useCallback(() => {
 		startTransition(async () => {
 			await addGoalDeckLink(goalId, selectedDeckId);
 			onSuccess();
+			setIsDialogOpen(false);
 			const decks = await getAvailableDecksForGoal(goalId);
 			setAvailableDecks(decks);
 			setSelectedDeckId("");
@@ -69,6 +74,7 @@ export function AddDeckLinkDialog({
 			}
 			await addGoalDeckLink(goalId, newDeck.id);
 			onSuccess();
+			setIsDialogOpen(false);
 			const decks = await getAvailableDecksForGoal(goalId);
 			setAvailableDecks(decks);
 			setSelectedDeckId("");
@@ -77,56 +83,63 @@ export function AddDeckLinkDialog({
 	}, [goalId, newDeckTitle, onSuccess]);
 
 	return (
-		<ResponsiveDialog
-			triggerText={triggerText}
-			dialogTitle="デッキ追加"
-			triggerButtonProps={{
-				className: "w-full border-none shadow-none",
-			}}
-		>
-			<div className="space-y-2 p-4">
-				<Select value={selectedDeckId} onValueChange={setSelectedDeckId}>
-					<SelectTrigger>
-						<SelectValue placeholder="選択してください" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectGroup>
-							<SelectLabel>デッキを選択</SelectLabel>
-							{/* 新規作成オプション */}
-							<SelectItem key={CREATE_NEW_VALUE} value={CREATE_NEW_VALUE}>
-								新規デッキを追加
-							</SelectItem>
-							{availableDecks.map((deck) => (
-								<SelectItem key={deck.id} value={deck.id}>
-									{deck.title} ({deck.card_count})
+		<>
+			<Button
+				onClick={() => setIsDialogOpen(true)}
+				className="w-full border-none shadow-none"
+				variant="ghost"
+			>
+				{triggerText}
+			</Button>
+			<ResponsiveDialog
+				open={isDialogOpen}
+				onOpenChange={setIsDialogOpen}
+				dialogTitle="デッキ追加"
+			>
+				<div className="space-y-2 p-4">
+					<Select value={selectedDeckId} onValueChange={setSelectedDeckId}>
+						<SelectTrigger>
+							<SelectValue placeholder="選択してください" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectGroup>
+								<SelectLabel>デッキを選択</SelectLabel>
+								{/* 新規作成オプション */}
+								<SelectItem key={CREATE_NEW_VALUE} value={CREATE_NEW_VALUE}>
+									新規デッキを追加
 								</SelectItem>
-							))}
-						</SelectGroup>
-					</SelectContent>
-				</Select>
-				{/* 選択に応じて表示切替 */}
-				{selectedDeckId && selectedDeckId !== CREATE_NEW_VALUE && (
-					<Button disabled={isPending} onClick={handleAdd}>
-						既存デッキを追加
-					</Button>
-				)}
-				{selectedDeckId === CREATE_NEW_VALUE && (
-					<div className="pt-4 border-t space-y-2">
-						<p className="text-sm font-medium">新規デッキを作成</p>
-						<Input
-							placeholder="タイトルを入力"
-							value={newDeckTitle}
-							onChange={(e) => setNewDeckTitle(e.currentTarget.value)}
-						/>
-						<Button
-							disabled={isPending || !newDeckTitle}
-							onClick={handleCreate}
-						>
-							新規デッキを作成して追加
+								{availableDecks.map((deck) => (
+									<SelectItem key={deck.id} value={deck.id}>
+										{deck.title} ({deck.card_count})
+									</SelectItem>
+								))}
+							</SelectGroup>
+						</SelectContent>
+					</Select>
+					{/* 選択に応じて表示切替 */}
+					{selectedDeckId && selectedDeckId !== CREATE_NEW_VALUE && (
+						<Button disabled={isPending} onClick={handleAdd}>
+							既存デッキを追加
 						</Button>
-					</div>
-				)}
-			</div>
-		</ResponsiveDialog>
+					)}
+					{selectedDeckId === CREATE_NEW_VALUE && (
+						<div className="pt-4 border-t space-y-2">
+							<p className="text-sm font-medium">新規デッキを作成</p>
+							<Input
+								placeholder="タイトルを入力"
+								value={newDeckTitle}
+								onChange={(e) => setNewDeckTitle(e.currentTarget.value)}
+							/>
+							<Button
+								disabled={isPending || !newDeckTitle}
+								onClick={handleCreate}
+							>
+								新規デッキを作成して追加
+							</Button>
+						</div>
+					)}
+				</div>
+			</ResponsiveDialog>
+		</>
 	);
 }
