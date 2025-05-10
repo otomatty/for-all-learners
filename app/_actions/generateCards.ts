@@ -28,7 +28,6 @@ export async function generateCardsFromTranscript(
 		model: "gemini-2.5-flash-preview-04-17",
 		contents,
 	});
-	console.log("Card generation response:", response);
 
 	// Extract raw content
 	const { candidates } = response as unknown as {

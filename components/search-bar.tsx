@@ -34,7 +34,6 @@ export function SearchBar() {
 	// デバウンス付きで候補をフェッチ
 	const fetchSuggestions = useCallback(
 		debounce(async (value: string) => {
-			console.log("[SearchBar] fetchSuggestions called with:", value);
 			if (!value) {
 				setSuggestions([]);
 				return;
@@ -43,14 +42,11 @@ export function SearchBar() {
 				const res = await fetch(
 					`/api/search-suggestions?q=${encodeURIComponent(value)}`,
 				);
-				console.log("[SearchBar] API response status:", res.status);
 				if (!res.ok) {
-					console.log("[SearchBar] API responded not ok:", res.statusText);
 					setSuggestions([]);
 					return;
 				}
 				const data: Suggestion[] = await res.json();
-				console.log("[SearchBar] Fetched suggestions:", data);
 				setSuggestions(data);
 				setActiveIndex(-1);
 			} catch (error) {
@@ -68,7 +64,6 @@ export function SearchBar() {
 
 	// 入力値変更ハンドラ
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		console.log("[SearchBar] handleChange value:", e.target.value);
 		setQuery(e.target.value);
 	};
 

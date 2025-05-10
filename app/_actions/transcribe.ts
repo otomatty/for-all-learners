@@ -45,7 +45,6 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 		model: "gemini-2.5-flash-preview-04-17",
 		contents,
 	});
-	console.log("Transcription response:", response);
 
 	// Extract transcript from response candidates
 	const { candidates } = response as unknown as GenerateContentResponse;

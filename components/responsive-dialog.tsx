@@ -78,18 +78,11 @@ export function ResponsiveDialog({
 	open,
 	onOpenChange,
 }: ResponsiveDialogProps) {
-	console.log(
-		`[ResponsiveDialog] Rendering. Title: "${dialogTitle}". Open state: ${open}`,
-	);
 	const isMobile = useIsMobile();
 
 	const buttonProps: React.ComponentProps<typeof Button> = {
 		variant: "outline",
-		onClick: () =>
-			console.log(
-				`[ResponsiveDialog] Trigger button clicked for "${dialogTitle}" (if trigger is used)`,
-			),
-		...triggerButtonProps,
+		onClick: () => triggerButtonProps,
 	};
 
 	// アイコンが指定されていれば優先的に表示
@@ -104,9 +97,6 @@ export function ResponsiveDialog({
 			<Drawer
 				open={open}
 				onOpenChange={(currentOpenState) => {
-					console.log(
-						`[ResponsiveDialog] Mobile Drawer onOpenChange for "${dialogTitle}". New state: ${currentOpenState}. Calling props.onOpenChange.`,
-					);
 					onOpenChange(currentOpenState);
 				}}
 			>
@@ -127,9 +117,6 @@ export function ResponsiveDialog({
 		<Dialog
 			open={open}
 			onOpenChange={(currentOpenState) => {
-				console.log(
-					`[ResponsiveDialog] Desktop Dialog onOpenChange for "${dialogTitle}". New state: ${currentOpenState}. Calling props.onOpenChange.`,
-				);
 				onOpenChange(currentOpenState);
 			}}
 		>

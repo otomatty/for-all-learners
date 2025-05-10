@@ -71,7 +71,6 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 		try {
 			// ① アバター画像アップロード
 			if (selectedFile) {
-				console.log("[ProfileForm] Uploading new avatar");
 				const webp = await convertToWebp(selectedFile);
 				const afterAvatar = await uploadAvatar(webp);
 				setAccount(afterAvatar);

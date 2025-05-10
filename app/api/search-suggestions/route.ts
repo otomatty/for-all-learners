@@ -12,7 +12,6 @@ interface RpcRow {
 export async function GET(request: NextRequest) {
 	const url = new URL(request.url);
 	const q = url.searchParams.get("q")?.trim() ?? "";
-	console.log("[search-suggestions] Received query:", q);
 	if (!q) {
 		return NextResponse.json([], {
 			status: 200,
@@ -30,8 +29,6 @@ export async function GET(request: NextRequest) {
 		"search_suggestions",
 		{ p_query: q },
 	);
-	console.log("[search-suggestions] rpcError:", rpcError);
-	console.log("[search-suggestions] rpcData:", rpcData);
 	if (rpcError) {
 		return NextResponse.json([], {
 			status: 200,

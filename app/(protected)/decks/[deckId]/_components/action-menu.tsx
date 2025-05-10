@@ -49,7 +49,6 @@ export default function ActionMenu({
 	const [showDeckFormDialog, setShowDeckFormDialog] = useState(false);
 
 	const handleDelete = async () => {
-		console.log("[ActionMenu] handleDelete called");
 		try {
 			await deleteDeck(deckId);
 			toast.success("デッキを削除しました");
@@ -58,19 +57,9 @@ export default function ActionMenu({
 			console.error("[ActionMenu] デッキ削除エラー:", err);
 			toast.error("デッキの削除に失敗しました");
 		} finally {
-			console.log(
-				"[ActionMenu] handleDelete finally block. Setting showDelete to false.",
-			);
 			setShowDelete(false);
 		}
 	};
-
-	console.log("[ActionMenu] Rendering. Current states:", {
-		deckId,
-		showDelete,
-		showCardFormDialog,
-		showDeckFormDialog,
-	});
 
 	return (
 		<>
@@ -83,10 +72,6 @@ export default function ActionMenu({
 					triggerButtonProps={{ variant: "outline", size: "sm" }}
 					open={showCardFormDialog}
 					onOpenChange={(isOpen) => {
-						console.log(
-							"[ActionMenu] Mobile CardForm ResponsiveDialog onOpenChange:",
-							isOpen,
-						);
 						setShowCardFormDialog(isOpen);
 					}}
 				>
@@ -111,10 +96,6 @@ export default function ActionMenu({
 					triggerButtonProps={{ variant: "outline", size: "sm" }}
 					open={showDeckFormDialog}
 					onOpenChange={(isOpen) => {
-						console.log(
-							"[ActionMenu] Mobile DeckForm ResponsiveDialog onOpenChange:",
-							isOpen,
-						);
 						setShowDeckFormDialog(isOpen);
 					}}
 				>
@@ -130,9 +111,6 @@ export default function ActionMenu({
 					variant="outline"
 					size="sm"
 					onClick={() => {
-						console.log(
-							"[ActionMenu] Mobile Delete button clicked. Setting showDelete to true.",
-						);
 						setShowDelete(true);
 					}}
 				>
@@ -169,9 +147,6 @@ export default function ActionMenu({
 					>
 						<DropdownMenuItem
 							onSelect={() => {
-								console.log(
-									"[ActionMenu] Desktop '手動で入力する' onSelect. Setting showCardFormDialog to true.",
-								);
 								setTimeout(() => setShowCardFormDialog(true), 0);
 							}}
 						>
@@ -181,9 +156,6 @@ export default function ActionMenu({
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							onSelect={() => {
-								console.log(
-									"[ActionMenu] Desktop 'デッキを編集する' onSelect. Setting showDeckFormDialog to true.",
-								);
 								setTimeout(() => setShowDeckFormDialog(true), 0);
 							}}
 						>
@@ -192,9 +164,6 @@ export default function ActionMenu({
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							onSelect={() => {
-								console.log(
-									"[ActionMenu] Desktop 'デッキを削除する' onSelect. Setting showDelete to true.",
-								);
 								setTimeout(() => setShowDelete(true), 0);
 							}}
 						>
@@ -208,10 +177,6 @@ export default function ActionMenu({
 			<ResponsiveDialog
 				open={showCardFormDialog}
 				onOpenChange={(isOpen) => {
-					console.log(
-						"[ActionMenu] Desktop CardForm ResponsiveDialog onOpenChange:",
-						isOpen,
-					);
 					setShowCardFormDialog(isOpen);
 				}}
 				dialogTitle="カードを作成 (Desktop)"
@@ -226,10 +191,6 @@ export default function ActionMenu({
 			<ResponsiveDialog
 				open={showDeckFormDialog}
 				onOpenChange={(isOpen) => {
-					console.log(
-						"[ActionMenu] Desktop DeckForm ResponsiveDialog onOpenChange:",
-						isOpen,
-					);
 					setShowDeckFormDialog(isOpen);
 				}}
 				dialogTitle="デッキを編集 (Desktop)"
@@ -248,7 +209,6 @@ export default function ActionMenu({
 			<AlertDialog
 				open={showDelete}
 				onOpenChange={(isOpen) => {
-					console.log("[ActionMenu] Delete AlertDialog onOpenChange:", isOpen);
 					setShowDelete(isOpen);
 				}}
 			>
