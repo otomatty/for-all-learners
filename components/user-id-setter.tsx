@@ -8,7 +8,7 @@ interface UserIdSetterProps {
 	userId: string;
 }
 
-export default function UserIdSetter({ userId }: UserIdSetterProps) {
+export function UserIdSetter({ userId }: UserIdSetterProps) {
 	const setUserId = useSetAtom(userIdAtom);
 	useEffect(() => {
 		setUserId(userId);

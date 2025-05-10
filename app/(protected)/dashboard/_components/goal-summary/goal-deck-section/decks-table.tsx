@@ -18,7 +18,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Volume2, Camera } from "lucide-react";
 import { useAtomValue } from "jotai";
 import { userIdAtom } from "@/stores/user";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -44,21 +44,21 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 
 	return (
 		<>
-			<Table>
+			<Table className="text-center">
 				<TableHeader>
 					<TableRow>
-						<TableHead>デッキ名</TableHead>
-						<TableHead>カード数</TableHead>
-						<TableHead>今日のカード数</TableHead>
-						<TableHead>学習を始める</TableHead>
-						<TableHead>復習する</TableHead>
-						<TableHead>操作</TableHead>
+						<TableHead className="text-center">デッキ名</TableHead>
+						<TableHead className="text-center">カード数</TableHead>
+						<TableHead className="text-center">今日のカード数</TableHead>
+						<TableHead className="text-center">学習を始める</TableHead>
+						<TableHead className="text-center">復習する</TableHead>
+						<TableHead className="text-center">操作</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{decks.map((deck) => (
 						<TableRow key={deck.id}>
-							<TableCell>
+							<TableCell className="text-left">
 								<Link
 									href={`/decks/${deck.id}`}
 									className="text-blue-500 hover:underline"
@@ -96,28 +96,42 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 										align="end"
 										onCloseAutoFocus={(event) => event.preventDefault()}
 									>
+										<DropdownMenuItem asChild>
+											<Link
+												href={`/decks/${deck.id}/audio`}
+												className="flex items-center"
+											>
+												<Volume2 className="h-4 w-4" />
+												音読する
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild>
+											<Link
+												href={`/decks/${deck.id}/ocr`}
+												className="flex items-center"
+											>
+												<Camera className="h-4 w-4" />
+												写真を読み込む
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuSeparator />
 										{userId && (
 											<DropdownMenuItem
 												onSelect={() =>
 													setTimeout(() => setEditingDeckId(deck.id), 0)
 												}
 											>
-												編集
+												<Pencil className="h-4 w-4" />
+												編集する
 											</DropdownMenuItem>
 										)}
-										<DropdownMenuItem asChild>
-											<Link href={`/decks/${deck.id}/audio`}>音読する</Link>
-										</DropdownMenuItem>
-										<DropdownMenuItem asChild>
-											<Link href={`/decks/${deck.id}/ocr`}>写真を読み込む</Link>
-										</DropdownMenuItem>
-										<DropdownMenuSeparator />
 										{onRemove && (
 											<DropdownMenuItem
 												className="text-destructive"
 												onClick={() => onRemove(deck.id)}
 											>
-												削除する
+												<Trash2 className="h-4 w-4 text-destructive" />
+												<span className="text-destructive">削除する</span>
 											</DropdownMenuItem>
 										)}
 									</DropdownMenuContent>

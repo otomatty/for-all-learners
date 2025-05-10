@@ -88,33 +88,30 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem onClick={() => router.push("/profile")}>
-						<UserRound className="w-4 h-4 mr-2" />
+						<UserRound className="w-4 h-4" />
 						プロフィール
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => router.push("/settings")}>
-						<Settings className="w-4 h-4 mr-2" />
+						<Settings className="w-4 h-4" />
 						設定
 					</DropdownMenuItem>
 					{isAdmin && !pathname?.startsWith("/admin") && (
 						<DropdownMenuItem onClick={() => router.push("/admin")}>
-							<Shield className="w-4 h-4 mr-2" />
+							<Shield className="w-4 h-4" />
 							管理者画面へ
 						</DropdownMenuItem>
 					)}
 					{isAdmin && pathname?.startsWith("/admin") && (
 						<DropdownMenuItem onClick={() => router.push("/")}>
-							<Home className="w-4 h-4 mr-2" />
+							<Home className="w-4 h-4" />
 							アプリへ
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					onClick={handleSignOut}
-					className="text-red-500 hover:bg-red-500 hover:text-white"
-				>
-					<LogOut className="w-4 h-4 mr-2" />
-					ログアウト
+				<DropdownMenuItem onClick={handleSignOut}>
+					<LogOut className="w-4 h-4 text-destructive" />
+					<span className="text-destructive">ログアウト</span>
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

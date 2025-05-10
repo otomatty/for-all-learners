@@ -66,7 +66,7 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 					onClick={() => setOpen(!open)}
 					className="p-2 rounded-md hover:bg-gray-100 focus:outline-none"
 				>
-					<Icons.Grip className="w-5 h-5" />
+					<Icons.Grip className="w-4 h-4" />
 				</button>
 
 				{open && (

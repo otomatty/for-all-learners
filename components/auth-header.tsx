@@ -14,7 +14,6 @@ import {
 	TooltipContent,
 	TooltipProvider,
 } from "@/components/ui/tooltip";
-import { HelpCircleIcon } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 
 interface AuthHeaderProps {
@@ -47,10 +46,7 @@ export function AuthHeader({
 					<TooltipProvider>
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<PageHelpButton
-									triggerIcon={<HelpCircleIcon />}
-									playAudio={playAudio}
-								/>
+								<PageHelpButton playAudio={playAudio} />
 							</TooltipTrigger>
 							<TooltipContent>操作ガイド</TooltipContent>
 						</Tooltip>

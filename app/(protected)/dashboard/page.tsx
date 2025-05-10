@@ -1,14 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
-import { getAccountById } from "@/app/_actions/accounts";
 import { redirect } from "next/navigation";
-import { DashboardSummary } from "./_components/dashboard-summary";
-import GoalSummary from "./_components/goal-summary";
+import { createClient } from "@/lib/supabase/server";
+// conponents
+import { Container } from "@/components/container";
+import { UserIdSetter } from "@/components/user-id-setter";
+import { GoalSummary } from "./_components/goal-summary";
 import { QuickActionTiles } from "./_components/quick-action-tiles";
+// actions
+import { getAccountById } from "@/app/_actions/accounts";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
-import UserIdSetter from "@/components/user-id-setter";
-import { Container } from "@/components/container";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
@@ -40,9 +41,6 @@ export default async function DashboardPage() {
 			<div className="space-y-4">
 				<GoalSummary goals={safeStudyGoals} logs={safeLogs} />
 				<QuickActionTiles />
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<DashboardSummary stats={stats} />
-				</div>
 			</div>
 		</Container>
 	);

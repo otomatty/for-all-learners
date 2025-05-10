@@ -39,11 +39,5 @@ export default async function ServerGoalDecksSection({
 			todayCounts.find((t) => t.deck_id === d.id)?.review_count ?? 0,
 	}));
 
-	return (
-		<ClientGoalDecksSection
-			goalId={goalId}
-			initialDecks={initialDecks}
-			initialLogs={logs}
-		/>
-	);
+	return <ClientGoalDecksSection goalId={goalId} initialDecks={initialDecks} />;
 }

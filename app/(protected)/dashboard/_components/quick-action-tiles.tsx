@@ -131,7 +131,7 @@ export const QuickActionTiles: React.FC = () => {
 									</CommandList>
 								</Command>
 							</div>
-							<div>
+							<div className="space-y-2">
 								<Label>生成方法を選択</Label>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 									<Button

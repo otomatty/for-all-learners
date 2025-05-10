@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import GoalHeatmap from "./goal-heatmap";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import TimeProgress from "./time-progress";

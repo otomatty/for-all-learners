@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { pageHelpConfig, type PageHelpConfig } from "@/lib/pageHelpConfig";
 import type { ReactNode } from "react";
+import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
 import Link from "next/link";
@@ -14,16 +15,11 @@ import Link from "next/link";
  * @param playAudio ヘルプ動画の音声を再生するか
  */
 interface PageHelpButtonProps {
-	/** ボタンに表示するアイコン（指定しない場合はテキスト） */
-	triggerIcon?: ReactNode;
 	/** ヘルプ動画の音声を再生するか */
 	playAudio?: boolean;
 }
 
-export function PageHelpButton({
-	triggerIcon,
-	playAudio = false,
-}: PageHelpButtonProps) {
+export function PageHelpButton({ playAudio = false }: PageHelpButtonProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	// 音声設定をローカル state で管理
 	const [localPlayAudio, setLocalPlayAudio] = useState(playAudio);
@@ -49,23 +45,11 @@ export function PageHelpButton({
 		setLocalPlayAudio(updated);
 	}
 
-	const triggerButton = triggerIcon ? (
-		<button
-			type="button"
-			onClick={() => setIsDialogOpen(true)}
-			className="p-2 rounded-md hover:bg-accent" // Basic styling, adjust as needed
-		>
-			{triggerIcon}
-		</button>
-	) : (
-		<Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(true)}>
-			ヘルプ
-		</Button>
-	);
-
 	return (
 		<>
-			{triggerButton}
+			<Button variant="ghost" size="icon" onClick={() => setIsDialogOpen(true)}>
+				<HelpCircle />
+			</Button>
 			<ResponsiveDialog
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}

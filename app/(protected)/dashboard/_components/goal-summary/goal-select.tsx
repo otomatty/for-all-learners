@@ -9,7 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { AddGoalDialog } from "./add-goal-dialog";
+import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 
 interface StudyGoal {
 	id: string;

@@ -2,14 +2,16 @@
 
 import React, { useState, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type {
-	Deck as ServerDeck,
-	DeckStudyLog,
-} from "@/app/_actions/goal-decks";
+// components
 import { DecksTable } from "./decks-table";
 import { MobileDecksList } from "./mobile-decks-list";
 import { AddStudySessionDialog } from "./add-study-session-dialog";
 import { AddDeckLinkDialog } from "./add-deck-link-dialog";
+// actions
+import type {
+	Deck as ServerDeck,
+	DeckStudyLog,
+} from "@/app/_actions/goal-decks";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
 
 // Deck type extends server-side Deck and adds today's review count
@@ -20,7 +22,6 @@ export interface Deck extends ServerDeck {
 interface ClientGoalDecksSectionProps {
 	goalId: string;
 	initialDecks: Deck[];
-	initialLogs: DeckStudyLog[];
 }
 
 /**
@@ -29,7 +30,6 @@ interface ClientGoalDecksSectionProps {
 export default function ClientGoalDecksSection({
 	goalId,
 	initialDecks,
-	initialLogs,
 }: ClientGoalDecksSectionProps) {
 	const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();

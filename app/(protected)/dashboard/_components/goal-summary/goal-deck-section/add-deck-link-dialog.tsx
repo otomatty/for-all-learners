@@ -123,7 +123,7 @@ export function AddDeckLinkDialog({
 						</Button>
 					)}
 					{selectedDeckId === CREATE_NEW_VALUE && (
-						<div className="pt-4 border-t space-y-2">
+						<div className="pt-4 border-t border-border space-y-2">
 							<p className="text-sm font-medium">新規デッキを作成</p>
 							<Input
 								placeholder="タイトルを入力"

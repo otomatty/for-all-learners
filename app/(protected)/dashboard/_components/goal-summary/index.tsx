@@ -1,8 +1,8 @@
 import type React from "react";
 import { Card } from "@/components/ui/card";
-import { AddGoalDialog } from "./add-goal-dialog";
+import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 import GoalSummaryClient from "./goal-summary-client";
-import ServerGoalDecksSection from "./goal-decks-section";
+import ServerGoalDecksSection from "./goal-deck-section";
 
 interface StudyGoal {
 	id: string;
@@ -18,7 +18,7 @@ interface GoalSummaryProps {
 	logs: LearningLog[];
 }
 
-export default async function GoalSummary({ goals, logs }: GoalSummaryProps) {
+export async function GoalSummary({ goals, logs }: GoalSummaryProps) {
 	// 目標が未設定のときのエンプティステート表示
 	if (goals.length === 0) {
 		return (
