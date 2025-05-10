@@ -8,6 +8,7 @@ export function AdminNav() {
 	const pathname = usePathname();
 	const navItems = [
 		{ href: "/admin/users", label: "ユーザー" },
+		{ href: "/admin/changelog", label: "更新履歴" },
 		{ href: "/admin/announcements", label: "お知らせ" },
 		{ href: "/admin/contact", label: "お問い合わせ" },
 	];

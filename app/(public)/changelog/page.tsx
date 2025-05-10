@@ -101,6 +101,7 @@ export default async function ChangelogPage() {
 								} = getTypeAttributes(change.type);
 								return (
 									<div
+										// biome-ignore lint/suspicious/noArrayIndexKey:
 										key={changeIndex}
 										className="p-4 rounded-md border bg-card text-card-foreground shadow-sm"
 									>
