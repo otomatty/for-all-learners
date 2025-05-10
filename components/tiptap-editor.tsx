@@ -58,7 +58,7 @@ const TiptapEditor = ({
 		editorProps: {
 			attributes: {
 				class:
-					"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none border p-2 rounded-md min-h-[150px]",
+					"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mb-4 focus:outline-none border p-2 rounded-md min-h-[150px]",
 			},
 		},
 	});
@@ -68,9 +68,9 @@ const TiptapEditor = ({
 	}
 
 	return (
-		<div className="border rounded-md">
+		<>
 			{editor && (
-				<div className="toolbar p-2 border-b flex items-center gap-1">
+				<div className="toolbar py-2 border-b flex items-center gap-1">
 					<Button
 						type="button"
 						onClick={() => editor.chain().focus().toggleBold().run()}
@@ -134,7 +134,7 @@ const TiptapEditor = ({
 				</div>
 			)}
 			<EditorContent editor={editor} />
-		</div>
+		</>
 	);
 };
 

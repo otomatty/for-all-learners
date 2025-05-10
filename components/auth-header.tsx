@@ -5,6 +5,7 @@ import { UserNav } from "@/components/user-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { Logo } from "@/components/site-logo";
+import { UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import AppNavDropdown, { type NavItem } from "@/components/app-nav-dropdown";
 import { PageHelpButton } from "@/components/page-help-button";
@@ -14,7 +15,9 @@ import {
 	TooltipContent,
 	TooltipProvider,
 } from "@/components/ui/tooltip";
+import { createClient } from "@/lib/supabase/client"; // Supabaseクライアントのパスを適宜修正してください
 import { SearchBar } from "@/components/search-bar";
+import { useActiveUsers } from "@/hooks/use-active-users";
 
 interface AuthHeaderProps {
 	version?: string;
@@ -33,6 +36,9 @@ export function AuthHeader({
 }: AuthHeaderProps) {
 	const pathname = usePathname();
 	const showAdminNav = isAdmin && pathname.startsWith("/admin");
+	const supabase = createClient();
+	const activeUsers = useActiveUsers(supabase);
+
 	return (
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
 			<div className="container mx-auto flex items-center justify-between py-2 px-6 gap-8">
@@ -44,6 +50,19 @@ export function AuthHeader({
 				</div>
 				<div className="hidden md:flex gap-4 items-center">
 					<TooltipProvider>
+						{activeUsers !== null && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div className="flex items-center gap-1 text-sm text-muted-foreground cursor-default">
+										<UsersIcon className="h-4 w-4" />
+										<span>{activeUsers}</span>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>オンライン中のユーザー数</p>
+								</TooltipContent>
+							</Tooltip>
+						)}
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<PageHelpButton playAudio={playAudio} />

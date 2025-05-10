@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/types/database.types";
 import { useTextSelection } from "@/hooks/use-text-selection";
@@ -22,7 +21,8 @@ import {
 	DialogTitle,
 	DialogDescription,
 } from "@/components/ui/dialog";
-import { CardContextMenu } from "./card-context-menu";
+import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
+import { CardItem } from "./card-item"; // CardItem をインポート
 
 interface CardsListProps {
 	cards: Database["public"]["Tables"]["cards"]["Row"][];
@@ -47,30 +47,13 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 	const isDraggingRef = useRef(false);
 	// Add state to track hovered card for focus blur
 	const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+	const [userId, setUserId] = useState<string | null>(null);
+	const [isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
 
+	// Prop 'cards' が変更されたら localCards を更新する
 	useEffect(() => {
-		console.debug(
-			"[CardsList] selectedText:",
-			selectedText,
-			"selectionRect:",
-			selectionRect,
-		);
-	}, [selectedText, selectionRect]);
-
-	// Debug: log computed popup positions when selectionRect updates
-	useEffect(() => {
-		if (selectionRect) {
-			const popupTop = selectionRect.y + window.scrollY;
-			const popupLeft = selectionRect.x + window.scrollX;
-			console.debug(
-				"[CardsList] computed popupTop:",
-				popupTop,
-				"popupLeft:",
-				popupLeft,
-			);
-		}
-	}, [selectionRect]);
-
+		setLocalCards(cards);
+	}, [cards]);
 	// update selectionCardId when text selection rectangle changes
 	useEffect(() => {
 		if (!selectionRect) {
@@ -82,6 +65,16 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 		const cardEl = el?.closest("[data-card-id]");
 		setSelectionCardId(cardEl?.getAttribute("data-card-id") ?? null);
 	}, [selectionRect]);
+
+	useEffect(() => {
+		const fetchUser = async () => {
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+			if (user) setUserId(user.id);
+		};
+		fetchUser();
+	}, [supabase]);
 
 	const handleConvertLink = async (text: string) => {
 		// cardId should have been set on selection via onMouseUp
@@ -164,6 +157,7 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 		}
 	};
 
+	// isLoading が false の場合の処理
 	if (localCards.length === 0) {
 		const emptyMessage = (
 			<div className="flex flex-col items-center justify-center h-40 border border-border rounded-lg transition-shadow bg-muted">
@@ -215,59 +209,74 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 		);
 	}
 
+	const handleCardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (e.button !== 0) return;
+		dragStartRef.current = { x: e.clientX, y: e.clientY };
+		isDraggingRef.current = false;
+	};
+
+	const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (dragStartRef.current) {
+			const dx = e.clientX - dragStartRef.current.x;
+			const dy = e.clientY - dragStartRef.current.y;
+			if (Math.hypot(dx, dy) > 5) {
+				isDraggingRef.current = true;
+			}
+		}
+	};
+
+	const handleCardMouseUp = (
+		e: React.MouseEvent<HTMLDivElement>,
+		card: Database["public"]["Tables"]["cards"]["Row"],
+	) => {
+		if (e.button !== 0) return;
+		if (!isDraggingRef.current) {
+			setDetailCard(card);
+		} else if (selectedText) {
+			// selection occurred, set cardId for link conversion
+			setSelectionCardId(card.id);
+		}
+		dragStartRef.current = null;
+		isDraggingRef.current = false;
+	};
+
+	const handleCardUpdated = (
+		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
+	) => {
+		setLocalCards((prevCards) =>
+			prevCards.map((card) =>
+				card.id === updatedCard.id ? updatedCard : card,
+			),
+		);
+		router.refresh(); // データの整合性を保つためにバックグラウンドで再フェッチ
+	};
+
+	const handleCreateCardSuccess = (
+		newCard: Database["public"]["Tables"]["cards"]["Row"],
+	) => {
+		setLocalCards((prevCards) => [newCard, ...prevCards]); // 新しいカードをリストの先頭に追加
+		setIsCreateCardDialogOpen(false); // ダイアログを閉じる
+		router.refresh(); // データの整合性を保つためにバックグラウンドで再フェッチ
+		toast.info("新しいカードがリストに追加されました。"); // 必要に応じて通知
+	};
+
 	const gridContent = (
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{localCards.map((card) => (
-				<CardContextMenu
+				<CardItem
 					key={card.id}
-					cardId={card.id}
-					onEdit={() => {
-						/* TODO: open edit dialog */
-					}}
-				>
-					<Card
-						data-card-id={card.id}
-						// Track hover to blur sibling cards
-						onMouseEnter={() => setHoveredCardId(card.id)}
-						onMouseLeave={() => setHoveredCardId(null)}
-						className={`overflow-hidden cursor-pointer transition-all duration-300 ease-in-out ${
-							hoveredCardId && hoveredCardId !== card.id
-								? "filter blur-xs opacity-60"
-								: "hover:shadow-lg"
-						}`}
-						onMouseDown={(e) => {
-							if (e.button !== 0) return;
-							dragStartRef.current = { x: e.clientX, y: e.clientY };
-							isDraggingRef.current = false;
-						}}
-						onMouseMove={(e) => {
-							if (dragStartRef.current) {
-								const dx = e.clientX - dragStartRef.current.x;
-								const dy = e.clientY - dragStartRef.current.y;
-								if (Math.hypot(dx, dy) > 5) {
-									isDraggingRef.current = true;
-								}
-							}
-						}}
-						onMouseUp={(e) => {
-							if (e.button !== 0) return;
-							if (!isDraggingRef.current) {
-								setDetailCard(card);
-							} else if (selectedText) {
-								// selection occurred, set cardId for link conversion
-								setSelectionCardId(card.id);
-							}
-							dragStartRef.current = null;
-							isDraggingRef.current = false;
-						}}
-					>
-						<CardContent>
-							<div className="prose prose-sm rich-content">
-								<RichContent content={card.front_content} />
-							</div>
-						</CardContent>
-					</Card>
-				</CardContextMenu>
+					card={card}
+					isBlurred={!!(hoveredCardId && hoveredCardId !== card.id)}
+					onMouseEnter={() => setHoveredCardId(card.id)}
+					onMouseLeave={() => setHoveredCardId(null)}
+					onMouseDown={handleCardMouseDown}
+					onMouseMove={handleCardMouseMove}
+					onMouseUp={(e) => handleCardMouseUp(e, card)}
+					deckId={deckId} // deckId を渡す
+					userId={userId} // userId を渡す
+					canEdit={canEdit} // canEdit を渡す
+					onCardUpdated={handleCardUpdated} // 更新ハンドラを渡す
+				/>
 			))}
 		</div>
 	);

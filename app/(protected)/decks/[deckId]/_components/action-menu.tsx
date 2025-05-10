@@ -21,7 +21,14 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Volume2, Camera } from "lucide-react";
+import {
+	MoreHorizontal,
+	Pencil,
+	Trash2,
+	Volume2,
+	Camera,
+	SquarePlus,
+} from "lucide-react";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { CardForm } from "../_components/card-form";
 import { DeckForm } from "../../_components/deck-form";
@@ -64,19 +71,15 @@ export default function ActionMenu({
 	return (
 		<>
 			{/* Mobile: show all buttons inline */}
-			<div className="flex justify-end mb-4 space-x-2 md:hidden">
-				<ResponsiveDialog
-					triggerText="手動で入力する"
-					dialogTitle="カードを作成"
-					dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
-					triggerButtonProps={{ variant: "outline", size: "sm" }}
-					open={showCardFormDialog}
-					onOpenChange={(isOpen) => {
-						setShowCardFormDialog(isOpen);
-					}}
+			<div className="flex flex-wrap justify-end gap-2 mb-4 md:hidden">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => setShowCardFormDialog(true)}
 				>
-					<CardForm deckId={deckId} userId={userId} />
-				</ResponsiveDialog>
+					<SquarePlus className="h-4 w-4" />
+					手動で入力する
+				</Button>
 				<Button asChild variant="outline" size="sm">
 					<Link href={`/decks/${deckId}/audio`}>
 						<Volume2 className="h-4 w-4" />
@@ -150,6 +153,7 @@ export default function ActionMenu({
 								setTimeout(() => setShowCardFormDialog(true), 0);
 							}}
 						>
+							<SquarePlus className="mr-2 h-4 w-4" />
 							手動で入力する
 						</DropdownMenuItem>
 
@@ -179,13 +183,16 @@ export default function ActionMenu({
 				onOpenChange={(isOpen) => {
 					setShowCardFormDialog(isOpen);
 				}}
-				dialogTitle="カードを作成 (Desktop)"
-				dialogDescription="カードの表面（質問）と裏面（回答）を入力してください"
+				dialogTitle="カードを作成"
+				dialogDescription="カードの表面（質問）と裏面（回答）を入力してください。"
 			>
 				<CardForm
 					deckId={deckId}
 					userId={userId}
-					onSuccess={() => setShowCardFormDialog(false)}
+					onSuccess={() => {
+						setShowCardFormDialog(false);
+						router.refresh(); // ページをリフレッシュしてデータを再取得
+					}}
 				/>
 			</ResponsiveDialog>
 			<ResponsiveDialog
@@ -193,7 +200,7 @@ export default function ActionMenu({
 				onOpenChange={(isOpen) => {
 					setShowDeckFormDialog(isOpen);
 				}}
-				dialogTitle="デッキを編集 (Desktop)"
+				dialogTitle="デッキを編集"
 				dialogDescription="デッキ情報を編集してください"
 			>
 				<DeckForm

@@ -14,14 +14,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-// import { Textarea } from "@/components/ui/textarea"; // Textareaを削除
-import TiptapEditor from "@/components/tiptap-editor"; // TiptapEditorをインポート
-import { createCard } from "@/app/_actions/cards";
+import TiptapEditor from "@/components/tiptap-editor";
+import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
+import type { Database } from "@/types/database.types"; // Database 型をインポート
 
 interface CardFormProps {
 	deckId: string;
 	userId: string;
-	onSuccess?: () => void;
+	cardToEdit?: Database["public"]["Tables"]["cards"]["Row"]; // 編集対象のカード情報
+	onSuccess?: (card: Database["public"]["Tables"]["cards"]["Row"]) => void; // 作成または更新されたカードを受け取る
+	onCancel?: () => void; // キャンセル時のコールバック
 }
 
 type CardFormValues = {
@@ -32,12 +34,22 @@ type CardFormValues = {
 // TipTapの空のドキュメントを表すJSON文字列
 const emptyTiptapContent = JSON.stringify({ type: "doc", content: [] });
 
-export function CardForm({ deckId, userId }: CardFormProps) {
+export function CardForm({
+	deckId,
+	userId,
+	cardToEdit,
+	onSuccess,
+	onCancel,
+}: CardFormProps) {
 	const router = useRouter();
 	const form = useForm<CardFormValues>({
 		defaultValues: {
-			frontContent: emptyTiptapContent,
-			backContent: emptyTiptapContent,
+			frontContent: cardToEdit?.front_content
+				? JSON.stringify(cardToEdit.front_content)
+				: emptyTiptapContent,
+			backContent: cardToEdit?.back_content
+				? JSON.stringify(cardToEdit.back_content)
+				: emptyTiptapContent,
 		},
 	});
 	const [side, setSide] = useState<"front" | "back">("front");
@@ -48,9 +60,6 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 		setIsLoading(true);
 		try {
 			const { frontContent, backContent } = values;
-
-			// TipTapのコンテンツが実質的に空かどうかの簡易チェック
-			// TODO: より堅牢な空チェック方法を検討する (例: editor.isEmpty)
 			const isFrontEmpty =
 				!frontContent ||
 				JSON.parse(frontContent).content.every(
@@ -79,27 +88,38 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 				return;
 			}
 
-			// Use server action to create a card
-			const data = await createCard({
-				user_id: userId,
-				deck_id: deckId,
-				front_content: frontContent, // TipTapのJSON文字列を渡す
-				back_content: backContent, // TipTapのJSON文字列を渡す
-			});
-			// syncCardLinksはTiptapのJSONContentを前提としているため削除
-			// try {
-			// 	await syncCardLinks(data.id, frontContent);
-			// } catch (syncErr) {
-			// 	console.error("リンク同期エラー:", syncErr);
-			// }
-			toast.success("カードを作成しました");
-			router.push(`/decks/${deckId}`);
+			if (cardToEdit) {
+				// 更新処理
+				const updatedCardData = await updateCard(cardToEdit.id, {
+					front_content: JSON.parse(frontContent),
+					back_content: JSON.parse(backContent),
+				});
+				toast.success("カードを更新しました");
+				if (onSuccess) onSuccess(updatedCardData); // 更新されたカードデータを渡す
+			} else {
+				// 新規作成処理
+				const newCardData = await createCard({
+					user_id: userId,
+					deck_id: deckId,
+					front_content: JSON.parse(frontContent),
+					back_content: JSON.parse(backContent),
+				});
+				toast.success("カードを作成しました");
+				if (onSuccess) onSuccess(newCardData); // 作成されたカードデータを渡す
+			}
+			// onSuccess が提供されていれば、そちらでダイアログを閉じるなどの処理を期待
+			// onSuccess がなく、かつ新規作成モードだった場合のフォールバック
+			if (!onSuccess && !cardToEdit) {
+				// 新規作成時で onSuccess がない場合のみリダイレクト
+				router.push(`/decks/${deckId}`); // onSuccessがない場合のフォールバック
+			}
 		} catch (err: unknown) {
-			console.error("カード作成エラー:", err);
+			const actionType = cardToEdit ? "更新" : "作成";
+			console.error(`カード${actionType}エラー:`, err);
 			toast.error(
 				err instanceof Error
 					? err.message
-					: "カードの作成中にエラーが発生しました。",
+					: `カードの${actionType}中にエラーが発生しました。`,
 			);
 		} finally {
 			setIsLoading(false);
@@ -244,16 +264,27 @@ export function CardForm({ deckId, userId }: CardFormProps) {
 						)}
 					/>
 				)}
-				<Button
-					variant="outline"
-					type="button"
-					onClick={() => router.push(`/decks/${deckId}`)}
-				>
-					キャンセル
-				</Button>
-				<Button type="submit" disabled={isLoading}>
-					{isLoading ? "作成中..." : "カードを作成"}
-				</Button>
+				<div className="flex space-x-2 mb-4">
+					<Button
+						variant="outline"
+						type="button"
+						onClick={() => {
+							if (onCancel) onCancel();
+							else if (!cardToEdit) router.push(`/decks/${deckId}`); // 新規作成時のみ
+						}}
+					>
+						キャンセル
+					</Button>
+					<Button type="submit" disabled={isLoading}>
+						{isLoading
+							? cardToEdit
+								? "更新中..."
+								: "作成中..."
+							: cardToEdit
+								? "カードを更新"
+								: "カードを作成"}
+					</Button>
+				</div>
 			</form>
 		</Form>
 	);

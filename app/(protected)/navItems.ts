@@ -11,16 +11,15 @@ export const navItems: NavItem[] = [
 	},
 	{ label: "レポート", href: "/reports", icon: "BarChart", status: "new" },
 	{
+		label: "自習室",
+		href: "/study-room",
+		icon: "DoorOpen",
+		status: "enabled",
+	},
+	{
 		label: "学習計画",
 		href: "/plans",
 		icon: "Calendar",
 		status: "coming-soon",
-	},
-	{
-		label: "通知",
-		href: "/notifications",
-		icon: "Bell",
-		status: "enabled",
-		hasNotification: true,
 	},
 ];
