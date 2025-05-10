@@ -57,11 +57,6 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.redirect(new URL("/auth/login", req.url));
 	}
 
-	// Authenticated users visiting public routes
-	if (isAuthenticated && isPublicPath) {
-		return NextResponse.redirect(new URL("/dashboard", req.url));
-	}
-
 	return res;
 }
 

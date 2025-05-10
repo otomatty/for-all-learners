@@ -14,7 +14,7 @@ export const navItems: NavItem[] = [
 		label: "自習室",
 		href: "/study-room",
 		icon: "DoorOpen",
-		status: "enabled",
+		status: "coming-soon",
 	},
 	{
 		label: "学習計画",

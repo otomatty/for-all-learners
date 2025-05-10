@@ -272,6 +272,71 @@ export type Database = {
           },
         ]
       }
+      changelog_entries: {
+        Row: {
+          created_at: string
+          id: string
+          published_at: string
+          title: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published_at: string
+          title?: string | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published_at?: string
+          title?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      changelog_items: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          entry_id: string
+          id: string
+          type: Database["public"]["Enums"]["change_type_enum"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number
+          entry_id: string
+          id?: string
+          type: Database["public"]["Enums"]["change_type_enum"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          entry_id?: string
+          id?: string
+          type?: Database["public"]["Enums"]["change_type_enum"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_items_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cosense_projects: {
         Row: {
           created_at: string
@@ -1118,6 +1183,7 @@ export type Database = {
     }
     Enums: {
       admin_role: "superadmin" | "admin" | "moderator"
+      change_type_enum: "new" | "improvement" | "fix" | "security"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1234,6 +1300,7 @@ export const Constants = {
   public: {
     Enums: {
       admin_role: ["superadmin", "admin", "moderator"],
+      change_type_enum: ["new", "improvement", "fix", "security"],
     },
   },
 } as const

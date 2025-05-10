@@ -1,10 +1,10 @@
 import type React from "react";
 import { version } from "../../package.json";
 import { UnauthHeader } from "@/components/unauth-header";
+import { AppFooter } from "@/components/app-footer";
 // Supabase のサーバーサイドクライアントを作成する関数をインポートします。
 // パスはプロジェクトの構成に合わせて調整してください。
 import { createClient } from "@/lib/supabase/server"; // 例: utils/supabase/server.ts
-import { cookies } from "next/headers";
 
 export default async function PublicLayout({
 	children,
@@ -24,11 +24,7 @@ export default async function PublicLayout({
 		<div className="min-h-screen flex flex-col">
 			<UnauthHeader version={version} isAuthenticated={!!user} />
 			<main>{children}</main>
-			<footer className="bg-white py-6 border-t">
-				<div className="container mx-auto text-center text-gray-500">
-					&copy; {new Date().getFullYear()} 資格学習支援アプリ ForAllLearners
-				</div>
-			</footer>
+			<AppFooter version={version} appName="For All Learners" />
 		</div>
 	);
 }

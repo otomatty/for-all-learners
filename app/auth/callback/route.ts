@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 			requestUrl.searchParams.get("error_description"),
 		);
 		return NextResponse.redirect(
-			`${requestUrl.origin}/auth/login?error=${errorParam}`,
+			`${requestUrl.origin}/auth/login?error=${encodeURIComponent(errorParam)}&error_description=${encodeURIComponent(requestUrl.searchParams.get("error_description") || "Unknown OAuth error")}`,
 		);
 	}
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 		if (exchangeError) {
 			console.error("Error exchanging code for session:", exchangeError);
 			return NextResponse.redirect(
-				`${requestUrl.origin}/auth/login?error=exchange_failed`,
+				`${requestUrl.origin}/auth/login?error=auth_exchange_failed&error_description=${encodeURIComponent(exchangeError.message)}`,
 			);
 		}
 	}
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 	if (!user) {
 		console.error("Error retrieving user:", userError);
 		return NextResponse.redirect(
-			`${requestUrl.origin}/auth/login?error=auth_failed`,
+			`${requestUrl.origin}/auth/login?error=user_retrieval_failed${userError ? `&error_description=${encodeURIComponent(userError.message)}` : ""}`,
 		);
 	}
 	// Account existence check and creation
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 		if (!user.email) {
 			console.error("ユーザーにメールアドレスがありません");
 			return NextResponse.redirect(
-				`${requestUrl.origin}/auth/login?error=no_email`,
+				`${requestUrl.origin}/auth/login?error=no_email_for_account`,
 			);
 		}
 		await createAccount({

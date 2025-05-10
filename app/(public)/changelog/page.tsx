@@ -7,6 +7,11 @@ import {
 	ShieldCheckIcon, // セキュリティ
 } from "lucide-react"; // アイコンライブラリ
 import React from "react";
+import {
+	getChangelogData,
+	type ChangeLogEntry,
+	type Change,
+} from "../../_actions/changelog";
 
 export const metadata: Metadata = {
 	title: "更新履歴 - For All Learners",
@@ -14,85 +19,8 @@ export const metadata: Metadata = {
 		"For All Learners アプリケーションのこれまでの改善と新機能の履歴です。",
 };
 
-interface Change {
-	type: "new" | "improvement" | "fix" | "security";
-	description: string;
-}
-
-interface ChangeLogEntry {
-	date: string;
-	version: string;
-	title?: string; // 各バージョンに対するキャッチーなタイトル (任意)
-	changes: Change[];
-}
-
 // ダミーデータ: 実際にはCMSやデータベース、または静的なファイルから取得することを推奨します
-const changelogData: ChangeLogEntry[] = [
-	{
-		date: "2024年5月15日",
-		version: "v1.2.0",
-		title: "集中モード登場＆パフォーマンス向上！",
-		changes: [
-			{
-				type: "new",
-				description:
-					"新しい学習モード「集中モード」を追加しました。より学習に没頭できます。",
-			},
-			{
-				type: "improvement",
-				description:
-					"データ同期のパフォーマンスを大幅に向上させ、よりスムーズな操作感を実現しました。",
-			},
-			{
-				type: "fix",
-				description:
-					"特定の条件下で学習記録が正しく保存されない場合がある不具合を修正しました。",
-			},
-		],
-	},
-	{
-		date: "2024年4月28日",
-		version: "v1.1.5",
-		changes: [
-			{
-				type: "fix",
-				description: "ログイン画面における軽微なUIの表示ズレを修正しました。",
-			},
-			{
-				type: "improvement",
-				description:
-					"ヘルプドキュメントの内容を最新化し、より分かりやすくなりました。",
-			},
-			{
-				type: "security",
-				description:
-					"パスワードリセット処理に関するセキュリティを強化しました。",
-			},
-		],
-	},
-	{
-		date: "2024年4月10日",
-		version: "v1.1.0",
-		title: "レポート機能強化＆プロフィール拡張",
-		changes: [
-			{
-				type: "new",
-				description:
-					"レポート機能に新しいグラフオプション「進捗ヒートマップ」を追加しました。",
-			},
-			{
-				type: "new",
-				description:
-					"ユーザープロフィールのカスタマイズ項目に「目標設定」を追加しました。",
-			},
-			{
-				type: "improvement",
-				description:
-					"アプリ全体のローディング速度を改善し、起動時間を短縮しました。",
-			},
-		],
-	},
-];
+// const changelogData: ChangeLogEntry[] = [ ... ]; // ダミーデータは削除
 
 const getTypeAttributes = (type: Change["type"]) => {
 	switch (type) {
@@ -129,7 +57,9 @@ const getTypeAttributes = (type: Change["type"]) => {
 	}
 };
 
-export default function ChangelogPage() {
+export default async function ChangelogPage() {
+	const changelogData: ChangeLogEntry[] = await getChangelogData();
+
 	return (
 		<div className="container mx-auto px-4 sm:px-6 py-12 max-w-4xl">
 			<header className="mb-12 text-center">

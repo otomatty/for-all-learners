@@ -41,3 +41,31 @@ export async function logout() {
 	// Redirect to login page after sign out
 	redirect("/auth/login");
 }
+
+/**
+ * Initiate Magic Link login via Supabase
+ * @param email The user's email address
+ */
+export async function loginWithMagicLink(formData: FormData) {
+	const email = formData.get("email") as string;
+	if (!email) {
+		// TODO: より良いエラーハンドリングとユーザーへのフィードバック
+		throw new Error("Email is required for Magic Link login.");
+	}
+
+	const supabase = await createClient();
+	const { error } = await supabase.auth.signInWithOtp({
+		email,
+		options: {
+			// Redirect back to our callback route after login from email
+			emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
+		},
+	});
+	if (error) {
+		console.error("Magic Link login error:", error);
+		throw new Error(`Magic Link login failed: ${error.message}`);
+	}
+	// Magic Linkが送信されたことをユーザーに通知するために、リダイレクトやメッセージ表示を検討できます。
+	// ここでは、ログインページにメッセージを表示するためのクエリパラメータを付与してリダイレクトします。
+	redirect("/auth/login?message=magic_link_sent");
+}

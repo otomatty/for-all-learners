@@ -21,8 +21,7 @@ export function UnauthHeader({ version, isAuthenticated }: UnauthHeaderProps) {
 					<ThemeToggle />
 					{isAuthenticated ? (
 						<Button asChild>
-							<Link href="/dashboard">アプリへ</Link>{" "}
-							{/* 認証後の適切なページパスに変更してください */}
+							<Link href="/dashboard">アプリへ</Link>
 						</Button>
 					) : (
 						<Button asChild variant="outline">
