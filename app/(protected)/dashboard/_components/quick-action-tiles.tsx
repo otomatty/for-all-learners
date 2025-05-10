@@ -71,7 +71,7 @@ export const QuickActionTiles: React.FC = () => {
 					<span className="text-sm text-gray-500">Step 1</span>
 					<div className="flex items-center space-x-2 mt-2">
 						<Sparkles className="h-6 w-6" />
-						<CardTitle>AI問題作成</CardTitle>
+						<CardTitle>問題を作成する</CardTitle>
 					</div>
 					<CardDescription className="mt-1">
 						音読または画像から問題カードを自動生成します
@@ -166,7 +166,7 @@ export const QuickActionTiles: React.FC = () => {
 					<span className="text-sm text-gray-500">Step 2</span>
 					<div className="flex items-center space-x-2 mt-2">
 						<Repeat className="h-6 w-6" />
-						<CardTitle>繰り返し学習</CardTitle>
+						<CardTitle>繰り返し学習する</CardTitle>
 					</div>
 					<CardDescription className="mt-1">
 						間隔反復で作成済みカードを復習します

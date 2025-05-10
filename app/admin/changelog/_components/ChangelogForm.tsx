@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useState, useEffect, useActionState } from "react"; // useFormState を削除し、useActionState を react からインポート
+import { useFormStatus } from "react-dom"; // useFormState を削除
 import {
 	createChangelogEntry, // 新規作成時のみ使用
 	updateChangelogEntry, // 更新時に使用
@@ -60,21 +60,32 @@ interface ChangelogFormProps {
 	onCancel?: () => void;
 }
 
-export function ChangelogForm({ initialData, onSuccess, onCancel }: ChangelogFormProps) {
+export function ChangelogForm({
+	initialData,
+	onSuccess,
+	onCancel,
+}: ChangelogFormProps) {
 	const isEditMode = !!initialData;
 
 	const [version, setVersion] = useState(initialData?.version || "");
 	const [title, setTitle] = useState(initialData?.title || "");
 	const [publishedAt, setPublishedAt] = useState(() => {
 		if (initialData?.date) {
-			return new Date(initialData.date.replace(/(\d+)年(\d+)月(\d+)日/, "$1-$2-$3")).toISOString().split("T")[0];
+			return new Date(
+				initialData.date.replace(/(\d+)年(\d+)月(\d+)日/, "$1-$2-$3"),
+			)
+				.toISOString()
+				.split("T")[0];
 		}
 		return new Date().toISOString().split("T")[0];
 	});
-	const [changes, setChanges] = useState<ClientChange[]>(() =>
-		initialData?.changes.map((change) => ({ ...change, clientId: crypto.randomUUID() })) || [
-			{ clientId: crypto.randomUUID(), type: "new", description: "" },
-		]);
+	const [changes, setChanges] = useState<ClientChange[]>(
+		() =>
+			initialData?.changes.map((change) => ({
+				...change,
+				clientId: crypto.randomUUID(),
+			})) || [{ clientId: crypto.randomUUID(), type: "new", description: "" }],
+	);
 
 	// useFormState に渡すサーバーアクションをラップ
 	const createChangelogEntryWithChanges = async (
@@ -98,18 +109,22 @@ export function ChangelogForm({ initialData, onSuccess, onCancel }: ChangelogFor
 		return createChangelogEntry(inputData); // 新規作成
 	};
 
-	const [state, formAction] = useFormState(
+	const [state, formAction] = useActionState(
+		// useFormState を useActionState に変更
 		createChangelogEntryWithChanges,
 		initialState,
 	);
 
 	useEffect(() => {
 		if (state.success) {
-			if (!isEditMode) { // 新規作成時のみフォームリセット
+			if (!isEditMode) {
+				// 新規作成時のみフォームリセット
 				setVersion("");
 				setTitle("");
 				setPublishedAt(new Date().toISOString().split("T")[0]);
-				setChanges([{ clientId: crypto.randomUUID(), type: "new", description: "" }]);
+				setChanges([
+					{ clientId: crypto.randomUUID(), type: "new", description: "" },
+				]);
 			}
 			onSuccess?.(); // 親コンポーネントに成功を通知
 		} else if (state.error) {
