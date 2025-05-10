@@ -21,6 +21,7 @@ import { createCard } from "@/app/_actions/cards";
 interface CardFormProps {
 	deckId: string;
 	userId: string;
+	onSuccess?: () => void;
 }
 
 type CardFormValues = {

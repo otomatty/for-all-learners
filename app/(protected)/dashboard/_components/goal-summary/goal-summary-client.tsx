@@ -1,7 +1,8 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import GoalHeatmap from "./goal-heatmap";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import TimeProgress from "./time-progress";
@@ -20,13 +21,44 @@ interface LearningLog {
 interface GoalSummaryClientProps {
 	goals: StudyGoal[];
 	logs: LearningLog[];
+	initialSelectedGoalId?: string;
 }
 
 const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 	goals,
 	logs,
+	initialSelectedGoalId,
 }) => {
-	const [selectedGoalId, setSelectedGoalId] = useState<string>(goals[0].id);
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const [selectedGoalId, setSelectedGoalId] = useState<string>(
+		initialSelectedGoalId || (goals.length > 0 ? goals[0].id : ""),
+	);
+
+	useEffect(() => {
+		const goalIdFromUrl = searchParams.get("goalId");
+		if (goalIdFromUrl) {
+			if (goals.find((g) => g.id === goalIdFromUrl)) {
+				if (selectedGoalId !== goalIdFromUrl) {
+					setSelectedGoalId(goalIdFromUrl);
+				}
+			} else if (goals.length > 0) {
+				// URLのgoalIdが無効な場合、有効な最初のgoalにフォールバック
+				const firstValidGoalId = goals[0].id;
+				setSelectedGoalId(firstValidGoalId);
+				router.replace(`/dashboard?goalId=${firstValidGoalId}`, {
+					scroll: false,
+				});
+			}
+		} else if (
+			initialSelectedGoalId &&
+			selectedGoalId !== initialSelectedGoalId
+		) {
+			// URLにパラメータがなく、初期IDと現在の選択が異なる場合 (例: 初期ロード後)
+			setSelectedGoalId(initialSelectedGoalId);
+		}
+	}, [searchParams, goals, router, selectedGoalId, initialSelectedGoalId]);
+
 	const selectedGoal = goals.find((g) => g.id === selectedGoalId);
 	const now = new Date();
 
@@ -50,12 +82,27 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 	const startDate = new Date(now);
 	startDate.setFullYear(startDate.getFullYear() - 1);
 
+	const handleGoalChange = (newGoalId: string) => {
+		if (newGoalId !== selectedGoalId) {
+			setSelectedGoalId(newGoalId); // UIの即時反映のため
+			router.push(`/dashboard?goalId=${newGoalId}`, { scroll: false });
+		}
+	};
+
+	if (!selectedGoal && goals.length > 0) {
+		// selectedGoalId が不正な場合などのフォールバック（useEffectで処理されるはずだが念のため）
+		return (
+			<div className="mt-4 p-4 text-center">目標情報を読み込んでいます...</div>
+		);
+	}
+	if (goals.length === 0) return null; // 親コンポーネントで処理されるが、念のため
+
 	return (
 		<div className="mt-4">
 			<GoalSelect
 				goals={goals}
 				selectedGoalId={selectedGoalId}
-				onGoalChange={setSelectedGoalId}
+				onGoalChange={handleGoalChange}
 			/>
 			{createdAt && deadlineVal && (
 				<TimeProgress createdAt={createdAt} deadline={deadlineVal} />

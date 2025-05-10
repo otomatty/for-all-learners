@@ -8,10 +8,7 @@ import { MobileDecksList } from "./mobile-decks-list";
 import { AddStudySessionDialog } from "./add-study-session-dialog";
 import { AddDeckLinkDialog } from "./add-deck-link-dialog";
 // actions
-import type {
-	Deck as ServerDeck,
-	DeckStudyLog,
-} from "@/app/_actions/goal-decks";
+import type { Deck as ServerDeck } from "@/app/_actions/goal-decks";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
 
 // Deck type extends server-side Deck and adds today's review count
@@ -34,10 +31,6 @@ export default function ClientGoalDecksSection({
 	const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
-
-	const handleLog = useCallback((deckId: string) => {
-		setSelectedDeckId(deckId);
-	}, []);
 
 	const handleSuccess = useCallback(() => {
 		setSelectedDeckId(null);

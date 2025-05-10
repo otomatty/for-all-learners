@@ -11,7 +11,11 @@ import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+	searchParams: searchParamsPromise, // Renaming to clarify it's a promise
+}: {
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
 	const supabase = await createClient();
 	// Securely fetch authenticated user
 	const {
@@ -30,6 +34,11 @@ export default async function DashboardPage() {
 		getLearningLogsByUser(user.id),
 	]);
 
+	const searchParams = searchParamsPromise
+		? await searchParamsPromise
+		: undefined;
+	const currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
+
 	// シリアライズしてプロトタイプを剥がす
 	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals || []));
 	const safeLogs = JSON.parse(JSON.stringify(logs || []));
@@ -39,7 +48,11 @@ export default async function DashboardPage() {
 			{/* Set the current user ID for downstream components */}
 			<UserIdSetter userId={user.id} />
 			<div className="space-y-4">
-				<GoalSummary goals={safeStudyGoals} logs={safeLogs} />
+				<GoalSummary
+					goals={safeStudyGoals}
+					logs={safeLogs}
+					currentGoalIdFromUrl={currentGoalIdFromUrl}
+				/>
 				<QuickActionTiles />
 			</div>
 		</Container>

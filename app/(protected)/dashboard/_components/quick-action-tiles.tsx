@@ -74,7 +74,7 @@ export const QuickActionTiles: React.FC = () => {
 						<CardTitle>AI問題作成</CardTitle>
 					</div>
 					<CardDescription className="mt-1">
-						音読または写真から問題カードを自動生成します
+						音読または画像から問題カードを自動生成します
 					</CardDescription>
 				</CardHeader>
 				<CardFooter>
@@ -152,7 +152,7 @@ export const QuickActionTiles: React.FC = () => {
 										disabled={!selectedDeckId}
 									>
 										<Camera className="h-6 w-6" />
-										写真を撮る
+										画像を撮る
 									</Button>
 								</div>
 							</div>

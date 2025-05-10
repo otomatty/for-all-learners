@@ -123,7 +123,7 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 						</Avatar>
 
 						<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white rounded-full">
-							写真を変更
+							画像を変更
 						</div>
 					</div>
 
@@ -141,7 +141,7 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 						}}
 					/>
 					<p className="text-sm text-gray-500">
-						写真をクリックすると変更できます
+						画像をクリックすると変更できます
 					</p>
 				</div>
 				<div className="space-y-2">

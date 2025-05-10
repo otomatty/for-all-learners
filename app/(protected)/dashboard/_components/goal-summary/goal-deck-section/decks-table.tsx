@@ -111,7 +111,7 @@ export function DecksTable({ decks, onRemove }: DecksTableProps) {
 												className="flex items-center"
 											>
 												<Camera className="h-4 w-4" />
-												写真を読み込む
+												画像を読み込む
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />

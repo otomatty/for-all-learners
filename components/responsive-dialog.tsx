@@ -78,10 +78,17 @@ export function ResponsiveDialog({
 	open,
 	onOpenChange,
 }: ResponsiveDialogProps) {
+	console.log(
+		`[ResponsiveDialog] Rendering. Title: "${dialogTitle}". Open state: ${open}`,
+	);
 	const isMobile = useIsMobile();
 
 	const buttonProps: React.ComponentProps<typeof Button> = {
 		variant: "outline",
+		onClick: () =>
+			console.log(
+				`[ResponsiveDialog] Trigger button clicked for "${dialogTitle}" (if trigger is used)`,
+			),
 		...triggerButtonProps,
 	};
 
@@ -94,7 +101,15 @@ export function ResponsiveDialog({
 
 	if (isMobile) {
 		return (
-			<Drawer open={open} onOpenChange={onOpenChange}>
+			<Drawer
+				open={open}
+				onOpenChange={(currentOpenState) => {
+					console.log(
+						`[ResponsiveDialog] Mobile Drawer onOpenChange for "${dialogTitle}". New state: ${currentOpenState}. Calling props.onOpenChange.`,
+					);
+					onOpenChange(currentOpenState);
+				}}
+			>
 				{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
 				{/* <DrawerTrigger asChild>{triggerElement}</DrawerTrigger> */}
 				<DrawerContent className="sm:max-w-[425px]">
@@ -109,7 +124,15 @@ export function ResponsiveDialog({
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog
+			open={open}
+			onOpenChange={(currentOpenState) => {
+				console.log(
+					`[ResponsiveDialog] Desktop Dialog onOpenChange for "${dialogTitle}". New state: ${currentOpenState}. Calling props.onOpenChange.`,
+				);
+				onOpenChange(currentOpenState);
+			}}
+		>
 			{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
 			{/* <DialogTrigger asChild>{triggerElement}</DialogTrigger> */}
 			<DialogContent className={className}>

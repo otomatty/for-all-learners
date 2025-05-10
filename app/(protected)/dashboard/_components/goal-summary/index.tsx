@@ -16,9 +16,14 @@ interface LearningLog {
 interface GoalSummaryProps {
 	goals: StudyGoal[];
 	logs: LearningLog[];
+	currentGoalIdFromUrl?: string;
 }
 
-export async function GoalSummary({ goals, logs }: GoalSummaryProps) {
+export async function GoalSummary({
+	goals,
+	logs,
+	currentGoalIdFromUrl,
+}: GoalSummaryProps) {
 	// 目標が未設定のときのエンプティステート表示
 	if (goals.length === 0) {
 		return (
@@ -30,13 +35,20 @@ export async function GoalSummary({ goals, logs }: GoalSummaryProps) {
 			</Card>
 		);
 	}
-	// 初期選択は最初の目標
-	const initialGoalId = goals[0].id;
+	// 表示する目標IDを決定: URLパラメータがあればそれを使い、なければ最初の目標
+	const goalIdToDisplay =
+		currentGoalIdFromUrl && goals.find((g) => g.id === currentGoalIdFromUrl)
+			? currentGoalIdFromUrl
+			: goals[0].id;
 
 	return (
 		<Card className="p-4">
-			<GoalSummaryClient goals={goals} logs={logs} />
-			<ServerGoalDecksSection goalId={initialGoalId} />
+			<GoalSummaryClient
+				goals={goals}
+				logs={logs}
+				initialSelectedGoalId={goalIdToDisplay}
+			/>
+			<ServerGoalDecksSection key={goalIdToDisplay} goalId={goalIdToDisplay} />
 		</Card>
 	);
 }

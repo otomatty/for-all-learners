@@ -102,7 +102,7 @@ export function MobileDecksList({ decks, onRemove }: MobileDecksListProps) {
 											<Link href={`/decks/${deck.id}/audio`}>音読</Link>
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild>
-											<Link href={`/decks/${deck.id}/ocr`}>写真</Link>
+											<Link href={`/decks/${deck.id}/ocr`}>画像</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										{onRemove && (
