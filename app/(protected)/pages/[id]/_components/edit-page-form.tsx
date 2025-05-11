@@ -143,6 +143,7 @@ export default function EditPageForm({
 		<>
 			<div className="space-y-6">
 				<PageHeader
+					pageId={page.id} // page.id を pageIdとして渡す
 					title={title}
 					onTitleChange={setTitle}
 					onGenerateContent={handleGenerateContent}

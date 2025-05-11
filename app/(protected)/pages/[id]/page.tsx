@@ -11,7 +11,7 @@ import { transformPageLinks } from "@/lib/utils/transformPageLinks";
 
 export default async function PageDetail({
 	params,
-}: { params: Promise<{ slug: string }> }) {
+}: { params: Promise<{ id: string }> }) {
 	const supabase = await createClient();
 	const {
 		data: { user },
@@ -21,7 +21,7 @@ export default async function PageDetail({
 	}
 
 	// Await params for Next.js 14 sync dynamic APIs
-	const { slug: rawSlug } = await params;
+	const { id: rawSlug } = await params;
 	const slug = decodeURIComponent(rawSlug);
 	// Fetch by ID or title
 	const { data: page, error } = await supabase

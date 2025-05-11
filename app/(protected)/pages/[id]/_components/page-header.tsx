@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Next.js 13 App Router
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, MoreVertical, Trash2 } from "lucide-react";
+import { Sparkles, MoreVertical, Trash2, Layers } from "lucide-react"; // Layers アイコンをインポート
 import { SpeechControlButtons } from "./speech-control-buttons";
 import { DeletePageDialog } from "./delete-page-dialog";
 
 interface PageHeaderProps {
+	pageId: string; // ページID (slugから渡される想定)
 	title: string;
 	onTitleChange: (newTitle: string) => void;
 	onGenerateContent: () => void;
@@ -28,6 +31,7 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({
+	pageId,
 	title,
 	onTitleChange,
 	onGenerateContent,
@@ -40,7 +44,12 @@ export function PageHeader({
 	onDeletePage,
 	isPlaying,
 }: PageHeaderProps) {
+	const router = useRouter();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+	const handleNavigateToGenerateCards = () => {
+		router.push(`/pages/${pageId}/generate-cards`);
+	};
 
 	return (
 		<div className="flex items-center">
@@ -83,6 +92,14 @@ export function PageHeader({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuItem
+						onSelect={handleNavigateToGenerateCards}
+						className="cursor-pointer"
+					>
+						<Layers className="mr-2 h-4 w-4" />
+						<span>カードを生成する</span>
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
 						variant="destructive"
 						onSelect={() => {
 							// DropdownMenuが閉じる処理が完了するのを待ってからAlertDialogを開く
@@ -91,7 +108,7 @@ export function PageHeader({
 						// destructive variant のスタイルをベースにしつつ、特定のhover/focusスタイルを適用したい場合はclassNameで指定
 						className="hover:!bg-red-100 dark:hover:!bg-red-900/50 focus:!bg-red-100 dark:focus:!bg-red-900/50"
 					>
-						<Trash2 className="mr-2 h-4 w-4" />{" "}
+						<Trash2 className="mr-2 h-4 w-4" />
 						{/* アイコンとテキストの間にマージンを追加 */}
 						<span>ページを削除</span>
 					</DropdownMenuItem>

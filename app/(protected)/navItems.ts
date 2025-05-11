@@ -7,7 +7,6 @@ export const navItems: NavItem[] = [
 		href: "/pages",
 		icon: "BookOpen",
 		status: "enabled",
-		hasNotification: true,
 	},
 	{ label: "レポート", href: "/reports", icon: "BarChart", status: "new" },
 	{

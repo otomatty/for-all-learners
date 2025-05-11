@@ -287,15 +287,11 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 				<Dialog open={true} onOpenChange={() => setDetailCard(null)}>
 					<DialogContent>
 						<DialogHeader className="text-left">
-							<DialogTitle>カード詳細</DialogTitle>
-							<DialogDescription>
-								カードの詳細情報を表示します
-							</DialogDescription>
+							<DialogTitle>答え</DialogTitle>
 						</DialogHeader>
 						<div className="space-y-4">
-							<h3 className="text-lg font-semibold">問題文</h3>
 							<div className="prose">
-								<RichContent content={detailCard.front_content} />
+								<RichContent content={detailCard.back_content} />
 							</div>
 						</div>
 					</DialogContent>

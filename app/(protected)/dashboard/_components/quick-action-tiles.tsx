@@ -173,7 +173,7 @@ export const QuickActionTiles: React.FC = () => {
 					</CardDescription>
 				</CardHeader>
 				<CardFooter>
-					<Button asChild className="w-full">
+					<Button asChild className="w-full cursor-default">
 						<Link href="/learn">学習を始める</Link>
 					</Button>
 				</CardFooter>
@@ -191,7 +191,7 @@ export const QuickActionTiles: React.FC = () => {
 					</CardDescription>
 				</CardHeader>
 				<CardFooter>
-					<Button asChild className="w-full">
+					<Button asChild className="w-full cursor-default">
 						<Link href="/pages">メモ一覧へ</Link>
 					</Button>
 				</CardFooter>

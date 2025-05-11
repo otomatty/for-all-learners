@@ -22,10 +22,10 @@ export function SpeechControlButtons({
 }: SpeechControlButtonsProps) {
 	const buttonBaseStyle =
 		"p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
-	const iconStyle = "w-5 h-5";
+	const iconStyle = "w-4 h-4";
 
 	return (
-		<div className="flex items-center ml-2 space-x-1 bg-white dark:bg-gray-800 p-1.5 rounded-xl shadow-md">
+		<div className="flex items-center ml-2 space-x-1 bg-white dark:bg-gray-800 p-1.5 rounded-xl border border-border shadow-md">
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<button

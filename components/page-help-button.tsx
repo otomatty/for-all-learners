@@ -7,6 +7,11 @@ import { pageHelpConfig } from "@/lib/pageHelpConfig";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 /**
  * ヘルプダイアログを表示するボタンコンポーネント
@@ -46,9 +51,18 @@ export function PageHelpButton({ playAudio = false }: PageHelpButtonProps) {
 
 	return (
 		<>
-			<Button variant="ghost" size="icon" onClick={() => setIsDialogOpen(true)}>
-				<HelpCircle />
-			</Button>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => setIsDialogOpen(true)}
+					>
+						<HelpCircle />
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>このページの操作ガイドを表示します</TooltipContent>
+			</Tooltip>
 			<ResponsiveDialog
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}
