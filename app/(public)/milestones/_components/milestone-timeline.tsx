@@ -48,6 +48,7 @@ export interface MilestoneEntry {
 	imageUrl?: string; // ビジュアルコンテンツのURL
 	videoUrl?: string; // 動画コンテンツのURL
 	relatedLinks?: { label: string; url: string }[]; // 関連リンク
+	sort_order: number;
 }
 
 interface MilestoneTimelineProps {

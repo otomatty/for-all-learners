@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { pageHelpConfig, type PageHelpConfig } from "@/lib/pageHelpConfig";
-import type { ReactNode } from "react";
+import { pageHelpConfig } from "@/lib/pageHelpConfig";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";

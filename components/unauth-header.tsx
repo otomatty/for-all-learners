@@ -19,6 +19,9 @@ export function UnauthHeader({ version, isAuthenticated }: UnauthHeaderProps) {
 				<PublicNavigation />
 				<div className="flex items-center space-x-4">
 					<ThemeToggle />
+					<Button asChild variant="outline">
+						<Link href="/inquiry">お問い合わせ</Link>
+					</Button>
 					{isAuthenticated ? (
 						<Button asChild>
 							<Link href="/dashboard">アプリへ</Link>

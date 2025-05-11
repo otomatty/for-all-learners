@@ -1,29 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
-import { PageLink } from "@/lib/tiptap-extensions/page-link";
-import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
-import {
-	CustomBulletList,
-	CustomOrderedList,
-} from "@/lib/tiptap-extensions/custom-list";
+import { EditorContent } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import type { Database } from "@/types/database.types";
-import Placeholder from "@tiptap/extension-placeholder";
-import { Sparkles, Volume2, Pause, RotateCcw } from "lucide-react";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
-import { marked } from "marked";
-import { Button } from "@/components/ui/button";
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import type { KeyboardEvent } from "react";
+import { usePageFormState } from "../_hooks/usePageFormState";
+import { useSpeechControls } from "../_hooks/useSpeechControls";
+import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
+import { PageHeader } from "./page-header";
+import { useRouter } from "next/navigation";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -40,134 +31,41 @@ export default function EditPageForm({
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
 	const isNewPage = searchParams.get("newPage") === "true";
-	const router = useRouter();
 	const supabase = createClient();
-	// Determine content for editor: use injected initialContent or original
-	const initialDoc: JSONContent = initialContent ??
-		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
-	const [title, setTitle] = useState(page.title);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isDirty, setIsDirty] = useState(false);
-	const [isGenerating, setIsGenerating] = useState(false);
+	const router = useRouter();
 
-	// Offline detection state (SSR safe)
-	const [isOnline, setIsOnline] = useState<boolean>(true);
-	useEffect(() => {
-		// set initial status on client
-		setIsOnline(navigator.onLine);
-		const handleOnline = () => setIsOnline(true);
-		const handleOffline = () => setIsOnline(false);
-		window.addEventListener("online", handleOnline);
-		window.addEventListener("offline", handleOffline);
-		return () => {
-			window.removeEventListener("online", handleOnline);
-			window.removeEventListener("offline", handleOffline);
-		};
-	}, []);
+	const {
+		title,
+		setTitle,
+		isLoading, // isLoading は usePageEditorLogic が更新するが、表示のために必要ならここでも受け取る
+		setIsLoading,
+		isDirty,
+		isGenerating,
+		setIsGenerating,
+		isOnline,
+		// ページ削除中のローディング状態も管理する場合
+	} = usePageFormState({ page, isNewPage });
 
-	// Initialize TipTap editor before defining savePage and autosave hooks
-	const editor = useEditor({
-		extensions: [
-			StarterKit.configure({
-				heading: false,
-				bulletList: false,
-				orderedList: false,
-			}),
-			CustomHeading,
-			CustomBulletList,
-			CustomOrderedList,
-			LinkExtension,
-			PageLink,
-			Placeholder.configure({
-				placeholder: "ページ内容を入力してください",
-				includeChildren: true,
-			}),
-		],
-		content: initialDoc,
-		editorProps: {
-			attributes: {
-				class:
-					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose lg:prose-lg mx-auto min-h-[200px] px-3 py-2",
-			},
-		},
+	const { editor, handleGenerateContent } = usePageEditorLogic({
+		page,
+		initialContent,
+		title,
+		supabase,
+		setIsLoading,
+		setIsGenerating,
+		isDirty,
 	});
 
-	// Ref for debounce timer
-	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-	// Ref to skip initial editor update autosave
-	const isFirstUpdate = useRef(true);
-	// Debounced save function for autosave
-	const savePage = useCallback(async () => {
-		if (!editor) return;
-		setIsLoading(true);
-		try {
-			const content = editor.getJSON() as JSONContent;
-			const { data: updated, error } = await supabase
-				.from("pages")
-				.update({ title, content_tiptap: content })
-				.eq("id", page.id)
-				.select()
-				.single();
-			if (error) throw error;
-			toast.success("ページを保存しました");
-		} catch (err) {
-			console.error("EditPageForm save error:", err);
-			toast.error("保存に失敗しました");
-		} finally {
-			setIsLoading(false);
-		}
-	}, [editor, title, page.id, supabase]);
-
-	// タイトルからGemini生成を呼び出すハンドラー
-	const handleGenerate = useCallback(async () => {
-		if (!title.trim()) {
-			toast.error("タイトルを入力してください");
-			return;
-		}
-		setIsGenerating(true);
-		try {
-			const markdown = await generatePageInfo(title);
-			const html = marked.parse(markdown);
-			editor?.commands.setContent(html);
-			await savePage();
-			toast.success("コンテンツ生成完了");
-		} catch (error) {
-			console.error("generatePageInfo error:", error);
-			toast.error("生成に失敗しました");
-		} finally {
-			setIsGenerating(false);
-		}
-	}, [title, editor, savePage]);
-
-	// Autosave on editor updates, skip initial update
-	useEffect(() => {
-		if (!editor) return;
-		const onUpdate = () => {
-			if (isFirstUpdate.current) {
-				isFirstUpdate.current = false;
-				return;
-			}
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-			saveTimeout.current = setTimeout(savePage, 2000);
-		};
-		editor.on("update", onUpdate);
-		return () => {
-			editor.off("update", onUpdate);
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		};
-	}, [savePage, editor]);
-	// Autosave on title changes, only when title is dirty
-	useEffect(() => {
-		if (!editor) return;
-		if (!isDirty) return;
-		if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		saveTimeout.current = setTimeout(savePage, 2000);
-		return () => {
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		};
-	}, [isDirty, savePage, editor]);
+	const { handleReadAloud, handlePause, handleReset, isPlaying } =
+		useSpeechControls({
+			editor,
+		});
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Function to wrap selection with pageLink mark
+	// この関数は editor と supabase に依存するため、usePageEditorLogic に含めるか、
+	// EditPageForm に残して editor と supabase を渡す形になります。
+	// ここでは EditPageForm に残す例を示しますが、usePageEditorLogic に移すことも検討可能です。
 	const wrapSelectionWithPageLink = useCallback(async () => {
 		if (!editor) return;
 		const { from, to } = editor.state.selection;
@@ -177,7 +75,6 @@ export default function EditPageForm({
 			return;
 		}
 		try {
-			// Check if a page with the same title exists
 			const { data: pages, error } = await supabase
 				.from("pages")
 				.select("id")
@@ -189,7 +86,6 @@ export default function EditPageForm({
 				return;
 			}
 			const pageId = pages?.[0]?.id ?? null;
-			// 選択したテキストに pageLink マークを付与する（pageId があればリンク先設定）
 			editor
 				.chain()
 				.focus()
@@ -222,131 +118,50 @@ export default function EditPageForm({
 		[editor, wrapSelectionWithPageLink],
 	);
 
-	/**
-	 * ページの内容を読み上げる
-	 */
-	const handleReadAloud = useCallback(() => {
-		if (!editor) return;
-		const text = editor.getText();
-		if (!text) {
-			toast.error("読み上げるテキストがありません");
-			return;
-		}
+	const handleDeletePage = useCallback(async () => {
+		setIsDeleting(true);
+		setIsLoading(true); // 共通のローディングインジケータを使う場合
+		toast.loading("ページを削除しています...");
 		try {
-			speechSynthesis.cancel();
-			const utterance = new SpeechSynthesisUtterance(text);
-			utterance.lang = "ja-JP";
-			speechSynthesis.speak(utterance);
+			const { error } = await supabase.from("pages").delete().eq("id", page.id);
+			if (error) throw error;
+			toast.dismiss(); // ローディング中のトーストを消す
+			toast.success(`ページ「${title}」を削除しました`);
+			router.push("/pages"); // ページ一覧などにリダイレクト
 		} catch (err) {
-			console.error("handleReadAloud error:", err);
-			toast.error("読み上げ機能を利用できません");
+			console.error("ページ削除エラー:", err);
+			toast.dismiss(); // ローディング中のトーストを消す
+			toast.error("ページの削除に失敗しました");
+			throw err; // DeletePageDialog でエラーを捕捉できるように再スロー
+		} finally {
+			setIsDeleting(false);
+			setIsLoading(false);
 		}
-	}, [editor]);
-
-	/**
-	 * 読み上げを一時停止する
-	 */
-	const handlePause = useCallback(() => {
-		try {
-			if (speechSynthesis.speaking && !speechSynthesis.paused) {
-				speechSynthesis.pause();
-				toast.success("読み上げを一時停止しました");
-			} else {
-				toast.error("一時停止できる読み上げがありません");
-			}
-		} catch (err) {
-			console.error("handlePause error:", err);
-			toast.error("一時停止に失敗しました");
-		}
-	}, []);
-
-	/**
-	 * 読み上げをリセット（停止）する
-	 */
-	const handleReset = useCallback(() => {
-		try {
-			if (speechSynthesis.speaking || speechSynthesis.paused) {
-				speechSynthesis.cancel();
-				toast.success("読み上げを停止しました");
-			} else {
-				toast.error("停止できる読み上げがありません");
-			}
-		} catch (err) {
-			console.error("handleReset error:", err);
-			toast.error("停止に失敗しました");
-		}
-	}, []);
+	}, [supabase, page.id, router, title, setIsLoading]);
 
 	return (
 		<>
 			<div className="space-y-6">
-				<div className="flex items-center">
-					<Input
-						value={title}
-						onChange={(e) => {
-							const newTitle = e.target.value;
-							setTitle(newTitle);
-							// 初期タイトル(page.title)と比較して変更状態を更新
-							setIsDirty(newTitle.trim() !== page.title.trim());
-						}}
-						placeholder="ページタイトルを入力"
-						variant="borderless"
-						className="text-4xl font-bold flex-1"
-					/>
-					{/* 変更があったときのみ表示し、左からフェードイン */}
-					<button
-						type="button"
-						onClick={handleGenerate}
-						disabled={isGenerating || (!isDirty && !isNewPage)}
-						title="タイトルからコンテンツ生成"
-						className={`ml-2 p-1 rounded hover:bg-gray-100 transition-all duration-300 ease-out ${
-							isDirty || isNewPage
-								? "opacity-100 translate-x-0 visible"
-								: "opacity-0 -translate-x-4 invisible"
-						}`}
-					>
-						<Sparkles
-							className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
-						/>
-					</button>
-					{/* 読み上げボタン */}
-					<Button
-						type="button"
-						onClick={handleReadAloud}
-						title="ページを読み上げる"
-						variant="outline"
-						className="ml-2"
-					>
-						<Volume2 className="w-6 h-6" />
-					</Button>
-					{/* 一時停止ボタン */}
-					<Button
-						type="button"
-						onClick={handlePause}
-						title="一時停止"
-						variant="outline"
-						className="ml-2"
-					>
-						<Pause className="w-6 h-6" />
-					</Button>
-					{/* リセットボタン */}
-					<Button
-						type="button"
-						onClick={handleReset}
-						title="リセット"
-						variant="outline"
-						className="ml-2"
-					>
-						<RotateCcw className="w-6 h-6" />
-					</Button>
-				</div>
+				<PageHeader
+					title={title}
+					onTitleChange={setTitle}
+					onGenerateContent={handleGenerateContent}
+					isGenerating={isGenerating}
+					isDirty={isDirty}
+					isNewPage={isNewPage}
+					onReadAloud={handleReadAloud}
+					onPauseReadAloud={handlePause}
+					onResetReadAloud={handleReset}
+					onDeletePage={handleDeletePage}
+					isPlaying={isPlaying} // isPlaying プロパティを渡す
+				/>
 				{editor && (
 					<div className="relative">
 						<EditPageBubbleMenu
 							editor={editor}
 							wrapSelectionWithPageLink={wrapSelectionWithPageLink}
 						/>
-						{isGenerating ? (
+						{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
 							<ContentSkeleton />
 						) : (
 							<EditorContent

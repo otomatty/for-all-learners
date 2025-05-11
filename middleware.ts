@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
 	"/pricing",
 	"/guides",
 	"/faq",
+	"/inquiry",
 ];
 
 export async function middleware(req: NextRequest) {

@@ -527,6 +527,146 @@ export type Database = {
         }
         Relationships: []
       }
+      inquiries: {
+        Row: {
+          assigned_admin_id: string | null
+          body: string
+          category_id: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          ip_address: unknown | null
+          name: string | null
+          page_path: string | null
+          priority: Database["public"]["Enums"]["inquiry_priority_enum"] | null
+          status: Database["public"]["Enums"]["inquiry_status_enum"] | null
+          subject: string | null
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          assigned_admin_id?: string | null
+          body: string
+          category_id?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          ip_address?: unknown | null
+          name?: string | null
+          page_path?: string | null
+          priority?: Database["public"]["Enums"]["inquiry_priority_enum"] | null
+          status?: Database["public"]["Enums"]["inquiry_status_enum"] | null
+          subject?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          assigned_admin_id?: string | null
+          body?: string
+          category_id?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          ip_address?: unknown | null
+          name?: string | null
+          page_path?: string | null
+          priority?: Database["public"]["Enums"]["inquiry_priority_enum"] | null
+          status?: Database["public"]["Enums"]["inquiry_status_enum"] | null
+          subject?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_assigned_admin_id_fkey"
+            columns: ["assigned_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          id: string
+          inquiry_id: string
+          mime_type: string
+          size: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          id?: string
+          inquiry_id: string
+          mime_type: string
+          size: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          id?: string
+          inquiry_id?: string
+          mime_type?: string
+          size?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_attachments_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_categories: {
+        Row: {
+          created_at: string | null
+          description_en: string | null
+          description_ja: string | null
+          id: number
+          name_en: string
+          name_ja: string
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description_en?: string | null
+          description_ja?: string | null
+          id?: number
+          name_en: string
+          name_ja: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description_en?: string | null
+          description_ja?: string | null
+          id?: number
+          name_en?: string
+          name_ja?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       learning_logs: {
         Row: {
           answered_at: string | null
@@ -1232,6 +1372,8 @@ export type Database = {
     Enums: {
       admin_role: "superadmin" | "admin" | "moderator"
       change_type_enum: "new" | "improvement" | "fix" | "security"
+      inquiry_priority_enum: "low" | "medium" | "high"
+      inquiry_status_enum: "open" | "in_progress" | "resolved" | "closed"
       milestone_status: "planning" | "in-progress" | "launched" | "on-hold"
     }
     CompositeTypes: {
@@ -1350,6 +1492,8 @@ export const Constants = {
     Enums: {
       admin_role: ["superadmin", "admin", "moderator"],
       change_type_enum: ["new", "improvement", "fix", "security"],
+      inquiry_priority_enum: ["low", "medium", "high"],
+      inquiry_status_enum: ["open", "in_progress", "resolved", "closed"],
       milestone_status: ["planning", "in-progress", "launched", "on-hold"],
     },
   },
