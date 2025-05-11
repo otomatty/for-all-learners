@@ -600,6 +600,54 @@ export type Database = {
           },
         ]
       }
+      milestones: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: string[] | null
+          id: string
+          image_url: string | null
+          milestone_id: string
+          progress: number | null
+          related_links: Json | null
+          sort_order: number
+          status: Database["public"]["Enums"]["milestone_status"]
+          timeframe: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          milestone_id: string
+          progress?: number | null
+          related_links?: Json | null
+          sort_order?: number
+          status: Database["public"]["Enums"]["milestone_status"]
+          timeframe: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          milestone_id?: string
+          progress?: number | null
+          related_links?: Json | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["milestone_status"]
+          timeframe?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_shares: {
         Row: {
           created_at: string | null
@@ -1184,6 +1232,7 @@ export type Database = {
     Enums: {
       admin_role: "superadmin" | "admin" | "moderator"
       change_type_enum: "new" | "improvement" | "fix" | "security"
+      milestone_status: "planning" | "in-progress" | "launched" | "on-hold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1301,6 +1350,7 @@ export const Constants = {
     Enums: {
       admin_role: ["superadmin", "admin", "moderator"],
       change_type_enum: ["new", "improvement", "fix", "security"],
+      milestone_status: ["planning", "in-progress", "launched", "on-hold"],
     },
   },
 } as const

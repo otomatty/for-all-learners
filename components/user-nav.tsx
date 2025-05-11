@@ -102,7 +102,7 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 						</DropdownMenuItem>
 					)}
 					{isAdmin && pathname?.startsWith("/admin") && (
-						<DropdownMenuItem onClick={() => router.push("/")}>
+						<DropdownMenuItem onClick={() => router.push("/dashboard")}>
 							<Home className="w-4 h-4" />
 							アプリへ
 						</DropdownMenuItem>
