@@ -17,6 +17,7 @@ import {
 	List,
 	ListOrdered,
 	Link2,
+	Code,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -245,6 +246,37 @@ export function EditPageBubbleMenu({
 							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
 						>
 							<Link2 className="w-5 h-5" />
+						</button>
+					)}
+
+					{/* Code Block */}
+					{!isMobile ? (
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+								>
+									<Code className="w-5 h-5" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent side="top">
+								<div className="flex items-center space-x-1">
+									<span>コードブロック:</span>
+									<Badge variant="secondary">
+										{isMac ? "⌘+Shift+C" : "Ctrl+Shift+C"}
+									</Badge>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					) : (
+						<button
+							type="button"
+							onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+						>
+							<Code className="w-5 h-5" />
 						</button>
 					)}
 				</div>

@@ -305,4 +305,12 @@
   .prose li > p {
     @apply inline m-0;
   }
+
+  /* コードブロック用スタイル */
+  .prose pre {
+    @apply bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-auto;
+  }
+  .prose pre code {
+    @apply font-mono text-sm leading-relaxed;
+  }
 }

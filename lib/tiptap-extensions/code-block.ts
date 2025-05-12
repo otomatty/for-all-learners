@@ -4,6 +4,7 @@ import CodeBlockShiki, {
 	type CodeBlockShikiOptions,
 } from "tiptap-extension-code-block-shiki";
 import { textblockTypeInputRule } from "@tiptap/core";
+import { createHighlighter } from "shiki";
 
 /**
  * Custom Shiki code block extension that supports fenced code blocks with syntax highlighting
