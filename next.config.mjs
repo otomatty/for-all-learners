@@ -1,6 +1,15 @@
 import path from "node:path";
 
 const nextConfig = {
+	images: {
+		domains: [
+			"scrapbox.io",
+			"gyazo.com",
+			"youtube.com",
+			"i.ytimg.com",
+			"i.gyazo.com",
+		],
+	},
 	webpack(config) {
 		config.resolve.alias = {
 			...(config.resolve.alias || {}),

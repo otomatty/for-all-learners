@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
@@ -16,6 +16,7 @@ import { marked } from "marked";
 import { toast } from "sonner";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
+import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -53,6 +54,7 @@ export function usePageEditorLogic({
 			LinkExtension,
 			PageLink,
 			CustomCodeBlock,
+			GyazoImage,
 			Placeholder.configure({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,
@@ -75,9 +77,33 @@ export function usePageEditorLogic({
 		setIsLoading(true);
 		try {
 			const content = editor.getJSON() as JSONContent;
+			// Extract first Gyazo image and compute raw URL for thumbnail
+			let firstImageRawUrl: string | null = null;
+			const findGyazoImage = (node: JSONContent): string | null => {
+				const attrs = (node as { attrs?: { src?: string } }).attrs;
+				if (node.type === "gyazoImage" && attrs?.src) {
+					const src = attrs.src;
+					const pageUrl = src
+						.replace(/^https:\/\/i\.gyazo\.com\//, "https://gyazo.com/")
+						.replace(/\.png$/, "");
+					return `${pageUrl}/raw`;
+				}
+				if ("content" in node && Array.isArray(node.content)) {
+					for (const child of node.content) {
+						const found = findGyazoImage(child as JSONContent);
+						if (found) return found;
+					}
+				}
+				return null;
+			};
+			firstImageRawUrl = findGyazoImage(content);
 			const { error } = await supabase
 				.from("pages")
-				.update({ title, content_tiptap: content })
+				.update({
+					title,
+					content_tiptap: content,
+					thumbnail_url: firstImageRawUrl,
+				})
 				.eq("id", page.id)
 				.select()
 				.single();

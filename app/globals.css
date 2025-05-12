@@ -314,3 +314,26 @@
     @apply font-mono text-sm leading-relaxed;
   }
 }
+
+/* GyazoImage 用スタイル */
+.image {
+    max-width: 100%;
+    max-height: 300px;
+    display: inline-block;
+    vertical-align: bottom;
+    margin: 3px 0px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease-in-out;
+    border-radius: 0.5rem;
+}
+.image:hover {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Full-width GyazoImage style */
+.image-full {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+}

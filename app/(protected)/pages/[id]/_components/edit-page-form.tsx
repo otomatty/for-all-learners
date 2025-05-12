@@ -1,20 +1,22 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import type { KeyboardEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EditorContent } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
+
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
+
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
-import type { KeyboardEvent } from "react";
 import { usePageFormState } from "../_hooks/usePageFormState";
 import { useSpeechControls } from "../_hooks/useSpeechControls";
 import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
+import { useDateShortcut } from "../_hooks/useDateShortcut";
 import { PageHeader } from "./page-header";
-import { useRouter } from "next/navigation";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -37,13 +39,11 @@ export default function EditPageForm({
 	const {
 		title,
 		setTitle,
-		isLoading, // isLoading は usePageEditorLogic が更新するが、表示のために必要ならここでも受け取る
 		setIsLoading,
 		isDirty,
 		isGenerating,
 		setIsGenerating,
 		isOnline,
-		// ページ削除中のローディング状態も管理する場合
 	} = usePageFormState({ page, isNewPage });
 
 	const { editor, handleGenerateContent } = usePageEditorLogic({
@@ -60,6 +60,7 @@ export default function EditPageForm({
 		useSpeechControls({
 			editor,
 		});
+	const handleDateShortcut = useDateShortcut(editor);
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Function to wrap selection with pageLink mark
@@ -102,6 +103,10 @@ export default function EditPageForm({
 		(e: KeyboardEvent) => {
 			if (!editor) return;
 			const key = e.key.toLowerCase();
+			if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key === "t") {
+				e.preventDefault();
+				handleDateShortcut();
+			}
 			if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key === "k") {
 				e.preventDefault();
 				wrapSelectionWithPageLink();
@@ -115,7 +120,7 @@ export default function EditPageForm({
 				editor.chain().focus().toggleOrderedList().run();
 			}
 		},
-		[editor, wrapSelectionWithPageLink],
+		[editor, wrapSelectionWithPageLink, handleDateShortcut],
 	);
 
 	const handleDeletePage = useCallback(async () => {

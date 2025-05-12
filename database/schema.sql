@@ -64,6 +64,7 @@ CREATE TABLE pages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES accounts(id) NOT NULL,
   title TEXT NOT NULL,
+  thumbnail_url TEXT,
   content_tiptap JSONB NOT NULL,
   scrapbox_page_id TEXT,
   scrapbox_page_list_synced_at TIMESTAMPTZ,

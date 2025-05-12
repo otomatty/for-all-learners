@@ -2,10 +2,30 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 import type { Database, Json } from "@/types/database.types";
-
+import { ArrowUpRight } from "lucide-react";
 interface PagesListProps {
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
+}
+
+// 許可するドメイン一覧
+const ALLOWED_DOMAINS = [
+	"scrapbox.io", // Scrapbox
+	"gyazo.com", // Gyazo
+	"i.ytimg.com", // YouTubeのサムネイル
+];
+
+/**
+ * Checks if the given URL's domain is allowed.
+ */
+function isAllowedDomain(url: string): boolean {
+	try {
+		const { hostname } = new URL(url);
+		return ALLOWED_DOMAINS.includes(hostname);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -43,21 +63,47 @@ export function PagesList({ pages }: PagesListProps) {
 			{pages.map((page) => (
 				<Link key={page.id} href={`/pages/${encodeURIComponent(page.id)}`}>
 					<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">
-						<CardHeader className="px-4">
+						<CardHeader className="px-4 py-2">
 							<CardTitle>{page.title}</CardTitle>
 						</CardHeader>
 						<CardContent className="px-4">
-							{(() => {
-								const text = extractTextFromTiptap(page.content_tiptap)
-									.replace(/\s+/g, " ")
-									.trim();
-								if (!text) return null;
-								return (
-									<p className="line-clamp-5 text-sm text-muted-foreground">
-										{text}
-									</p>
-								);
-							})()}
+							{page.thumbnail_url ? (
+								isAllowedDomain(page.thumbnail_url) ? (
+									<Image
+										src={page.thumbnail_url}
+										alt={page.title}
+										width={400}
+										height={200}
+										className="w-full h-32 object-contain"
+									/>
+								) : (
+									<div className="w-full h-32 flex items-center justify-center bg-gray-100 text-sm text-center text-gray-500 p-4">
+										この画像のドメインは許可されていません。
+										<Link
+											href="https://gyazo.com"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-blue-500 hover:underline"
+										>
+											Gyazo
+											<ArrowUpRight className="w-4 h-4" />
+										</Link>
+										をご利用ください。
+									</div>
+								)
+							) : (
+								(() => {
+									const text = extractTextFromTiptap(page.content_tiptap)
+										.replace(/\s+/g, " ")
+										.trim();
+									if (!text) return null;
+									return (
+										<p className="line-clamp-5 text-sm text-muted-foreground">
+											{text}
+										</p>
+									);
+								})()
+							)}
 						</CardContent>
 					</Card>
 				</Link>

@@ -56,6 +56,7 @@ export async function GET(
 		const allPages: {
 			id: string;
 			title: string;
+			image: string | null;
 			descriptions: string[];
 			created: number;
 			updated: number;
@@ -90,9 +91,18 @@ export async function GET(
 		}
 		const pages = allPages;
 
-		// Sync filtering: skip pages edited more recently locally
+		// Sync filtering: include pages with updated content or missing thumbnails
 		const scrapboxIds = pages.map((p) => p.id);
-		// RPCを使用して既存ページのupdated_atを取得
+		// Fetch existing updated_at and thumbnail_url via RPC
+		// RPC get_pages_by_ids returns scrapbox_page_id, updated_at, thumbnail_url
+		// SQL:
+		// BEGIN
+		//   RETURN QUERY
+		//   SELECT p.scrapbox_page_id, p.updated_at, p.thumbnail_url
+		//     FROM pages p
+		//    WHERE p.user_id = uid
+		//      AND p.scrapbox_page_id = ANY(ids);
+		// END;
 		const { data: existingPages, error: existingPagesError } =
 			await supabase.rpc("get_pages_by_ids", {
 				ids: scrapboxIds,
@@ -104,18 +114,25 @@ export async function GET(
 				existingPagesError,
 			);
 		}
+		// Build map of existing metadata for comparison
 		const existingMap = new Map(
 			(existingPages ?? []).map(
-				(e) => [e.scrapbox_page_id, e.updated_at] as [string, string],
+				(e) =>
+					[
+						e.scrapbox_page_id,
+						{ updated_at: e.updated_at, thumbnail_url: e.thumbnail_url },
+					] as [string, { updated_at: string; thumbnail_url: string | null }],
 			),
 		);
+		// Filter pages: include if newer OR if existing record lacks thumbnail
 		const filteredPages = pages.filter((item) => {
 			const incomingMs = item.updated * 1000;
-			const existingUpdated = existingMap.get(item.id);
-			const existingMs = existingUpdated
-				? new Date(existingUpdated).getTime()
+			const existing = existingMap.get(item.id);
+			const existingMs = existing?.updated_at
+				? new Date(existing.updated_at).getTime()
 				: 0;
-			return incomingMs > existingMs;
+			const hasThumb = existing?.thumbnail_url != null;
+			return incomingMs > existingMs || !hasThumb;
 		});
 		const skippedCount = pages.length - filteredPages.length;
 
@@ -125,6 +142,7 @@ export async function GET(
 			(item: {
 				id: string;
 				title: string;
+				image: string | null;
 				descriptions: string[];
 				created: number;
 				updated: number;
@@ -143,6 +161,7 @@ export async function GET(
 				return {
 					user_id: user.id,
 					title: item.title,
+					thumbnail_url: item.image,
 					content_tiptap: content,
 					scrapbox_page_id: item.id,
 					scrapbox_page_list_synced_at: now,

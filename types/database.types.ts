@@ -836,6 +836,7 @@ export type Database = {
           scrapbox_page_content_synced_at: string | null
           scrapbox_page_id: string | null
           scrapbox_page_list_synced_at: string | null
+          thumbnail_url: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -848,6 +849,7 @@ export type Database = {
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
+          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -860,6 +862,7 @@ export type Database = {
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
@@ -1339,6 +1342,7 @@ export type Database = {
         Returns: {
           scrapbox_page_id: string
           updated_at: string
+          thumbnail_url: string
         }[]
       }
       is_admin_user: {
