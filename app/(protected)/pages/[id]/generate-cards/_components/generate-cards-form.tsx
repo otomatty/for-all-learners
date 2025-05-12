@@ -84,8 +84,12 @@ export function GenerateCardsForm({
 					toast.success("カードが生成されました。内容を確認してください。");
 					setRawGeneratedCards(result.generatedRawCards);
 				}
-			} catch (e: any) {
-				toast.error(`予期せぬエラーが発生しました: ${e.message}`);
+			} catch (e: unknown) {
+				if (e instanceof Error) {
+					toast.error(`予期せぬエラーが発生しました: ${e.message}`);
+				} else {
+					toast.error("予期せぬエラーが発生しました。");
+				}
 				setRawGeneratedCards(null);
 			}
 		});
@@ -125,8 +129,14 @@ export function GenerateCardsForm({
 					router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移
 					// router.refresh(); // デッキページへ遷移するため、現在のページのリフレッシュは不要になる可能性が高い
 				}
-			} catch (e: any) {
-				toast.error(`カード保存中に予期せぬエラーが発生しました: ${e.message}`);
+			} catch (e: unknown) {
+				if (e instanceof Error) {
+					toast.error(
+						`カード保存中に予期せぬエラーが発生しました: ${e.message}`,
+					);
+				} else {
+					toast.error("カード保存中に予期せぬエラーが発生しました。");
+				}
 			}
 		});
 	};

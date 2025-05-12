@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 export interface RawGeneratedCard {
 	front_content: string;
 	back_content: string;
+}
+
+// Reactのkeyとして使用する内部IDを含むカードの型
+interface EditableCard extends RawGeneratedCard {
+	_internalId: string;
 }
 
 interface GeneratedCardsListProps {
@@ -26,10 +32,10 @@ export function GeneratedCardsList({
 	isSaving,
 	onDeleteCard,
 }: GeneratedCardsListProps) {
-	const [editableCards, setEditableCards] = useState<RawGeneratedCard[]>([]);
+	const [editableCards, setEditableCards] = useState<EditableCard[]>([]);
 
 	useEffect(() => {
-		setEditableCards(cards.map((card) => ({ ...card })));
+		setEditableCards(cards.map((card) => ({ ...card, _internalId: uuidv4() })));
 	}, [cards]);
 
 	const handleCardChange = (
@@ -43,7 +49,11 @@ export function GeneratedCardsList({
 	};
 
 	const handleSave = () => {
-		onSave(editableCards);
+		// 親コンポーネントには RawGeneratedCard[] 型で渡すため、_internalId を除外
+		const cardsToSave: RawGeneratedCard[] = editableCards.map(
+			({ _internalId, ...rest }) => rest,
+		);
+		onSave(cardsToSave);
 	};
 
 	return (
@@ -54,7 +64,7 @@ export function GeneratedCardsList({
 			</p>
 			<div className="space-y-4">
 				{editableCards.map((card, index) => (
-					<Card key={index}>
+					<Card key={card._internalId}>
 						<CardHeader>
 							<div className="flex justify-between items-center">
 								<CardTitle>カード {index + 1}</CardTitle>
