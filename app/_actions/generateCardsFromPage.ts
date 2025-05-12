@@ -13,17 +13,28 @@ interface TiptapNode {
 }
 
 // TiptapのJSONBからテキストを抽出するヘルパー関数
-function extractTextFromTiptapNode(node: TiptapNode): string {
+// node の型を Json に変更し、内部で TiptapNode ライクなオブジェクトかチェックする
+function extractTextFromTiptapNode(node: Json): string {
 	let text = "";
-	if (node.text) {
+	// node がオブジェクトで、null でなく、配列でもないことを確認
+	if (typeof node !== "object" || node === null || Array.isArray(node)) {
+		return "";
+	}
+
+	// TiptapNode のプロパティにアクセスする前に存在確認
+	if ("text" in node && typeof node.text === "string") {
 		text += node.text;
 	}
-	if (node.content && Array.isArray(node.content)) {
+
+	if ("content" in node && Array.isArray(node.content)) {
 		for (const childNode of node.content) {
+			// childNode も Json 型なので、そのまま再帰呼び出し
 			text += extractTextFromTiptapNode(childNode);
 		}
 		// 主要なブロック要素の後に改行を追加して読みやすくする
 		if (
+			"type" in node &&
+			typeof node.type === "string" &&
 			["paragraph", "heading", "listItem", "blockquote", "codeBlock"].includes(
 				node.type,
 			) &&
@@ -34,19 +45,24 @@ function extractTextFromTiptapNode(node: TiptapNode): string {
 	}
 	return text;
 }
-
-function extractTextFromTiptap(
-	tiptapContent: TiptapNode | null | undefined,
-): string {
+function extractTextFromTiptap(tiptapContent: Json | null | undefined): string {
 	if (
 		!tiptapContent ||
-		tiptapContent.type !== "doc" ||
-		!tiptapContent.content
+		typeof tiptapContent !== "object" || // オブジェクトでない
+		Array.isArray(tiptapContent) || // 配列である (Json[] のケース)
+		!("type" in tiptapContent) || // 'type' プロパティがない
+		tiptapContent.type !== "doc" || // 'type' が "doc" でない
+		!("content" in tiptapContent) || // 'content' プロパティがない
+		!Array.isArray(tiptapContent.content) // 'content' が配列でない
 	) {
 		return "";
 	}
 	// 各トップレベルノードからテキストを抽出し、余分な空白や改行をトリム
-	return tiptapContent.content.map(extractTextFromTiptapNode).join("").trim();
+	// content の各要素は Json 型なので、extractTextFromTiptapNode にそのまま渡せる
+	return tiptapContent.content
+		.map((childNode) => extractTextFromTiptapNode(childNode as Json))
+		.join("")
+		.trim();
 }
 
 // 生成されたカードの型
@@ -98,7 +114,8 @@ export async function generateRawCardsFromPageContent(
 	error?: string;
 }> {
 	// 1. Tiptap JSONからテキストを抽出
-	const pageText = extractTextFromTiptap(pageContentTiptap as TiptapNode);
+	// extractTextFromTiptap の引数型を変更したため、キャストが不要になる
+	const pageText = extractTextFromTiptap(pageContentTiptap);
 
 	if (!pageText) {
 		return {
@@ -149,10 +166,16 @@ export async function generateRawCardsFromPageContent(
 			}
 		}
 		generatedRawCards = JSON.parse(jsonString);
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("AIによるカード生成エラー:", error);
+		if (error instanceof Error) {
+			return {
+				error: `AIによるカード生成に失敗しました: ${error.message}`,
+				generatedRawCards: [],
+			};
+		}
 		return {
-			error: `AIによるカード生成に失敗しました: ${error.message}`,
+			error: "AIによるカード生成中に予期せぬエラーが発生しました。",
 			generatedRawCards: [],
 		};
 	}
