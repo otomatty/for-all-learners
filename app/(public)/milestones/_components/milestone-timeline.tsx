@@ -340,7 +340,7 @@ export default function MilestoneTimeline({
 							{/* 各年の縦コンテナ */}
 							<div className="sticky top-0 z-10 bg-background pt-3 pb-2 mb-4 shadow-sm">
 								{/* スティッキーヘッダー */}
-								<h2 className="text-lg font-semibold text-center whitespace-nowrap px-3">
+								<h2 className="text-lg font-semibold text-left whitespace-nowrap px-3">
 									{group.yearDisplay}
 								</h2>
 							</div>

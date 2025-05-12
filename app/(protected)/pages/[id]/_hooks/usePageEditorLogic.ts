@@ -15,7 +15,7 @@ import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import { marked } from "marked";
 import { toast } from "sonner";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -45,12 +45,14 @@ export function usePageEditorLogic({
 				heading: false,
 				bulletList: false,
 				orderedList: false,
+				codeBlock: false,
 			}),
 			CustomHeading,
 			CustomBulletList,
 			CustomOrderedList,
 			LinkExtension,
 			PageLink,
+			CustomCodeBlock,
 			Placeholder.configure({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,

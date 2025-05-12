@@ -43,7 +43,10 @@ export function AuthHeader({
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
 			<div className="container mx-auto flex items-center justify-between py-2 px-6 gap-8">
 				<div className="flex items-center flex-1 gap-8">
-					<Logo version={version} href={showAdminNav ? "/admin" : "/"} />
+					<Logo
+						version={version}
+						href={showAdminNav ? "/admin" : "/dashboard"}
+					/>
 					<div className="w-full max-w-md">
 						{showAdminNav ? <div /> : <SearchBar />}
 					</div>
