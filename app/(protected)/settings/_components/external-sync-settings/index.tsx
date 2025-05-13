@@ -7,6 +7,7 @@ import CosenseSyncSettings, {
 } from "./cosense-sync-settings";
 import IntegrationCardShell from "./integration-card-shell";
 import ServiceIntegrationDetails from "./service-integration-details";
+import GyazoSyncSettings from "./gyazo-sync-settings";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
@@ -65,21 +66,11 @@ export default function ExternalServices({
 						setSettings({ ...settings, gyazo_sync_enabled: false })
 					}
 				>
-					<ServiceIntegrationDetails
-						apiKeyRequired={false}
-						apiKey=""
-						onApiKeyChange={() => {}}
-						syncOptions={[]}
-						syncDirection=""
-						onSyncDirectionChange={() => {}}
-						syncFrequencyOptions={[]}
-						syncFrequency=""
-						onSyncFrequencyChange={() => {}}
-						errorMessage=""
-						hasChanges={false}
-						isSaving={false}
-						onSave={() => {}}
-						onCancel={() => {}}
+					<GyazoSyncSettings
+						initialEnabled={settings.gyazo_sync_enabled}
+						onEnabledChange={(value) =>
+							setSettings({ ...settings, gyazo_sync_enabled: value })
+						}
 					/>
 				</IntegrationCardShell>
 				<IntegrationCardShell

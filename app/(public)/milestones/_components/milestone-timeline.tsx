@@ -159,12 +159,10 @@ export default function MilestoneTimeline({
 	const [canScrollRight, setCanScrollRight] = useState(false);
 
 	const handleMilestoneClick = useCallback((milestone: MilestoneEntry) => {
-		console.log("Milestone card clicked:", milestone);
 		setSelectedMilestone(milestone);
 	}, []);
 
 	const handleCloseDetail = useCallback(() => {
-		console.log("Closing detail view");
 		setSelectedMilestone(null);
 	}, []);
 

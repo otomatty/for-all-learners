@@ -203,7 +203,6 @@ function calculateBoostedUsers(actualCount: number): number {
 	let maxBoost = 5;
 
 	if (config) {
-		// console.log("Using config:", config.id || "Unnamed config");
 		baseMinDisplayUsers = config.minDisplayUsers;
 		displayFluctuation = config.minDisplayFluctuation;
 		probability = config.probability;

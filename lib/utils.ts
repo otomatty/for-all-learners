@@ -62,7 +62,9 @@ export function parseAdminInquiriesSearchParams(searchParams?: {
 	const limit = Number.parseInt(params.get("limit") || "20", 10);
 
 	const sortByInput = params.get("sortBy") || "created_at";
-	const sortBy = validSortByKeysForAdminInquiries.includes(sortByInput as any)
+	const sortBy = validSortByKeysForAdminInquiries.includes(
+		sortByInput as keyof FormattedInquiryListItem | "category_name_ja",
+	)
 		? (sortByInput as keyof FormattedInquiryListItem | "category_name_ja")
 		: "created_at";
 

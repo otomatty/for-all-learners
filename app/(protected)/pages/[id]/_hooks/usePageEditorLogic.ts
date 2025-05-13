@@ -28,6 +28,36 @@ interface UsePageEditorLogicProps {
 	isDirty: boolean;
 }
 
+/**
+ * Remove empty text nodes from a JSONContent document.
+ */
+function sanitizeContent(doc: JSONContent): JSONContent {
+	const clone = structuredClone(doc) as JSONContent;
+	const recurse = (node: JSONContent): JSONContent => {
+		const newNode = { ...node } as JSONContent;
+		if (Array.isArray(newNode.content)) {
+			newNode.content = newNode.content.map(recurse);
+			if (newNode.type === "paragraph") {
+				// Filter out empty or whitespace-only text nodes
+				newNode.content = newNode.content.filter((child: JSONContent) => {
+					if (child.type === "text" && typeof child.text === "string") {
+						return child.text.trim() !== "";
+					}
+					return true;
+				});
+				if (newNode.content.length === 0) {
+					// Remove empty content property without using delete
+					const { content, ...rest } = newNode;
+					return rest as JSONContent;
+				}
+			}
+		}
+		return newNode;
+	};
+	clone.content = (clone.content ?? []).map(recurse);
+	return clone;
+}
+
 export function usePageEditorLogic({
 	page,
 	initialContent,
@@ -67,8 +97,9 @@ export function usePageEditorLogic({
 			},
 		},
 		onCreate({ editor }) {
-			console.log("[Client Debug] onCreate initialDoc:", initialDoc);
-			editor.commands.setContent(initialDoc);
+			// Sanitize initial document to remove empty text nodes
+			const sanitized = sanitizeContent(initialDoc);
+			editor.commands.setContent(sanitized);
 		},
 	});
 
@@ -171,18 +202,9 @@ export function usePageEditorLogic({
 
 	useEffect(() => {
 		if (editor && initialContent) {
-			editor.commands.setContent(initialContent);
-		}
-	}, [editor, initialContent]);
-
-	// Debug: log initial content and editor state in browser console
-	useEffect(() => {
-		if (editor) {
-			console.log(
-				"[Client Debug] initialContent in usePageEditorLogic:",
-				initialContent,
-			);
-			console.log("[Client Debug] editor JSON:", editor.getJSON());
+			// Sanitize initialContent on effect to ensure no invalid nodes
+			const sanitized = sanitizeContent(initialContent);
+			editor.commands.setContent(sanitized);
 		}
 	}, [editor, initialContent]);
 

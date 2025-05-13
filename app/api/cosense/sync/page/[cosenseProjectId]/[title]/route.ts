@@ -5,7 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: Promise<{ cosenseProjectId: string; title: string }> },
+	context: { params: { cosenseProjectId: string; title: string } },
 ) {
 	try {
 		const supabase = await createClient();
@@ -19,8 +19,8 @@ export async function GET(
 			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
-		// Unwrap dynamic params; dynamic segment is treated as projectName
-		const { cosenseProjectId: projectName, title: pageTitle } = await params;
+		// Extract dynamic params from context
+		const { cosenseProjectId: projectName, title: pageTitle } = context.params;
 
 		// ユーザーと連携された Cosense プロジェクト設定取得 by projectName
 		const { data: relation, error: relError } = await supabase
@@ -64,11 +64,9 @@ export async function GET(
 			);
 		}
 		const data = await res.json();
-		console.log("[Cosense Route] fetched data:", data);
 
 		// Scrapbox の lines を TipTap JSON にマッピング
 		const json: JSONContent = parseCosenseLines(data.lines);
-		console.log("[Cosense Route] mapped JSONContent:", json);
 
 		const { data: updatedPage, error: updateError } = await supabase
 			.from("pages")
@@ -80,7 +78,6 @@ export async function GET(
 			.eq("title", pageTitle)
 			.select()
 			.single();
-		console.log("[Cosense Route] updatedPage from DB:", updatedPage);
 
 		if (updateError) {
 			console.error("[Cosense Sync Page] Update failed", updateError);

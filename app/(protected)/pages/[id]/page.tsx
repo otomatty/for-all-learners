@@ -35,76 +35,16 @@ export default async function PageDetail({
 		notFound();
 	}
 	// Use mutable page for potential re-fetch after content sync
-	let page = pageData;
+	const page = pageData;
 
-	// Auto sync detailed content if list-synced but content not yet synced
-	if (
-		page.scrapbox_page_list_synced_at &&
-		!page.scrapbox_page_content_synced_at
-	) {
-		// fetch user's Cosense projectName relation
-		const { data: relation, error: relError } = await supabase
-			.from("user_cosense_projects")
-			.select("cosense_projects(project_name)")
-			.eq("user_id", user.id)
-			.limit(1)
-			.single();
-		if (relError || !relation) {
-			console.error(
-				"Cosense project relation not found for detailed sync",
-				relError,
-			);
-		} else {
-			const projectName = relation.cosense_projects.project_name;
-			// Construct absolute URL for server fetch
-			const hdrs = await headers();
-			const host = hdrs.get("host") || "";
-			const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-			const origin = `${protocol}://${host}`;
-			const url = new URL(
-				`/api/cosense/sync/page/${encodeURIComponent(
-					projectName,
-				)}/${encodeURIComponent(page.title)}`,
-				origin,
-			).toString();
-			// include cookies for server-side auth
-			const cookieHeader = hdrs.get("cookie") || "";
-			console.log("[Cosense Debug] cookie header=", cookieHeader);
-			console.log("[Cosense Debug] Absolute Sync URL=", url);
-			try {
-				const res = await fetch(url, {
-					cache: "no-store",
-					headers: { cookie: cookieHeader },
-				});
-				console.log("[Cosense Debug] fetch status=", res.status, "ok=", res.ok);
-				console.log(
-					"[Cosense Debug] content-type=",
-					res.headers.get("content-type"),
-				);
-				const text = await res.text();
-				console.log("[Cosense Debug] response body=", text);
-				let data: unknown;
-				try {
-					data = JSON.parse(text);
-					console.log("[Cosense Debug] parsed JSON=", data);
-				} catch (e) {
-					console.log("[Cosense Debug] JSON parse failed=", e);
-				}
-				// re-fetch page with full content
-				const { data: updatedPage } = await supabase
-					.from("pages")
-					.select("*")
-					.eq("id", page.id)
-					.single();
-				if (updatedPage) {
-					page = updatedPage;
-					console.log("[Cosense Debug] updatedPage object:", updatedPage);
-				}
-			} catch (err) {
-				console.error("Cosense content sync error:", err);
-			}
-		}
-	}
+	// Fetch user's Cosense projectName for manual sync
+	const { data: relation, error: relError } = await supabase
+		.from("user_cosense_projects")
+		.select("cosense_projects(project_name)")
+		.eq("user_id", user.id)
+		.limit(1)
+		.single();
+	const cosenseProjectName = relation?.cosense_projects.project_name ?? null;
 
 	// Fetch pages and shared pages for mapping titles to IDs (after potential content sync)
 	const [myPages, sharedPageShares] = await Promise.all([
@@ -122,12 +62,15 @@ export default async function PageDetail({
 		page.content_tiptap as JSONContent,
 		pagesMap,
 	);
-	console.log("[Cosense Debug] decoratedDoc:", decoratedDoc);
 
 	return (
 		<Container className="max-w-5xl">
 			<BackLink title="戻る" className="mb-4" path="/pages" />
-			<EditPageForm page={page} initialContent={decoratedDoc} />
+			<EditPageForm
+				page={page}
+				initialContent={decoratedDoc}
+				cosenseProjectName={cosenseProjectName}
+			/>
 		</Container>
 	);
 }

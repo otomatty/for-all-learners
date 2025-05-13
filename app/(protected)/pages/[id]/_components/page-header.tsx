@@ -10,14 +10,21 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Layers, MoreVertical, Sparkles, Trash2 } from "lucide-react"; // Layers アイコンをインポート
-import { useRouter } from "next/navigation"; // Next.js 13 App Router
-import { useState } from "react";
+import {
+	Layers,
+	MoreVertical,
+	Sparkles,
+	Trash2,
+	Image as ImageIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useRef } from "react";
 import { DeletePageDialog } from "./delete-page-dialog";
 import { SpeechControlButtons } from "./speech-control-buttons";
+import { toast } from "sonner";
 
 interface PageHeaderProps {
-	pageId: string; // ページID (slugから渡される想定)
+	pageId: string;
 	title: string;
 	onTitleChange: (newTitle: string) => void;
 	onGenerateContent: () => void;
@@ -27,9 +34,12 @@ interface PageHeaderProps {
 	onReadAloud: () => void;
 	onPauseReadAloud: () => void;
 	onResetReadAloud: () => void;
-	onDeletePage: () => Promise<void>; // ページ削除処理のコールバック
-	isPlaying: boolean; // SpeechControlButtons の isPlaying 状態
-	showCosenseSyncBadge: boolean; // Cosense同期ステータス
+	onDeletePage: () => Promise<void>;
+	isPlaying: boolean;
+	scrapboxPageContentSyncedAt?: string | null;
+	scrapboxPageListSyncedAt?: string | null;
+	cosenseProjectName?: string | null;
+	onUploadImage: (file: File) => void;
 }
 
 export function PageHeader({
@@ -45,10 +55,15 @@ export function PageHeader({
 	onResetReadAloud,
 	onDeletePage,
 	isPlaying,
-	showCosenseSyncBadge,
+	scrapboxPageContentSyncedAt,
+	scrapboxPageListSyncedAt,
+	cosenseProjectName,
+	onUploadImage,
 }: PageHeaderProps) {
 	const router = useRouter();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isSyncingContent, setIsSyncingContent] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleNavigateToGenerateCards = () => {
 		router.push(`/pages/${pageId}/generate-cards`);
@@ -56,6 +71,18 @@ export function PageHeader({
 
 	return (
 		<div className="flex items-center">
+			{/* Hidden file input for image upload */}
+			<input
+				type="file"
+				ref={fileInputRef}
+				hidden
+				accept="image/png,image/jpeg,image/webp,image/gif"
+				onChange={(e) => {
+					const file = e.target.files?.[0];
+					if (file) onUploadImage(file);
+					e.target.value = "";
+				}}
+			/>
 			<Input
 				value={title}
 				onChange={(e) => onTitleChange(e.target.value)}
@@ -79,8 +106,38 @@ export function PageHeader({
 				/>
 			</button>
 
-			{/* Cosense同期バッジを条件付き表示 */}
-			{showCosenseSyncBadge && <CosenseSyncBadge className="ml-2" />}
+			{cosenseProjectName && scrapboxPageListSyncedAt && (
+				<button
+					type="button"
+					onClick={async () => {
+						setIsSyncingContent(true);
+						try {
+							const res = await fetch(
+								`/api/cosense/sync/page/${encodeURIComponent(
+									cosenseProjectName,
+								)}/${encodeURIComponent(title)}`,
+								{ cache: "no-store" },
+							);
+							if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
+							toast.success("コンテンツ同期完了");
+							router.refresh();
+						} catch (err) {
+							console.error("Cosense content sync error:", err);
+							toast.error("コンテンツ同期に失敗しました");
+						} finally {
+							setIsSyncingContent(false);
+						}
+					}}
+					title="Cosenseからコンテンツを同期"
+					className="ml-2"
+				>
+					<CosenseSyncBadge
+						isLoading={isSyncingContent}
+						status={scrapboxPageContentSyncedAt ? "synced" : "unsynced"}
+						className="cursor-pointer"
+					/>
+				</button>
+			)}
 
 			<SpeechControlButtons
 				onReadAloud={onReadAloud}
@@ -104,18 +161,22 @@ export function PageHeader({
 						<Layers className="mr-2 h-4 w-4" />
 						<span>カードを生成する</span>
 					</DropdownMenuItem>
+					<DropdownMenuItem
+						onSelect={() => fileInputRef.current?.click()}
+						className="cursor-pointer"
+					>
+						<ImageIcon className="mr-2 h-4 w-4" />
+						<span>画像をアップロード</span>
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant="destructive"
 						onSelect={() => {
-							// DropdownMenuが閉じる処理が完了するのを待ってからAlertDialogを開く
 							setTimeout(() => setShowDeleteConfirm(true), 0);
 						}}
-						// destructive variant のスタイルをベースにしつつ、特定のhover/focusスタイルを適用したい場合はclassNameで指定
 						className="hover:!bg-red-100 dark:hover:!bg-red-900/50 focus:!bg-red-100 dark:focus:!bg-red-900/50"
 					>
 						<Trash2 className="mr-2 h-4 w-4" />
-						{/* アイコンとテキストの間にマージンを追加 */}
 						<span>ページを削除</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -128,10 +189,8 @@ export function PageHeader({
 				onConfirmDelete={async () => {
 					try {
 						await onDeletePage();
-						setShowDeleteConfirm(false); // 成功したらダイアログを閉じる
+						setShowDeleteConfirm(false);
 					} catch (error) {
-						// エラーは onDeletePage 内でトースト表示される想定
-						// ダイアログは閉じない（ユーザーが再試行できるようにするか、エラーメッセージをダイアログ内に表示する）
 						console.error(
 							"ページ削除中にエラー（ダイアログ呼び出し側）:",
 							error,

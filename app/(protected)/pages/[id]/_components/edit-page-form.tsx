@@ -19,15 +19,19 @@ import { useSpeechControls } from "../_hooks/useSpeechControls";
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import { PageHeader } from "./page-header";
+import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
 	initialContent?: JSONContent;
+	/** Cosense プロジェクト名 (manual sync 用) */
+	cosenseProjectName?: string | null;
 }
 
 export default function EditPageForm({
 	page,
 	initialContent,
+	cosenseProjectName,
 }: EditPageFormProps) {
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
@@ -143,11 +147,36 @@ export default function EditPageForm({
 		}
 	}, [supabase, page.id, router, title, setIsLoading]);
 
+	// 画像アップロード用ハンドラ
+	const handleUploadImage = useCallback(
+		async (file: File) => {
+			setIsLoading(true);
+			try {
+				// Gyazo API returns direct image URL
+				const { url } = await uploadAndSaveGyazoImage(file);
+				if (editor) {
+					editor
+						.chain()
+						.focus()
+						.insertContent({ type: "gyazoImage", attrs: { src: url } })
+						.run();
+				}
+			} catch (err) {
+				console.error("画像アップロードエラー:", err);
+				toast.error("画像アップロードに失敗しました");
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[editor, setIsLoading],
+	);
+
 	return (
 		<>
 			<div className="space-y-6">
 				<PageHeader
-					pageId={page.id} // page.id を pageIdとして渡す
+					cosenseProjectName={cosenseProjectName}
+					pageId={page.id}
 					title={title}
 					onTitleChange={setTitle}
 					onGenerateContent={handleGenerateContent}
@@ -158,8 +187,10 @@ export default function EditPageForm({
 					onPauseReadAloud={handlePause}
 					onResetReadAloud={handleReset}
 					onDeletePage={handleDeletePage}
-					isPlaying={isPlaying} // isPlaying プロパティを渡す
-					showCosenseSyncBadge={Boolean(page.scrapbox_page_list_synced_at)} // Cosense同期ステータス
+					onUploadImage={handleUploadImage}
+					isPlaying={isPlaying}
+					scrapboxPageContentSyncedAt={page.scrapbox_page_content_synced_at}
+					scrapboxPageListSyncedAt={page.scrapbox_page_list_synced_at}
 				/>
 				{editor && (
 					<div className="relative">
