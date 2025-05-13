@@ -21,10 +21,4 @@ export const navItems: NavItem[] = [
 		icon: "Calendar",
 		status: "coming-soon",
 	},
-	{
-		label: "お問い合わせ",
-		href: "/inquiry",
-		icon: "Mail",
-		status: "enabled",
-	},
 ];

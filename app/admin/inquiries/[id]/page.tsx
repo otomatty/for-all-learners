@@ -7,13 +7,18 @@ import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}) {
+	const { id } = await params;
 	// 動的にメタデータを設定することも可能
 	// const result = await getInquiryById(params.id);
 	// if (result.success && result.inquiry) {
 	//   return { title: `お問い合わせ: ${result.inquiry.subject} | 管理者ダッシュボード` };
 	// }
-	return { title: "お問い合わせ詳細 | 管理者ダッシュボード" };
+	return { title: `お問い合わせ詳細: ${id} | 管理者ダッシュボード` };
 }
 
 function InquiryDetailItem({

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import { Home, LogOut, Settings, Shield, UserRound } from "lucide-react";
+import { Home, LogOut, Settings, Shield, UserRound, Mail } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -94,6 +94,10 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 					<DropdownMenuItem onClick={() => router.push("/settings")}>
 						<Settings className="w-4 h-4" />
 						設定
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => router.push("/inquiry")}>
+						<Mail className="w-4 h-4" />
+						お問い合わせ
 					</DropdownMenuItem>
 					{isAdmin && !pathname?.startsWith("/admin") && (
 						<DropdownMenuItem onClick={() => router.push("/admin")}>

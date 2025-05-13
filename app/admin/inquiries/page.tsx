@@ -13,6 +13,7 @@ function AdminInquiriesPageSkeleton() {
 			<div className="p-4 border rounded-lg bg-card">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 					{[...Array(4)].map((_, i) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						<div key={i} className="space-y-2">
 							<Skeleton className="h-4 w-20" />
 							<Skeleton className="h-10 w-full" />

@@ -22,6 +22,19 @@ import { ChangelogEntryItem } from "./_components/ChangelogEntryItem";
 import { ChangelogForm } from "./_components/ChangelogForm";
 import { ChangelogHeader } from "./_components/ChangelogHeader";
 import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CommitHistorySection } from "./_components/CommitHistorySection";
+
+// 追加: コミット履歴型の定義
+type CommitLog = {
+	hash: string;
+	author: string;
+	relDate: string;
+	message: string;
+};
+
+// 追加: バージョンごとのコミットグループ型
+type VersionGroup = { version: string; commits: CommitLog[] };
 
 export default function ChangelogPage() {
 	const [changelogEntries, setChangelogEntries] = useState<ChangeLogEntry[]>(
@@ -88,90 +101,105 @@ export default function ChangelogPage() {
 
 	return (
 		<div className="container mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-			<ChangelogHeader />
-			<div className="mb-6 text-right">
-				<Button onClick={() => setIsCreateDialogOpen(true)}>新規作成</Button>
-			</div>
-
-			{isLoading && <p className="text-center py-10">読み込み中...</p>}
-			{!isLoading && changelogEntries.length === 0 && <EmptyChangelogMessage />}
-			{!isLoading && changelogEntries.length > 0 && (
-				<div className="space-y-12">
-					{changelogEntries.map((entry: ChangeLogEntry) => (
-						<ChangelogEntryItem
-							key={entry.id} // versionからidに変更
-							entry={entry}
-							onEdit={handleOpenEditDialog}
-							onDelete={handleOpenDeleteDialog}
-						/>
-					))}
-				</div>
-			)}
-
-			<ResponsiveDialog
-				open={isCreateDialogOpen}
-				onOpenChange={setIsCreateDialogOpen}
-				dialogTitle="更新履歴 新規作成"
-				dialogDescription="新しいバージョンの変更点を記録します。"
-				className="sm:max-w-2xl" // ダイアログの幅を調整
-			>
-				<div className="pt-4">
-					{" "}
-					{/* フォームとダイアログヘッダーの間に少しスペース */}
-					<ChangelogForm
-						onSuccess={handleCreateFormSuccess}
-						onCancel={() => setIsCreateDialogOpen(false)}
-					/>
-				</div>
-			</ResponsiveDialog>
-
-			{editingEntry && (
-				<ResponsiveDialog
-					open={isEditDialogOpen}
-					onOpenChange={(open) => {
-						setIsEditDialogOpen(open);
-						if (!open) setEditingEntry(null); // ダイアログが閉じられたら編集対象をクリア
-					}}
-					dialogTitle={`更新履歴 編集 (v${editingEntry.version})`}
-					dialogDescription="既存の変更点を編集します。"
-					className="sm:max-w-2xl"
-				>
-					<div className="pt-4">
-						<ChangelogForm
-							initialData={editingEntry}
-							onSuccess={handleEditFormSuccess}
-							onCancel={() => {
-								setIsEditDialogOpen(false);
-								setEditingEntry(null);
-							}}
-						/>
+			<Tabs defaultValue="changes">
+				<TabsList className="mb-6">
+					<TabsTrigger value="changes">更新履歴</TabsTrigger>
+					<TabsTrigger value="commits">コミット履歴</TabsTrigger>
+				</TabsList>
+				<TabsContent value="changes">
+					<ChangelogHeader />
+					<div className="mb-6 text-right">
+						<Button onClick={() => setIsCreateDialogOpen(true)}>
+							新規作成
+						</Button>
 					</div>
-				</ResponsiveDialog>
-			)}
-			<AlertDialog
-				open={isDeleteDialogOpen}
-				onOpenChange={setIsDeleteDialogOpen}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
-						<AlertDialogDescription>
-							この操作は元に戻せません。この更新履歴エントリを完全に削除します。
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={() => setDeletingEntryId(null)}>
-							キャンセル
-						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={handleDeleteConfirm}
-							className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus-visible:ring-red-500"
+
+					{isLoading && <p className="text-center py-10">読み込み中...</p>}
+					{!isLoading && changelogEntries.length === 0 && (
+						<EmptyChangelogMessage />
+					)}
+					{!isLoading && changelogEntries.length > 0 && (
+						<div className="space-y-12">
+							{changelogEntries.map((entry: ChangeLogEntry) => (
+								<ChangelogEntryItem
+									key={entry.id}
+									entry={entry}
+									onEdit={handleOpenEditDialog}
+									onDelete={handleOpenDeleteDialog}
+								/>
+							))}
+						</div>
+					)}
+
+					<ResponsiveDialog
+						open={isCreateDialogOpen}
+						onOpenChange={setIsCreateDialogOpen}
+						dialogTitle="更新履歴 新規作成"
+						dialogDescription="新しいバージョンの変更点を記録します。"
+						className="sm:max-w-2xl" // ダイアログの幅を調整
+					>
+						<div className="pt-4">
+							{" "}
+							{/* フォームとダイアログヘッダーの間に少しスペース */}
+							<ChangelogForm
+								onSuccess={handleCreateFormSuccess}
+								onCancel={() => setIsCreateDialogOpen(false)}
+							/>
+						</div>
+					</ResponsiveDialog>
+
+					{editingEntry && (
+						<ResponsiveDialog
+							open={isEditDialogOpen}
+							onOpenChange={(open) => {
+								setIsEditDialogOpen(open);
+								if (!open) setEditingEntry(null); // ダイアログが閉じられたら編集対象をクリア
+							}}
+							dialogTitle={`更新履歴 編集 (v${editingEntry.version})`}
+							dialogDescription="既存の変更点を編集します。"
+							className="sm:max-w-2xl"
 						>
-							削除する
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+							<div className="pt-4">
+								<ChangelogForm
+									initialData={editingEntry}
+									onSuccess={handleEditFormSuccess}
+									onCancel={() => {
+										setIsEditDialogOpen(false);
+										setEditingEntry(null);
+									}}
+								/>
+							</div>
+						</ResponsiveDialog>
+					)}
+					<AlertDialog
+						open={isDeleteDialogOpen}
+						onOpenChange={setIsDeleteDialogOpen}
+					>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
+								<AlertDialogDescription>
+									この操作は元に戻せません。この更新履歴エントリを完全に削除します。
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel onClick={() => setDeletingEntryId(null)}>
+									キャンセル
+								</AlertDialogCancel>
+								<AlertDialogAction
+									onClick={handleDeleteConfirm}
+									className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus-visible:ring-red-500"
+								>
+									削除する
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
+				</TabsContent>
+				<TabsContent value="commits">
+					<CommitHistorySection />
+				</TabsContent>
+			</Tabs>
 		</div>
 	);
 }
