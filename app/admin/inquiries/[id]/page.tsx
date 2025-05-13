@@ -38,9 +38,7 @@ function InquiryDetailItem({
 
 export default async function AdminInquiryDetailPage({
 	params,
-}: {
-	params: { id: string };
-}) {
+}: { params: { id: string } }) {
 	const { id } = params;
 	const result = await getInquiryById(id);
 
