@@ -115,41 +115,84 @@ export async function createChangelogEntry(
 	const supabase = await createClient();
 
 	try {
-		// 1. changelog_entries テーブルに新しいエントリを挿入
-		const { data: newEntry, error: entryError } = await supabase
+		// Check if an entry with this version already exists
+		const { data: existingEntry, error: selectError } = await supabase
 			.from("changelog_entries")
-			.insert({
-				version: input.version,
-				title: input.title,
-				published_at: input.published_at,
-			})
-			.select()
-			.single();
+			.select("*")
+			.eq("version", input.version)
+			.maybeSingle();
+		if (selectError) throw selectError;
 
-		if (entryError || !newEntry) {
-			console.error("Error creating changelog entry:", entryError?.message);
-			return {
-				success: false,
-				error: entryError?.message || "Failed to create changelog entry.",
-			};
+		let entry = existingEntry;
+		if (entry) {
+			// Update existing entry's metadata
+			const updateData: Partial<DbChangelogEntry> = {};
+			if (input.title !== undefined) updateData.title = input.title;
+			if (input.published_at) updateData.published_at = input.published_at;
+			const { data: updatedEntry, error: updateError } = await supabase
+				.from("changelog_entries")
+				.update(updateData)
+				.eq("id", entry.id)
+				.select()
+				.single();
+			if (updateError || !updatedEntry) {
+				console.error("Error updating existing entry:", updateError?.message);
+				return {
+					success: false,
+					error: updateError?.message || "Failed to update existing entry.",
+				};
+			}
+			entry = updatedEntry;
+
+			// Remove old items before inserting new ones
+			const { error: deleteError } = await supabase
+				.from("changelog_items")
+				.delete()
+				.eq("entry_id", entry.id);
+			if (deleteError) {
+				console.error(
+					"Error deleting old changelog items:",
+					deleteError.message,
+				);
+				return {
+					success: false,
+					error: deleteError.message || "Failed to clear old items.",
+				};
+			}
+		} else {
+			// Create a new changelog entry
+			const { data: newEntry, error: entryError } = await supabase
+				.from("changelog_entries")
+				.insert({
+					version: input.version,
+					title: input.title,
+					published_at: input.published_at,
+				})
+				.select()
+				.single();
+			if (entryError || !newEntry) {
+				console.error("Error creating changelog entry:", entryError?.message);
+				return {
+					success: false,
+					error: entryError?.message || "Failed to create changelog entry.",
+				};
+			}
+			entry = newEntry;
 		}
 
-		// 2. changelog_items テーブルに関連する変更点を挿入
+		// Insert changelog items
 		if (input.changes && input.changes.length > 0) {
 			const itemsToInsert = input.changes.map((change, index) => ({
-				entry_id: newEntry.id,
+				entry_id: entry.id,
 				type: change.type as ChangeTypeEnum,
 				description: change.description,
 				display_order: index,
 			}));
-
 			const { error: itemsError } = await supabase
 				.from("changelog_items")
 				.insert(itemsToInsert);
-
 			if (itemsError) {
 				console.error("Error creating changelog items:", itemsError.message);
-				// ここでロールバック処理を検討することもできるが、今回はエラーを返す
 				return {
 					success: false,
 					error: itemsError.message || "Failed to create changelog items.",
@@ -157,19 +200,18 @@ export async function createChangelogEntry(
 			}
 		}
 
-		revalidatePath("/changelog"); // キャッシュを再検証
+		revalidatePath("/changelog");
 
 		return {
 			success: true,
-			// 作成成功時に返すデータにidを含める (もしクライアント側で直後に使いたい場合)
 			data: {
-				version: newEntry.version,
-				title: newEntry.title,
-				date: format(new Date(newEntry.published_at), "yyyy年MM月dd日", {
+				version: entry.version,
+				title: entry.title,
+				date: format(new Date(entry.published_at), "yyyy年MM月dd日", {
 					locale: ja,
 				}),
-				changes: input.changes, // 入力された変更点をそのまま返す
-				id: newEntry.id,
+				changes: input.changes,
+				id: entry.id,
 			},
 		};
 	} catch (error) {
@@ -177,7 +219,7 @@ export async function createChangelogEntry(
 			error instanceof Error
 				? error.message
 				: "An unknown error occurred during creation.";
-		console.error("Failed to create changelog entry:", errorMessage);
+		console.error("Failed to create/update changelog entry:", errorMessage);
 		return { success: false, error: errorMessage };
 	}
 }

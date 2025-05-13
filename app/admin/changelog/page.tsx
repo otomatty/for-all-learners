@@ -25,17 +25,6 @@ import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CommitHistorySection } from "./_components/CommitHistorySection";
 
-// 追加: コミット履歴型の定義
-type CommitLog = {
-	hash: string;
-	author: string;
-	relDate: string;
-	message: string;
-};
-
-// 追加: バージョンごとのコミットグループ型
-type VersionGroup = { version: string; commits: CommitLog[] };
-
 export default function ChangelogPage() {
 	const [changelogEntries, setChangelogEntries] = useState<ChangeLogEntry[]>(
 		[],
@@ -100,7 +89,7 @@ export default function ChangelogPage() {
 	};
 
 	return (
-		<div className="container mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
+		<div className="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
 			<Tabs defaultValue="changes">
 				<TabsList className="mb-6">
 					<TabsTrigger value="changes">更新履歴</TabsTrigger>

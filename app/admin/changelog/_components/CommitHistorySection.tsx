@@ -9,13 +9,36 @@ import {
 	Code2,
 	Plus,
 	Minus,
+	SparklesIcon,
+	TrendingUpIcon,
+	BugIcon,
+	ShieldCheckIcon,
+	GripVertical,
+	Trash2,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	createVersionCommitStaging,
 	processVersionCommitStaging,
 	getVersionCommitStagingByVersion,
-	confirmVersionReleaseNotes,
 } from "@/app/_actions/version";
+import { createChangelogEntry } from "@/app/_actions/changelog";
+import {
+	DndContext,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	closestCenter,
+	type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+	SortableContext,
+	verticalListSortingStrategy,
+	useSortable,
+	arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 /**
  * コミット履歴の型定義
@@ -50,6 +73,94 @@ type ReleaseNotesJSON = {
 	items: ReleaseNoteItem[];
 };
 
+// Helper to map release note types to labels, icons, and badge variants
+const getTypeAttributes = (type: ReleaseNoteItem["type"]) => {
+	switch (type) {
+		case "new":
+			return {
+				label: "新機能",
+				icon: SparklesIcon,
+				badgeVariant: "default" as const,
+			};
+		case "improvement":
+			return {
+				label: "改善",
+				icon: TrendingUpIcon,
+				badgeVariant: "secondary" as const,
+			};
+		case "fix":
+			return {
+				label: "修正",
+				icon: BugIcon,
+				badgeVariant: "destructive" as const,
+			};
+		case "security":
+			return {
+				label: "セキュリティ",
+				icon: ShieldCheckIcon,
+				badgeVariant: "outline" as const,
+			};
+		default:
+			return {
+				label: type,
+				icon: SparklesIcon,
+				badgeVariant: "default" as const,
+			};
+	}
+};
+
+// Component for each sortable release note item, extracting useSortable into its own component
+function SortableReleaseNoteItem({
+	item,
+	onRemove,
+}: {
+	item: ReleaseNoteItem;
+	onRemove: (id: number) => void;
+}) {
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: item.display_order });
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+	const {
+		label,
+		icon: IconComponent,
+		badgeVariant,
+	} = getTypeAttributes(item.type);
+	return (
+		<div
+			ref={setNodeRef}
+			style={style}
+			className="p-4 mb-2 rounded-md border bg-card text-card-foreground shadow-sm flex items-center justify-between space-x-2"
+		>
+			<div className="flex items-center gap-2">
+				<GripVertical
+					{...listeners}
+					{...attributes}
+					className="cursor-grab text-gray-500"
+				/>
+				<div>
+					<Badge variant={badgeVariant} className="mb-1.5 text-xs">
+						<IconComponent className="h-3.5 w-3.5 mr-1.5" />
+						{label}
+					</Badge>
+					<p className="flex-1 text-sm text-muted-foreground leading-relaxed">
+						{item.description}
+					</p>
+				</div>
+			</div>
+			<Button
+				variant="ghost"
+				size="icon"
+				onClick={() => onRemove(item.display_order)}
+			>
+				<Trash2 className="h-4 w-4 text-destructive" />
+			</Button>
+		</div>
+	);
+}
+
 /**
  * コミット履歴セクションコンポーネント
  * バージョンごとにカードを横並び表示し、選択時に詳細を表示
@@ -61,7 +172,10 @@ export function CommitHistorySection() {
 	const [stagingStatus, setStagingStatus] = useState<string>("idle");
 	const [stagingId, setStagingId] = useState<number | undefined>(undefined);
 	const [summaryText, setSummaryText] = useState<string>("");
+	const [previewItems, setPreviewItems] = useState<ReleaseNoteItem[]>([]);
+	const [summaryTitle, setSummaryTitle] = useState<string>("");
 	const [loadingConfirm, setLoadingConfirm] = useState(false);
+	const sensors = useSensors(useSensor(PointerSensor));
 
 	// データ取得
 	useEffect(() => {
@@ -97,6 +211,54 @@ export function CommitHistorySection() {
 			})();
 		}
 	}, [selectedVersion]);
+
+	// Parse summaryText into previewItems when summaryText changes
+	useEffect(() => {
+		if (!summaryText) {
+			setPreviewItems([]);
+			return;
+		}
+		const raw = summaryText.replace(/```/g, "").trim();
+		const bodyMatch = raw.match(/json\s*\n([\s\S]*)/);
+		const body = bodyMatch ? bodyMatch[1].trim() : raw;
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(body);
+		} catch {
+			setPreviewItems([]);
+			return;
+		}
+		const data = parsed as ReleaseNotesJSON & { parts?: { text: string }[] };
+		let items: ReleaseNoteItem[] = [];
+		let title = (Array.isArray(data.items) ? data.title : undefined) || "";
+		if (Array.isArray(data.items)) {
+			items = data.items;
+		} else if (Array.isArray(data.parts)) {
+			const text = data.parts[0].text || "";
+			const innerMatch = text.match(/(\{[\s\S]*\})/);
+			const inner = innerMatch ? innerMatch[1] : text;
+			try {
+				const release = JSON.parse(inner) as ReleaseNotesJSON;
+				items = release.items;
+				title = release.title;
+			} catch {
+				items = [];
+			}
+		}
+		setSummaryTitle(title);
+		setPreviewItems(items);
+	}, [summaryText]);
+
+	// Handle drag end to reorder items
+	const handleDragEnd = ({ active, over }: DragEndEvent) => {
+		if (active.id !== over?.id) {
+			setPreviewItems((items) => {
+				const oldIndex = items.findIndex((i) => i.display_order === active.id);
+				const newIndex = items.findIndex((i) => i.display_order === over?.id);
+				return arrayMove(items, oldIndex, newIndex);
+			});
+		}
+	};
 
 	if (groups.length === 0) {
 		return <p className="text-sm text-gray-500">コミット履歴がありません。</p>;
@@ -241,82 +403,38 @@ export function CommitHistorySection() {
 						</span>
 						{/* 要約プレビュー＆確定ボタン */}
 						{summaryText && (
-							<div className="mt-4 p-4 bg-white border rounded">
+							<div className="mt-4 ">
 								<h5 className="font-semibold mb-2">要約プレビュー</h5>
-								{(() => {
-									// DEBUG: log the raw summaryText before processing
-									console.log("[DEBUG] summaryText:", summaryText);
-									// Remove markdown fences and prepare for JSON parsing
-									const raw = summaryText.replace(/```/g, "").trim();
-									console.log("[DEBUG] raw:", raw);
-									// Attempt to extract JSON after any 'json' prefix
-									const bodyMatch = raw.match(/json\s*\n([\s\S]*)/);
-									const body = bodyMatch ? bodyMatch[1].trim() : raw;
-									console.log("[DEBUG] body for parsing:", body);
-									let parsed: any;
-									let release: ReleaseNotesJSON;
-									try {
-										parsed = JSON.parse(body);
-									} catch (e) {
-										console.error(
-											"[DEBUG] initial JSON.parse failed:",
-											e,
-											body,
-										);
-										return (
-											<pre className="text-gray-800 whitespace-pre-line">
-												{summaryText}
-											</pre>
-										);
-									}
-									// If top-level has items, use it directly
-									if (parsed.items && Array.isArray(parsed.items)) {
-										release = parsed as ReleaseNotesJSON;
-									} else if (parsed.parts && Array.isArray(parsed.parts)) {
-										// Model wrapped format: parse nested parts[0].text
-										const text = parsed.parts[0].text || "";
-										const innerMatch = text.match(/(\{[\s\S]*\})/);
-										const inner = innerMatch ? innerMatch[1] : text;
-										console.log("[DEBUG] inner JSON string:", inner);
-										try {
-											release = JSON.parse(inner) as ReleaseNotesJSON;
-										} catch (e) {
-											console.error(
-												"[DEBUG] inner JSON.parse failed:",
-												e,
-												inner,
-											);
-											return (
-												<pre className="text-gray-800 whitespace-pre-line">
-													{summaryText}
-												</pre>
-											);
-										}
-									} else {
-										console.error("[DEBUG] Unexpected JSON structure:", parsed);
-										return (
-											<pre className="text-gray-800 whitespace-pre-line">
-												{summaryText}
-											</pre>
-										);
-									}
-									// Render release notes
-									return (
-										<div className="space-y-4">
-											{release.items.map((item) => (
-												<div
+								{summaryTitle && (
+									<div className="mb-2">
+										<h5 className="font-semibold">タイトル</h5>
+										<p className="text-sm text-gray-700">{summaryTitle}</p>
+									</div>
+								)}
+								{previewItems.length > 0 && (
+									<DndContext
+										sensors={sensors}
+										collisionDetection={closestCenter}
+										onDragEnd={handleDragEnd}
+									>
+										<SortableContext
+											items={previewItems.map((i) => i.display_order)}
+											strategy={verticalListSortingStrategy}
+										>
+											{previewItems.map((item) => (
+												<SortableReleaseNoteItem
 													key={item.display_order}
-													className="border rounded-lg p-4"
-												>
-													<h6 className="font-semibold capitalize text-lg mb-1">
-														{item.type}
-													</h6>
-													<p className="text-gray-800">{item.description}</p>
-												</div>
+													item={item}
+													onRemove={(id) =>
+														setPreviewItems((prev) =>
+															prev.filter((i) => i.display_order !== id),
+														)
+													}
+												/>
 											))}
-										</div>
-									);
-								})()}
+										</SortableContext>
+									</DndContext>
+								)}
 								{stagingStatus === "processed" && stagingId && (
 									<button
 										type="button"
@@ -324,8 +442,23 @@ export function CommitHistorySection() {
 										onClick={async () => {
 											setLoadingConfirm(true);
 											try {
-												await confirmVersionReleaseNotes(stagingId);
-												setStagingStatus("confirmed");
+												const result = await createChangelogEntry({
+													version: selectedGroup.version,
+													title: summaryTitle,
+													published_at: selectedGroup.publishedAt.split("T")[0],
+													changes: previewItems.map((item) => ({
+														type: item.type,
+														description: item.description,
+													})),
+												});
+												if (result.success) {
+													setStagingStatus("confirmed");
+												} else {
+													console.error(
+														"Changelog entry creation failed",
+														result.error,
+													);
+												}
 											} catch (e) {
 												console.error("登録エラー", e);
 											} finally {

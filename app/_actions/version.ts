@@ -68,8 +68,8 @@ export async function processVersionCommitStaging(
 		.join("\n");
 	// JSON形式出力用プロンプトに変更
 	const systemPrompt = `
-以下のコミット情報を基に、バージョン ${record.version} のリリースノートを日本語で作成し、必ず以下のJSON形式で出力してください。JSON以外のテキストは出力しないでください。
-タイトル（title）はコミット内容を要約した短い説明を入れてください。published_atにはリリース日（YYYY-MM-DD）を設定してください。
+以下のコミット情報を基に、バージョン ${record.version} のリリースノートを日本語で作成し、必ず以下のJSON形式で出力してください。JSON以外のテキストは一切出力しないでください。
+タイトル（title）は、特にユーザーに注目してもらいたい新機能や改善点を具体的に示し、抽象的・一般的な表現は避けてください。例：「検索機能追加」、「ログインUX改善」のように、機能名や効果を明確に入れてください。published_atにはリリース日（YYYY-MM-DD）を設定してください。
 
 {
   "version": "${record.version}",
@@ -140,29 +140,55 @@ export async function confirmVersionReleaseNotes(
 	} catch (e) {
 		throw new Error(`Failed to parse staging.summary JSON: ${e}`);
 	}
+	// Ensure a valid published_at; fallback to today if missing or invalid
+	const rawDate = parsedRelease.published_at;
+	const publishedAt =
+		typeof rawDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+			? rawDate
+			: new Date().toISOString().split("T")[0];
+	// Check if an entry with this version already exists to avoid duplicate key error
+	const { data: existingEntry, error: selectError } = await supabase
+		.from("changelog_entries")
+		.select("*")
+		.eq("version", staging.version)
+		.maybeSingle();
+	if (selectError) throw selectError;
+	if (existingEntry) {
+		// Mark staging as confirmed and return the existing entry
+		await supabase
+			.from("version_commit_staging")
+			.update({ status: "confirmed" })
+			.eq("id", id);
+		return existingEntry;
+	}
 	// changelog_entriesへ挿入
 	const { data: entry, error: entryError } = await supabase
 		.from("changelog_entries")
 		.insert({
 			version: staging.version,
 			title: parsedRelease.title,
-			published_at: parsedRelease.published_at,
+			published_at: publishedAt,
 		})
 		.select("*")
 		.single();
 	if (entryError || !entry)
 		throw entryError ?? new Error("Failed to insert changelog_entries");
-	// changelog_itemsへ一括挿入
-	const itemsToInsert = parsedRelease.items.map((item) => ({
-		entry_id: entry.id,
-		type: item.type,
-		description: item.description,
-		display_order: item.display_order,
-	}));
-	const { error: itemsError } = await supabase
-		.from("changelog_items")
-		.insert(itemsToInsert);
-	if (itemsError) throw itemsError;
+	// changelog_itemsへ一括挿入 (itemsがundefinedの場合はスキップ)
+	const itemsArray = Array.isArray(parsedRelease.items)
+		? parsedRelease.items
+		: [];
+	if (itemsArray.length > 0) {
+		const itemsToInsert = itemsArray.map((item) => ({
+			entry_id: entry.id,
+			type: item.type,
+			description: item.description,
+			display_order: item.display_order,
+		}));
+		const { error: itemsError } = await supabase
+			.from("changelog_items")
+			.insert(itemsToInsert);
+		if (itemsError) throw itemsError;
+	}
 	// ステータスを確定
 	await supabase
 		.from("version_commit_staging")

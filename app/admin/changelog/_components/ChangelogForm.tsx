@@ -47,7 +47,7 @@ function SubmitButton({ isEditMode }: SubmitButtonProps) {
 		<button
 			type="submit"
 			disabled={pending}
-			className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+			className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
 		>
 			{text}
 		</button>
@@ -92,11 +92,17 @@ export function ChangelogForm({
 		prevState: ActionResponse<ChangeLogEntry>,
 		formData: FormData,
 	): Promise<ActionResponse<ChangeLogEntry>> => {
+		// Ensure published_at is retrieved as string
+		const publishedAtValue = formData.get("published_at");
+		if (publishedAtValue === null) {
+			throw new Error("公開日が取得できませんでした");
+		}
+		// Build input data for changelog entry
 		const inputData: CreateChangelogEntryInput = {
 			// id は CreateChangelogEntryInput にはない
 			version: formData.get("version") as string,
 			title: formData.get("title") as string | null,
-			published_at: formData.get("published_at") as string,
+			published_at: publishedAtValue.toString(),
 			changes: changes.map(({ type, description }) => ({ type, description })),
 		};
 		if (isEditMode && initialData?.id) {
