@@ -1393,6 +1393,57 @@ export type Database = {
           },
         ]
       }
+      version_commit_staging: {
+        Row: {
+          commits: Json
+          created_at: string
+          id: number
+          status: string
+          summary: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          commits: Json
+          created_at?: string
+          id?: number
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          commits?: Json
+          created_at?: string
+          id?: number
+          status?: string
+          summary?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      version_release_notes: {
+        Row: {
+          created_at: string
+          id: number
+          summary: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          summary: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          summary?: string
+          version?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

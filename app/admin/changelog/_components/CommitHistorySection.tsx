@@ -10,6 +10,10 @@ import {
 	Plus,
 	Minus,
 } from "lucide-react";
+import {
+	createVersionCommitStaging,
+	processVersionCommitStaging,
+} from "@/app/_actions/version";
 
 /**
  * コミット履歴の型定義
@@ -38,6 +42,7 @@ type VersionGroup = {
 export function CommitHistorySection() {
 	const [groups, setGroups] = useState<VersionGroup[]>([]);
 	const [selectedVersion, setSelectedVersion] = useState<string>("");
+	const [loadingSummary, setLoadingSummary] = useState(false);
 
 	// データ取得
 	useEffect(() => {
@@ -144,6 +149,29 @@ export function CommitHistorySection() {
 							</li>
 						))}
 					</ul>
+					<div className="mt-4">
+						<button
+							type="button"
+							onClick={async () => {
+								setLoadingSummary(true);
+								try {
+									const staging = await createVersionCommitStaging({
+										version: selectedGroup.version,
+										commits: selectedGroup.commits,
+									});
+									await processVersionCommitStaging(staging.id);
+								} catch (e) {
+									console.error("要約作成エラー", e);
+								} finally {
+									setLoadingSummary(false);
+								}
+							}}
+							disabled={loadingSummary}
+							className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+						>
+							{loadingSummary ? "作成中..." : "要約を作成"}
+						</button>
+					</div>
 				</div>
 			)}
 		</>
