@@ -2,7 +2,7 @@
  * Custom hook to detect text selection on the document and return the selected text and its bounding rectangle.
  * @returns An object containing the selected text, its bounding rectangle, and a function to clear the selection.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export interface TextSelectionInfo {
 	/** The currently selected text, or null if none. */

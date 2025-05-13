@@ -1,9 +1,9 @@
-import type React from "react";
+import { isAdmin } from "@/app/_actions/admin";
 import { AuthHeader } from "@/components/auth-header";
 import { Container } from "@/components/container";
-import { version } from "../../package.json";
-import { isAdmin } from "@/app/_actions/admin";
 import { redirect } from "next/navigation";
+import type React from "react";
+import { version } from "../../package.json";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;

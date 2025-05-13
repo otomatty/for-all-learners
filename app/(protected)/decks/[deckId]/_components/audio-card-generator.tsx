@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { createActionLog } from "@/app/_actions/actionLogs";
+import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
+import { createCards } from "@/app/_actions/cards";
+import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import { transcribeAudio } from "@/app/_actions/transcribe";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -10,19 +14,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { transcribeAudio } from "@/app/_actions/transcribe";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
-import { createCards } from "@/app/_actions/cards";
-import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import type { JSONContent } from "@tiptap/core";
-import { createActionLog } from "@/app/_actions/actionLogs";
-import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface AudioCardGeneratorProps {
 	deckId: string;

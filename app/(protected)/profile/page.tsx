@@ -1,9 +1,9 @@
-import React from "react";
-import { createClient } from "@/lib/supabase/server";
-import { getAccountById, createAccount } from "@/app/_actions/accounts";
-import ProfileForm from "./_components/profile-form";
+import { createAccount, getAccountById } from "@/app/_actions/accounts";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
+import { createClient } from "@/lib/supabase/server";
+import React from "react";
+import ProfileForm from "./_components/profile-form";
 
 export default async function ProfilePage() {
 	const supabase = await createClient();

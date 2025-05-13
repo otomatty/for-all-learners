@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { deleteDeck } from "@/app/_actions/decks";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,26 +12,28 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
-	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+	Camera,
 	MoreHorizontal,
 	Pencil,
+	SquarePlus,
 	Trash2,
 	Volume2,
-	Camera,
-	SquarePlus,
 } from "lucide-react";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { CardForm } from "../_components/card-form";
-import { DeckForm } from "../../_components/deck-form";
-import { deleteDeck } from "@/app/_actions/decks";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import { toast } from "sonner";
+import { DeckForm } from "../../_components/deck-form";
+import { CardForm } from "../_components/card-form";
 
 interface ActionMenuProps {
 	deckId: string;

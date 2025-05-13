@@ -1,5 +1,25 @@
 "use client";
 
+import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialogをインポート
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription, // Badgeの代わりに使うことを想定
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	CalendarClockIcon,
+	CheckCircle2Icon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	ConstructionIcon,
+	LightbulbIcon,
+	PauseCircleIcon,
+	RocketIcon,
+} from "lucide-react";
 import React, {
 	useMemo,
 	useRef,
@@ -7,27 +27,7 @@ import React, {
 	useState,
 	useCallback,
 } from "react";
-import { Badge } from "@/components/ui/badge";
-import {
-	LightbulbIcon,
-	ConstructionIcon,
-	CheckCircle2Icon,
-	RocketIcon,
-	PauseCircleIcon,
-	CalendarClockIcon,
-	ChevronLeftIcon,
-	ChevronRightIcon,
-} from "lucide-react";
 import MilestoneDetail from "./milestone-detail"; // 新しい詳細コンポーネントをインポート
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialogをインポート
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardContent,
-	CardDescription, // Badgeの代わりに使うことを想定
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export type MilestoneStatus =
 	| "planning"

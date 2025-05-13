@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -8,9 +8,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Container } from "@/components/container";
+import { Check, X } from "lucide-react";
+import Link from "next/link";
 
 export default function PricingSection() {
 	return (

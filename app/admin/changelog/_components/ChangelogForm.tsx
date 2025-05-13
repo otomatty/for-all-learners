@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react"; // useFormState を削除し、useActionState を react からインポート
-import { useFormStatus } from "react-dom"; // useFormState を削除
 import {
+	type ActionResponse,
+	type Change,
+	type ChangeLogEntry, // createChangelogEntry の戻り値の型として必要
+	type CreateChangelogEntryInput,
+	type UpdateChangelogEntryInput,
 	createChangelogEntry, // 新規作成時のみ使用
 	updateChangelogEntry, // 更新時に使用
-	type CreateChangelogEntryInput,
-	type Change,
-	type UpdateChangelogEntryInput,
-	type ActionResponse,
-	type ChangeLogEntry, // createChangelogEntry の戻り値の型として必要
 } from "@/app/_actions/changelog";
+import { useActionState, useEffect, useState } from "react"; // useFormState を削除し、useActionState を react からインポート
+import { useFormStatus } from "react-dom"; // useFormState を削除
 
 const changeTypes: Change["type"][] = ["new", "improvement", "fix", "security"];
 const changeTypeLabels: Record<Change["type"], string> = {

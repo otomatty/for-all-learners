@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 
 interface CreateDeckDialogButtonProps {
 	userId: string;

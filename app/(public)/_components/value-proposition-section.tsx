@@ -1,7 +1,7 @@
-import { Brain, Clock, Users } from "lucide-react";
-import { Container } from "@/components/container";
-import React from "react";
 import { SectionHeader } from "@/components/SectionHeader";
+import { Container } from "@/components/container";
+import { Brain, Clock, Users } from "lucide-react";
+import React from "react";
 
 export default function ValuePropositionSection() {
 	return (

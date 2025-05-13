@@ -1,8 +1,8 @@
-import type React from "react";
-import { Card } from "@/components/ui/card";
 import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
-import GoalSummaryClient from "./goal-summary-client";
+import { Card } from "@/components/ui/card";
+import type React from "react";
 import ServerGoalDecksSection from "./goal-deck-section";
+import GoalSummaryClient from "./goal-summary-client";
 
 interface StudyGoal {
 	id: string;

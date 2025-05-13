@@ -1,3 +1,5 @@
+import { SectionHeader } from "@/components/SectionHeader";
+import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -8,8 +10,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
-import { Container } from "@/components/container";
-import { SectionHeader } from "@/components/SectionHeader";
 
 export default function PricingSection() {
 	return (

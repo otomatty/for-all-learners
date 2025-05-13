@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useTransition, useCallback } from "react";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import {
-	Select,
-	SelectTrigger,
-	SelectValue,
-	SelectContent,
-	SelectGroup,
-	SelectLabel,
-	SelectItem,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { createDeckAction } from "@/app/_actions/decks";
 import type { Deck } from "@/app/_actions/goal-decks";
 import {
-	getAvailableDecksForGoal,
 	addGoalDeckLink,
+	getAvailableDecksForGoal,
 } from "@/app/_actions/goal-decks";
-import { createDeckAction } from "@/app/_actions/decks";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import React, { useState, useEffect, useTransition, useCallback } from "react";
 
 interface AddDeckLinkDialogProps {
 	goalId: string;

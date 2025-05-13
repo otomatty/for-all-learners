@@ -1,3 +1,4 @@
+import { Container } from "@/components/container";
 import {
 	Accordion,
 	AccordionContent,
@@ -5,7 +6,6 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Container } from "@/components/container";
 
 export default function FAQTabsSection() {
 	return (

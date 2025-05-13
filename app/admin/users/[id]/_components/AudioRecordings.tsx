@@ -1,14 +1,14 @@
-import React from "react";
 import { getAudioRecordingsByUser } from "@/app/_actions/audio_recordings";
+import type { AudioRecording } from "@/app/_actions/audio_recordings";
 import {
 	Table,
-	TableHeader,
 	TableBody,
-	TableRow,
-	TableHead,
 	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import type { AudioRecording } from "@/app/_actions/audio_recordings";
+import React from "react";
 
 interface AudioRecordingsProps {
 	userId: string;

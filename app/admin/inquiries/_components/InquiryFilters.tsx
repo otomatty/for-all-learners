@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -11,10 +10,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { XIcon } from "lucide-react";
-import type { InquiryCategoryOption } from "@/types/inquiry-types";
 import type { Database } from "@/types/database.types";
+import type { InquiryCategoryOption } from "@/types/inquiry-types";
+import { XIcon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type InquiryStatus = Database["public"]["Enums"]["inquiry_status_enum"];
 type InquiryPriority = Database["public"]["Enums"]["inquiry_priority_enum"];

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { PagesList } from "./pages-list";
-import { useInView } from "react-intersection-observer";
 import type { Json } from "@/types/database.types";
+import React, { useState, useEffect, useCallback } from "react";
+import { useInView } from "react-intersection-observer";
+import { PagesList } from "./pages-list";
 interface MyPagesListProps {
 	userId: string;
 }

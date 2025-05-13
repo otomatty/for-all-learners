@@ -1,6 +1,6 @@
-import { useCallback, useState, useEffect } from "react";
-import { toast } from "sonner";
 import type { Editor } from "@tiptap/react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface UseSpeechControlsProps {
 	editor: Editor | null;

@@ -1,11 +1,11 @@
+import { SectionHeader } from "@/components/SectionHeader";
+import { Container } from "@/components/container";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Container } from "@/components/container";
-import { SectionHeader } from "@/components/SectionHeader";
 
 export default function FAQSection() {
 	return (

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Container } from "@/components/container";
 import {
 	Card,
 	CardContent,
@@ -6,7 +6,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Container } from "@/components/container";
+import Image from "next/image";
 
 export default function VideoTutorialSection() {
 	return (

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { Logo } from "@/components/site-logo";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { PublicNavigation } from "@/components/public-navigation";
+import { Logo } from "@/components/site-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface UnauthHeaderProps {
 	version?: string;

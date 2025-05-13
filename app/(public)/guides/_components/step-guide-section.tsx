@@ -1,19 +1,19 @@
-import Image from "next/image";
-import Link from "next/link";
+import { Container } from "@/components/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+	BarChart,
 	BookOpen,
 	Brain,
-	Users,
-	Settings,
-	BarChart,
-	Zap,
 	FileText,
 	Layers,
+	Settings,
 	Share2,
 	UserCircle,
+	Users,
+	Zap,
 } from "lucide-react";
-import { Container } from "@/components/container";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function StepGuideSection() {
 	return (

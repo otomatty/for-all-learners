@@ -1,5 +1,5 @@
-import React from "react";
 import { getQuestionsByUser } from "@/app/_actions/questions";
+import React from "react";
 
 interface QuestionsProps {
 	userId: string;

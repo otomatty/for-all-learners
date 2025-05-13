@@ -1,15 +1,15 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+// actions
+import { getAccountById } from "@/app/_actions/accounts";
+import { getDashboardStats } from "@/app/_actions/dashboardStats";
+import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
+import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 // conponents
 import { Container } from "@/components/container";
 import { UserIdSetter } from "@/components/user-id-setter";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { GoalSummary } from "./_components/goal-summary";
 import { QuickActionTiles } from "./_components/quick-action-tiles";
-// actions
-import { getAccountById } from "@/app/_actions/accounts";
-import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
-import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
-import { getDashboardStats } from "@/app/_actions/dashboardStats";
 
 export default async function DashboardPage({
 	searchParams: searchParamsPromise, // Renaming to clarify it's a promise

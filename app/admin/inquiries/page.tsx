@@ -1,6 +1,6 @@
+import { Skeleton } from "@/components/ui/skeleton"; // shadcn/ui の Skeleton を利用
 import { Suspense } from "react";
 import { InquiriesTableContainer } from "./_components/InquiriesTableContainer";
-import { Skeleton } from "@/components/ui/skeleton"; // shadcn/ui の Skeleton を利用
 
 export const metadata = {
 	title: "お問い合わせ管理 | 管理者ダッシュボード",

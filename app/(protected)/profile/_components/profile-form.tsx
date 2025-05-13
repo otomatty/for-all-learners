@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import type { Database } from "@/types/database.types";
 import { updateAccount, uploadAvatar } from "@/app/_actions/accounts";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
-	SelectTrigger,
-	SelectValue,
 	SelectContent,
 	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
+import type { Database } from "@/types/database.types";
+import React, { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 

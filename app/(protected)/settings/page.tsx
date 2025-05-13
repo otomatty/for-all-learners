@@ -1,9 +1,9 @@
-import React from "react";
-import { getUserSettings } from "@/app/_actions/user_settings";
 import { getUserCosenseProjects } from "@/app/_actions/cosense";
-import UserSettingsForm from "./_components/user-settings-form";
+import { getUserSettings } from "@/app/_actions/user_settings";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
+import React from "react";
+import UserSettingsForm from "./_components/user-settings-form";
 
 export default async function SettingsPage() {
 	// サーバーサイドでユーザー設定を取得

@@ -1,29 +1,29 @@
 "use client";
 
-import React, { useState, useTransition, useEffect, useMemo } from "react";
-import type { Database } from "@/types/database.types";
-import { useRouter, usePathname } from "next/navigation";
 import { updateUserSettings } from "@/app/_actions/user_settings";
-import { Button } from "@/components/ui/button";
 import {
 	AlertDialog,
-	AlertDialogContent,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogDescription,
-	AlertDialogFooter,
 	AlertDialogAction,
 	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Database } from "@/types/database.types";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useState, useTransition, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import AppearanceSettings from "./appearance";
+import ExternalServices from "./external-sync-settings";
+import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
 import GeneralSettings from "./general";
+import LlmSettings from "./llm-settings";
 import NotificationSettings from "./notifications";
 import PaginationSettings from "./pagination";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
-import ExternalServices from "./external-sync-settings";
-import LlmSettings from "./llm-settings";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];

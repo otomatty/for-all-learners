@@ -1,19 +1,19 @@
 "use client";
 
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
+import { PageLink } from "@/lib/tiptap-extensions/page-link";
+import type { JSONContent } from "@tiptap/core";
+import Image from "@tiptap/extension-image"; // Imageエクステンションをインポート
+import LinkExtension from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align"; // TextAlignをインポート
+import Typography from "@tiptap/extension-typography"; // Typographyをインポート
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 /**
  * RichContent component: renders Tiptap JSON content with Link, PageLink, and Highlight extensions,
  * and applies the Highlight mark to occurrences of a given keyword.
  */
 import React from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image"; // Imageエクステンションをインポート
-import TextAlign from "@tiptap/extension-text-align"; // TextAlignをインポート
-import Typography from "@tiptap/extension-typography"; // Typographyをインポート
-import { PageLink } from "@/lib/tiptap-extensions/page-link";
-import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
-import type { JSONContent } from "@tiptap/core";
 
 interface RichContentProps {
 	/** The Tiptap JSONContent to render */

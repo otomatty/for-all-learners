@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 

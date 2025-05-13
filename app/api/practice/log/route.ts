@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 /**
  * API route to record a learning log entry.

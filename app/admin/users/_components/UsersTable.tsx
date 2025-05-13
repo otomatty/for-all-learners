@@ -1,15 +1,15 @@
 "use client";
 
-import type { Database } from "@/types/database.types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	Table,
-	TableHeader,
-	TableRow,
-	TableHead,
 	TableBody,
 	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import type { Database } from "@/types/database.types";
 import Link from "next/link";
 
 // Account row base type matching selected fields (omit created_at/updated_at)

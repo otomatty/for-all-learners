@@ -1,28 +1,28 @@
 "use client";
 
+import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
 import { Button } from "@/components/ui/button";
-import type { Database } from "@/types/database.types";
-import { useTextSelection } from "@/hooks/use-text-selection";
-import {
-	Popover,
-	PopoverTrigger,
-	PopoverContent,
-} from "@/components/ui/popover";
-import { RichContent } from "./rich-content";
-import { useEffect, useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import type { JSONContent } from "@tiptap/core";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 } from "@/components/ui/dialog";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { useTextSelection } from "@/hooks/use-text-selection";
+import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
+import type { JSONContent } from "@tiptap/core";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { CardItem } from "./card-item"; // CardItem をインポート
+import { RichContent } from "./rich-content";
 
 interface CardsListProps {
 	cards: Database["public"]["Tables"]["cards"]["Row"][];

@@ -1,6 +1,6 @@
+import { mergeAttributes } from "@tiptap/core";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
-import { mergeAttributes } from "@tiptap/core";
 
 export const CustomBulletList = BulletList.extend({
 	renderHTML({ HTMLAttributes }) {

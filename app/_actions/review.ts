@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import { calculateSM2 } from "@/lib/utils/sm2";
+import type { Database } from "@/types/database.types";
 
 /**
  * カードの復習結果に基づき、SM-2アルゴリズムを適用してカードと学習ログを更新します

@@ -1,7 +1,7 @@
+import { getInquiryCategories } from "@/app/_actions/inquiries";
 // /Users/sugaiakimasa/apps/for-all-learners/app/inquiry/page.tsx
 import { createClient } from "@/lib/supabase/server";
 import InquiryForm from "./_components/inquiry-form";
-import { getInquiryCategories } from "@/app/_actions/inquiries";
 
 export default async function InquiryPage() {
 	const supabase = await createClient();

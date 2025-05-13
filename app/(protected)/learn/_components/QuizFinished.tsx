@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
 import { Confetti } from "@/components/magicui/confetti";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React from "react";
 
 // Summary type for all practiced questions including time spent
 export interface AnswerSummary {

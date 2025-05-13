@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import { calculateSM2 } from "@/lib/utils/sm2";
+import type { Database } from "@/types/database.types";
 export async function getLearningLogsByUser(userId: string) {
 	const supabase = await createClient();
 	const { data, error } = await supabase

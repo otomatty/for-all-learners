@@ -1,12 +1,12 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import Profile from "./_components/Profile";
-import DecksAndCards from "./_components/DecksAndCards";
-import Questions from "./_components/Questions";
-import LearningActivity from "./_components/LearningActivity";
-import Goals from "./_components/Goals";
-import Settings from "./_components/Settings";
 import AudioRecordings from "./_components/AudioRecordings";
+import DecksAndCards from "./_components/DecksAndCards";
+import Goals from "./_components/Goals";
+import LearningActivity from "./_components/LearningActivity";
+import Profile from "./_components/Profile";
+import Questions from "./_components/Questions";
+import Settings from "./_components/Settings";
 
 interface UserDetailPageProps {
 	params: Promise<{ id: string }>;

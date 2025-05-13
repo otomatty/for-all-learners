@@ -1,19 +1,19 @@
 "use client";
-import type React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { addStudyGoal } from "@/app/_actions/study_goals";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { Button } from "@/components/ui/button";
 import {
 	Form,
+	FormControl,
 	FormItem,
 	FormLabel,
-	FormControl,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { addStudyGoal } from "@/app/_actions/study_goals";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface GoalFormFields {
 	title: string;

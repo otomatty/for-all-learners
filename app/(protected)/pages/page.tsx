@@ -1,9 +1,9 @@
+import { getPagesByUser } from "@/app/_actions/pages";
+import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Container } from "@/components/container";
 import PagesPageClient from "./page-client";
-import { getPagesByUser } from "@/app/_actions/pages";
-import { BackLink } from "@/components/ui/back-link";
 
 export default async function PagesPage() {
 	const supabase = await createClient();

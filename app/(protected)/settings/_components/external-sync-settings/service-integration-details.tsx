@@ -1,18 +1,18 @@
 "use client";
 
-import React from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Select,
-	SelectTrigger,
-	SelectValue,
 	SelectContent,
 	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
-import { HelpCircle, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, HelpCircle } from "lucide-react";
+import React from "react";
 import { toast } from "sonner";
 
 export interface SyncOption {

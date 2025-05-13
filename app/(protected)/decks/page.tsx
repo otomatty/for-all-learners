@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { DecksList } from "@/app/(protected)/decks/_components/decks-list";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateDeckDialogButton } from "@/app/(protected)/decks/_components/create-deck-dialog-button";
+import { DecksList } from "@/app/(protected)/decks/_components/decks-list";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function DecksPage() {
 	const supabase = await createClient();

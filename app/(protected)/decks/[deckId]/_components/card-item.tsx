@@ -1,11 +1,11 @@
 "use client";
 
-import type React from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/types/database.types";
-import { RichContent } from "./rich-content";
+import type React from "react";
 import { CardContextMenu } from "./card-context-menu";
+import { RichContent } from "./rich-content";
 
 interface CardItemProps {
 	card?: Database["public"]["Tables"]["cards"]["Row"]; // オプショナルに変更
@@ -18,7 +18,9 @@ interface CardItemProps {
 	deckId: string;
 	userId: string | null;
 	canEdit: boolean;
-	onCardUpdated?: (updatedCard: Database["public"]["Tables"]["cards"]["Row"]) => void;
+	onCardUpdated?: (
+		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
+	) => void;
 	isLoading?: boolean;
 }
 
@@ -39,12 +41,19 @@ export function CardItem({
 	if (isLoading) {
 		return (
 			<Card className="overflow-hidden">
-				<CardContent> {/* Uses default CardContent padding (p-6) */}
-					<div className="space-y-3 py-2"> {/* Added py-2 to better align with prose */}
+				<CardContent>
+					{" "}
+					{/* Uses default CardContent padding (p-6) */}
+					<div className="space-y-3 py-2">
+						{" "}
+						{/* Added py-2 to better align with prose */}
 						<Skeleton className="h-5 w-3/4" /> {/* Simulating a title line */}
-						<Skeleton className="h-4 w-full" /> {/* Simulating a content line */}
-						<Skeleton className="h-4 w-5/6" /> {/* Simulating another content line */}
-						<Skeleton className="h-4 w-1/2" /> {/* Simulating a shorter content line */}
+						<Skeleton className="h-4 w-full" />{" "}
+						{/* Simulating a content line */}
+						<Skeleton className="h-4 w-5/6" />{" "}
+						{/* Simulating another content line */}
+						<Skeleton className="h-4 w-1/2" />{" "}
+						{/* Simulating a shorter content line */}
 					</div>
 				</CardContent>
 			</Card>

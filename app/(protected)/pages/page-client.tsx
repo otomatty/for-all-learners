@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import Link from "next/link";
+import { PagesListContainer } from "@/app/(protected)/pages/_components/pages-list-container";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -11,7 +9,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { PagesListContainer } from "@/app/(protected)/pages/_components/pages-list-container";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
+import React, { useState } from "react";
 
 interface PagesPageClientProps {
 	userId: string;

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useCallback } from "react";
 import type { Database } from "@/types/database.types";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import React, { useCallback } from "react";
 import { PagesList } from "./pages-list";
 import { PagesListSkeleton } from "./pages-list-skeleton";
 

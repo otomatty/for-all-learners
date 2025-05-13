@@ -1,16 +1,16 @@
-import { Suspense } from "react";
 import {
 	getAllInquiries,
 	getInquiryCategories,
 } from "@/app/_actions/inquiries";
 import type { GetAllInquiriesOptions } from "@/app/_actions/inquiries";
-import { InquiriesTable } from "./InquiriesTable";
-import { InquiryPagination } from "./InquiryPagination";
-import { InquiryFilters } from "./InquiryFilters";
 import {
-	parseAdminInquiriesSearchParams,
 	type ParsedAdminInquiriesSearchParams,
+	parseAdminInquiriesSearchParams,
 } from "@/lib/utils";
+import { Suspense } from "react";
+import { InquiriesTable } from "./InquiriesTable";
+import { InquiryFilters } from "./InquiryFilters";
+import { InquiryPagination } from "./InquiryPagination";
 
 interface InquiriesTableContainerProps {
 	searchParams?: { [key: string]: string | string[] | undefined };

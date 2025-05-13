@@ -1,22 +1,22 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
-import { PageLink } from "@/lib/tiptap-extensions/page-link";
+import { generatePageInfo } from "@/app/_actions/generatePageInfo";
+import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import {
 	CustomBulletList,
 	CustomOrderedList,
 } from "@/lib/tiptap-extensions/custom-list";
-import type { JSONContent } from "@tiptap/core";
-import type { Database } from "@/types/database.types";
-import Placeholder from "@tiptap/extension-placeholder";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
-import { marked } from "marked";
-import { toast } from "sonner";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
+import { PageLink } from "@/lib/tiptap-extensions/page-link";
+import type { Database } from "@/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { JSONContent } from "@tiptap/core";
+import LinkExtension from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { marked } from "marked";
+import { useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -60,12 +60,15 @@ export function usePageEditorLogic({
 				includeChildren: true,
 			}),
 		],
-		content: initialDoc,
 		editorProps: {
 			attributes: {
 				class:
 					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose lg:prose-lg mx-auto min-h-[200px] px-3 py-2",
 			},
+		},
+		onCreate({ editor }) {
+			console.log("[Client Debug] onCreate initialDoc:", initialDoc);
+			editor.commands.setContent(initialDoc);
 		},
 	});
 
@@ -165,6 +168,23 @@ export function usePageEditorLogic({
 			if (saveTimeout.current) clearTimeout(saveTimeout.current);
 		};
 	}, [isDirty, savePage, editor]);
+
+	useEffect(() => {
+		if (editor && initialContent) {
+			editor.commands.setContent(initialContent);
+		}
+	}, [editor, initialContent]);
+
+	// Debug: log initial content and editor state in browser console
+	useEffect(() => {
+		if (editor) {
+			console.log(
+				"[Client Debug] initialContent in usePageEditorLogic:",
+				initialContent,
+			);
+			console.log("[Client Debug] editor JSON:", editor.getJSON());
+		}
+	}, [editor, initialContent]);
 
 	return {
 		editor,

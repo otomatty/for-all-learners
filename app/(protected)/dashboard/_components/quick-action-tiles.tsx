@@ -1,29 +1,29 @@
 "use client";
-import type React from "react";
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import type { Database } from "@/types/database.types";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardHeader,
-	CardTitle,
 	CardDescription,
 	CardFooter,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Sparkles, Mic, Repeat, FileText, Camera } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import {
 	Command,
-	CommandInput,
-	CommandList,
 	CommandEmpty,
 	CommandGroup,
+	CommandInput,
 	CommandItem,
+	CommandList,
 } from "@/components/ui/command";
+import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
+import { Camera, FileText, Mic, Repeat, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
 export const QuickActionTiles: React.FC = () => {
 	const [isQuickActionDialogOpen, setIsQuickActionDialogOpen] = useState(false);
 	// State for deck list and selection

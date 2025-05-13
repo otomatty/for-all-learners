@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useSetAtom } from "jotai";
 import { userIdAtom } from "@/stores/user";
+import { useSetAtom } from "jotai";
+import { useEffect } from "react";
 
 interface UserIdSetterProps {
 	userId: string;

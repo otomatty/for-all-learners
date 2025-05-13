@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { createCards } from "@/app/_actions/cards";
+import type { GeneratedCard } from "@/app/_actions/generateCards";
+import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import { createRawInput } from "@/app/_actions/rawInputs";
+import { transcribeImage } from "@/app/_actions/transcribeImage";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardHeader,
 	CardContent,
 	CardFooter,
+	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Save, Loader2, Trash } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { transcribeImage } from "@/app/_actions/transcribeImage";
-import type { GeneratedCard } from "@/app/_actions/generateCards";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
-import { createCards } from "@/app/_actions/cards";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { createRawInput } from "@/app/_actions/rawInputs";
+import { Loader2, Save, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface ImageCardGeneratorProps {
 	deckId: string;

@@ -1,16 +1,16 @@
 "use client";
 
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
+import { Button } from "@/components/ui/button"; // Buttonをインポート
 import Image from "@tiptap/extension-image";
-import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import Typography from "@tiptap/extension-typography";
-import { Button } from "@/components/ui/button"; // Buttonをインポート
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useRef } from "react";
-import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { toast } from "sonner"; // toastをインポート
 
 interface TiptapEditorProps {

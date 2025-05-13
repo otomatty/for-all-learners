@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { Container } from "@/components/container";
+import Link from "next/link";
 
 export default function CTASection() {
 	return (

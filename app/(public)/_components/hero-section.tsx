@@ -1,9 +1,9 @@
-import Link from "next/link";
-import Image from "next/image";
+import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { CheckCircle } from "lucide-react";
-import { Container } from "@/components/container";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function HeroSection() {
 	return (

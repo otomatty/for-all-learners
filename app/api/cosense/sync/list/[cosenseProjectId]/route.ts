@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { parseCosenseDescriptions } from "@/lib/utils/cosenseParser";
 import type { JSONContent } from "@tiptap/core";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	request: NextRequest,
@@ -124,6 +125,27 @@ export async function GET(
 					] as [string, { updated_at: string; thumbnail_url: string | null }],
 			),
 		);
+		// Fetch existing content sync timestamps to preserve detailed sync status
+		const { data: contentSyncPages, error: contentSyncError } = await supabase
+			.from("pages")
+			.select("scrapbox_page_id, scrapbox_page_content_synced_at")
+			.eq("user_id", user.id)
+			.in("scrapbox_page_id", scrapboxIds);
+		if (contentSyncError) {
+			console.error(
+				"[Cosense Sync List] Failed to fetch content sync timestamps",
+				contentSyncError,
+			);
+		}
+		const contentSyncMap = new Map(
+			(contentSyncPages ?? []).map(
+				(e) =>
+					[e.scrapbox_page_id, e.scrapbox_page_content_synced_at] as [
+						string,
+						string | null,
+					],
+			),
+		);
 		// Filter pages: include if newer OR if existing record lacks thumbnail
 		const filteredPages = pages.filter((item) => {
 			const incomingMs = item.updated * 1000;
@@ -151,13 +173,11 @@ export async function GET(
 				const createdAt = new Date(item.created * 1000).toISOString();
 				const updatedAt = new Date(item.updated * 1000).toISOString();
 				// descriptions を TipTap JSON にマッピング
-				const content: JSONContent = {
-					type: "doc",
-					content: item.descriptions.map((desc) => ({
-						type: "paragraph",
-						content: [{ type: "text", text: desc }],
-					})),
-				};
+				const content: JSONContent = parseCosenseDescriptions(
+					item.descriptions,
+				);
+				// Preserve previous detailed content sync timestamp
+				const prevContentSynced = contentSyncMap.get(item.id) ?? null;
 				return {
 					user_id: user.id,
 					title: item.title,
@@ -165,7 +185,7 @@ export async function GET(
 					content_tiptap: content,
 					scrapbox_page_id: item.id,
 					scrapbox_page_list_synced_at: now,
-					scrapbox_page_content_synced_at: now,
+					scrapbox_page_content_synced_at: prevContentSynced,
 					created_at: createdAt,
 					updated_at: updatedAt,
 				};

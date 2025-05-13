@@ -5,7 +5,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Pause, Play, RotateCcw } from "lucide-react";
 
 interface SpeechControlButtonsProps {
 	onReadAloud: () => void;

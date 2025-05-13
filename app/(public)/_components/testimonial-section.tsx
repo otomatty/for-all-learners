@@ -1,8 +1,8 @@
-import Image from "next/image";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Container } from "@/components/container";
-import { Quote } from "lucide-react";
 import { SectionHeader } from "@/components/SectionHeader";
+import { Container } from "@/components/container";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Quote } from "lucide-react";
+import Image from "next/image";
 
 interface Testimonial {
 	quote: string;

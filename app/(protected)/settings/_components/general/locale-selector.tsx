@@ -1,16 +1,16 @@
 "use client";
 
-import React from "react";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
-	SelectTrigger,
-	SelectValue,
 	SelectContent,
 	SelectGroup,
-	SelectLabel,
 	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import React from "react";
 
 interface LocaleSelectorProps {
 	value: string;

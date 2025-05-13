@@ -1,11 +1,11 @@
 "use client";
 
-import type React from "react";
 import type { Database } from "@/types/database.types";
-import IntegrationCardShell from "./integration-card-shell";
+import type React from "react";
 import CosenseSyncSettings, {
 	type CosenseProject,
 } from "./cosense-sync-settings";
+import IntegrationCardShell from "./integration-card-shell";
 import ServiceIntegrationDetails from "./service-integration-details";
 
 // ユーザー設定の型

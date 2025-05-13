@@ -1,32 +1,32 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { BubbleMenu } from "@tiptap/react";
 import type { Editor } from "@tiptap/react";
 import {
-	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
-	DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
+	Bold,
+	Code,
 	Hash,
 	Heading1,
 	Heading2,
 	Heading3,
-	Bold,
+	Link2,
 	List,
 	ListOrdered,
-	Link2,
-	Code,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import {
-	Tooltip,
-	TooltipTrigger,
-	TooltipContent,
-	TooltipProvider,
-} from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 interface EditPageBubbleMenuProps {
 	editor: Editor | null;

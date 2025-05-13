@@ -1,12 +1,13 @@
 // /Users/sugaiakimasa/apps/for-all-learners/app/inquiry/_components/inquiry-form.tsx
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
+import { type InquiryFormState, submitInquiry } from "@/app/_actions/inquiries"; // サーバーアクションをインポート
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -18,6 +19,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // Labelを追加
+import { LabelBadge } from "@/components/ui/label-badge"; // 作成したLabelBadgeをインポート
 import {
 	Select,
 	SelectContent,
@@ -25,11 +28,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label"; // Labelを追加
 import { Textarea } from "@/components/ui/textarea";
-import { LabelBadge } from "@/components/ui/label-badge"; // 作成したLabelBadgeをインポート
 import { ImageUploader } from "./image-uploader"; // 作成したImageUploaderをインポート
-import { submitInquiry, type InquiryFormState } from "@/app/_actions/inquiries"; // サーバーアクションをインポート
 
 // page.tsx から渡されるカテゴリの型
 type InquiryCategory = {

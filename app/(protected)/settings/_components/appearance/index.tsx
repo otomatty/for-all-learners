@@ -1,9 +1,9 @@
 "use client";
 
-import type React from "react";
 import type { Database } from "@/types/database.types";
-import ThemeSelector from "./theme-selector";
+import type React from "react";
 import ModeToggle from "./mode-toggle";
+import ThemeSelector from "./theme-selector";
 
 // user settings type
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];

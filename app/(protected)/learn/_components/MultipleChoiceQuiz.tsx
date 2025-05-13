@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
-import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 import { Progress } from "@/components/ui/progress";
+import type { MultipleChoiceQuestion } from "@/lib/gemini";
+import React, { useState, useEffect, useRef } from "react";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {

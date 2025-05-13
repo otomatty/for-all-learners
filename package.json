@@ -6,7 +6,7 @@
 		"dev": "next dev --turbopack",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint",
+		"lint": "biome check --write",
 		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts"
 	},
 	"dependencies": {

@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function ContactSection() {
 	return (

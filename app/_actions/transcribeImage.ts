@@ -1,7 +1,7 @@
 "use server";
 
 import { geminiClient } from "@/lib/gemini/client";
-import { createUserContent, createPartFromUri } from "@google/genai";
+import { createPartFromUri, createUserContent } from "@google/genai";
 
 // Define types for OCR response to avoid any
 interface ImageOcrCandidate {

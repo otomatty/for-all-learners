@@ -1,6 +1,6 @@
-import React from "react";
-import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 import { getCardsByUser } from "@/app/_actions/cards";
+import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
+import React from "react";
 
 interface DecksAndCardsProps {
 	userId: string;

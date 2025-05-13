@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type QuestionType, generateQuestions } from "@/lib/gemini";
 import { createClient } from "@/lib/supabase/server";
-import { generateQuestions, type QuestionType } from "@/lib/gemini";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
 	try {

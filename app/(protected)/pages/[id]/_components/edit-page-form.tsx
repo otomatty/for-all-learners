@@ -1,33 +1,32 @@
 "use client";
 
+// Supabase
+import { createClient } from "@/lib/supabase/client";
+// Types
+import type { Database } from "@/types/database.types";
+import type { JSONContent } from "@tiptap/core";
+import { EditorContent } from "@tiptap/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { EditorContent } from "@tiptap/react";
-import type { JSONContent } from "@tiptap/core";
-
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
-
-import { ContentSkeleton } from "./content-skeleton";
-import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
+import { useDateShortcut } from "../_hooks/useDateShortcut";
+import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
+// Hooks
 import { usePageFormState } from "../_hooks/usePageFormState";
 import { useSpeechControls } from "../_hooks/useSpeechControls";
-import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
-import { useDateShortcut } from "../_hooks/useDateShortcut";
+// Components
+import { ContentSkeleton } from "./content-skeleton";
+import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import { PageHeader } from "./page-header";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
-	userId: string;
-	/** Initial JSONContent with pageId marks injected */
 	initialContent?: JSONContent;
 }
 
 export default function EditPageForm({
 	page,
-	userId,
 	initialContent,
 }: EditPageFormProps) {
 	// Detect if this is a newly created page via query param
@@ -160,6 +159,7 @@ export default function EditPageForm({
 					onResetReadAloud={handleReset}
 					onDeletePage={handleDeletePage}
 					isPlaying={isPlaying} // isPlaying プロパティを渡す
+					showCosenseSyncBadge={Boolean(page.scrapbox_page_list_synced_at)} // Cosense同期ステータス
 				/>
 				{editor && (
 					<div className="relative">
@@ -171,6 +171,7 @@ export default function EditPageForm({
 							<ContentSkeleton />
 						) : (
 							<EditorContent
+								key={JSON.stringify(initialContent)}
 								placeholder="ページ内容を入力してください"
 								editor={editor}
 								onKeyDown={handleKeyDown}

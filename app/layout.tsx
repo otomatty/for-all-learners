@@ -1,8 +1,8 @@
-import type React from "react";
 import { Inter } from "next/font/google";
+import type React from "react";
 import "./globals.css";
-import { Providers } from "@/components/providers";
 import { getUserSettings } from "@/app/_actions/user_settings";
+import { Providers } from "@/components/providers";
 
 const inter = Inter({ subsets: ["latin"] });
 

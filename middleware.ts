@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/database.types";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Define public routes for unauthenticated users

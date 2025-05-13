@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { pageHelpConfig } from "@/lib/pageHelpConfig";
-import { HelpCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { pageHelpConfig } from "@/lib/pageHelpConfig";
+import { HelpCircle } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 /**
  * ヘルプダイアログを表示するボタンコンポーネント
  * @param triggerIcon ボタンに表示するアイコン（指定しない場合はテキスト）

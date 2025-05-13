@@ -1,12 +1,12 @@
 "use server";
 
-import { v4 as uuidv4 } from "uuid"; // ファイル名の一意性を保つためにuuidを使用
 import { createClient } from "@/lib/supabase/server";
-import { z } from "zod";
-import { headers } from "next/headers";
 import type { Database } from "@/types/database.types";
 // import { revalidatePath } from "next/cache"; // 必要に応じてコメント解除
 import type { InquiryCategoryOption } from "@/types/inquiry-types";
+import { headers } from "next/headers";
+import { v4 as uuidv4 } from "uuid"; // ファイル名の一意性を保つためにuuidを使用
+import { z } from "zod";
 
 // お問い合わせフォームの入力スキーマ定義 (zodを使用)
 const CreateInquirySchema = z.object({

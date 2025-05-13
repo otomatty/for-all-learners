@@ -1,19 +1,6 @@
 "use client";
 
-import type * as React from "react";
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-	ContextMenu,
-	ContextMenuTrigger,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuSeparator,
-} from "@/components/ui/context-menu";
+import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,9 +11,22 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
-import { CardForm } from "./card-form"; // CardForm をインポート
+import { Button } from "@/components/ui/button";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuSeparator,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types"; // Database 型をインポート
+import { Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type * as React from "react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { CardForm } from "./card-form"; // CardForm をインポート
 
 interface CardContextMenuProps {
 	card: Database["public"]["Tables"]["cards"]["Row"];

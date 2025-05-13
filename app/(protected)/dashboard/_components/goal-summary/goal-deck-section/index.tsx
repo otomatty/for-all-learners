@@ -1,8 +1,8 @@
-import React from "react";
-import { getGoalDecks, getDeckStudyLogs } from "@/app/_actions/goal-decks";
-import ClientGoalDecksSection from "./goal-decks-section-client";
-import { createClient } from "@/lib/supabase/server";
+import { getDeckStudyLogs, getGoalDecks } from "@/app/_actions/goal-decks";
 import { getTodayReviewCountsByDeck } from "@/app/_actions/learning_logs";
+import { createClient } from "@/lib/supabase/server";
+import React from "react";
+import ClientGoalDecksSection from "./goal-decks-section-client";
 import type { Deck as ClientDeck } from "./goal-decks-section-client";
 
 interface GoalDecksSectionProps {

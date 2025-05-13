@@ -1,12 +1,12 @@
-import type React from "react";
-import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import {
 	Dialog,
-	DialogTrigger,
 	DialogContent,
 	DialogTitle,
+	DialogTrigger,
 } from "@/components/ui/dialog";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import Image from "next/image";
+import type React from "react";
 
 /**
  * A NodeView component that displays the Gyazo image normally,

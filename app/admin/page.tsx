@@ -1,11 +1,11 @@
+import { isAdmin } from "@/app/_actions/admin";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { isAdmin } from "@/app/_actions/admin";
 import { ActiveUsersCard } from "./_components/ActiveUsersCard";
 import { NewUsersCard } from "./_components/NewUsersCard";
+import { SupabaseMetrics } from "./_components/SupabaseMetrics";
 import { SupabaseStatusCard } from "./_components/SupabaseStatusCard";
 import { VercelStatusCard } from "./_components/VercelStatusCard";
-import { SupabaseMetrics } from "./_components/SupabaseMetrics";
 /**
  * 管理者用ダッシュボードトップページ
  */

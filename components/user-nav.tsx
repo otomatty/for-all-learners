@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter, usePathname } from "next/navigation";
+import { logout } from "@/app/_actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +12,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import { LogOut, Settings, UserRound, Shield, Home } from "lucide-react";
-import { logout } from "@/app/_actions/auth";
+import { Home, LogOut, Settings, Shield, UserRound } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // Type for data fetched from the accounts table
 type Account = Database["public"]["Tables"]["accounts"]["Row"];

@@ -1,14 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { revalidatePath } from "next/cache";
 
+import { createClient } from "@/lib/supabase/server";
 // Supabaseの型定義ファイルへのパスをプロジェクトに合わせて修正してください。
 // 例: import type { Database } from '@/lib/database.types';
 // この例では、プロジェクトルートの `lib` フォルダに `database.types.ts` があると仮定しています。
 import type { Database } from "@/types/database.types"; // ← 実際のパスに置き換えてください
-import { createClient } from "@/lib/supabase/server";
 
 // フロントエンドで使われる型定義 (page.tsx と共通化も検討)
 export interface Change {

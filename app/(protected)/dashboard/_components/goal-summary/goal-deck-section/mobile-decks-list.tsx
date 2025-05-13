@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useAtomValue } from "jotai";
-import { userIdAtom } from "@/stores/user";
+import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
-import { Separator } from "@/components/ui/separator";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
-	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { userIdAtom } from "@/stores/user";
+import { useAtomValue } from "jotai";
 import { MoreHorizontal } from "lucide-react";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import Link from "next/link";
+import React, { useState } from "react";
 
 interface Deck {
 	id: string;

@@ -1,10 +1,10 @@
 "use server";
 
+import { syncCardLinks } from "@/app/_actions/syncCardLinks";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import { revalidatePath } from "next/cache";
-import { syncCardLinks } from "@/app/_actions/syncCardLinks";
 import type { JSONContent } from "@tiptap/core";
+import { revalidatePath } from "next/cache";
 
 export async function getDecksByUser(userId: string) {
 	const supabase = await createClient();

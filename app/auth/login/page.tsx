@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { Mail } from "lucide-react";
-import { UnauthHeader } from "@/components/unauth-header";
 import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
-import { version } from "../../../package.json";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UnauthHeader } from "@/components/unauth-header";
+import { createClient } from "@/lib/supabase/server";
+import { Mail } from "lucide-react";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { version } from "../../../package.json";
 
 // ページコンポーネントの props に searchParams を追加
 export default async function LoginPage({

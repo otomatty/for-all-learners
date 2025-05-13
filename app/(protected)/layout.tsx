@@ -1,10 +1,10 @@
-import type React from "react";
-import { AuthHeader } from "@/components/auth-header";
-import { version } from "../../package.json";
 import { isAdmin } from "@/app/_actions/admin";
 import { getHelpVideoAudioSetting } from "@/app/_actions/user_settings";
-import { navItems } from "./navItems";
 import { AppFooter } from "@/components/app-footer";
+import { AuthHeader } from "@/components/auth-header";
+import type React from "react";
+import { version } from "../../package.json";
+import { navItems } from "./navItems";
 
 interface ProtectedLayoutProps {
 	children: React.ReactNode;

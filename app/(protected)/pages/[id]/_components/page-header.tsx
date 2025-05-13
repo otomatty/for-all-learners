@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // Next.js 13 App Router
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CosenseSyncBadge } from "@/components/ui/cosense-sync-badge";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -11,9 +9,12 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, MoreVertical, Trash2, Layers } from "lucide-react"; // Layers アイコンをインポート
-import { SpeechControlButtons } from "./speech-control-buttons";
+import { Input } from "@/components/ui/input";
+import { Layers, MoreVertical, Sparkles, Trash2 } from "lucide-react"; // Layers アイコンをインポート
+import { useRouter } from "next/navigation"; // Next.js 13 App Router
+import { useState } from "react";
 import { DeletePageDialog } from "./delete-page-dialog";
+import { SpeechControlButtons } from "./speech-control-buttons";
 
 interface PageHeaderProps {
 	pageId: string; // ページID (slugから渡される想定)
@@ -28,6 +29,7 @@ interface PageHeaderProps {
 	onResetReadAloud: () => void;
 	onDeletePage: () => Promise<void>; // ページ削除処理のコールバック
 	isPlaying: boolean; // SpeechControlButtons の isPlaying 状態
+	showCosenseSyncBadge: boolean; // Cosense同期ステータス
 }
 
 export function PageHeader({
@@ -43,6 +45,7 @@ export function PageHeader({
 	onResetReadAloud,
 	onDeletePage,
 	isPlaying,
+	showCosenseSyncBadge,
 }: PageHeaderProps) {
 	const router = useRouter();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -75,6 +78,9 @@ export function PageHeader({
 					className={`w-10 h-10 text-yellow-500 ${isGenerating ? "animate-spin" : ""}`}
 				/>
 			</button>
+
+			{/* Cosense同期バッジを条件付き表示 */}
+			{showCosenseSyncBadge && <CosenseSyncBadge className="ml-2" />}
 
 			<SpeechControlButtons
 				onReadAloud={onReadAloud}

@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge"; // shadcn/ui の Badge を想定
 import {
-	SparklesIcon, // 新機能
-	TrendingUpIcon, // 改善
 	BugIcon, // バグ修正
 	ShieldCheckIcon, // セキュリティ
+	SparklesIcon, // 新機能
+	TrendingUpIcon, // 改善
 } from "lucide-react"; // アイコンライブラリ
+import type { Metadata } from "next";
 import React from "react";
 import {
-	getChangelogData,
-	type ChangeLogEntry,
 	type Change,
+	type ChangeLogEntry,
+	getChangelogData,
 } from "../../_actions/changelog";
 
 export const metadata: Metadata = {

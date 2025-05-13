@@ -1,11 +1,11 @@
 import { getInquiryById } from "@/app/_actions/inquiries";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { notFound } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
+import { ArrowLeftIcon } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
 	// 動的にメタデータを設定することも可能

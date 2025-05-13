@@ -1,7 +1,7 @@
 "use client";
 
-import type React from "react";
 import type { Database } from "@/types/database.types";
+import type React from "react";
 import ItemsPerPageSelector from "./items-per-page-selector";
 
 // ユーザー設定の型

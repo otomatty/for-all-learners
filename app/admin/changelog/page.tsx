@@ -1,17 +1,11 @@
 "use client"; // ダイアログの状態管理のためクライアントコンポーネントに
 
-import { useState, useEffect, useCallback } from "react";
 import {
-	getChangelogData,
-	deleteChangelogEntry,
 	type ChangeLogEntry,
+	deleteChangelogEntry,
+	getChangelogData,
 } from "@/app/_actions/changelog";
-import { ChangelogHeader } from "./_components/ChangelogHeader";
-import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
-import { ChangelogForm } from "./_components/ChangelogForm";
-import { ChangelogEntryItem } from "./_components/ChangelogEntryItem";
 import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
-import { Button } from "@/components/ui/button"; // Button をインポート
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -22,6 +16,12 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button"; // Button をインポート
+import { useCallback, useEffect, useState } from "react";
+import { ChangelogEntryItem } from "./_components/ChangelogEntryItem";
+import { ChangelogForm } from "./_components/ChangelogForm";
+import { ChangelogHeader } from "./_components/ChangelogHeader";
+import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
 
 export default function ChangelogPage() {
 	const [changelogEntries, setChangelogEntries] = useState<ChangeLogEntry[]>(

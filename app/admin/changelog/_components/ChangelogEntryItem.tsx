@@ -1,13 +1,13 @@
-import type { ChangeLogEntry, Change } from "@/app/_actions/changelog";
-import { ChangeTypeBadge } from "./ChangeTypeBadge";
+import type { Change, ChangeLogEntry } from "@/app/_actions/changelog";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
+import { ChangeTypeBadge } from "./ChangeTypeBadge";
 
 interface ChangelogEntryItemProps {
 	entry: ChangeLogEntry;
@@ -21,9 +21,7 @@ export function ChangelogEntryItem({
 	onDelete,
 }: ChangelogEntryItemProps) {
 	return (
-		<article
-			className="p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 relative"
-		>
+		<article className="p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 relative">
 			<div className="absolute top-4 right-4 z-10">
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -52,7 +50,11 @@ export function ChangelogEntryItem({
 						: `${entry.version}`}
 				</h2>
 				<time
-					dateTime={new Date(entry.date.replace(/(\d+)年(\d+)月(\d+)日/, "$1-$2-$3")).toISOString().split("T")[0]} // YYYY-MM-DD形式に変換
+					dateTime={
+						new Date(entry.date.replace(/(\d+)年(\d+)月(\d+)日/, "$1-$2-$3"))
+							.toISOString()
+							.split("T")[0]
+					} // YYYY-MM-DD形式に変換
 					className="text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0"
 				>
 					{entry.date}

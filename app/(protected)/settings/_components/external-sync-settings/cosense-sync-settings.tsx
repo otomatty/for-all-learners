@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import {
-	Table,
-	TableHeader,
-	TableBody,
-	TableRow,
-	TableHead,
-	TableCell,
-} from "@/components/ui/table";
 import {
 	addUserCosenseProject,
 	removeUserCosenseProject,
 } from "@/app/_actions/cosense";
 import {
 	AlertDialog,
-	AlertDialogContent,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogDescription,
-	AlertDialogFooter,
 	AlertDialogAction,
 	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { RefreshCwIcon, TrashIcon } from "lucide-react";
+import Link from "next/link";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 export interface CosenseProject {

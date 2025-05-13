@@ -1,20 +1,20 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import type { FormattedInquiryListItem } from "@/app/_actions/inquiries"; // 型をインポート
+import { Button } from "@/components/ui/button";
 import {
 	Table,
-	TableHeader,
 	TableBody,
-	TableRow,
-	TableHead,
 	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { InquiryStatusBadge } from "./InquiryStatusBadge";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { InquiryPriorityBadge } from "./InquiryPriorityBadge";
-import type { FormattedInquiryListItem } from "@/app/_actions/inquiries"; // 型をインポート
+import { InquiryStatusBadge } from "./InquiryStatusBadge";
 
 interface InquiriesTableProps {
 	inquiries: FormattedInquiryListItem[];

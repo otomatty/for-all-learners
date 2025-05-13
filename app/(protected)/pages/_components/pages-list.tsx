@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
 import type { Database, Json } from "@/types/database.types";
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 interface PagesListProps {
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
 }

@@ -1,5 +1,5 @@
-import { getMilestones } from "../../_actions/milestone"; // 作成したサーバーアクションをインポート
 import type { Metadata } from "next";
+import { getMilestones } from "../../_actions/milestone"; // 作成したサーバーアクションをインポート
 import MilestoneTimeline, {
 	type MilestoneEntry,
 } from "./_components/milestone-timeline"; // クライアントコンポーネントをインポート

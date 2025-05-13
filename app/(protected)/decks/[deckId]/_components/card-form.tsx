@@ -1,22 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
+import TiptapEditor from "@/components/tiptap-editor";
+import { Button } from "@/components/ui/button";
 import {
 	Form,
+	FormControl,
 	FormField,
 	FormItem,
 	FormLabel,
-	FormControl,
 	FormMessage, // FormMessageを追加
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import TiptapEditor from "@/components/tiptap-editor";
-import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
 import type { Database } from "@/types/database.types"; // Database 型をインポート
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 interface CardFormProps {
 	deckId: string;

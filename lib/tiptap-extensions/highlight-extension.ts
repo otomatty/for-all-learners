@@ -1,4 +1,4 @@
-import { Mark, mergeAttributes, type Command } from "@tiptap/core";
+import { type Command, Mark, mergeAttributes } from "@tiptap/core";
 
 /**
  * Options type for the Highlight mark.

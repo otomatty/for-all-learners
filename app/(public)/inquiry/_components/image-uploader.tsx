@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import imageCompression from "browser-image-compression";
-import { PlusCircle, XCircle, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Loader2, PlusCircle, XCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button"; // Button for remove, if needed
+import { cn } from "@/lib/utils";
 
 export interface FileDetail {
 	id: string;

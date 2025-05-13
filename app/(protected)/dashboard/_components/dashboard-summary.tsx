@@ -1,23 +1,23 @@
 "use client";
 
-import type React from "react";
-import type { Stats } from "@/types/dashboard"; // ensure Stats type is defined
 import {
 	Card,
 	CardContent,
-	CardHeader,
-	CardTitle,
 	CardDescription,
 	CardFooter,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, BrainCircuit, Clock } from "lucide-react";
-import { PieChart, Pie, Cell } from "recharts";
 import {
 	type ChartConfig,
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@/components/ui/chart";
+import type { Stats } from "@/types/dashboard"; // ensure Stats type is defined
+import { BookOpen, BrainCircuit, Clock } from "lucide-react";
+import type React from "react";
+import { Cell, Pie, PieChart } from "recharts";
 
 interface DashboardSummaryProps {
 	stats: Stats;

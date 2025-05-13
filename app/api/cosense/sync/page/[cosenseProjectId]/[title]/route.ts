@@ -1,6 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { parseCosenseLines } from "@/lib/utils/cosenseParser";
 import type { JSONContent } from "@tiptap/core";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	req: NextRequest,
@@ -18,14 +19,14 @@ export async function GET(
 			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
-		// Unwrap dynamic params
-		const { cosenseProjectId, title: pageTitle } = await params;
+		// Unwrap dynamic params; dynamic segment is treated as projectName
+		const { cosenseProjectId: projectName, title: pageTitle } = await params;
 
-		// ユーザーと連携された Cosense プロジェクト設定取得
+		// ユーザーと連携された Cosense プロジェクト設定取得 by projectName
 		const { data: relation, error: relError } = await supabase
 			.from("user_cosense_projects")
 			.select("cosense_projects(project_name), scrapbox_session_cookie")
-			.eq("id", cosenseProjectId)
+			.eq("cosense_projects.project_name", projectName)
 			.single();
 		if (relError || !relation) {
 			console.error("[Cosense Sync Page] Project relation not found", relError);
@@ -34,8 +35,6 @@ export async function GET(
 				{ status: 404 },
 			);
 		}
-
-		const projectName = relation.cosense_projects.project_name;
 
 		// prepare cookie header if private project
 		const { scrapbox_session_cookie } = relation as {
@@ -65,28 +64,28 @@ export async function GET(
 			);
 		}
 		const data = await res.json();
+		console.log("[Cosense Route] fetched data:", data);
 
 		// Scrapbox の lines を TipTap JSON にマッピング
-		const content = data.lines.map((item: { text: string }) => ({
-			type: "paragraph",
-			content: [{ type: "text", text: item.text }],
-		}));
-		const json: JSONContent = { type: "doc", content };
+		const json: JSONContent = parseCosenseLines(data.lines);
+		console.log("[Cosense Route] mapped JSONContent:", json);
 
-		const { error: upsertError } = await supabase.from("pages").upsert(
-			{
-				user_id: user.id,
-				title: pageTitle,
+		const { data: updatedPage, error: updateError } = await supabase
+			.from("pages")
+			.update({
 				content_tiptap: json,
-				scrapbox_page_id: pageTitle,
 				scrapbox_page_content_synced_at: new Date().toISOString(),
-			},
-			{ onConflict: "user_id,scrapbox_page_id" },
-		);
-		if (upsertError) {
-			console.error("[Cosense Sync Page] Upsert failed", upsertError);
+			})
+			.eq("user_id", user.id)
+			.eq("title", pageTitle)
+			.select()
+			.single();
+		console.log("[Cosense Route] updatedPage from DB:", updatedPage);
+
+		if (updateError) {
+			console.error("[Cosense Sync Page] Update failed", updateError);
 			return NextResponse.json(
-				{ error: "Failed to save page" },
+				{ error: "Failed to update page" },
 				{ status: 500 },
 			);
 		}

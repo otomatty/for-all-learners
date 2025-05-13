@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 
 import { ActiveUsersCard } from "@/app/admin/_components/ActiveUsersCard";
 import { NewUsersCard } from "@/app/admin/_components/NewUsersCard";

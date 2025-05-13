@@ -1,15 +1,15 @@
+import { type QuizParams, getQuizQuestions } from "@/app/_actions/quiz";
+import { Container } from "@/components/container";
+import type {
+	ClozeQuestion,
+	FlashcardQuestion,
+	MultipleChoiceQuestion,
+} from "@/lib/gemini";
 import { cookies } from "next/headers";
-import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
+import Link from "next/link";
+import ClozeQuiz from "./_components/ClozeQuiz";
 import FlashcardQuiz from "./_components/FlashcardQuiz";
 import MultipleChoiceQuiz from "./_components/MultipleChoiceQuiz";
-import ClozeQuiz from "./_components/ClozeQuiz";
-import type {
-	MultipleChoiceQuestion,
-	FlashcardQuestion,
-	ClozeQuestion,
-} from "@/lib/gemini";
-import Link from "next/link";
-import { Container } from "@/components/container";
 export default async function SessionPage() {
 	const cookieStore = await cookies();
 	const raw = cookieStore.get("quizSettings")?.value;

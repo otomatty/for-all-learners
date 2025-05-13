@@ -1,7 +1,7 @@
 "use client";
 
-import type React from "react";
 import type { Database } from "@/types/database.types";
+import type React from "react";
 import LocaleSelector from "./locale-selector";
 import TimezoneSelector from "./timezone-selector";
 

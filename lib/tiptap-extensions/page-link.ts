@@ -1,6 +1,6 @@
+import { createClient } from "@/lib/supabase/client";
 import { Mark, markInputRule, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 // Create a single plugin key and instance to avoid duplicate instances

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
 	generateRawCardsFromPageContent,
 	saveGeneratedCards,
 	wrapTextInTiptapJson, // サーバーアクションからインポート
 } from "@/app/_actions/generateCardsFromPage";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -15,9 +14,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
 	GeneratedCardsList,
 	type RawGeneratedCard,

@@ -1,7 +1,7 @@
+import { createAccount, getAccountById } from "@/app/_actions/accounts";
+import { getUserSettings } from "@/app/_actions/user_settings";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { getAccountById, createAccount } from "@/app/_actions/accounts";
-import { getUserSettings } from "@/app/_actions/user_settings";
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
