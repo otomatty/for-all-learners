@@ -156,7 +156,7 @@ export default function MilestoneAdminView({
 
 	return (
 		<div style={{ padding: "20px" }}>
-			<button onClick={openForm} style={{ marginBottom: "20px" }}>
+			<button type="button" onClick={openForm} style={{ marginBottom: "20px" }}>
 				新規マイルストーン作成
 			</button>
 
@@ -324,6 +324,7 @@ export default function MilestoneAdminView({
 							<p>ステータス: {milestone.status}</p>
 							{milestone.description && <p>{milestone.description}</p>}
 							<button
+								type="button"
 								onClick={() => handleEdit(milestone)}
 								style={{ marginRight: "10px" }}
 								disabled={isLoading}
@@ -331,6 +332,7 @@ export default function MilestoneAdminView({
 								編集
 							</button>
 							<button
+								type="button"
 								onClick={() => handleDelete(milestone.id)}
 								disabled={isLoading}
 							>

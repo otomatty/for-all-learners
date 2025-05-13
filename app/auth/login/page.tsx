@@ -13,11 +13,11 @@ import { version } from "../../../package.json";
 export default async function LoginPage({
 	searchParams,
 }: {
-	searchParams: {
+	searchParams: Promise<{
 		message?: string;
 		error?: string;
 		error_description?: string;
-	};
+	}>;
 }) {
 	const supabase = await createClient();
 	const {
@@ -27,6 +27,8 @@ export default async function LoginPage({
 	if (user) {
 		redirect("/dashboard");
 	}
+
+	const resolvedSearchParams = await searchParams;
 
 	return (
 		<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -61,7 +63,7 @@ export default async function LoginPage({
 					</div>
 
 					{/* Magic Link 送信完了メッセージ */}
-					{searchParams.message === "magic_link_sent" && (
+					{resolvedSearchParams.message === "magic_link_sent" && (
 						<div
 							className="mb-4 p-3 rounded-md bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm"
 							role="alert"
@@ -70,13 +72,14 @@ export default async function LoginPage({
 						</div>
 					)}
 					{/* エラーメッセージ */}
-					{searchParams.error && (
+					{resolvedSearchParams.error && (
 						<div
 							className="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm"
 							role="alert"
 						>
 							エラーが発生しました:{" "}
-							{searchParams.error_description || searchParams.error}
+							{resolvedSearchParams.error_description ||
+								resolvedSearchParams.error}
 						</div>
 					)}
 

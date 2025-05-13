@@ -9,10 +9,8 @@ import { notFound } from "next/navigation";
 
 export async function generateMetadata({
 	params,
-}: {
-	params: { id: string };
-}) {
-	const { id } = params;
+}: { params: Promise<{ id: string }> }) {
+	const { id } = await params;
 	// 動的にメタデータを設定することも可能
 	// const result = await getInquiryById(params.id);
 	// if (result.success && result.inquiry) {
@@ -38,8 +36,8 @@ function InquiryDetailItem({
 
 export default async function AdminInquiryDetailPage({
 	params,
-}: { params: { id: string } }) {
-	const { id } = params;
+}: { params: Promise<{ id: string }> }) {
+	const { id } = await params;
 	const result = await getInquiryById(id);
 
 	if (!result.success || !result.inquiry) {

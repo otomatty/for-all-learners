@@ -1,26 +1,16 @@
 "use client";
 
-import type { Json } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 import React, { useState, useEffect, useCallback } from "react";
 import { useInView } from "react-intersection-observer";
 import { PagesList } from "./pages-list";
+
 interface MyPagesListProps {
 	userId: string;
 }
 
 interface PaginatedResult {
-	pages: Array<{
-		id: string;
-		title: string;
-		content_tiptap: Json;
-		created_at: string | null;
-		updated_at: string | null;
-		scrapbox_page_id: string | null;
-		scrapbox_page_list_synced_at: string | null;
-		scrapbox_page_content_synced_at: string | null;
-		is_public: boolean;
-		user_id: string;
-	}>;
+	pages: Database["public"]["Tables"]["pages"]["Row"][];
 	totalCount: number;
 }
 

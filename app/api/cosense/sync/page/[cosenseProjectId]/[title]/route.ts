@@ -1,12 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { parseCosenseLines } from "@/lib/utils/cosenseParser";
 import type { JSONContent } from "@tiptap/core";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export async function GET(
-	req: NextRequest,
-	context: { params: { cosenseProjectId: string; title: string } },
-) {
+export async function GET(req: NextRequest, context: any) {
 	try {
 		const supabase = await createClient();
 		const {

@@ -1502,7 +1502,12 @@ export type Database = {
       change_type_enum: "new" | "improvement" | "fix" | "security"
       inquiry_priority_enum: "low" | "medium" | "high"
       inquiry_status_enum: "open" | "in_progress" | "resolved" | "closed"
-      milestone_status: "planning" | "in-progress" | "launched" | "on-hold"
+      milestone_status:
+        | "planning"
+        | "in-progress"
+        | "launched"
+        | "on-hold"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1622,7 +1627,13 @@ export const Constants = {
       change_type_enum: ["new", "improvement", "fix", "security"],
       inquiry_priority_enum: ["low", "medium", "high"],
       inquiry_status_enum: ["open", "in_progress", "resolved", "closed"],
-      milestone_status: ["planning", "in-progress", "launched", "on-hold"],
+      milestone_status: [
+        "planning",
+        "in-progress",
+        "launched",
+        "on-hold",
+        "completed",
+      ],
     },
   },
 } as const
