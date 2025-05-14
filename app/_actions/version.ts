@@ -77,7 +77,9 @@ export async function processVersionCommitStaging(
   "published_at": "${record.version}",
   "items": [
     { "type": "new", "description": "〜を追加", "display_order": 0 },
-    { "type": "fix", "description": "〜を修正", "display_order": 1 }
+    { "type": "fix", "description": "〜を修正", "display_order": 1 },
+    { "type": "improvement", "description": "〜を改善", "display_order": 2 },
+    { "type": "security", "description": "〜を修正", "display_order": 3 }
   ]
 }
 

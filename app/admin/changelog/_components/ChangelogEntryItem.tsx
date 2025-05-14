@@ -64,6 +64,7 @@ export function ChangelogEntryItem({
 				<ul className="mt-4 space-y-3">
 					{entry.changes.map((change: Change, index: number) => (
 						<li
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 							key={index}
 							className="flex items-start text-gray-700 dark:text-gray-300"
 						>
