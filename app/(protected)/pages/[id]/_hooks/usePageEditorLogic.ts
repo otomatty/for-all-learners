@@ -6,11 +6,13 @@ import {
 	CustomOrderedList,
 } from "@/lib/tiptap-extensions/custom-list";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
-import { PageLink } from "@/lib/tiptap-extensions/page-link";
+import {
+	PageLink,
+	existencePluginKey,
+} from "@/lib/tiptap-extensions/page-link";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JSONContent } from "@tiptap/core";
-import LinkExtension from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -28,6 +30,13 @@ interface UsePageEditorLogicProps {
 	isDirty: boolean;
 }
 
+// Define a text node type to strip legacy link marks
+interface JSONTextNode extends JSONContent {
+	type: "text";
+	text: string;
+	marks?: Array<{ type: string; [key: string]: any }>;
+}
+
 /**
  * Remove empty text nodes from a JSONContent document.
  */
@@ -35,6 +44,22 @@ function sanitizeContent(doc: JSONContent): JSONContent {
 	const clone = structuredClone(doc) as JSONContent;
 	const recurse = (node: JSONContent): JSONContent => {
 		const newNode = { ...node } as JSONContent;
+		// Legacy link and pageLink marks を除去
+		if (newNode.type === "text") {
+			const textNode = newNode as JSONTextNode;
+			if (Array.isArray(textNode.marks)) {
+				const filtered = textNode.marks.filter(
+					(mark: { type: string }) =>
+						mark.type !== "link" && mark.type !== "pageLink",
+				);
+				if (filtered.length > 0) {
+					textNode.marks = filtered;
+				} else {
+					const { marks, ...rest } = textNode;
+					return rest as JSONContent;
+				}
+			}
+		}
 		if (Array.isArray(newNode.content)) {
 			newNode.content = newNode.content.map(recurse);
 			if (newNode.type === "paragraph") {
@@ -55,6 +80,65 @@ function sanitizeContent(doc: JSONContent): JSONContent {
 		return newNode;
 	};
 	clone.content = (clone.content ?? []).map(recurse);
+	return clone;
+}
+
+// Add helper to annotate bracketed text as link marks
+function annotateLinksInJSON(
+	doc: JSONContent,
+	titleIdMap: Map<string, string | null>,
+): JSONContent {
+	const clone = structuredClone(doc) as JSONContent;
+	const regex = /\[([^\[\]]+)\]/g;
+	const recurse = (node: JSONContent): JSONContent | JSONContent[] => {
+		if (node.type === "text") {
+			const textNode = node as { type: "text"; text: string; marks?: any[] };
+			const { text, marks } = textNode;
+			let lastIndex = 0;
+			const nodes: JSONContent[] = [];
+			// Find bracket matches sequentially
+			let match: RegExpExecArray | null = regex.exec(text);
+			while (match) {
+				const [full, title] = match;
+				const index = match.index;
+				if (index > lastIndex) {
+					nodes.push({
+						type: "text",
+						text: text.slice(lastIndex, index),
+						marks,
+					});
+				}
+				const pageId = titleIdMap.get(title) ?? null;
+				const href = pageId ? `/pages/${pageId}` : "#";
+				// Preserve brackets in link text
+				nodes.push({
+					type: "text",
+					text: full,
+					marks: [...(marks ?? []), { type: "link", attrs: { href, pageId } }],
+				});
+				lastIndex = index + full.length;
+				// Move to next match
+				match = regex.exec(text);
+			}
+			if (lastIndex < text.length) {
+				nodes.push({ type: "text", text: text.slice(lastIndex), marks });
+			}
+			return nodes.length > 0 ? nodes : [node];
+		}
+		if ("content" in node && Array.isArray(node.content)) {
+			const children = node.content.flatMap((child) => {
+				const res = recurse(child as JSONContent);
+				return Array.isArray(res) ? res : [res];
+			});
+			return { ...node, content: children };
+		}
+		return node;
+	};
+	clone.content =
+		clone.content?.flatMap((child) => {
+			const res = recurse(child);
+			return Array.isArray(res) ? res : [res];
+		}) ?? [];
 	return clone;
 }
 
@@ -87,6 +171,7 @@ export function usePageEditorLogic({
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
 	const editor = useEditor({
+		immediatelyRender: false,
 		extensions: [
 			StarterKit.configure({
 				heading: false,
@@ -97,7 +182,6 @@ export function usePageEditorLogic({
 			CustomHeading,
 			CustomBulletList,
 			CustomOrderedList,
-			LinkExtension,
 			PageLink,
 			CustomCodeBlock,
 			GyazoImage,
@@ -115,19 +199,50 @@ export function usePageEditorLogic({
 		onCreate({ editor }) {
 			// Sanitize initial document to remove empty text nodes
 			const sanitized = sanitizeContent(initialDoc);
-			editor.commands.setContent(sanitized);
+			// 初期ドキュメントを出力
+			console.debug(
+				"初期ドキュメント(initialDoc):",
+				JSON.stringify(initialDoc, null, 2),
+			);
+			try {
+				editor.commands.setContent(sanitized);
+			} catch (error) {
+				console.error("setContent 失敗:", error);
+				console.log(
+					"サニタイズされた内容:",
+					JSON.stringify(sanitized, null, 2),
+				);
+				// フォールバック: 空のドキュメントを設定
+				editor.commands.setContent({ type: "doc", content: [] });
+			}
 		},
 	});
 
 	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 	const isFirstUpdate = useRef(true);
 
+	const existenceTimeout = useRef<NodeJS.Timeout | null>(null);
+
 	const savePage = useCallback(async () => {
 		if (!editor) return;
 		setIsLoading(true);
 		isSavingRef.current = true;
 		try {
-			const content = editor.getJSON() as JSONContent;
+			const rawContent = editor.getJSON() as JSONContent;
+			// Extract unique titles from bracket syntax
+			const fullText = editor.getText();
+			const titles = Array.from(
+				new Set(Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g), (m) => m[1])),
+			);
+			const { data: pages } = await supabase
+				.from("pages")
+				.select("title,id")
+				.in("title", titles as string[]);
+			const titleIdMap = new Map<string, string | null>(
+				pages?.map((p) => [p.title, p.id]) ?? [],
+			);
+			// Annotate content with link marks
+			const content = annotateLinksInJSON(rawContent, titleIdMap);
 			// Extract first Gyazo image and compute raw URL for thumbnail
 			let firstImageRawUrl: string | null = null;
 			const findGyazoImage = (node: JSONContent): string | null => {
@@ -189,6 +304,26 @@ export function usePageEditorLogic({
 		}
 	}, [title, editor, savePage, setIsGenerating]);
 
+	// Add wrapSelectionWithPageLink for bubble menu and keyboard shortcuts
+	const wrapSelectionWithPageLink = useCallback(async () => {
+		if (!editor) return;
+		const { from, to } = editor.state.selection;
+		const text = editor.state.doc.textBetween(from, to, "");
+
+		if (!text) {
+			toast.error("テキストを選択してページリンクを作成してください");
+			return;
+		}
+
+		// 選択範囲をブラケットで囲むだけに修正
+		editor
+			.chain()
+			.focus()
+			.insertContentAt(from, "[")
+			.insertContentAt(to + 1, "]")
+			.run();
+	}, [editor]);
+
 	// Autosave on editor updates
 	useEffect(() => {
 		if (!editor) return;
@@ -219,15 +354,71 @@ export function usePageEditorLogic({
 
 	useEffect(() => {
 		if (editor && initialContent) {
+			// raw initialContent を出力
+			console.debug(
+				"raw initialContent:",
+				JSON.stringify(initialContent, null, 2),
+			);
 			// Sanitize initialContent on effect to ensure no invalid nodes
 			const sanitized = sanitizeContent(initialContent);
-			editor.commands.setContent(sanitized);
+			try {
+				editor.commands.setContent(sanitized);
+			} catch (error) {
+				console.error("initialContent 設定エラー:", error);
+				console.log(
+					"サニタイズされた initialContent:",
+					JSON.stringify(sanitized, null, 2),
+				);
+			}
 		}
 	}, [editor, initialContent]);
+
+	// リンク先の存在チェックをエディタ更新時にデバウンス実行
+	useEffect(() => {
+		if (!editor) return;
+		const checkExistence = async () => {
+			// テキスト全体を取得
+			const fullText = editor.getText();
+			const titles = Array.from(
+				new Set(Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g), (m) => m[1])),
+			);
+			// Build map of title to page ID (null if not exists)
+			const existMap = new Map<string, string | null>();
+			if (titles.length > 0) {
+				const { data: pages } = await supabase
+					.from("pages")
+					.select("title,id")
+					.in("title", titles as string[]);
+				const pageMap = new Map<string, string>(
+					pages?.map((p) => [p.title, p.id]) ?? [],
+				);
+				for (const t of titles) {
+					existMap.set(t, pageMap.get(t) ?? null);
+				}
+			}
+			// メタ情報としてセット
+			const tr = editor.state.tr.setMeta(existencePluginKey, existMap);
+			editor.view.dispatch(tr);
+		};
+
+		const handler = () => {
+			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
+			existenceTimeout.current = setTimeout(checkExistence, 500);
+		};
+
+		editor.on("update", handler);
+		// 初回チェックを即時実行して、再読み込み時にもリンク状態を反映
+		handler();
+		return () => {
+			editor.off("update", handler);
+			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
+		};
+	}, [editor, supabase]);
 
 	return {
 		editor,
 		savePage, // 必要であれば外部から直接呼び出すことも可能にする
 		handleGenerateContent,
+		wrapSelectionWithPageLink,
 	};
 }

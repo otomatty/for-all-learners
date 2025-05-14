@@ -120,15 +120,6 @@ export async function uploadImageToGyazo(
 	if (albumData?.gyazo_album_id) {
 		formData.append("album_id", albumData.gyazo_album_id);
 	}
-	// デバッグ用ログ: tokenData, albumData, formData entries
-	console.log("DEBUG Gyazo upload: tokenData", tokenData.access_token);
-	console.log("DEBUG Gyazo upload: albumData", albumData);
-	console.log(
-		"DEBUG Gyazo upload: formData entries",
-		Array.from(formData.entries()).map(([key, value]) =>
-			value instanceof Blob ? [key, (value as Blob).size] : [key, value],
-		),
-	);
 
 	const response = await fetch("https://upload.gyazo.com/api/upload", {
 		method: "POST",

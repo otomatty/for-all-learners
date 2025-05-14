@@ -49,15 +49,16 @@ export default function EditPageForm({
 		isOnline,
 	} = usePageFormState({ page, isNewPage });
 
-	const { editor, handleGenerateContent } = usePageEditorLogic({
-		page,
-		initialContent,
-		title,
-		supabase,
-		setIsLoading,
-		setIsGenerating,
-		isDirty,
-	});
+	const { editor, handleGenerateContent, wrapSelectionWithPageLink } =
+		usePageEditorLogic({
+			page,
+			initialContent,
+			title,
+			supabase,
+			setIsLoading,
+			setIsGenerating,
+			isDirty,
+		});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =
 		useSpeechControls({
@@ -65,41 +66,6 @@ export default function EditPageForm({
 		});
 	const handleDateShortcut = useDateShortcut(editor);
 	const [isDeleting, setIsDeleting] = useState(false);
-
-	// Function to wrap selection with pageLink mark
-	// この関数は editor と supabase に依存するため、usePageEditorLogic に含めるか、
-	// EditPageForm に残して editor と supabase を渡す形になります。
-	// ここでは EditPageForm に残す例を示しますが、usePageEditorLogic に移すことも検討可能です。
-	const wrapSelectionWithPageLink = useCallback(async () => {
-		if (!editor) return;
-		const { from, to } = editor.state.selection;
-		const text = editor.state.doc.textBetween(from, to, "");
-		if (!text) {
-			toast.error("テキストを選択してページリンクを作成してください");
-			return;
-		}
-		try {
-			const { data: pages, error } = await supabase
-				.from("pages")
-				.select("id")
-				.eq("title", text)
-				.limit(1);
-			if (error) {
-				console.error("ページチェックエラー:", error);
-				toast.error("リンク作成中にエラーが発生しました");
-				return;
-			}
-			const pageId = pages?.[0]?.id ?? null;
-			editor
-				.chain()
-				.focus()
-				.toggleMark("pageLink", { pageName: text, pageId })
-				.run();
-		} catch (err) {
-			console.error("リンク作成例外:", err);
-			toast.error("リンク作成中にエラーが発生しました");
-		}
-	}, [editor, supabase]);
 
 	// Keyboard shortcuts: Mod-k for page link, Mod-Shift-l/o for bullet/ordered list
 	const handleKeyDown = useCallback(
