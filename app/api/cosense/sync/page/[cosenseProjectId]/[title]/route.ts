@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: { cosenseProjectId: string; title: string } },
+	{ params }: { params: Promise<{ cosenseProjectId: string; title: string }> },
 ) {
 	try {
 		const supabase = await createClient();
@@ -20,8 +20,8 @@ export async function GET(
 			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
-		// Extract dynamic params from context
-		const { cosenseProjectId: projectName, title: pageTitle } = params;
+		// Unwrap dynamic params from context
+		const { cosenseProjectId: projectName, title: pageTitle } = await params;
 
 		// ユーザーと連携された Cosense プロジェクト設定取得 by projectName
 		const { data: relation, error: relError } = await supabase
