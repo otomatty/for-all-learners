@@ -25,6 +25,7 @@ import {
 	Link2,
 	List,
 	ListOrdered,
+	Strikethrough,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -151,6 +152,37 @@ export function EditPageBubbleMenu({
 							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
 						>
 							<Bold className="w-5 h-5" />
+						</button>
+					)}
+
+					{/* Strikethrough */}
+					{!isMobile ? (
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									onClick={() => editor.chain().focus().toggleStrike().run()}
+									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+								>
+									<Strikethrough className="w-5 h-5" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent side="top">
+								<div className="flex items-center space-x-1">
+									<span>打ち消し線:</span>
+									<Badge variant="secondary">
+										{isMac ? "⌘+Shift+X" : "Ctrl+Shift+X"}
+									</Badge>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					) : (
+						<button
+							type="button"
+							onClick={() => editor.chain().focus().toggleStrike().run()}
+							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+						>
+							<Strikethrough className="w-5 h-5" />
 						</button>
 					)}
 

@@ -70,23 +70,26 @@ export const PageLink = Mark.create({
 		return {
 			pageName: { default: null },
 			pageId: { default: null },
+			href: { default: null },
 		};
 	},
 	parseHTML() {
-		return [{ tag: "a[data-page-name]" }];
+		return [{ tag: "a[data-page-name]" }, { tag: "a[href]" }];
 	},
 	renderHTML({ HTMLAttributes }) {
-		// pageIdの有無で色を切り替え: 存在すれば青、なければ赤
-		const { pageName, pageId } = HTMLAttributes;
-		const href = pageId ? `/pages/${pageId}` : undefined;
+		const { pageName, pageId, href } = HTMLAttributes;
+		const resolvedHref = href ?? (pageId ? `/pages/${pageId}` : undefined);
 		const className = pageId
 			? "text-blue-500 cursor-pointer"
-			: "text-red-500 cursor-pointer";
+			: href
+				? "text-blue-500 underline cursor-pointer"
+				: "text-red-500 cursor-pointer";
 		return [
 			"a",
 			mergeAttributes(HTMLAttributes, {
-				"data-page-name": pageName,
-				...(pageId ? { "data-page-id": pageId, href } : {}),
+				...(pageName ? { "data-page-name": pageName } : {}),
+				...(pageId ? { "data-page-id": pageId } : {}),
+				...(resolvedHref ? { href: resolvedHref } : {}),
 				class: className,
 			}),
 			0,
@@ -95,9 +98,15 @@ export const PageLink = Mark.create({
 	addInputRules() {
 		return [
 			markInputRule({
-				find: /\[\[([^\]]+)\]\]/,
+				find: /\[([^\]]+)\]/,
 				type: this.type,
-				getAttributes: (match) => ({ pageName: match[1] }),
+				getAttributes: (match) => {
+					const text = match[1];
+					if (/^https?:\/\//.test(text)) {
+						return { href: text };
+					}
+					return { pageName: text };
+				},
 			}),
 		];
 	},

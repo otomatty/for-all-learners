@@ -6,11 +6,19 @@ import { sinkListItem } from "prosemirror-schema-list";
 
 export const CustomBulletList = BulletList.extend({
 	addInputRules() {
-		// Allow single space at start to create a bullet list, preserving default rules
+		// Allow single space, hyphen+space or asterisk+space at start to create a bullet list
 		const rules = super.addInputRules?.() ?? [];
 		return [
 			wrappingInputRule({
-				find: /^ $/,
+				find: /^ $/, // single space
+				type: this.type,
+			}),
+			wrappingInputRule({
+				find: /^-\s$/, // hyphen + space
+				type: this.type,
+			}),
+			wrappingInputRule({
+				find: /^\*\s$/, // asterisk + space
 				type: this.type,
 			}),
 			...rules,
