@@ -63,22 +63,24 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 				string | null
 			>;
 			const decos: Decoration[] = [];
+			// Determine the active paragraph range based on the caret position
+			const { $from } = state.selection;
+			const paraStart = $from.start(1);
+			const paraEnd = $from.end(1);
+			// Iterate through text nodes and add decorations
 			state.doc.descendants((node, pos) => {
 				if (!node.isText) return;
 				const text = node.text ?? "";
 				const regex = /\[([^\[\]]+)\]/g;
-				let match: RegExpExecArray | null = regex.exec(text);
-				while (match !== null) {
+				for (const match of text.matchAll(regex)) {
 					const start = pos + match.index;
 					const end = start + match[0].length;
 					const title = match[1];
 					const isExternal = /^https?:\/\//.test(title);
-					// Determine page ID for internal links
 					const pageId = existMap.get(title);
 					const exists = isExternal || Boolean(pageId);
 					const cls = exists ? "text-blue-500" : "text-red-500";
-
-					// Build href: external URLs or internal page if exists
+					// Build href for link
 					const hrefValue = isExternal
 						? title
 						: pageId
@@ -92,8 +94,28 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 							? { target: "_blank", rel: "noopener noreferrer" }
 							: {}),
 					};
-					decos.push(Decoration.inline(start, end, decoAttrs));
-					match = regex.exec(text);
+					if (start >= paraStart && end <= paraEnd) {
+						// Active paragraph: show brackets
+						decos.push(Decoration.inline(start, end, decoAttrs));
+					} else {
+						// Inactive paragraph: hide brackets and link only text
+						decos.push(
+							Decoration.inline(start, start + 1, { style: "display: none" }),
+						);
+						decos.push(
+							Decoration.inline(end - 1, end, { style: "display: none" }),
+						);
+						// Inactive link attrs: hide brackets, link only text, and mark for new-page creation
+						const inactiveAttrs: Record<string, string> = {
+							...decoAttrs,
+							contentEditable: "false",
+						};
+						if (!isExternal && !pageId) {
+							// mark this link for page creation
+							inactiveAttrs["data-page-title"] = title;
+						}
+						decos.push(Decoration.inline(start + 1, end - 1, inactiveAttrs));
+					}
 				}
 			});
 			return DecorationSet.create(state.doc, decos);
@@ -209,14 +231,55 @@ export const PageLink = Extension.create({
 					// Intercept DOM click on <a> tags to perform navigation
 					handleDOMEvents: {
 						click(view, event) {
-							const target = event.target as HTMLElement;
-							if (target.tagName === "A" && target.hasAttribute("href")) {
-								const href = target.getAttribute("href");
-								if (href && href !== "#") {
-									window.location.href = href;
+							const target = event.target as HTMLAnchorElement;
+							if (target.tagName === "A") {
+								// Create and navigate for new-page links
+								const newTitle = target.getAttribute("data-page-title");
+								if (newTitle) {
+									event.preventDefault();
+									(async () => {
+										const supabase = createClient();
+										const {
+											data: { user },
+											error: authError,
+										} = await supabase.auth.getUser();
+										if (authError || !user) {
+											toast.error("ログインしてください");
+											return;
+										}
+										// Insert new page
+										const { data: newPage, error: insertError } = await supabase
+											.from("pages")
+											.insert({
+												user_id: user.id,
+												title: newTitle,
+												content_tiptap: { type: "doc", content: [] },
+												is_public: false,
+											})
+											.select("id")
+											.single();
+										if (insertError || !newPage) {
+											console.error("ページ作成失敗:", insertError);
+											toast.error("ページ作成に失敗しました");
+											return;
+										}
+										window.location.href = `/pages/${newPage.id}?newPage=true`;
+									})();
+									return true;
 								}
-								event.preventDefault();
-								return true;
+								// Otherwise, handle normal navigation
+								if (target.hasAttribute("href")) {
+									const href = target.getAttribute("href");
+									if (href && href !== "#") {
+										if (target.target === "_blank") {
+											window.open(href, "_blank");
+										} else {
+											window.location.href = href;
+										}
+									}
+									event.preventDefault();
+									return true;
+								}
 							}
 							return false;
 						},
