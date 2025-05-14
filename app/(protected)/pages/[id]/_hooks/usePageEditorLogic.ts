@@ -67,6 +67,22 @@ export function usePageEditorLogic({
 	setIsGenerating,
 	isDirty,
 }: UsePageEditorLogicProps) {
+	// Track saving state to block navigation
+	const isSavingRef = useRef(false);
+
+	// Prevent page unload/navigation while saving
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			if (isSavingRef.current) {
+				e.preventDefault();
+			}
+		};
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => {
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+		};
+	}, []);
+
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
@@ -109,6 +125,7 @@ export function usePageEditorLogic({
 	const savePage = useCallback(async () => {
 		if (!editor) return;
 		setIsLoading(true);
+		isSavingRef.current = true;
 		try {
 			const content = editor.getJSON() as JSONContent;
 			// Extract first Gyazo image and compute raw URL for thumbnail
@@ -142,12 +159,12 @@ export function usePageEditorLogic({
 				.select()
 				.single();
 			if (error) throw error;
-			toast.success("ページを保存しました");
 		} catch (err) {
 			console.error("EditPageForm save error:", err);
 			toast.error("保存に失敗しました");
 		} finally {
 			setIsLoading(false);
+			isSavingRef.current = false;
 		}
 	}, [editor, title, page.id, supabase, setIsLoading]);
 
