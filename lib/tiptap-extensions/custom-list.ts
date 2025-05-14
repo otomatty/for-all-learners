@@ -1,8 +1,41 @@
-import { mergeAttributes } from "@tiptap/core";
+import { mergeAttributes, wrappingInputRule } from "@tiptap/core";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { sinkListItem } from "prosemirror-schema-list";
 
 export const CustomBulletList = BulletList.extend({
+	addInputRules() {
+		// Allow single space at start to create a bullet list, preserving default rules
+		const rules = super.addInputRules?.() ?? [];
+		return [
+			wrappingInputRule({
+				find: /^ $/,
+				type: this.type,
+			}),
+			...rules,
+		];
+	},
+	addProseMirrorPlugins() {
+		const plugins = super.addProseMirrorPlugins?.() ?? [];
+		const indentPlugin = new Plugin({
+			key: new PluginKey("customBulletIndent"),
+			props: {
+				handleKeyDown(view, event) {
+					if (event.key !== " ") return false;
+					const { state, dispatch } = view;
+					// Attempt to indent the list item by sinking it
+					const cmd = sinkListItem(state.schema.nodes.listItem);
+					if (cmd(state, dispatch)) {
+						event.preventDefault();
+						return true;
+					}
+					return false;
+				},
+			},
+		});
+		return [...plugins, indentPlugin];
+	},
 	renderHTML({ HTMLAttributes }) {
 		return [
 			"ul",

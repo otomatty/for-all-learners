@@ -4,7 +4,10 @@ import type { JSONContent } from "@tiptap/core";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, context: any) {
+export async function GET(
+	req: NextRequest,
+	{ params }: { params: { cosenseProjectId: string; title: string } },
+) {
 	try {
 		const supabase = await createClient();
 		const {
@@ -18,7 +21,7 @@ export async function GET(req: NextRequest, context: any) {
 		}
 
 		// Extract dynamic params from context
-		const { cosenseProjectId: projectName, title: pageTitle } = context.params;
+		const { cosenseProjectId: projectName, title: pageTitle } = params;
 
 		// ユーザーと連携された Cosense プロジェクト設定取得 by projectName
 		const { data: relation, error: relError } = await supabase
