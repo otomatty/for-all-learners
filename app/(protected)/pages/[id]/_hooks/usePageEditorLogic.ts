@@ -10,6 +10,7 @@ import {
 	PageLink,
 	existencePluginKey,
 } from "@/lib/tiptap-extensions/page-link";
+import { TagLink } from "@/lib/tiptap-extensions/tag-link";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JSONContent } from "@tiptap/core";
@@ -183,6 +184,7 @@ export function usePageEditorLogic({
 			CustomBulletList,
 			CustomOrderedList,
 			PageLink,
+			TagLink,
 			CustomCodeBlock,
 			GyazoImage,
 			Placeholder.configure({
@@ -231,9 +233,16 @@ export function usePageEditorLogic({
 			const rawContent = editor.getJSON() as JSONContent;
 			// Extract unique titles from bracket syntax
 			const fullText = editor.getText();
-			const titles = Array.from(
-				new Set(Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g), (m) => m[1])),
+			// Extract bracketed titles and tag titles (after #)
+			const bracketTitles = Array.from(
+				fullText.matchAll(/\[([^\[\]]+)\]/g),
+				(m) => m[1],
 			);
+			const tagTitles = Array.from(
+				fullText.matchAll(/#([^\s\[\]]+)/g),
+				(m) => m[1],
+			);
+			const titles = Array.from(new Set([...bracketTitles, ...tagTitles]));
 			const { data: pages } = await supabase
 				.from("pages")
 				.select("title,id")
@@ -379,9 +388,16 @@ export function usePageEditorLogic({
 		const checkExistence = async () => {
 			// テキスト全体を取得
 			const fullText = editor.getText();
-			const titles = Array.from(
-				new Set(Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g), (m) => m[1])),
+			// Extract bracketed titles and tag titles (after #)
+			const bracketTitles = Array.from(
+				fullText.matchAll(/\[([^\[\]]+)\]/g),
+				(m) => m[1],
 			);
+			const tagTitles = Array.from(
+				fullText.matchAll(/#([^\s\[\]]+)/g),
+				(m) => m[1],
+			);
+			const titles = Array.from(new Set([...bracketTitles, ...tagTitles]));
 			// Build map of title to page ID (null if not exists)
 			const existMap = new Map<string, string | null>();
 			if (titles.length > 0) {

@@ -3,6 +3,8 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { toast } from "sonner";
+import { searchPages } from "@/lib/utils/searchPages";
+import tippy, { type Instance, type Props } from "tippy.js";
 
 // プラグインキーの作成
 const pageLinkPluginKey = new PluginKey("pageLinkPlugin");
@@ -71,9 +73,10 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 			state.doc.descendants((node, pos) => {
 				if (!node.isText) return;
 				const text = node.text ?? "";
-				const regex = /\[([^\[\]]+)\]/g;
-				for (const match of text.matchAll(regex)) {
-					const start = pos + match.index;
+				// Decorate bracket links
+				const bracketRegex = /\[([^\[\]]+)\]/g;
+				for (const match of text.matchAll(bracketRegex)) {
+					const start = pos + (match.index ?? 0);
 					const end = start + match[0].length;
 					const title = match[1];
 					const isExternal = /^https?:\/\//.test(title);
@@ -95,30 +98,233 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 							: {}),
 					};
 					if (start >= paraStart && end <= paraEnd) {
-						// Active paragraph: show brackets
 						decos.push(Decoration.inline(start, end, decoAttrs));
 					} else {
-						// Inactive paragraph: hide brackets and link only text
 						decos.push(
 							Decoration.inline(start, start + 1, { style: "display: none" }),
 						);
 						decos.push(
 							Decoration.inline(end - 1, end, { style: "display: none" }),
 						);
-						// Inactive link attrs: hide brackets, link only text, and mark for new-page creation
 						const inactiveAttrs: Record<string, string> = {
 							...decoAttrs,
 							contentEditable: "false",
 						};
 						if (!isExternal && !pageId) {
-							// mark this link for page creation
 							inactiveAttrs["data-page-title"] = title;
 						}
 						decos.push(Decoration.inline(start + 1, end - 1, inactiveAttrs));
 					}
 				}
+				// Decorate tag links (#text)
+				const tagRegex = /#([^\s\[\]]+)/g;
+				for (const match of text.matchAll(tagRegex)) {
+					const index = match.index ?? 0;
+					const start = pos + index;
+					const end = start + match[0].length;
+					const title = match[1];
+					const pageId = existMap.get(title);
+					const exists = Boolean(pageId);
+					const cls = exists ? "text-blue-500" : "text-red-500";
+					// Build anchor attributes
+					const decoAttrs: Record<string, string> = {
+						nodeName: "a",
+						href: exists ? `/pages/${pageId}` : "#",
+						class: `${cls} underline cursor-pointer`,
+					};
+					// If no page exists, do not allow navigation
+					if (!exists) {
+						decoAttrs["data-no-page"] = "true";
+					}
+					decos.push(Decoration.inline(start, end, decoAttrs));
+				}
 			});
 			return DecorationSet.create(state.doc, decos);
+		},
+	},
+});
+
+// Suggestion plugin for bracketed text
+const suggestionPluginKey = new PluginKey<SuggestionState>("bracketSuggestion");
+interface SuggestionState {
+	suggesting: boolean;
+	range: { from: number; to: number } | null;
+	items: Array<{ id: string; title: string }>;
+	activeIndex: number;
+	query: string;
+}
+const suggestionPlugin = new Plugin<SuggestionState>({
+	key: suggestionPluginKey,
+	state: {
+		init: () => ({
+			suggesting: false,
+			range: null,
+			items: [],
+			activeIndex: 0,
+			query: "",
+		}),
+		apply(tr, prev) {
+			const meta = tr.getMeta(suggestionPluginKey) as
+				| SuggestionState
+				| undefined;
+			return meta ? meta : prev;
+		},
+	},
+	view(view) {
+		let timeoutId: number | null = null;
+		let tip: Instance<Props> | null = null;
+		return {
+			update(view) {
+				const prev = suggestionPluginKey.getState(
+					view.state,
+				) as SuggestionState;
+				const { $from } = view.state.selection;
+				const paraStart = $from.start($from.depth);
+				const paraEnd = $from.end($from.depth);
+				const text = view.state.doc.textBetween(paraStart, paraEnd, "", "");
+				const posInPara = $from.pos - paraStart;
+				const localOpen = text.lastIndexOf("[", posInPara - 1);
+				const localClose = text.indexOf("]", posInPara);
+				if (
+					localOpen !== -1 &&
+					localClose !== -1 &&
+					posInPara > localOpen &&
+					posInPara <= localClose
+				) {
+					const rangeFrom = paraStart + localOpen;
+					const rangeTo = paraStart + localClose + 1;
+					const query = text.slice(localOpen + 1, posInPara);
+					if (
+						!prev.suggesting ||
+						!prev.range ||
+						prev.range.from !== rangeFrom ||
+						prev.range.to !== rangeTo ||
+						prev.query !== query
+					) {
+						if (timeoutId) window.clearTimeout(timeoutId);
+						timeoutId = window.setTimeout(async () => {
+							const items = await searchPages(query);
+							const meta: SuggestionState = {
+								suggesting: true,
+								range: { from: rangeFrom, to: rangeTo },
+								items,
+								activeIndex: 0,
+								query,
+							};
+							view.dispatch(view.state.tr.setMeta(suggestionPluginKey, meta));
+						}, 300);
+					}
+				} else if (prev.suggesting) {
+					if (timeoutId) window.clearTimeout(timeoutId);
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							suggesting: false,
+							range: null,
+							items: [],
+							activeIndex: 0,
+							query: "",
+						}),
+					);
+				}
+				// render tooltip via Tippy.js
+				const state = suggestionPluginKey.getState(
+					view.state,
+				) as SuggestionState;
+				if (state.suggesting && state.range) {
+					const { from, to } = state.range;
+					const coords = view.coordsAtPos(from);
+					const makeList = () => {
+						const list = document.createElement("div");
+						list.className = "bracket-suggestion-list";
+						state.items.forEach((item, i) => {
+							const div = document.createElement("div");
+							div.textContent = item.title;
+							// click to select
+							div.addEventListener("mousedown", (e) => {
+								e.preventDefault();
+								view.dispatch(
+									view.state.tr
+										.insertText(`[${item.title}]`, from, to)
+										.setMeta(suggestionPluginKey, {
+											suggesting: false,
+											range: null,
+											items: [],
+											activeIndex: 0,
+											query: "",
+										}),
+								);
+								tip?.hide();
+							});
+							div.className = `suggestion-item${i === state.activeIndex ? " active" : ""}`;
+							list.appendChild(div);
+						});
+						return list;
+					};
+					if (!tip) {
+						tip = tippy(document.body, {
+							trigger: "manual",
+							interactive: true,
+							placement: "bottom-start",
+							arrow: false,
+							getReferenceClientRect: () =>
+								new DOMRect(coords.left, coords.bottom, 0, 0),
+							content: makeList(),
+						});
+					} else {
+						tip.setContent(makeList());
+						tip.setProps({
+							getReferenceClientRect: () =>
+								new DOMRect(coords.left, coords.bottom, 0, 0),
+						});
+					}
+					tip.show();
+				} else if (tip) {
+					tip.hide();
+				}
+			},
+			destroy() {
+				if (timeoutId) window.clearTimeout(timeoutId);
+				tip?.destroy();
+				tip = null;
+			},
+		};
+	},
+	props: {
+		handleKeyDown(view, event) {
+			const sugg = suggestionPluginKey.getState(view.state) as SuggestionState;
+			if (!sugg.suggesting || !sugg.range) return false;
+			if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+				event.preventDefault();
+				const dir = event.key === "ArrowDown" ? 1 : -1;
+				const newIndex =
+					(sugg.activeIndex + dir + sugg.items.length) % sugg.items.length;
+				view.dispatch(
+					view.state.tr.setMeta(suggestionPluginKey, {
+						...sugg,
+						activeIndex: newIndex,
+					}),
+				);
+				return true;
+			}
+			if (event.key === "Tab" || event.key === "Enter") {
+				event.preventDefault();
+				const item = sugg.items[sugg.activeIndex];
+				if (!item) return false;
+				const { from, to } = sugg.range;
+				view.dispatch(
+					view.state.tr
+						.insertText(`[${item.title}]`, from, to)
+						.setMeta(suggestionPluginKey, {
+							suggesting: false,
+							range: null,
+							items: [],
+							activeIndex: 0,
+							query: "",
+						}),
+				);
+				return true;
+			}
+			return false;
 		},
 	},
 });
@@ -130,6 +336,7 @@ export const PageLink = Extension.create({
 		return [
 			bracketPlugin,
 			existencePlugin,
+			suggestionPlugin,
 			new Plugin({
 				key: pageLinkPluginKey,
 				props: {
