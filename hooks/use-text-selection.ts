@@ -39,12 +39,7 @@ export function useTextSelection(): TextSelectionInfo & {
 			const selection = window.getSelection();
 			if (!selection) return;
 			const text = selection.toString().trim();
-			console.debug("[useTextSelection] selected text:", text);
 			if (text) {
-				// 選択テキストがある場合はバウンディングボックスを計算して状態を更新
-				console.debug(
-					"[useTextSelection] computing bounding rect for text selection",
-				);
 				const range = selection.getRangeAt(0);
 				let rect = range.getBoundingClientRect();
 				if ((rect.width === 0 && rect.height === 0) || Number.isNaN(rect.x)) {
@@ -56,9 +51,6 @@ export function useTextSelection(): TextSelectionInfo & {
 				setSelectedText(text);
 				setSelectionRect(rect);
 			} else {
-				console.debug(
-					"[useTextSelection] no text selected, clearing selection state",
-				);
 				setSelectedText(null);
 				setSelectionRect(null);
 			}

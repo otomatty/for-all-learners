@@ -57,13 +57,6 @@ export default function ClozeQuiz({
 	};
 	const { text, blanks, answers } = current;
 
-	// Debug: log questions and current question detail
-	useEffect(() => {
-		console.debug("[ClozeQuiz] questions:", questions);
-		console.debug("[ClozeQuiz] currentIndex:", currentIndex);
-		console.debug("[ClozeQuiz] current:", current);
-	}, [questions, currentIndex, current]);
-
 	// Prepare safe data lists and log errors if data is invalid
 	const blanksList = Array.isArray(blanks) ? blanks : [];
 	if (!Array.isArray(blanks))

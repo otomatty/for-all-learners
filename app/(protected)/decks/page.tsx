@@ -25,11 +25,14 @@ export default async function DecksPage() {
 	const sharedDecks = sharedDeckShares.map((share) => share.decks);
 
 	return (
-		<Container>
-			<div className="mb-6">
+		<>
+			<div className="max-w-5xl mx-auto py-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
-			<Tabs defaultValue="my-decks" className="space-y-4">
+			<Tabs
+				defaultValue="my-decks"
+				className="space-y-4 max-w-5xl mx-auto mb-20"
+			>
 				{/* 新規／編集デッキフォーム */}
 				<div className="flex justify-between mb-4">
 					<TabsList>
@@ -45,6 +48,6 @@ export default async function DecksPage() {
 					<DecksList decks={sharedDecks || []} />
 				</TabsContent>
 			</Tabs>
-		</Container>
+		</>
 	);
 }

@@ -110,7 +110,6 @@ Back: ${back}`;
 	}
 	// Remove any trailing commas before closing braces/brackets
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
-	console.debug("Cleaned JSON from Gemini:", jsonStr);
 
 	try {
 		const parsed = JSON.parse(jsonStr) as Omit<QuestionData, "type">;
@@ -187,7 +186,6 @@ Use valid JSON array only.\n`;
 		contents: prompt,
 	});
 	const raw = apiResponse.text;
-	console.debug("Raw Gemini bulk response:", raw);
 	if (!raw) throw new Error("Empty response from Gemini client");
 
 	// Extract JSON array
@@ -203,11 +201,9 @@ Use valid JSON array only.\n`;
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
 	// Correct missing commas between objects if model output glued them together
 	jsonStr = jsonStr.replace(/}\s*{/g, "},{");
-	console.debug("Cleaned bulk JSON string:", jsonStr);
 	// Remove stray quotes and misplaced newlines before commas to ensure valid JSON
 	jsonStr = jsonStr.replace(/"\s*\n\s*"/g, '","');
 	jsonStr = jsonStr.replace(/"\s*,/g, '",');
-	console.debug("Final cleaned bulk JSON string:", jsonStr);
 
 	try {
 		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;

@@ -65,40 +65,42 @@ export default async function SearchPage({
 	}
 
 	return (
-		<Container>
-			<div className="mb-6">
+		<>
+			<div className="mb-6 max-w-5xl mx-auto py-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
-			<h1 className="text-2xl font-bold mb-6">検索結果: {query}</h1>
-			{rows.length === 0 ? (
-				<p>該当する結果がありません。</p>
-			) : (
-				<ul className="space-y-2">
-					{rows.map((r) => {
-						const href =
-							r.type === "card"
-								? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
-								: `/pages/${encodeURIComponent(r.id)}`;
-						return (
-							<li key={`${r.type}-${r.id}`}>
-								<div className="space-y-1">
-									<Link href={href} className="text-blue-600 hover:underline">
-										{r.suggestion}
-									</Link>
-									<p className="text-sm text-gray-600">
-										{parse(
-											sanitizeHtml(r.excerpt, {
-												allowedTags: ["mark"],
-												allowedAttributes: {},
-											}),
-										)}
-									</p>
-								</div>
-							</li>
-						);
-					})}
-				</ul>
-			)}
-		</Container>
+			<Container>
+				<h1 className="text-2xl font-bold mb-6">検索結果: {query}</h1>
+				{rows.length === 0 ? (
+					<p>該当する結果がありません。</p>
+				) : (
+					<ul className="space-y-2">
+						{rows.map((r) => {
+							const href =
+								r.type === "card"
+									? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
+									: `/pages/${encodeURIComponent(r.id)}`;
+							return (
+								<li key={`${r.type}-${r.id}`}>
+									<div className="space-y-1">
+										<Link href={href} className="text-blue-600 hover:underline">
+											{r.suggestion}
+										</Link>
+										<p className="text-sm text-gray-600">
+											{parse(
+												sanitizeHtml(r.excerpt, {
+													allowedTags: ["mark"],
+													allowedAttributes: {},
+												}),
+											)}
+										</p>
+									</div>
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</Container>
+		</>
 	);
 }

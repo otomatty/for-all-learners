@@ -82,12 +82,6 @@ export default function MultipleChoiceQuiz({
 		}
 	}, [isFinished, timeRecorded, startedAt]);
 
-	// デバッグ: 質問データと現在の質問をログ出力
-	useEffect(() => {
-		console.debug("[MultipleChoiceQuiz] questions:", questions);
-		console.debug("[MultipleChoiceQuiz] currentQuestion:", currentQuestion);
-	}, [questions, currentQuestion]);
-
 	// 質問開始時（timeLimit変更時）に expire 時刻を更新
 	useEffect(() => {
 		expireTimeRef.current = Date.now() + timeLimit * 1000;

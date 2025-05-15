@@ -11,16 +11,18 @@ export default async function SettingsPage() {
 	const initialProjects = await getUserCosenseProjects();
 
 	return (
-		<Container className="max-w-3xl">
-			<div className="mb-6">
+		<>
+			<div className="mb-6 max-w-5xl mx-auto py-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
-			<h1 className="text-2xl font-bold mb-6">ユーザー設定</h1>
-			{/* 設定フォームを表示 */}
-			<UserSettingsForm
-				initialSettings={initialSettings}
-				initialProjects={initialProjects}
-			/>
-		</Container>
+			<Container className="max-w-3xl">
+				<h1 className="text-2xl font-bold mb-6">ユーザー設定</h1>
+				{/* 設定フォームを表示 */}
+				<UserSettingsForm
+					initialSettings={initialSettings}
+					initialProjects={initialProjects}
+				/>
+			</Container>
+		</>
 	);
 }

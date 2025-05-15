@@ -18,11 +18,13 @@ export default async function PagesPage() {
 	const { totalCount } = await getPagesByUser(user.id);
 
 	return (
-		<Container className="max-w-7xl">
-			<div className="mb-6">
+		<>
+			<div className="max-w-7xl mx-auto p-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
-			<PagesPageClient userId={user.id} totalCount={totalCount} />
-		</Container>
+			<div className="max-w-7xl mx-auto px-4">
+				<PagesPageClient userId={user.id} totalCount={totalCount} />
+			</div>
+		</>
 	);
 }

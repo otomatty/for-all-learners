@@ -36,7 +36,7 @@ export default function DeckSelector({
 	);
 
 	return (
-		<div className="mb-6 max-w-md">
+		<div className="mb-6 max-w-md bg-background">
 			<Select value={currentDeckId} onValueChange={handleChange}>
 				<SelectTrigger className="w-full text-lg font-semibold">
 					<SelectValue placeholder="デッキを選択" />

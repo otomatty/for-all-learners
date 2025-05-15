@@ -27,7 +27,7 @@ export default async function ProtectedLayout({
 				appNavItems={navItems}
 				playAudio={playAudio}
 			/>
-			<main>{children}</main>
+			<main className="bg-secondary min-h-screen">{children}</main>
 			<AppFooter version={version} appName={appName} />
 		</div>
 	);

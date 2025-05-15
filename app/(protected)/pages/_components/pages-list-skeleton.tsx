@@ -14,7 +14,7 @@ export function PagesListSkeleton() {
 			{skeletonKeys.map((key) => (
 				<div
 					key={key}
-					className="p-4 border border-border rounded-md animate-pulse space-y-2"
+					className="bg-background p-4 border border-border rounded-md animate-pulse space-y-2"
 				>
 					<Skeleton className="h-6 w-3/4" />
 					<Skeleton className="h-4 w-full" />

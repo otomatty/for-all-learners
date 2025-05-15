@@ -201,19 +201,12 @@ export function usePageEditorLogic({
 		onCreate({ editor }) {
 			// Sanitize initial document to remove empty text nodes
 			const sanitized = sanitizeContent(initialDoc);
-			// 初期ドキュメントを出力
-			console.debug(
-				"初期ドキュメント(initialDoc):",
-				JSON.stringify(initialDoc, null, 2),
-			);
+
 			try {
 				editor.commands.setContent(sanitized);
 			} catch (error) {
 				console.error("setContent 失敗:", error);
-				console.log(
-					"サニタイズされた内容:",
-					JSON.stringify(sanitized, null, 2),
-				);
+
 				// フォールバック: 空のドキュメントを設定
 				editor.commands.setContent({ type: "doc", content: [] });
 			}
@@ -363,21 +356,12 @@ export function usePageEditorLogic({
 
 	useEffect(() => {
 		if (editor && initialContent) {
-			// raw initialContent を出力
-			console.debug(
-				"raw initialContent:",
-				JSON.stringify(initialContent, null, 2),
-			);
 			// Sanitize initialContent on effect to ensure no invalid nodes
 			const sanitized = sanitizeContent(initialContent);
 			try {
 				editor.commands.setContent(sanitized);
 			} catch (error) {
 				console.error("initialContent 設定エラー:", error);
-				console.log(
-					"サニタイズされた initialContent:",
-					JSON.stringify(sanitized, null, 2),
-				);
 			}
 		}
 	}, [editor, initialContent]);

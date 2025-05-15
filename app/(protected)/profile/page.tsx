@@ -24,16 +24,18 @@ export default async function ProfilePage() {
 	}
 
 	return (
-		<Container className="max-w-3xl">
-			<div className="mb-6">
+		<>
+			<div className="mb-6 max-w-5xl mx-auto py-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
-			<h1 className="text-2xl font-bold mb-6">プロフィール</h1>
-			{account ? (
-				<ProfileForm initialAccount={account} />
-			) : (
-				<p>アカウントが見つかりませんでした。</p>
-			)}
-		</Container>
+			<Container className="max-w-3xl">
+				<h1 className="text-2xl font-bold mb-6">プロフィール</h1>
+				{account ? (
+					<ProfileForm initialAccount={account} />
+				) : (
+					<p>アカウントが見つかりませんでした。</p>
+				)}
+			</Container>
+		</>
 	);
 }

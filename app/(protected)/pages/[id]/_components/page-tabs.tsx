@@ -1,0 +1,45 @@
+"use client";
+
+import React from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PageLinksGrid from "./page-links-grid";
+import RelatedCardsGrid from "./related-cards-grid";
+import type { JSONContent } from "@tiptap/core";
+
+interface PageTabsProps {
+	outgoingPages: {
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}[];
+	nestedLinks: Record<string, string[]>;
+	missingLinks: string[];
+	pageId: string;
+}
+
+export default function PageTabs({
+	outgoingPages,
+	nestedLinks,
+	missingLinks,
+	pageId,
+}: PageTabsProps) {
+	return (
+		<Tabs defaultValue="links" className="my-8 max-w-5xl mx-auto">
+			<TabsList>
+				<TabsTrigger value="links">リンク一覧</TabsTrigger>
+				<TabsTrigger value="cards">関連カード</TabsTrigger>
+			</TabsList>
+			<TabsContent value="links">
+				<PageLinksGrid
+					outgoingPages={outgoingPages}
+					nestedLinks={nestedLinks}
+					missingLinks={missingLinks}
+				/>
+			</TabsContent>
+			<TabsContent value="cards">
+				<RelatedCardsGrid pageId={pageId} />
+			</TabsContent>
+		</Tabs>
+	);
+}
