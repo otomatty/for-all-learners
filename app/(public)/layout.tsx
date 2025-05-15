@@ -4,7 +4,9 @@ import { UnauthHeader } from "@/components/unauth-header";
 // パスはプロジェクトの構成に合わせて調整してください。
 import { createClient } from "@/lib/supabase/server"; // 例: utils/supabase/server.ts
 import type React from "react";
-import { version } from "../../package.json";
+import pkg from "../../package.json";
+
+const version = pkg.version;
 
 export default async function PublicLayout({
 	children,

@@ -3,12 +3,14 @@ import { getHelpVideoAudioSetting } from "@/app/_actions/user_settings";
 import { AppFooter } from "@/components/app-footer";
 import { AuthHeader } from "@/components/auth-header";
 import type React from "react";
-import { version } from "../../package.json";
+import pkg from "../../package.json";
 import { navItems } from "./navItems";
 
 interface ProtectedLayoutProps {
 	children: React.ReactNode;
 }
+
+const version = pkg.version;
 
 export default async function ProtectedLayout({
 	children,
