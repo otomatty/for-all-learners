@@ -72,12 +72,22 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 			// Iterate through text nodes and add decorations
 			state.doc.descendants((node, pos) => {
 				if (!node.isText) return;
+				// Determine if inside code block or inline code
+				const $pos = state.doc.resolve(pos);
+				const isCodeContext =
+					$pos.parent.type.name === "codeBlock" ||
+					node.marks.some((mark) => mark.type.name === "code");
 				const text = node.text ?? "";
 				// Decorate bracket links
 				const bracketRegex = /\[([^\[\]]+)\]/g;
 				for (const match of text.matchAll(bracketRegex)) {
 					const start = pos + (match.index ?? 0);
 					const end = start + match[0].length;
+					// In code contexts, render as plain span
+					if (isCodeContext) {
+						decos.push(Decoration.inline(start, end, { nodeName: "span" }));
+						continue;
+					}
 					const title = match[1];
 					const isExternal = /^https?:\/\//.test(title);
 					const pageId = existMap.get(title);
@@ -347,6 +357,13 @@ export const PageLink = Extension.create({
 						const node = $pos.node();
 
 						if (!node.isText) return false;
+
+						// コードブロックおよびインラインコード内のブラケットをリンク化しない
+						if (
+							$pos.parent.type.name === "codeBlock" ||
+							node.marks.some((mark) => mark.type.name === "code")
+						)
+							return;
 
 						const text = node.text || "";
 						const posInNode = $pos.textOffset;

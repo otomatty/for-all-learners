@@ -27,7 +27,7 @@ export default async function ProtectedLayout({
 				appNavItems={navItems}
 				playAudio={playAudio}
 			/>
-			<main className="flex-1 container mx-auto py-8 px-6">{children}</main>
+			<main>{children}</main>
 			<AppFooter version={version} appName={appName} />
 		</div>
 	);

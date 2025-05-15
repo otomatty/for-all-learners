@@ -59,7 +59,7 @@ export function PagesList({ pages }: PagesListProps) {
 	}
 
 	return (
-		<div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+		<div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
 			{pages.map((page) => (
 				<Link key={page.id} href={`/pages/${encodeURIComponent(page.id)}`}>
 					<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">

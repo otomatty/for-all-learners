@@ -47,7 +47,7 @@ export function AuthHeader({
 						version={version}
 						href={showAdminNav ? "/admin" : "/dashboard"}
 					/>
-					<div className="w-full max-w-md">
+					<div className="hidden md:block w-full max-w-md">
 						{showAdminNav ? <div /> : <SearchBar />}
 					</div>
 				</div>

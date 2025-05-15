@@ -47,7 +47,7 @@ export default function PagesPageClient({
 								<SelectItem value="created">作成順</SelectItem>
 							</SelectContent>
 						</Select>
-						<Button asChild>
+						<Button asChild className="hidden md:block">
 							<Link href="/pages/new">新規ページ</Link>
 						</Button>
 					</div>

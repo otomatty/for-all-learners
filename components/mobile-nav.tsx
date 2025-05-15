@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import { SearchBar } from "./search-bar";
 export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 	const pathname = usePathname();
 
@@ -43,6 +43,9 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 				</SheetTrigger>
 				<SheetContent side="right">
 					<SheetTitle className="sr-only">メニュー</SheetTitle>
+					<div className="hidden md:block w-full max-w-md">
+						{isAdmin ? <div /> : <SearchBar />}
+					</div>
 					<nav className="flex flex-col py-2">
 						{navItems.map((item) => (
 							<SheetClose asChild key={item.href}>
