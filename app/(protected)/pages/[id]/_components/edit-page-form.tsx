@@ -20,18 +20,32 @@ import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import { PageHeader } from "./page-header";
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
+import PageLinksGrid from "./page-links-grid";
+import RelatedCardsGrid from "./related-cards-grid";
+import FloatingToolbar from "./floating-toolbar";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
 	initialContent?: JSONContent;
 	/** Cosense プロジェクト名 (manual sync 用) */
 	cosenseProjectName?: string | null;
+	outgoingPages: Array<{
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}>;
+	nestedLinks: Record<string, string[]>;
+	missingLinks: string[];
 }
 
 export default function EditPageForm({
 	page,
 	initialContent,
 	cosenseProjectName,
+	outgoingPages,
+	nestedLinks,
+	missingLinks,
 }: EditPageFormProps) {
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
@@ -137,45 +151,70 @@ export default function EditPageForm({
 		[editor, setIsLoading],
 	);
 
+	// Handler for generating cards
+	const handleNavigateToGenerateCards = useCallback(() => {
+		router.push(`/pages/${page.id}/generate-cards`);
+	}, [router, page.id]);
+
 	return (
 		<>
-			<div className="space-y-6">
-				<PageHeader
-					cosenseProjectName={cosenseProjectName}
-					pageId={page.id}
-					title={title}
-					onTitleChange={setTitle}
-					onGenerateContent={handleGenerateContent}
-					isGenerating={isGenerating}
-					isDirty={isDirty}
-					isNewPage={isNewPage}
-					onReadAloud={handleReadAloud}
-					onPauseReadAloud={handlePause}
-					onResetReadAloud={handleReset}
-					onDeletePage={handleDeletePage}
-					onUploadImage={handleUploadImage}
-					isPlaying={isPlaying}
-					scrapboxPageContentSyncedAt={page.scrapbox_page_content_synced_at}
-					scrapboxPageListSyncedAt={page.scrapbox_page_list_synced_at}
-				/>
-				{editor && (
-					<div className="relative">
-						<EditPageBubbleMenu
-							editor={editor}
-							wrapSelectionWithPageLink={wrapSelectionWithPageLink}
-						/>
-						{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
-							<ContentSkeleton />
-						) : (
-							<EditorContent
-								key={JSON.stringify(initialContent)}
-								placeholder="ページ内容を入力してください"
-								editor={editor}
-								onKeyDown={handleKeyDown}
+			<div className="flex gap-2">
+				<div className="flex-1 space-y-6">
+					{editor && (
+						<div className="relative">
+							<div className="bg-background rounded-lg py-12 px-4 border border-border">
+								<PageHeader
+									cosenseProjectName={cosenseProjectName}
+									title={title}
+									onTitleChange={setTitle}
+									scrapboxPageContentSyncedAt={
+										page.scrapbox_page_content_synced_at
+									}
+									scrapboxPageListSyncedAt={page.scrapbox_page_list_synced_at}
+								/>
+								<EditPageBubbleMenu
+									editor={editor}
+									wrapSelectionWithPageLink={wrapSelectionWithPageLink}
+								/>
+								{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
+									<ContentSkeleton />
+								) : (
+									<EditorContent
+										key={JSON.stringify(initialContent)}
+										placeholder="ページ内容を入力してください"
+										editor={editor}
+										onKeyDown={handleKeyDown}
+									/>
+								)}
+							</div>
+							{/* リンク一覧 */}
+							<PageLinksGrid
+								outgoingPages={outgoingPages}
+								nestedLinks={nestedLinks}
+								missingLinks={missingLinks}
 							/>
-						)}
-					</div>
-				)}
+							{/* 関連カード */}
+							<RelatedCardsGrid pageId={page.id} />
+						</div>
+					)}
+				</div>
+				{/* フローティングアクションメニュー */}
+				<div className="hidden md:block sticky top-0">
+					<FloatingToolbar
+						title={title}
+						onGenerateContent={handleGenerateContent}
+						isGenerating={isGenerating}
+						isDirty={isDirty}
+						isNewPage={isNewPage}
+						onReadAloud={handleReadAloud}
+						onPauseReadAloud={handlePause}
+						onResetReadAloud={handleReset}
+						isPlaying={isPlaying}
+						onGenerateCards={handleNavigateToGenerateCards}
+						onUploadImage={handleUploadImage}
+						onDeletePage={handleDeletePage}
+					/>
+				</div>
 			</div>
 			{!isOnline && (
 				<div className="fixed bottom-0 left-0 w-full bg-yellow-500 text-white text-center py-2">

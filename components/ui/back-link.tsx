@@ -37,23 +37,27 @@ export function BackLink({ title, path, className = "" }: BackLinkProps) {
 
 	if (path) {
 		return (
-			<Button
-				asChild
-				variant="ghost"
-				className={`inline-flex items-center ${className}`}
-			>
-				<Link href={path}>{content}</Link>
-			</Button>
+			<div className="mb-6">
+				<Button
+					asChild
+					variant="ghost"
+					className={`inline-flex items-center ${className}`}
+				>
+					<Link href={path}>{content}</Link>
+				</Button>
+			</div>
 		);
 	}
 
 	return (
-		<Button
-			variant="ghost"
-			onClick={handleClick}
-			className={`inline-flex items-center ${className}`}
-		>
-			{content}
-		</Button>
+		<div className="mb-6">
+			<Button
+				variant="ghost"
+				onClick={handleClick}
+				className={`inline-flex items-center ${className}`}
+			>
+				{content}
+			</Button>
+		</div>
 	);
 }

@@ -44,7 +44,7 @@ export default async function DashboardPage({
 	const safeLogs = JSON.parse(JSON.stringify(logs || []));
 
 	return (
-		<div className="max-w-5xl mx-auto py-10 lg:py-20">
+		<Container>
 			{/* Set the current user ID for downstream components */}
 			<UserIdSetter userId={user.id} />
 			<div className="space-y-4">
@@ -55,6 +55,6 @@ export default async function DashboardPage({
 				/>
 				<QuickActionTiles />
 			</div>
-		</div>
+		</Container>
 	);
 }

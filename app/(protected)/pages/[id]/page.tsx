@@ -14,8 +14,6 @@ function isTextNode(node: JSONContent): node is JSONTextNode {
 	return textNode.type === "text" && typeof textNode.text === "string";
 }
 import EditPageForm from "./_components/edit-page-form";
-import PageLinksGrid from "./_components/page-links-grid";
-import RelatedCardsGrid from "./_components/related-cards-grid";
 
 // JSONContent内のpageLinkおよびlegacy linkマーク用型定義
 type ContentMark = {
@@ -183,28 +181,25 @@ export default async function PageDetail({
 	const missingLinks = missingNames;
 
 	return (
-		<>
-			<div className="max-w-5xl mx-auto py-4 lg:py-8">
-				<BackLink title="ページ一覧に戻る" path="/pages" />
+		<Container>
+			<BackLink title="ページ一覧に戻る" path="/pages" />
+			<div className="flex gap-4">
+				<div className="flex-1">
+					<EditPageForm
+						page={page}
+						initialContent={decoratedDoc}
+						cosenseProjectName={cosenseProjectName}
+						outgoingPages={outgoingPages.map((p) => ({
+							id: p.id,
+							title: p.title,
+							thumbnail_url: p.thumbnail_url ?? null,
+							content_tiptap: p.content_tiptap as JSONContent,
+						}))}
+						nestedLinks={nestedLinks}
+						missingLinks={missingLinks}
+					/>
+				</div>
 			</div>
-			<Container className="max-w-5xl">
-				<EditPageForm
-					page={page}
-					initialContent={decoratedDoc}
-					cosenseProjectName={cosenseProjectName}
-				/>
-			</Container>
-			<PageLinksGrid
-				outgoingPages={outgoingPages.map((p) => ({
-					id: p.id,
-					title: p.title,
-					thumbnail_url: p.thumbnail_url ?? null,
-					content_tiptap: p.content_tiptap as JSONContent,
-				}))}
-				nestedLinks={nestedLinks}
-				missingLinks={missingLinks}
-			/>
-			<RelatedCardsGrid pageId={page.id} />
-		</>
+		</Container>
 	);
 }

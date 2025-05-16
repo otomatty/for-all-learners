@@ -79,7 +79,7 @@ export default function PageLinksGrid({
 			{outgoingPages.length > 0 && (
 				<section className="max-w-5xl mx-auto">
 					<h2 className="text-lg font-semibold mb-2">このページのリンク一覧</h2>
-					<div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 						{outgoingPages.map((page) => (
 							<Link
 								key={page.id}
@@ -123,7 +123,7 @@ export default function PageLinksGrid({
 			{missingLinks.length > 0 && (
 				<section className="max-w-5xl mx-auto">
 					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
-					<div className="grid gap-2 md:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 						{missingLinks.map((name) => (
 							<Card
 								key={name}

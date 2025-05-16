@@ -58,30 +58,22 @@ export default async function DeckPage({
 	const canEdit = isOwner || permission === "edit";
 
 	return (
-		<>
-			<div className="max-w-5xl mx-auto py-4 lg:py-8">
-				<BackLink title="デッキ一覧に戻る" path="/decks" />
-			</div>
-			<div className="max-w-5xl mx-auto">
-				<DeckSelector decks={decksList} currentDeckId={deckId} />
-				{canEdit && (
-					<ActionMenu
-						deckId={deckId}
-						userId={user.id}
-						deckTitle={deck.title}
-						deckDescription={deck.description ?? ""}
-						deckIsPublic={deck.is_public ?? false}
-					/>
-				)}
-				<Suspense fallback={<CardsListSkeleton deckId={deckId} />}>
-					<CardsListWrapper
-						deckId={deckId}
-						canEdit={canEdit}
-						userId={user.id}
-					/>
-				</Suspense>
-			</div>
-		</>
+		<Container>
+			<BackLink title="デッキ一覧に戻る" path="/decks" />
+			<DeckSelector decks={decksList} currentDeckId={deckId} />
+			{canEdit && (
+				<ActionMenu
+					deckId={deckId}
+					userId={user.id}
+					deckTitle={deck.title}
+					deckDescription={deck.description ?? ""}
+					deckIsPublic={deck.is_public ?? false}
+				/>
+			)}
+			<Suspense fallback={<CardsListSkeleton deckId={deckId} />}>
+				<CardsListWrapper deckId={deckId} canEdit={canEdit} userId={user.id} />
+			</Suspense>
+		</Container>
 	);
 }
 
