@@ -35,7 +35,7 @@ interface UsePageEditorLogicProps {
 interface JSONTextNode extends JSONContent {
 	type: "text";
 	text: string;
-	marks?: Array<{ type: string; [key: string]: any }>;
+	marks?: Array<{ type: string; [key: string]: unknown }>;
 }
 
 /**
@@ -93,7 +93,7 @@ function annotateLinksInJSON(
 	const regex = /\[([^\[\]]+)\]/g;
 	const recurse = (node: JSONContent): JSONContent | JSONContent[] => {
 		if (node.type === "text") {
-			const textNode = node as { type: "text"; text: string; marks?: any[] };
+			const textNode = node as JSONTextNode;
 			const { text, marks } = textNode;
 			let lastIndex = 0;
 			const nodes: JSONContent[] = [];
@@ -180,7 +180,7 @@ export function usePageEditorLogic({
 				orderedList: false,
 				codeBlock: false,
 			}),
-			CustomHeading,
+			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,
 			CustomOrderedList,
 			GyazoImage,

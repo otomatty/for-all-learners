@@ -31,6 +31,8 @@ export function PageHeader({
 	useEffect(() => {
 		if (hasAutoSyncedRef.current) return;
 		if (!cosenseProjectName) return;
+		// Only auto-sync pages that have been list-synced
+		if (!scrapboxPageListSyncedAt) return;
 		if (scrapboxPageContentSyncedAt) return;
 		hasAutoSyncedRef.current = true;
 		(async () => {
@@ -49,11 +51,19 @@ export function PageHeader({
 				setIsSyncingContent(false);
 			}
 		})();
-	}, [cosenseProjectName, scrapboxPageContentSyncedAt, title, router]);
+	}, [
+		cosenseProjectName,
+		scrapboxPageListSyncedAt,
+		scrapboxPageContentSyncedAt,
+		title,
+		router,
+	]);
 
 	return (
 		<div className="flex items-center">
 			<Textarea
+				role="heading"
+				aria-level={1}
 				value={title}
 				onChange={(e) => onTitleChange(e.target.value)}
 				placeholder="ページタイトルを入力"

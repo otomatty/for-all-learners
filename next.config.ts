@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
 			"youtube.com",
 			"i.ytimg.com",
 			"i.gyazo.com",
+			"storage.googleapis.com",
 		],
 	},
 };
