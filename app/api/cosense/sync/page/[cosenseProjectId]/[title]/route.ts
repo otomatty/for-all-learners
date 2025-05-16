@@ -66,8 +66,11 @@ export async function GET(
 		}
 		const data = await res.json();
 
-		// Scrapbox の lines を TipTap JSON にマッピング
-		const json: JSONContent = parseCosenseLines(data.lines);
+		// Filter out title line so it's not inserted into content
+		const filteredLines = data.lines.filter(
+			(line: { text: string }) => line.text.trim() !== pageTitle,
+		);
+		const json: JSONContent = parseCosenseLines(filteredLines);
 
 		const { data: updatedPage, error: updateError } = await supabase
 			.from("pages")

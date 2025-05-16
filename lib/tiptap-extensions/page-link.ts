@@ -393,6 +393,9 @@ export const PageLink = Extension.create({
 
 						if (!bracketContent) return false;
 
+						// Convert underscores to spaces for page title search and creation
+						const searchTitle = bracketContent.replace(/_/g, " ");
+
 						// 外部リンクかどうかをチェック
 						if (/^https?:\/\//.test(bracketContent)) {
 							window.open(bracketContent, "_blank");
@@ -414,7 +417,7 @@ export const PageLink = Extension.create({
 							const { data: pages, error: searchError } = await supabase
 								.from("pages")
 								.select("id")
-								.eq("title", bracketContent)
+								.eq("title", searchTitle)
 								.limit(1);
 							if (searchError) {
 								console.error("ページの検索に失敗しました:", searchError);
@@ -430,7 +433,7 @@ export const PageLink = Extension.create({
 									.from("pages")
 									.insert({
 										user_id: user.id,
-										title: bracketContent,
+										title: searchTitle,
 										content_tiptap: { type: "doc", content: [] },
 										is_public: false,
 									})
@@ -442,9 +445,7 @@ export const PageLink = Extension.create({
 									return;
 								}
 								pageId = newPage.id;
-								toast.success(
-									`新しいページ「${bracketContent}」を作成しました`,
-								);
+								toast.success(`新しいページ「${searchTitle}」を作成しました`);
 							}
 
 							window.location.href = `/pages/${pageId}?newPage=${pages?.length === 0}`;
@@ -461,6 +462,8 @@ export const PageLink = Extension.create({
 								const newTitle = target.getAttribute("data-page-title");
 								if (newTitle) {
 									event.preventDefault();
+									// Convert underscores to spaces for new page title
+									const titleWithSpaces = newTitle.replace(/_/g, " ");
 									(async () => {
 										const supabase = createClient();
 										const {
@@ -476,7 +479,7 @@ export const PageLink = Extension.create({
 											.from("pages")
 											.insert({
 												user_id: user.id,
-												title: newTitle,
+												title: titleWithSpaces,
 												content_tiptap: { type: "doc", content: [] },
 												is_public: false,
 											})

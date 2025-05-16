@@ -1,10 +1,10 @@
 "use client";
 
 import { CosenseSyncBadge } from "@/components/ui/cosense-sync-badge";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 interface PageHeaderProps {
@@ -24,15 +24,40 @@ export function PageHeader({
 }: PageHeaderProps) {
 	const router = useRouter();
 	const [isSyncingContent, setIsSyncingContent] = useState(false);
+	// Ref to ensure auto-sync runs only once
+	const hasAutoSyncedRef = useRef(false);
+
+	// Auto-sync only once when content has never been synced
+	useEffect(() => {
+		if (hasAutoSyncedRef.current) return;
+		if (!cosenseProjectName) return;
+		if (scrapboxPageContentSyncedAt) return;
+		hasAutoSyncedRef.current = true;
+		(async () => {
+			setIsSyncingContent(true);
+			try {
+				const res = await fetch(
+					`/api/cosense/sync/page/${encodeURIComponent(cosenseProjectName)}/${encodeURIComponent(title)}`,
+					{ cache: "no-store" },
+				);
+				if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
+				router.refresh();
+			} catch (err) {
+				console.error("Auto Cosense content sync error:", err);
+				toast.error("自動同期に失敗しました");
+			} finally {
+				setIsSyncingContent(false);
+			}
+		})();
+	}, [cosenseProjectName, scrapboxPageContentSyncedAt, title, router]);
 
 	return (
 		<div className="flex items-center">
-			<Input
+			<Textarea
 				value={title}
 				onChange={(e) => onTitleChange(e.target.value)}
 				placeholder="ページタイトルを入力"
-				variant="borderless"
-				className="text-4xl font-bold flex-1"
+				className="!text-4xl font-bold flex-1 resize-none whitespace-pre-wrap break-words border-0 bg-transparent focus-visible:outline-none focus-visible:ring-0"
 			/>
 			{cosenseProjectName && scrapboxPageListSyncedAt && (
 				<button

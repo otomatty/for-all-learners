@@ -82,21 +82,11 @@ ALTER TABLE pages
 CREATE OR REPLACE FUNCTION auto_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- UPDATE 操作の場合のみ実行
+  -- すべてのUPDATE操作でupdated_atを現在時刻に更新
   IF TG_OP = 'UPDATE' THEN
-    -- NEW.scrapbox_page_content_synced_at が OLD.scrapbox_page_content_synced_at と異なる場合（Cosense同期と見なす）はスキップ
-    -- IS DISTINCT FROM は NULL の比較も適切に行います
-    IF NEW.scrapbox_page_content_synced_at IS DISTINCT FROM OLD.scrapbox_page_content_synced_at THEN
-      -- scrapbox_page_content_synced_at が更新された場合は、updated_at はトリガーで自動更新せず、
-      -- アプリケーション側で設定された値を使うか、更新しないままにする
-      NULL; -- 何もしないことで NEW.updated_at の値はそのままになる
-    ELSE
-      -- scrapbox_page_content_synced_at が更新されていない場合（通常の編集など）は
-      -- updated_at を現在の時刻に自動更新する
-      NEW.updated_at = NOW();
-    END IF;
+    NEW.updated_at = NOW();
   END IF;
-  RETURN NEW; -- 変更後の行データを返す
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 

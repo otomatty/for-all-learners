@@ -141,9 +141,10 @@ const tagSuggestionPlugin = new Plugin<TagSuggestionState>({
 							// click to select
 							div.addEventListener("mousedown", (e) => {
 								e.preventDefault();
+								const tagText = item.title.replace(/\s+/g, "_");
 								view.dispatch(
 									view.state.tr
-										.insertText(`#${item.title}`, from, to)
+										.insertText(`#${tagText}`, from, to)
 										.setMeta(tagSuggestionPluginKey, {
 											suggesting: false,
 											range: null,
@@ -214,9 +215,10 @@ const tagSuggestionPlugin = new Plugin<TagSuggestionState>({
 				const item = state.items[state.activeIndex];
 				if (!item) return false;
 				const { from, to } = state.range;
+				const tagText = item.title.replace(/\s+/g, "_");
 				view.dispatch(
 					view.state.tr
-						.insertText(`#${item.title}`, from, to)
+						.insertText(`#${tagText}`, from, to)
 						.setMeta(tagSuggestionPluginKey, {
 							suggesting: false,
 							range: null,
