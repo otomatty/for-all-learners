@@ -161,7 +161,7 @@ export function GenerateCardsForm({
 		<div className="space-y-8">
 			{!rawGeneratedCards ? (
 				<form onSubmit={handleGenerateCards} className="space-y-6">
-					<div>
+					<div className="w-fit">
 						<Label htmlFor="deck-select" className="mb-2 block">
 							保存先のデッキ
 						</Label>

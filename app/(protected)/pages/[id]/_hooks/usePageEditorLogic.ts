@@ -183,10 +183,10 @@ export function usePageEditorLogic({
 			CustomHeading,
 			CustomBulletList,
 			CustomOrderedList,
+			GyazoImage,
 			PageLink,
 			TagLink,
 			CustomCodeBlock,
-			GyazoImage,
 			Placeholder.configure({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,

@@ -1,26 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { CosenseSyncBadge } from "@/components/ui/cosense-sync-badge";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-	Layers,
-	MoreVertical,
-	Sparkles,
-	Trash2,
-	Image as ImageIcon,
-} from "lucide-react";
+
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
-import { DeletePageDialog } from "./delete-page-dialog";
-import { SpeechControlButtons } from "./speech-control-buttons";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface PageHeaderProps {
@@ -39,7 +23,6 @@ export function PageHeader({
 	scrapboxPageListSyncedAt,
 }: PageHeaderProps) {
 	const router = useRouter();
-	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isSyncingContent, setIsSyncingContent] = useState(false);
 
 	return (

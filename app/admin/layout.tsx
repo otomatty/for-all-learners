@@ -3,11 +3,13 @@ import { AuthHeader } from "@/components/auth-header";
 import { Container } from "@/components/container";
 import { redirect } from "next/navigation";
 import type React from "react";
-import { version } from "../../package.json";
+import pkg from "../../package.json";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
 }
+
+const version = pkg.version;
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
 	// 管理者権限チェック

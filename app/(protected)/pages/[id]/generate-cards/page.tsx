@@ -73,10 +73,8 @@ export default async function GenerateCardsPage({
 
 	return (
 		<>
-			<div className="max-w-5xl mx-auto py-4 lg:py-8">
+			<Container className="py-8">
 				<BackLink title="ページに戻る" path={`/pages/${page.id}`} />
-			</div>
-			<Container className="max-w-3xl py-8">
 				<h1 className="mb-6 mt-4 text-3xl font-bold">
 					ページ「{page.title}」からカードを生成
 				</h1>

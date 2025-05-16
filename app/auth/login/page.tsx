@@ -7,7 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Mail } from "lucide-react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { version } from "../../../package.json";
+import pkg from "../../../package.json";
+
+const version = pkg.version;
 
 // ページコンポーネントの props に searchParams を追加
 export default async function LoginPage({
