@@ -6,7 +6,6 @@ import {
 	PopoverTrigger,
 	PopoverContent,
 } from "@/components/ui/popover";
-import { useRouter } from "next/navigation";
 import { DeletePageDialog } from "./delete-page-dialog";
 import {
 	Sparkles,
@@ -51,7 +50,6 @@ export default function FloatingToolbar({
 }: FloatingToolbarProps) {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
-	const router = useRouter();
 
 	return (
 		<>
@@ -70,12 +68,7 @@ export default function FloatingToolbar({
 				<Popover>
 					<PopoverTrigger asChild>
 						<Sparkles
-							className={`w-6 h-6 text-yellow-500 hover:text-yellow-600 cursor-pointer ${isGenerating || (!isDirty && !isNewPage) ? "opacity-50 cursor-not-allowed" : ""}`}
-							onClick={() => {
-								if (!isGenerating && (isDirty || isNewPage)) {
-									onGenerateContent();
-								}
-							}}
+							className={`w-6 h-6 text-yellow-500 hover:text-yellow-600 cursor-pointer ${isGenerating ? "opacity-50 cursor-not-allowed" : ""}`}
 						/>
 					</PopoverTrigger>
 					<PopoverContent side="left" className="flex flex-col p-2">

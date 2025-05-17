@@ -49,7 +49,12 @@ export async function generatePageInfo(title: string): Promise<string> {
 	}
 	// コードフェンスがある場合は中身を抽出
 	const fenceMatch = markdown.match(/```(?:md|markdown)?\s*([\s\S]*?)```/i);
-	const result = fenceMatch ? fenceMatch[1].trim() : markdown.trim();
+	let result = fenceMatch ? fenceMatch[1].trim() : markdown.trim();
+	// Remove leading H1 heading if present, since title is already provided
+	const lines = result.split("\n");
+	if (lines[0].startsWith("# ")) {
+		result = lines.slice(1).join("\n").trim();
+	}
 
 	return result;
 }

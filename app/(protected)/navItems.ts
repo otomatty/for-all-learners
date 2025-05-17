@@ -8,17 +8,17 @@ export const navItems: NavItem[] = [
 		icon: "BookOpen",
 		status: "enabled",
 	},
-	{ label: "レポート", href: "/reports", icon: "BarChart", status: "new" },
-	{
-		label: "自習室",
-		href: "/study-room",
-		icon: "DoorOpen",
-		status: "coming-soon",
-	},
-	{
-		label: "学習計画",
-		href: "/plans",
-		icon: "Calendar",
-		status: "coming-soon",
-	},
+	{ label: "レポート", href: "/reports", icon: "BarChart", status: "demo" },
+	// {
+	// 	label: "自習室",
+	// 	href: "/study-room",
+	// 	icon: "DoorOpen",
+	// 	status: "coming-soon",
+	// },
+	// {
+	// 	label: "学習計画",
+	// 	href: "/plans",
+	// 	icon: "Calendar",
+	// 	status: "coming-soon",
+	// },
 ];
