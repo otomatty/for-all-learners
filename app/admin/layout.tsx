@@ -4,6 +4,8 @@ import { Container } from "@/components/container";
 import { redirect } from "next/navigation";
 import type React from "react";
 import pkg from "../../package.json";
+import { getCurrentUser } from "@/app/_actions/auth";
+import { getUserPlan } from "@/app/_actions/subscriptions";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
@@ -19,6 +21,11 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 		redirect("/");
 	}
 
+	// ユーザー情報とプランを取得
+	const account = await getCurrentUser();
+	if (!account) redirect("/auth/login");
+	const plan = await getUserPlan(account.id);
+
 	return (
 		<>
 			{/* ヘッダーに管理者情報を渡す */}
@@ -27,6 +34,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 				isAdmin={admin}
 				appNavItems={[]}
 				playAudio={false}
+				account={account}
+				plan={plan}
 			/>
 			<Container>{children}</Container>
 		</>
