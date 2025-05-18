@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { calculateSM2 } from "@/lib/utils/sm2";
+import { calculateFSRS } from "@/lib/utils/fsrs";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -21,37 +21,44 @@ export async function reviewCard(
 	// 1. カードの現在の進捗を取得
 	const { data: card, error: fetchError } = await supabase
 		.from("cards")
-		.select("review_interval, ease_factor, repetition_count, user_id")
+		.select(
+			"review_interval, ease_factor, repetition_count, user_id, stability, difficulty, last_reviewed_at",
+		)
 		.eq("id", cardId)
 		.single();
 	if (fetchError || !card) {
 		throw new Error(fetchError?.message || "カードが見つかりません");
 	}
 
-	const prevInterval = card.review_interval ?? 0;
-	const prevEF = card.ease_factor ?? 2.5;
-	const prevRepCount = card.repetition_count ?? 0;
+	const prevStability = card.stability ?? 0;
+	const prevDifficulty = card.difficulty ?? 1.0;
+	const lastReviewedAt = card.last_reviewed_at;
+	const now = new Date();
+	const elapsedMs = lastReviewedAt
+		? now.getTime() - new Date(lastReviewedAt).getTime()
+		: 0;
+	const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
 
-	// 2. SM-2アルゴリズムで新しい進捗を計算
-	const { interval, ef, repetitionCount } = calculateSM2(
-		prevInterval,
-		prevEF,
-		prevRepCount,
-		quality,
-	);
+	// 2. FSRSアルゴリズムで新しい進捗を計算
+	const {
+		stability: newStability,
+		difficulty: newDifficulty,
+		intervalDays,
+	} = calculateFSRS(prevStability, prevDifficulty, elapsedDays, quality);
 
 	// 次回レビュー日時を計算
-	const nextReview = new Date();
-	nextReview.setDate(nextReview.getDate() + interval);
-	const nextReviewAt = nextReview.toISOString();
+	const nextReviewAt = new Date(
+		now.getTime() + intervalDays * 24 * 60 * 60 * 1000,
+	).toISOString();
 
 	// 3. cardsテーブルの更新
 	const { error: updateError } = await supabase
 		.from("cards")
 		.update({
-			review_interval: interval,
-			ease_factor: ef,
-			repetition_count: repetitionCount,
+			review_interval: Math.ceil(intervalDays),
+			stability: newStability,
+			difficulty: newDifficulty,
+			last_reviewed_at: now.toISOString(),
 			next_review_at: nextReviewAt,
 		})
 		.eq("id", cardId);
@@ -70,7 +77,7 @@ export async function reviewCard(
 			is_correct: quality >= 3,
 			user_answer: null,
 			practice_mode: practiceMode,
-			review_interval: interval,
+			review_interval: Math.ceil(intervalDays),
 			next_review_at: nextReviewAt,
 		})
 		.select()
@@ -79,5 +86,5 @@ export async function reviewCard(
 		throw logError;
 	}
 
-	return { interval, nextReviewAt, log: insertedLog };
+	return { interval: Math.ceil(intervalDays), nextReviewAt, log: insertedLog };
 }

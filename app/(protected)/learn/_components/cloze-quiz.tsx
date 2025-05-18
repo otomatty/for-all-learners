@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import type { ClozeQuestion } from "@/lib/gemini";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import QuizFinished, { type AnswerSummary } from "./QuizFinished";
+import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface ClozeQuizProps {
 	questions: (ClozeQuestion & { questionId: string; cardId: string })[];

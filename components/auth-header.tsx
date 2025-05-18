@@ -18,14 +18,19 @@ import { useActiveUsers } from "@/hooks/use-active-users";
 import { createClient } from "@/lib/supabase/client"; // Supabaseクライアントのパスを適宜修正してください
 import { UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import type { Database } from "@/types/database.types";
 
-interface AuthHeaderProps {
+export interface AuthHeaderProps {
 	version?: string;
 	/** 現在のユーザーが管理者かどうか */
 	isAdmin: boolean;
 	appNavItems?: NavItem[];
 	/** ヘルプ動画の音声再生設定 */
 	playAudio: boolean;
+	/** カレントユーザーのアカウント情報 */
+	account: Database["public"]["Tables"]["accounts"]["Row"];
+	/** ユーザーのプラン情報 */
+	plan: Database["public"]["Tables"]["plans"]["Row"] | null;
 }
 
 export function AuthHeader({
@@ -33,11 +38,12 @@ export function AuthHeader({
 	isAdmin,
 	appNavItems = [],
 	playAudio,
+	account,
+	plan,
 }: AuthHeaderProps) {
 	const pathname = usePathname();
 	const showAdminNav = isAdmin && pathname.startsWith("/admin");
-	const supabase = createClient();
-	const activeUsers = useActiveUsers(supabase);
+	const activeUsers = useActiveUsers(createClient());
 
 	return (
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
@@ -93,7 +99,7 @@ export function AuthHeader({
 
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<UserNav isAdmin={isAdmin} />
+								<UserNav isAdmin={isAdmin} account={account} plan={plan} />
 							</TooltipTrigger>
 							<TooltipContent>ユーザーメニュー</TooltipContent>
 						</Tooltip>

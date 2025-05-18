@@ -1,15 +1,9 @@
 import { type QuizParams, getQuizQuestions } from "@/app/_actions/quiz";
 import { Container } from "@/components/container";
-import type {
-	ClozeQuestion,
-	FlashcardQuestion,
-	MultipleChoiceQuestion,
-} from "@/lib/gemini";
+import QuizSession from "./_components/quiz-session";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import ClozeQuiz from "./_components/ClozeQuiz";
-import FlashcardQuiz from "./_components/FlashcardQuiz";
-import MultipleChoiceQuiz from "./_components/MultipleChoiceQuiz";
+
 export default async function SessionPage() {
 	const cookieStore = await cookies();
 	const raw = cookieStore.get("quizSettings")?.value;
@@ -24,7 +18,6 @@ export default async function SessionPage() {
 		);
 	}
 	const params = JSON.parse(raw) as QuizParams;
-	const startTime = Date.now().toString();
 	const defaultTimeLimit = params.mode === "mcq" ? 10 : 20;
 	const timeLimit = defaultTimeLimit;
 
@@ -33,47 +26,11 @@ export default async function SessionPage() {
 
 	return (
 		<Container>
-			{params.mode === "mcq" ? (
-				<MultipleChoiceQuiz
-					questions={
-						rawQuestions as (MultipleChoiceQuestion & {
-							questionId: string;
-							cardId: string;
-						})[]
-					}
-					startTime={startTime}
-					timeLimit={timeLimit}
-				/>
-			) : params.mode === "one" ? (
-				<FlashcardQuiz
-					questions={
-						rawQuestions as (FlashcardQuestion & {
-							questionId: string;
-							cardId: string;
-						})[]
-					}
-					startTime={startTime}
-					timeLimit={timeLimit}
-				/>
-			) : params.mode === "fill" ? (
-				<ClozeQuiz
-					questions={
-						rawQuestions as (ClozeQuestion & {
-							questionId: string;
-							cardId: string;
-						})[]
-					}
-					startTime={startTime}
-					timeLimit={timeLimit}
-				/>
-			) : (
-				<div className="text-center p-6 space-y-4">
-					<p className="text-red-500">無効なモードです。</p>
-					<Link href="/dashboard" className="text-blue-500">
-						ホームに戻る
-					</Link>
-				</div>
-			)}
+			<QuizSession
+				mode={params.mode}
+				questions={rawQuestions}
+				timeLimit={timeLimit}
+			/>
 		</Container>
 	);
 }

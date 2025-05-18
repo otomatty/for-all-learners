@@ -5,7 +5,7 @@ import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { FlashcardQuestion } from "@/lib/gemini";
 import React, { useState, useEffect, useRef } from "react";
-import QuizFinished, { type AnswerSummary } from "./QuizFinished";
+import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface FlashcardQuizProps {
 	questions: (FlashcardQuestion & { questionId: string; cardId: string })[];

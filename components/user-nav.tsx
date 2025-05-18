@@ -12,57 +12,35 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import { Home, LogOut, Settings, Shield, UserRound, Mail } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+
+// Plan type
+type Plan = Database["public"]["Tables"]["plans"]["Row"];
 
 // Type for data fetched from the accounts table
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 
-export function UserNav({ isAdmin }: { isAdmin: boolean }) {
+export function UserNav({
+	isAdmin,
+	account,
+	plan,
+}: { isAdmin: boolean; account: Account; plan: Plan | null }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const supabase = createClient();
-	const [account, setAccount] = useState<Account | null>(null);
-
-	useEffect(() => {
-		const fetchUserAndAccount = async () => {
-			const { data: authData, error: authError } =
-				await supabase.auth.getUser();
-			if (authError || !authData?.user) {
-				console.error("[UserNav][AuthError]", authError);
-				return;
-			}
-			const userId = authData.user.id;
-			const { data: accountData, error: accountError } = await supabase
-				.from("accounts")
-				.select("*")
-				.eq("id", userId)
-				.single();
-			if (accountError) {
-				console.error("[UserNav][AccountFetchError]", accountError);
-				return;
-			}
-			setAccount(accountData);
-		};
-
-		fetchUserAndAccount();
-	}, [supabase]);
-
 	const handleSignOut = async () => {
 		await logout();
 	};
 
-	if (!account) {
-		return null;
-	}
+	// プランラベルの算出
+	const planLabel = plan?.name ?? "無料プラン";
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
+				<Button variant="ghost" className="flex items-center gap-2">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
 							src={account.avatar_url || "https://placehold.co/400x400"}
@@ -72,6 +50,7 @@ export function UserNav({ isAdmin }: { isAdmin: boolean }) {
 							{account.email?.charAt(0).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
+					<Badge variant="secondary">{planLabel}</Badge>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-56" align="end" forceMount>

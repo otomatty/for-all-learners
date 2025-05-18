@@ -877,11 +877,45 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          name: string
+          stripe_product_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id: string
+          name: string
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          name?: string
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           card_id: string
           created_at: string | null
           id: string
+          llm_model_used: string | null
           question_data: Json
           type: string
           user_id: string
@@ -890,6 +924,7 @@ export type Database = {
           card_id: string
           created_at?: string | null
           id?: string
+          llm_model_used?: string | null
           question_data: Json
           type: string
           user_id: string
@@ -898,6 +933,7 @@ export type Database = {
           card_id?: string
           created_at?: string | null
           id?: string
+          llm_model_used?: string | null
           question_data?: Json
           type?: string
           user_id?: string
@@ -1101,6 +1137,77 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_latest_invoice_id: string | null
+          stripe_payment_method_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          trial_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end: string
+          current_period_start: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_id: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_latest_invoice_id?: string | null
+          stripe_payment_method_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_latest_invoice_id?: string | null
+          stripe_payment_method_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]

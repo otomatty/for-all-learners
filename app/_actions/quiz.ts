@@ -53,10 +53,32 @@ export async function getQuizQuestions(
 		throw new Error("deckId または goalId を指定してください");
 	}
 
-	const { data: cards, error } = await query;
-	if (error) throw error;
-	if (!cards || cards.length === 0)
-		throw new Error("対象のカードが見つかりません");
+	// FSRSスケジューリング: 次回レビュー予定日が未来のカードを除外（null または 現在日時以下のみ取得）
+	const now = new Date().toISOString();
+	query = query.or(`next_review_at.is.null,next_review_at.lte.${now}`);
+
+	// Attempt to fetch due cards based on scheduling
+	const { data: initialCards, error: initialError } = await query;
+	if (initialError) throw initialError;
+	// Use due cards if available, otherwise fallback to all cards (reducing question count accordingly)
+	let cards = initialCards ?? [];
+	if (cards.length === 0) {
+		console.warn("No due cards found, falling back to all cards");
+		let fallbackQuery = supabase
+			.from("cards")
+			.select("id, front_content, back_content");
+		if (params.deckId) {
+			fallbackQuery = fallbackQuery.eq("deck_id", params.deckId);
+		} else if (params.goalId) {
+			fallbackQuery = fallbackQuery.eq("goal_id", params.goalId);
+		}
+		const { data: allCards, error: fallbackError } = await fallbackQuery;
+		if (fallbackError) throw fallbackError;
+		cards = allCards ?? [];
+		if (cards.length === 0) {
+			throw new Error("対象のカードが見つかりません");
+		}
+	}
 
 	// Get authenticated user for saving questions
 	const {
@@ -86,34 +108,98 @@ export async function getQuizQuestions(
 	};
 	const qType = modeMap[params.mode];
 
-	// Bulk generate questions in one request
-	const pairs = subset.map((card) => ({
-		front: extractText(card.front_content),
-		back: extractText(card.back_content),
+	// 抽出したカードIDリスト
+	const subsetIds = subset.map((c) => c.id);
+
+	// 既存の問題を取得してキャッシュ
+	const { data: existingRows, error: fetchError } = await supabase
+		.from("questions")
+		.select("id, card_id, question_data")
+		.in("card_id", subsetIds)
+		.eq("type", qType);
+	if (fetchError) throw fetchError;
+	const existing = existingRows.map((row) => ({
+		...(row.question_data as unknown as QuestionData),
+		questionId: row.id,
+		cardId: row.card_id,
 	}));
-	try {
-		// Generate questions in user's locale
-		const bulkQuestions = await generateBulkQuestions(pairs, qType, locale);
-		// Save generated questions in 'questions' table
-		const records = bulkQuestions.map((q, idx) => ({
-			card_id: subset[idx].id,
-			user_id: userId,
-			type: qType,
-			question_data: q as unknown as Json,
+
+	// 新規生成が必要なカードを抽出
+	const existingIdSet = new Set(existingRows.map((row) => row.card_id));
+	const newItems = subset.filter((c) => !existingIdSet.has(c.id));
+	let newQuestions: (QuestionData & { questionId: string; cardId: string })[] =
+		[];
+
+	if (newItems.length > 0) {
+		// テキスト抽出ペアを準備
+		const newPairs = newItems.map((card) => ({
+			front: extractText(card.front_content),
+			back: extractText(card.back_content),
 		}));
-		const { data: insertedQuestions, error: insertError } = await supabase
-			.from("questions")
-			.insert(records)
-			.select("id, card_id");
-		if (insertError) throw insertError;
-		// Enrich question data with cardId and questionId for client-side logging
-		return bulkQuestions.map((q, idx) => ({
-			...q,
-			questionId: insertedQuestions[idx].id,
-			cardId: insertedQuestions[idx].card_id,
-		}));
-	} catch (error: unknown) {
-		const msg = error instanceof Error ? error.message : String(error);
-		throw new Error(`問題の一括生成と保存に失敗しました: ${msg}`);
+		try {
+			// LLMで問題生成
+			const generated = await generateBulkQuestions(newPairs, qType, locale);
+			// DBに挿入
+			const modelUsed = process.env.GEMINI_MODEL || null;
+			const records = generated.map((q, idx) => ({
+				card_id: newItems[idx].id,
+				user_id: userId,
+				type: qType,
+				question_data: q as unknown as Json,
+				llm_model_used: modelUsed,
+			}));
+			const { data: inserted, error: insertError } = await supabase
+				.from("questions")
+				.insert(records)
+				.select("id, card_id");
+			if (insertError) throw insertError;
+			// 新規問題を成形
+			newQuestions = generated.map((q, idx) => ({
+				...q,
+				questionId: inserted[idx].id,
+				cardId: inserted[idx].card_id,
+			}));
+		} catch (genError: unknown) {
+			console.error("Error generating new questions:", genError);
+			// フォールバック: Flashcard 形式で生成
+			const fallbackRecords = newItems.map((item) => ({
+				card_id: item.id,
+				user_id: userId,
+				type: "flashcard" as QuestionType,
+				question_data: {
+					type: "flashcard",
+					prompt: extractText(item.front_content),
+					answer: extractText(item.back_content),
+				} as unknown as Json,
+				llm_model_used: "fallback",
+			}));
+			const { data: fallbackInserted, error: fallbackError } = await supabase
+				.from("questions")
+				.insert(fallbackRecords)
+				.select("id, card_id, question_data");
+			if (fallbackError) throw fallbackError;
+			newQuestions = fallbackInserted.map((row) => {
+				const qData = row.question_data as unknown as QuestionData;
+				return {
+					...qData,
+					questionId: row.id,
+					cardId: row.card_id,
+				};
+			});
+		}
 	}
+
+	// オリジナルの順序で結合して返却
+	const allQuestions = subset
+		.map(
+			(card) =>
+				existing.find((q) => q.cardId === card.id) ||
+				newQuestions.find((q) => q.cardId === card.id) ||
+				undefined,
+		)
+		.filter((q) => q !== undefined) as (QuestionData & {
+		questionId: string;
+		cardId: string;
+	})[];
+	return allQuestions;
 }

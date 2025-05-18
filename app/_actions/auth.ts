@@ -69,3 +69,22 @@ export async function loginWithMagicLink(formData: FormData) {
 	// ここでは、ログインページにメッセージを表示するためのクエリパラメータを付与してリダイレクトします。
 	redirect("/auth/login?message=magic_link_sent");
 }
+
+/**
+ * Fetch current authenticated user's account information.
+ */
+export async function getCurrentUser() {
+	const supabase = await createClient();
+	const {
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
+	if (authError || !user) return null;
+	const { data: account, error: accError } = await supabase
+		.from("accounts")
+		.select("*")
+		.eq("id", user.id)
+		.single();
+	if (accError) throw accError;
+	return account;
+}

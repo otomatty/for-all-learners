@@ -1,7 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { isUserPaid, getUserPlanFeatures } from "@/app/_actions/subscriptions";
 import type { Database } from "@/types/database.types";
+import type { QuestionType } from "@/lib/gemini";
 
 export async function getCardsByDeck(deckId: string) {
 	const supabase = await createClient();
@@ -35,6 +37,34 @@ export async function createCard(
 		.single();
 	if (error) throw error;
 	if (!data) throw new Error("createCard: no data returned");
+
+	// バックグラウンドで問題プリジェネをキック（有料ユーザーのみ）
+	try {
+		const paid = await isUserPaid(data.user_id);
+		if (paid) {
+			const features = (await getUserPlanFeatures(data.user_id)) || [];
+			// ユーザーのロケール取得
+			const { data: settings } = await supabase
+				.from("user_settings")
+				.select("locale")
+				.eq("user_id", data.user_id)
+				.single();
+			const locale = settings?.locale ?? "ja";
+			for (const type of features as QuestionType[]) {
+				await supabase.functions.invoke("generate-questions-bg", {
+					body: JSON.stringify({
+						cardId: data.id,
+						type,
+						locale,
+						userId: data.user_id,
+					}),
+				});
+			}
+		}
+	} catch (err) {
+		console.error("enqueue background generation failed:", err);
+	}
+
 	return data;
 }
 
@@ -51,6 +81,33 @@ export async function updateCard(
 		.single();
 	if (error) throw error;
 	if (!data) throw new Error("updateCard: no data returned");
+
+	// バックグラウンドで問題プリジェネをキック（有料ユーザーのみ）
+	try {
+		const paid = await isUserPaid(data.user_id);
+		if (paid) {
+			const features = (await getUserPlanFeatures(data.user_id)) || [];
+			const { data: settings } = await supabase
+				.from("user_settings")
+				.select("locale")
+				.eq("user_id", data.user_id)
+				.single();
+			const locale = settings?.locale ?? "ja";
+			for (const type of features as QuestionType[]) {
+				await supabase.functions.invoke("generate-questions-bg", {
+					body: JSON.stringify({
+						cardId: data.id,
+						type,
+						locale,
+						userId: data.user_id,
+					}),
+				});
+			}
+		}
+	} catch (err) {
+		console.error("enqueue background generation failed:", err);
+	}
+
 	return data;
 }
 

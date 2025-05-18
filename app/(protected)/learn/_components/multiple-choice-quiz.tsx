@@ -5,7 +5,18 @@ import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import React, { useState, useEffect, useRef } from "react";
-import QuizFinished, { type AnswerSummary } from "./QuizFinished";
+import QuizFinished, { type AnswerSummary } from "./quiz-finished";
+import { Container } from "@/components/container";
+import {
+	Card,
+	CardHeader,
+	CardContent,
+	CardFooter,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card";
+import { CircleCheck, CircleX } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {
@@ -180,68 +191,66 @@ export default function MultipleChoiceQuiz({
 	}
 
 	return (
-		<div className="max-w-xl mx-auto">
-			{/* プログレスバーで残り時間を表示 */}
-			<Progress
-				value={(remainingMs / (timeLimit * 1000)) * 100}
-				className="mb-2"
-			/>
-			{/* 問題文 */}
-			<div className="mb-4">
-				<h3 className="text-xl font-semibold">
-					問題 {currentIndex + 1} / {total}
-				</h3>
-				<p className="mt-2 text-lg font-medium">{currentQuestion.question}</p>
-			</div>
-			{/* 選択肢 */}
-			<div className="grid grid-cols-1 gap-4">
-				{currentQuestion.options.map((option, idx) => {
-					const isSelected = idx === selectedIndex;
-					const isCorrectOption = idx === currentQuestion.correctAnswerIndex;
-					let bgClass = "bg-white hover:bg-gray-100";
-					if (showAnswer) {
-						if (isCorrectOption) {
-							bgClass = "bg-green-200";
-						} else if (isSelected && !isCorrectOption) {
-							bgClass = "bg-red-200";
-						}
-					}
-					return (
-						<button
-							key={option}
-							type="button"
-							className={`w-full text-left p-3 border rounded ${bgClass}`}
-							onClick={() => handleOptionClick(idx)}
-							disabled={showAnswer}
-						>
-							{option}
-						</button>
-					);
-				})}
-			</div>
-			{/* 正解/不正解マークと説明文 */}
-			{showAnswer && (
-				<div className="mt-4 text-center">
-					{selectedIndex === currentQuestion.correctAnswerIndex ? (
-						<div className="text-5xl text-green-500">〇</div>
-					) : (
-						<div className="text-5xl text-red-500">×</div>
+		<Container className="py-12">
+			<Card className="max-w-xl mx-auto">
+				<CardHeader className="space-y-2">
+					<Progress
+						value={(remainingMs / (timeLimit * 1000)) * 100}
+						className="w-full"
+					/>
+					<CardTitle className="text-xl font-semibold">
+						問題 {currentIndex + 1} / {total}
+					</CardTitle>
+					<CardDescription className="text-lg font-medium">
+						{currentQuestion.question}
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="grid grid-cols-1 gap-4">
+						{currentQuestion.options.map((option, idx) => {
+							const isSelected = idx === selectedIndex;
+							const isCorrectOption =
+								idx === currentQuestion.correctAnswerIndex;
+							let bgClass = "bg-white hover:bg-gray-100";
+							if (showAnswer) {
+								if (isCorrectOption) {
+									bgClass = "bg-green-200";
+								} else if (isSelected && !isCorrectOption) {
+									bgClass = "bg-red-200";
+								}
+							}
+							return (
+								<Button
+									key={option}
+									variant="outline"
+									className={`w-full text-left p-3 border rounded ${bgClass}`}
+									onClick={() => handleOptionClick(idx)}
+									disabled={showAnswer}
+								>
+									{option}
+								</Button>
+							);
+						})}
+					</div>
+					{showAnswer && (
+						<div className="text-center space-y-2">
+							{selectedIndex === currentQuestion.correctAnswerIndex ? (
+								<CircleCheck className="mx-auto w-12 h-12 text-green-500" />
+							) : (
+								<CircleX className="mx-auto w-12 h-12 text-red-500" />
+							)}
+							<p className="text-sm text-gray-700">
+								{currentQuestion.explanation}
+							</p>
+						</div>
 					)}
-					<p className="mt-2 text-sm text-gray-700">
-						{currentQuestion.explanation}
-					</p>
-				</div>
-			)}
-			<div className="mt-4 flex justify-end">
-				<button
-					type="button"
-					className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-					onClick={handleNext}
-					disabled={!showAnswer}
-				>
-					{currentIndex + 1 < total ? "Next" : "Finish"}
-				</button>
-			</div>
-		</div>
+				</CardContent>
+				<CardFooter className="flex justify-end">
+					<Button onClick={handleNext} disabled={!showAnswer}>
+						{currentIndex + 1 < total ? "Next" : "Finish"}
+					</Button>
+				</CardFooter>
+			</Card>
+		</Container>
 	);
 }

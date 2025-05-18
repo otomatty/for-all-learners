@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { calculateSM2 } from "@/lib/utils/sm2";
+import { calculateFSRS } from "@/lib/utils/fsrs";
 import type { Database } from "@/types/database.types";
 export async function getLearningLogsByUser(userId: string) {
 	const supabase = await createClient();
@@ -44,26 +44,41 @@ export async function createLearningLog(
 	}
 	// 入力値を log から取得し、quality は別引数を使用
 	const { card_id, quality } = log;
-	const prevInterval = 0;
-	const prevEF = 2.5;
-	const prevRep = 0;
-	// 1. 計算
-	const { interval, ef, repetitionCount } = calculateSM2(
-		prevInterval,
-		prevEF,
-		prevRep,
-		quality,
-	);
-	const nextReviewAt = new Date();
-	nextReviewAt.setDate(nextReviewAt.getDate() + interval);
+	// 1. FSRS計算
+	// 前回の安定性・難易度・最終レビュー日時を取得
+	const { data: cardSettings, error: settingsError } = await supabase
+		.from("cards")
+		.select("stability, difficulty, last_reviewed_at")
+		.eq("id", card_id)
+		.single();
+	if (settingsError || !cardSettings) {
+		throw new Error(settingsError?.message || "カード設定の取得に失敗しました");
+	}
+	const prevStability = cardSettings.stability;
+	const prevDifficulty = cardSettings.difficulty;
+	const lastReviewedAt = cardSettings.last_reviewed_at;
+	const now = new Date();
+	const elapsedMs = lastReviewedAt
+		? now.getTime() - new Date(lastReviewedAt).getTime()
+		: 0;
+	const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
+	const {
+		stability: newStability,
+		difficulty: newDifficulty,
+		intervalDays,
+	} = calculateFSRS(prevStability, prevDifficulty, elapsedDays, quality);
+	const nextReviewAt = new Date(
+		now.getTime() + intervalDays * 24 * 60 * 60 * 1000,
+	).toISOString();
 	// 2. カード更新
 	await supabase
 		.from("cards")
 		.update({
-			review_interval: interval,
-			ease_factor: ef,
-			repetition_count: repetitionCount,
-			next_review_at: nextReviewAt.toISOString(),
+			review_interval: Math.ceil(intervalDays),
+			stability: newStability,
+			difficulty: newDifficulty,
+			last_reviewed_at: now.toISOString(),
+			next_review_at: nextReviewAt,
 		})
 		.eq("id", card_id);
 	// 3. learning_logs インサート
@@ -73,12 +88,16 @@ export async function createLearningLog(
 			user_id: user.id,
 			card_id,
 			question_id: log.question_id,
-			answered_at: new Date().toISOString(),
+			answered_at: now.toISOString(),
 			is_correct: quality >= 3,
 			user_answer: log.user_answer ?? null,
 			practice_mode: log.practice_mode,
-			review_interval: interval,
-			next_review_at: nextReviewAt.toISOString(),
+			quality,
+			review_interval: Math.ceil(intervalDays),
+			next_review_at: nextReviewAt,
+			response_time: log.response_time ?? 0,
+			effort_time: log.effort_time ?? 0,
+			attempt_count: log.attempt_count ?? 1,
 		})
 		.single();
 	if (insertError) throw insertError;

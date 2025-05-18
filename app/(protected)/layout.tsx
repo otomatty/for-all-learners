@@ -5,6 +5,9 @@ import { AuthHeader } from "@/components/auth-header";
 import type React from "react";
 import pkg from "../../package.json";
 import { navItems } from "./navItems";
+import { getCurrentUser } from "@/app/_actions/auth";
+import { getUserPlan } from "@/app/_actions/subscriptions";
+import { redirect } from "next/navigation";
 
 interface ProtectedLayoutProps {
 	children: React.ReactNode;
@@ -17,9 +20,15 @@ export default async function ProtectedLayout({
 }: ProtectedLayoutProps) {
 	const admin = await isAdmin();
 	const playAudio = await getHelpVideoAudioSetting();
+	const account = await getCurrentUser();
+	const plan = account ? await getUserPlan(account.id) : null;
 
 	// アプリ名を指定します。必要に応じて変更してください。
 	const appName = "For All Learners";
+
+	if (!account) {
+		redirect("/auth/login");
+	}
 
 	return (
 		<div className="flex flex-col min-h-screen">
@@ -28,6 +37,8 @@ export default async function ProtectedLayout({
 				isAdmin={admin}
 				appNavItems={navItems}
 				playAudio={playAudio}
+				account={account}
+				plan={plan}
 			/>
 			<main className="bg-secondary min-h-screen">{children}</main>
 			<AppFooter version={version} appName={appName} />
