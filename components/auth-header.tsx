@@ -105,7 +105,7 @@ export function AuthHeader({
 						</Tooltip>
 					</TooltipProvider>
 				</div>
-				<MobileNav isAdmin={showAdminNav} />
+				<MobileNav isAdmin={showAdminNav} account={account} plan={plan} />
 			</div>
 		</header>
 	);

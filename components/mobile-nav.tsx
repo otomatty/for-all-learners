@@ -14,7 +14,15 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchBar } from "./search-bar";
-export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+import type { Database } from "@/types/database.types";
+
+interface MobileNavProps {
+	isAdmin: boolean;
+	account: Database["public"]["Tables"]["accounts"]["Row"];
+	plan: Database["public"]["Tables"]["plans"]["Row"] | null;
+}
+
+export function MobileNav({ isAdmin, account, plan }: MobileNavProps) {
 	const pathname = usePathname();
 
 	const navItems = isAdmin
@@ -65,7 +73,7 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 					</nav>
 					<div className="mt-4 px-4 flex flex-col space-y-2">
 						<ThemeToggle />
-						<UserNav isAdmin={isAdmin} />
+						<UserNav isAdmin={isAdmin} account={account} plan={plan} />
 					</div>
 				</SheetContent>
 			</Sheet>
