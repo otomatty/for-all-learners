@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:is(.dark *));
 @import "tailwindcss";
+@import "./themes/red.css";
+@import "./themes/rose.css";
+@import "./themes/orange.css";
+@import "./themes/green.css";
+@import "./themes/blue.css";
+@import "./themes/yellow.css";
+@import "./themes/violet.css";
 
 @layer utilities {
 	.text-balance {
@@ -91,7 +98,7 @@
 
 	@layer base {
 		* {
-			@apply border-border;
+			@apply border-border outline-ring/50;
 		}
 		body {
 			@apply bg-background text-foreground;
@@ -203,89 +210,6 @@
 		--sidebar-accent-foreground: oklch(0.985 0 0);
 		--sidebar-border: oklch(1 0 0 / 10%);
 		--sidebar-ring: oklch(0.556 0 0);
-	}
-
-	@layer base {
-		* {
-			@apply border-border outline-ring/50;
-		}
-		body {
-			@apply bg-background text-foreground;
-		}
-	}
-
-	/* Custom theme classes for color themes */
-	.theme-ocean {
-		--background: #e0f7fa;
-		--foreground: #006064;
-		--primary: #0288d1;
-		--secondary: #26c6da;
-		--accent: #00b8d4;
-	}
-	.theme-forest {
-		--background: #e8f5e9;
-		--foreground: #1b5e20;
-		--primary: #388e3c;
-		--secondary: #81c784;
-		--accent: #66bb6a;
-	}
-	.theme-sunset {
-		--background: #fff3e0;
-		--foreground: #e65100;
-		--primary: #fb8c00;
-		--secondary: #ffb74d;
-		--accent: #ff9800;
-	}
-	.theme-night-sky {
-		--background: #1a237e;
-		--foreground: #e8eaf6;
-		--primary: #3949ab;
-		--secondary: #5c6bc0;
-		--accent: #7986cb;
-	}
-	.theme-desert {
-		--background: #fffde7;
-		--foreground: #3e2723;
-		--primary: #ffb300;
-		--secondary: #ffd54f;
-		--accent: #ffa000;
-	}
-
-	/* Dark mode overrides for custom themes */
-	.dark.theme-ocean {
-		--background: #004d40;
-		--foreground: #b2dfdb;
-		--primary: #26a69a;
-		--secondary: #4db6ac;
-		--accent: #80cbc4;
-	}
-	.dark.theme-forest {
-		--background: #1b5e20;
-		--foreground: #c8e6c9;
-		--primary: #306230;
-		--secondary: #66bb6a;
-		--accent: #a5d6a7;
-	}
-	.dark.theme-sunset {
-		--background: #3e2723;
-		--foreground: #ffe0b2;
-		--primary: #fb8c00;
-		--secondary: #ffb74d;
-		--accent: #ffcc80;
-	}
-	.dark.theme-night-sky {
-		--background: #0d0d33;
-		--foreground: #eceff1;
-		--primary: #3949ab;
-		--secondary: #5c6bc0;
-		--accent: #7986cb;
-	}
-	.dark.theme-desert {
-		--background: #5d4037;
-		--foreground: #fff8e1;
-		--primary: #ffb300;
-		--secondary: #ffe082;
-		--accent: #ffb74d;
 	}
 }
 

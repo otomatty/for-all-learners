@@ -86,6 +86,11 @@ export async function getSharedDecksByUser(userId: string): Promise<
 	return data;
 }
 
+/**
+ * Server action to create a new deck and revalidate relevant pages.
+ * @param formData - フォームデータに含まれるtitleおよびdescription
+ * @returns 作成されたデッキのデータ
+ */
 export async function createDeckAction(
 	formData: FormData,
 ): Promise<Database["public"]["Tables"]["decks"]["Row"]> {
@@ -107,8 +112,9 @@ export async function createDeckAction(
 	const description = (formData.get("description") as string) ?? "";
 	try {
 		const newDeck = await createDeck({ title, description, user_id: user.id });
-		// Revalidate decks page
+		// Revalidate decks and dashboard pages
 		revalidatePath("/decks");
+		revalidatePath("/dashboard");
 		return newDeck;
 	} catch (err) {
 		console.error("createDeckAction error:", err);

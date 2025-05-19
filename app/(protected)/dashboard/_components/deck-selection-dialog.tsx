@@ -1,5 +1,6 @@
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
 	Command,
 	CommandEmpty,
@@ -52,6 +53,8 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 	>([]);
 	const [selectedDeckId, setSelectedDeckId] = useState<string>("");
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
+	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
 	const router = useRouter();
 
 	// 外部デッキがあればそれを優先、なければフェッチしたデッキを使用
@@ -101,6 +104,29 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 		}
 	};
 
+	const handleCreateDeck = async () => {
+		const supabase = createClient();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+		if (!user) return;
+		const { data, error } = await supabase
+			.from("decks")
+			.insert({ title: newDeckTitle, user_id: user.id })
+			.select("*")
+			.maybeSingle();
+		if (error || !data) {
+			console.error("Failed to create deck:", error);
+			return;
+		}
+		const newDeck: DeckWithCount = { ...data, todayReviewCount: 0 };
+		setFetchedDecks((prev) => [newDeck, ...prev]);
+		setSelectedDeckId(newDeck.id);
+		setNewDeckTitle("");
+		setShowCreateForm(false);
+		onDeckSelect?.(newDeck.id);
+	};
+
 	return (
 		<ResponsiveDialog
 			open={open}
@@ -142,6 +168,31 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 						</CommandList>
 					</Command>
 				</div>
+				{showCreateForm ? (
+					<div className="space-y-2 mt-2">
+						<Input
+							placeholder="新しいデッキ名を入力"
+							value={newDeckTitle}
+							onChange={(e) => setNewDeckTitle(e.target.value)}
+						/>
+						<div className="flex space-x-2">
+							<Button onClick={handleCreateDeck} disabled={!newDeckTitle}>
+								作成
+							</Button>
+							<Button variant="ghost" onClick={() => setShowCreateForm(false)}>
+								キャンセル
+							</Button>
+						</div>
+					</div>
+				) : (
+					<Button
+						variant="link"
+						onClick={() => setShowCreateForm(true)}
+						className="mt-2"
+					>
+						＋ 新規デッキ作成
+					</Button>
+				)}
 				{showActionButtons ? (
 					<div className="space-y-2">
 						<Label>生成方法を選択</Label>

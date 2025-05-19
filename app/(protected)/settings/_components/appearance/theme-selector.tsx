@@ -8,32 +8,38 @@ interface ThemeSelectorProps {
 }
 
 const themes = [
-	{ value: "ocean", label: "海 (Ocean)" },
-	{ value: "forest", label: "森 (Forest)" },
-	{ value: "sunset", label: "夕暮れ (Sunset)" },
-	{ value: "night-sky", label: "夜空 (Night Sky)" },
-	{ value: "desert", label: "砂漠 (Desert)" },
+	{ value: "red", label: "Red" },
+	{ value: "rose", label: "Rose" },
+	{ value: "orange", label: "Orange" },
+	{ value: "green", label: "Green" },
+	{ value: "blue", label: "Blue" },
+	{ value: "yellow", label: "Yellow" },
+	{ value: "violet", label: "Violet" },
 ];
 
-const allThemes = [{ value: "", label: "デフォルト" }, ...themes];
+const allThemes = [{ value: "", label: "Default" }, ...themes];
 
 // テーマ毎のサンプルカラーを定義（CSS変数を使わず固定色で表示）
 const themeColors: Record<string, string> = {
-	ocean: "#0288D1",
-	forest: "#388E3C",
-	sunset: "#FB8C00",
-	"night-sky": "#3949AB",
-	desert: "#FFB300",
+	red: "oklch(0.637 0.237 25.331)",
+	rose: "oklch(0.645 0.246 16.439)",
+	orange: "oklch(0.705 0.213 47.604)",
+	green: "oklch(0.723 0.219 149.579)",
+	blue: "oklch(0.623 0.214 259.815)",
+	yellow: "oklch(0.795 0.184 86.047)",
+	violet: "oklch(0.606 0.25 292.717)",
 };
 const defaultColor = "#ffffff";
 
 // テーマ毎のボーダーカラーを定義
 const themeBorderColors: Record<string, string> = {
-	ocean: "#01579b",
-	forest: "#1b5e20",
-	sunset: "#e65100",
-	"night-sky": "#0d47a1",
-	desert: "#ff6f00",
+	red: "oklch(0.637 0.237 25.331)",
+	rose: "oklch(0.645 0.246 16.439)",
+	orange: "oklch(0.705 0.213 47.604)",
+	green: "oklch(0.723 0.219 149.579)",
+	blue: "oklch(0.623 0.214 259.815)",
+	yellow: "oklch(0.795 0.184 86.047)",
+	violet: "oklch(0.606 0.25 292.717)",
 };
 const defaultBorderColor = "#cccccc";
 
