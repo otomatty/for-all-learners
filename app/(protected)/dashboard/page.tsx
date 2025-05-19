@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { GoalSummary } from "./_components/goal-summary";
 import { QuickActionTiles } from "./_components/quick-action-tiles";
+import { getAllDueCountsByUser } from "@/app/_actions/cards";
 
 export default async function DashboardPage({
 	searchParams: searchParamsPromise, // Renaming to clarify it's a promise
@@ -43,6 +44,27 @@ export default async function DashboardPage({
 	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals || []));
 	const safeLogs = JSON.parse(JSON.stringify(logs || []));
 
+	// ユーザーの全デッキを取得
+	const { data: deckRows, error: deckError } = await supabase
+		.from("decks")
+		.select("*")
+		.eq("user_id", user.id);
+	if (deckError || !deckRows) {
+		console.error("Failed to fetch decks:", deckError);
+		return (
+			<Container>
+				<p>デッキの取得に失敗しました。</p>
+			</Container>
+		);
+	}
+	// 期限切れカード数マップを1回で取得
+	const dueMap = await getAllDueCountsByUser(user.id);
+	// デッキに復習数をマージ
+	const decksWithDueCount = deckRows.map((d) => ({
+		...d,
+		todayReviewCount: dueMap[d.id] ?? 0,
+	}));
+
 	return (
 		<Container>
 			{/* Set the current user ID for downstream components */}
@@ -52,8 +74,9 @@ export default async function DashboardPage({
 					goals={safeStudyGoals}
 					logs={safeLogs}
 					currentGoalIdFromUrl={currentGoalIdFromUrl}
+					dueMap={dueMap}
 				/>
-				<QuickActionTiles />
+				<QuickActionTiles decks={decksWithDueCount} />
 			</div>
 		</Container>
 	);

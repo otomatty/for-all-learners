@@ -1,12 +1,14 @@
-import { getDeckStudyLogs, getGoalDecks } from "@/app/_actions/goal-decks";
-import { getTodayReviewCountsByDeck } from "@/app/_actions/learning_logs";
+import { getGoalDecks } from "@/app/_actions/goal-decks";
 import { createClient } from "@/lib/supabase/server";
 import React from "react";
 import ClientGoalDecksSection from "./goal-decks-section-client";
 import type { Deck as ClientDeck } from "./goal-decks-section-client";
 
 interface GoalDecksSectionProps {
+	/** 表示対象の学習目標ID */
 	goalId: string;
+	/** デッキIDをキーとした期限切れカード数マップ (親から渡される) */
+	dueMap: Record<string, number>;
 }
 
 /**
@@ -14,6 +16,7 @@ interface GoalDecksSectionProps {
  */
 export default async function ServerGoalDecksSection({
 	goalId,
+	dueMap,
 }: GoalDecksSectionProps) {
 	// Supabase クライアント作成 & 認証ユーザー取得
 	const supabase = await createClient();
@@ -25,18 +28,12 @@ export default async function ServerGoalDecksSection({
 		throw new Error(authError?.message || "Not authenticated");
 	const userId = user.id;
 
-	// 目標デッキ、学習ログ、今日のレビュー数を並列取得
-	const [decks, logs, todayCounts] = await Promise.all([
-		getGoalDecks(goalId),
-		getDeckStudyLogs(goalId),
-		getTodayReviewCountsByDeck(userId),
-	]);
-
-	// デッキごとに今日のレビュー数をマージ (ClientDeck型で型付け)
+	// 目標に紐づくデッキを取得
+	const decks = await getGoalDecks(goalId);
+	// 親から渡された dueMap を用いて復習対象件数をマージ
 	const initialDecks: ClientDeck[] = decks.map((d) => ({
 		...d,
-		todayReviewCount:
-			todayCounts.find((t) => t.deck_id === d.id)?.review_count ?? 0,
+		todayReviewCount: dueMap[d.id] ?? 0,
 	}));
 
 	return <ClientGoalDecksSection goalId={goalId} initialDecks={initialDecks} />;

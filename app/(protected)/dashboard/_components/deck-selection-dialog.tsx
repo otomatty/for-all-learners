@@ -14,13 +14,27 @@ import type { Database } from "@/types/database.types";
 import { Camera, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type * as React from "react";
+
+// データベースのデッキ row に復習数を付与した型
+type DeckWithCount = Database["public"]["Tables"]["decks"]["Row"] & {
+	todayReviewCount?: number;
+};
 
 interface DeckSelectionDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	dialogTitle: string;
+	/**
+	 * 外部から渡すデッキリスト (FSRS復習数付き)
+	 */
+	decks?: DeckWithCount[];
 	onDeckSelect?: (deckId: string) => void;
 	showActionButtons?: boolean;
+	renderActionButtons?: (params: {
+		selectedDeck: DeckWithCount;
+		closeDialog: () => void;
+	}) => React.ReactNode;
 }
 
 export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
@@ -28,22 +42,36 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 	onOpenChange,
 	dialogTitle,
 	onDeckSelect,
+	decks: externalDecks,
 	showActionButtons = true,
+	renderActionButtons,
 }) => {
-	const [decks, setDecks] = useState<
+	// 内部でフェッチするデッキ
+	const [fetchedDecks, setFetchedDecks] = useState<
 		Database["public"]["Tables"]["decks"]["Row"][]
 	>([]);
 	const [selectedDeckId, setSelectedDeckId] = useState<string>("");
 	const [searchQuery, setSearchQuery] = useState<string>("");
 	const router = useRouter();
 
-	const filteredDecks = decks.filter((deck) =>
+	// 外部デッキがあればそれを優先、なければフェッチしたデッキを使用
+	const deckList: DeckWithCount[] = externalDecks
+		? externalDecks
+		: fetchedDecks.map((d) => ({ ...d, todayReviewCount: 0 }));
+	const filteredDecks = deckList.filter((deck) =>
 		deck.title.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 
-	const selectedDeck = decks.find((deck) => deck.id === selectedDeckId);
+	const selectedDeck = deckList.find((deck) => deck.id === selectedDeckId);
 
 	useEffect(() => {
+		// 外部デッキリストがある場合はフェッチをスキップし、初期選択のみ設定
+		if (externalDecks) {
+			if (externalDecks.length > 0) {
+				setSelectedDeckId(externalDecks[0].id);
+			}
+			return;
+		}
 		(async () => {
 			const supabase = createClient();
 			const {
@@ -59,11 +87,11 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 				return;
 			}
 			if (data?.length) {
-				setDecks(data);
+				setFetchedDecks(data);
 				setSelectedDeckId(data[0].id);
 			}
 		})();
-	}, []);
+	}, [externalDecks]);
 
 	const handleDeckSelect = (deckId: string) => {
 		setSelectedDeckId(deckId);
@@ -114,7 +142,7 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 						</CommandList>
 					</Command>
 				</div>
-				{showActionButtons && (
+				{showActionButtons ? (
 					<div className="space-y-2">
 						<Label>生成方法を選択</Label>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -138,6 +166,16 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 							</Button>
 						</div>
 					</div>
+				) : (
+					renderActionButtons &&
+					selectedDeck && (
+						<div className="space-y-2">
+							{renderActionButtons({
+								selectedDeck,
+								closeDialog: () => onOpenChange(false),
+							})}
+						</div>
+					)
 				)}
 			</div>
 		</ResponsiveDialog>

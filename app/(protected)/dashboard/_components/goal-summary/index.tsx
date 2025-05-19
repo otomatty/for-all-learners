@@ -17,12 +17,15 @@ interface GoalSummaryProps {
 	goals: StudyGoal[];
 	logs: LearningLog[];
 	currentGoalIdFromUrl?: string;
+	/** デッキIDをキーとした期限切れカード数マップ */
+	dueMap: Record<string, number>;
 }
 
 export async function GoalSummary({
 	goals,
 	logs,
 	currentGoalIdFromUrl,
+	dueMap,
 }: GoalSummaryProps) {
 	// 目標が未設定のときのエンプティステート表示
 	if (goals.length === 0) {
@@ -48,7 +51,11 @@ export async function GoalSummary({
 				logs={logs}
 				initialSelectedGoalId={goalIdToDisplay}
 			/>
-			<ServerGoalDecksSection key={goalIdToDisplay} goalId={goalIdToDisplay} />
+			<ServerGoalDecksSection
+				key={goalIdToDisplay}
+				goalId={goalIdToDisplay}
+				dueMap={dueMap}
+			/>
 		</Card>
 	);
 }

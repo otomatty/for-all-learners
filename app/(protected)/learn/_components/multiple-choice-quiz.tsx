@@ -244,7 +244,7 @@ export default function MultipleChoiceQuiz({
 								<Button
 									key={option}
 									variant="outline"
-									className={`w-full text-left p-3 border rounded ${bgClass} whitespace-normal h-auto`}
+									className={`w-full justify-start text-left p-3 border rounded ${bgClass} whitespace-normal h-auto`}
 									onClick={() => handleOptionClick(idx)}
 									disabled={showAnswer}
 								>

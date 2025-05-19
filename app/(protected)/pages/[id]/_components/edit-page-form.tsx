@@ -162,7 +162,7 @@ export default function EditPageForm({
 				<div className="flex-1 space-y-6">
 					{editor && (
 						<div className="relative">
-							<div className="bg-background rounded-lg py-12 px-4 border border-border">
+							<div className="bg-background rounded-lg py-12 px-2 md:px-4 border border-border">
 								<PageHeader
 									cosenseProjectName={cosenseProjectName}
 									title={title}

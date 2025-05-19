@@ -17,6 +17,8 @@ interface QuizSettingsDialogProps {
 	reviewMode?: boolean;
 	disabled?: boolean;
 	reviewCount?: number;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
 export function QuizSettingsDialog({
@@ -28,9 +30,24 @@ export function QuizSettingsDialog({
 	reviewMode = false,
 	disabled = false,
 	reviewCount,
+	open: controlledOpen,
+	onOpenChange: onControlledOpenChange,
 }: QuizSettingsDialogProps) {
 	const router = useRouter();
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
+
+	// Determine open state: controlled or internal
+	const isDialogOpen =
+		controlledOpen !== undefined ? controlledOpen : internalOpen;
+
+	const handleOpenChange = (open: boolean) => {
+		if (onControlledOpenChange) {
+			onControlledOpenChange(open);
+		} else {
+			setInternalOpen(open);
+		}
+	};
+
 	const [questionType, setQuestionType] = useState<string>("one");
 
 	// 選択された問題形式ごとの説明文
@@ -51,21 +68,23 @@ export function QuizSettingsDialog({
 		// 実際の送信は form の action で行われる
 		// 送信成功・失敗に関わらずダイアログは閉じることになるが、
 		// 通常はページ遷移が発生するため問題になりにくい
-		setIsDialogOpen(false);
+		handleOpenChange(false);
 	};
 
 	return (
 		<>
-			<Button
-				onClick={() => setIsDialogOpen(true)}
-				className="w-full relative"
-				disabled={disabled || (reviewMode && (reviewCount ?? 0) === 0)}
-			>
-				{displayText}
-			</Button>
+			{!controlledOpen && (
+				<Button
+					onClick={() => handleOpenChange(true)}
+					className="w-full relative"
+					disabled={disabled || (reviewMode && (reviewCount ?? 0) === 0)}
+				>
+					{displayText}
+				</Button>
+			)}
 			<ResponsiveDialog
 				open={isDialogOpen}
-				onOpenChange={setIsDialogOpen}
+				onOpenChange={handleOpenChange}
 				dialogTitle="学習モード設定"
 			>
 				<form

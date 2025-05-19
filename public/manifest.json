@@ -1,6 +1,6 @@
 {
-	"name": "MyWebSite",
-	"short_name": "MySite",
+	"name": "For All Learners",
+	"short_name": "F.A.L",
 	"icons": [
 		{
 			"src": "/web-app-manifest-192x192.png",

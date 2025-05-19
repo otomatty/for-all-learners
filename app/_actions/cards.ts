@@ -143,3 +143,48 @@ export async function createCards(
 	if (!data) throw new Error("createCards: no data returned");
 	return data;
 }
+
+/**
+ * 次回復習日時が現在日時以前のカードを取得するサーバーアクション
+ * @param deckId デッキID
+ * @param userId ユーザーID
+ * @returns 期限切れのカード一覧
+ */
+export async function getDueCardsByDeck(
+	deckId: string,
+	userId: string,
+): Promise<Database["public"]["Tables"]["cards"]["Row"][]> {
+	const supabase = await createClient();
+	const now = new Date().toISOString();
+	const { data, error } = await supabase
+		.from("cards")
+		.select("*")
+		.eq("deck_id", deckId)
+		.eq("user_id", userId)
+		.lte("next_review_at", now);
+	if (error) throw error;
+	return data ?? [];
+}
+
+/**
+ * ユーザーの全デッキごとに、FSRS次回復習日時が現在日時以前のカード数を一括取得します
+ * @param userId ユーザーID
+ * @returns デッキIDをキーとした期限切れカード数マップ
+ */
+export async function getAllDueCountsByUser(
+	userId: string,
+): Promise<Record<string, number>> {
+	const supabase = await createClient();
+	const now = new Date().toISOString();
+	const { data, error } = await supabase
+		.from("cards")
+		.select("deck_id")
+		.eq("user_id", userId)
+		.lte("next_review_at", now);
+	if (error) throw error;
+	const map: Record<string, number> = {};
+	for (const row of data ?? []) {
+		map[row.deck_id] = (map[row.deck_id] ?? 0) + 1;
+	}
+	return map;
+}
