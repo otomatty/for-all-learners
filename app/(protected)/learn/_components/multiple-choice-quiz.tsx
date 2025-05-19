@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { CircleCheck, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {
@@ -83,6 +84,26 @@ export default function MultipleChoiceQuiz({
 	const remaining = Math.ceil(remainingMs / 1000);
 	// track when the user answered or time expired
 	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
+
+	// Keyboard navigation
+	useEffect(() => {
+		const handleKeyPress = (event: KeyboardEvent) => {
+			if (showAnswer) return; // Don't process key presses if answer is shown
+
+			const keyNum = Number.parseInt(event.key, 10);
+			if (keyNum >= 1 && keyNum <= 4) {
+				// Check if the number of options is less than the key pressed
+				if (keyNum <= currentQuestion.options.length) {
+					handleOptionClick(keyNum - 1);
+				}
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyPress);
+		return () => {
+			window.removeEventListener("keydown", handleKeyPress);
+		};
+	}, [showAnswer, currentQuestion.options]); // Re-run if showAnswer or options change
 
 	// Log learning duration when quiz finishes
 	useEffect(() => {
@@ -223,25 +244,25 @@ export default function MultipleChoiceQuiz({
 								<Button
 									key={option}
 									variant="outline"
-									className={`w-full text-left p-3 border rounded ${bgClass}`}
+									className={`w-full text-left p-3 border rounded ${bgClass} whitespace-normal h-auto`}
 									onClick={() => handleOptionClick(idx)}
 									disabled={showAnswer}
 								>
-									{option}
+									{`${idx + 1}. ${option}`}
 								</Button>
 							);
 						})}
 					</div>
 					{showAnswer && (
-						<div className="text-center space-y-2">
+						<div className="text-center space-y-2 mt-4">
 							{selectedIndex === currentQuestion.correctAnswerIndex ? (
 								<CircleCheck className="mx-auto w-12 h-12 text-green-500" />
 							) : (
 								<CircleX className="mx-auto w-12 h-12 text-red-500" />
 							)}
-							<p className="text-sm text-gray-700">
-								{currentQuestion.explanation}
-							</p>
+							<div className="text-sm text-gray-700 p-4 border rounded-md bg-gray-50 text-left prose prose-sm max-w-none">
+								<ReactMarkdown>{currentQuestion.explanation}</ReactMarkdown>
+							</div>
 						</div>
 					)}
 				</CardContent>

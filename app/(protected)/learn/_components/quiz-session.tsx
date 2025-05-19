@@ -105,7 +105,7 @@ const QuizSession: React.FC<QuizSessionProps> = ({
 						})[]
 					}
 					startTime={startTime}
-					timeLimit={timeLimit}
+					timeLimit={20}
 				/>
 			);
 		default:

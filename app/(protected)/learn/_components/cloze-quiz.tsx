@@ -4,7 +4,7 @@ import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { ClozeQuestion } from "@/lib/gemini";
-import type React from "react";
+import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
@@ -47,6 +47,10 @@ export default function ClozeQuiz({
 	);
 	// track when the user submitted or time expired
 	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
+	// ユーザーが各空欄で選択した選択肢を保持 (undefined は未選択)
+	const [selectedOptions, setSelectedOptions] = useState<
+		(string | undefined)[]
+	>([]);
 
 	// Determine current question safely
 	const current = questions[currentIndex] ?? {
@@ -54,8 +58,13 @@ export default function ClozeQuiz({
 		blanks: [],
 		question: "",
 		answers: [],
+		options: [], // 初期値に options を追加
 	};
-	const { text, blanks, answers } = current;
+	console.log(
+		"[ClozeQuiz] Processing current question:",
+		JSON.stringify(current),
+	); // 問題データの内容をログ出力
+	const { text, blanks, answers, options } = current;
 
 	// Prepare safe data lists and log errors if data is invalid
 	const blanksList = Array.isArray(blanks) ? blanks : [];
@@ -71,11 +80,12 @@ export default function ClozeQuiz({
 		});
 
 	// Manage inputs: always call hooks unconditionally using safe lists
-	const [inputs, setInputs] = useState<string[]>(() =>
-		Array(blanksList.length).fill(""),
-	);
+	// const [inputs, setInputs] = useState<string[]>(() =>
+	// Array(blanksList.length).fill(""),
+	// );
 	useEffect(() => {
-		setInputs(Array(blanksList.length).fill(""));
+		// setInputs(Array(blanksList.length).fill(""));
+		setSelectedOptions(Array(blanksList.length).fill(undefined)); // 選択肢をリセット
 		setShowResult(false);
 	}, [blanksList.length]);
 
@@ -83,16 +93,6 @@ export default function ClozeQuiz({
 	if (total === 0) {
 		return (
 			<div className="p-4 text-center text-red-500">問題が見つかりません。</div>
-		);
-	}
-	if (finished) {
-		// Display quiz finished UI and onFinish navigate back
-		return (
-			<QuizFinished
-				score={0}
-				total={total}
-				questionSummaries={questionSummaries}
-			/>
 		);
 	}
 
@@ -150,7 +150,7 @@ export default function ClozeQuiz({
 			...prev,
 			{
 				prompt: current.question,
-				yourAnswer: inputs.join(", "),
+				yourAnswer: selectedOptions.map((opt) => opt ?? "-").join(", "), // selectedOptions を使用
 				correctAnswer: answersList.join(", "),
 				timeSpent: spent,
 			},
@@ -158,7 +158,7 @@ export default function ClozeQuiz({
 		// reset answer timestamp for next question
 		setAnswerTimestamp(null);
 		const isCorrect = blanksList.every(
-			(_blank, idx) => inputs[idx]?.trim() === answersList[idx]?.trim(),
+			(_blank, idx) => selectedOptions[idx] === answersList[idx], // selectedOptions を使用
 		);
 		// 結果をバッファに追加
 		setResults((prev) => [
@@ -167,6 +167,8 @@ export default function ClozeQuiz({
 		]);
 		const next = currentIndex + 1;
 		if (next < total) {
+			expireTimeRef.current = Date.now() + timeLimit * 1000; // Reset timer
+			setRemainingMs(timeLimit * 1000); // Reset timer
 			setCurrentIndex(next);
 			setShowResult(false);
 			// Reset start time for next question
@@ -176,7 +178,8 @@ export default function ClozeQuiz({
 		}
 	}, [
 		blanksList,
-		inputs,
+		// inputs, // inputs を削除
+		selectedOptions, // selectedOptions を追加
 		answersList,
 		current.question,
 		current.cardId,
@@ -184,6 +187,7 @@ export default function ClozeQuiz({
 		total,
 		questionStartTime,
 		answerTimestamp,
+		timeLimit, // timeLimit を依存配列に追加
 	]);
 
 	// Prepare parts with error handling
@@ -204,29 +208,67 @@ export default function ClozeQuiz({
 			const [before, after] = remainingText.split(blank);
 			// wrap text part with span to assign unique key
 			parts.push(
-				<span key={`text-${current.questionId}-${idx}`}>{before}</span>,
+				<span key={`text-before-${current.questionId}-${idx}-${blank}`}>
+					{before}
+				</span>,
 			);
 			// input part with question-specific key
+			// 選択肢ボタンに変更
+			const blankOptions = options?.[idx] ?? [];
+			if (blankOptions.length === 0) {
+				console.warn(
+					`[ClozeQuiz] No options for blank ${idx} in question:`,
+					current,
+				);
+			}
+
 			parts.push(
-				<input
-					key={`input-${current.questionId}-${idx}`}
-					type="text"
-					value={inputs[idx] || ""}
-					disabled={showResult}
-					onChange={(e) => {
-						const next = [...inputs];
-						next[idx] = e.target.value;
-						setInputs(next);
-					}}
-					className="border-b border-gray-400 focus:outline-none mx-1 w-24"
-					placeholder="…"
-				/>,
+				<div
+					key={`options-container-${current.questionId}-${idx}`}
+					className="inline-block mx-1"
+				>
+					{showResult ? (
+						<span
+							className={`px-2 py-1 rounded ${
+								selectedOptions[idx] === answersList[idx]
+									? "bg-green-200 text-green-800"
+									: "bg-red-200 text-red-800"
+							}`}
+						>
+							{selectedOptions[idx] ?? "未選択"}
+						</span>
+					) : blankOptions.length > 0 ? (
+						blankOptions.map((option, optionIdx) => (
+							<button
+								key={`option-${current.questionId}-${idx}-${optionIdx}-${option}`}
+								type="button"
+								disabled={showResult}
+								onClick={() => {
+									const newSelectedOptions = [...selectedOptions];
+									newSelectedOptions[idx] = option;
+									setSelectedOptions(newSelectedOptions);
+								}}
+								className={`border rounded px-2 py-1 m-0.5 text-sm ${
+									selectedOptions[idx] === option
+										? "bg-blue-500 text-white"
+										: "bg-gray-100 hover:bg-gray-200"
+								} ${showResult ? "cursor-not-allowed" : ""}`}
+							>
+								{option}
+							</button>
+						))
+					) : (
+						<span className="text-red-500 text-sm">(選択肢なし)</span>
+					)}
+				</div>,
 			);
 			remainingText = after;
 		});
 		// wrap final remaining text
 		parts.push(
-			<span key={`text-${current.questionId}-last`}>{remainingText}</span>,
+			<span key={`text-after-${current.questionId}-last`}>
+				{remainingText}
+			</span>,
 		);
 	} catch (error) {
 		console.error("[ClozeQuiz] Error rendering blanks:", error, current);
@@ -248,39 +290,70 @@ export default function ClozeQuiz({
 		}
 	}, [finished, timeRecorded, startedAtMs]);
 
+	// クイズが終了している場合は、結果表示コンポーネントをレンダリング
+	if (finished) {
+		return (
+			<QuizFinished
+				score={0} // score は別途計算が必要な場合は修正
+				total={total}
+				questionSummaries={questionSummaries}
+			/>
+		);
+	}
+
+	// Display results or controls (クイズ実行中のレンダリング)
 	return (
-		<div className="max-w-xl mx-auto p-4 space-y-4">
-			{/* プログレスバーで残り時間を視覚化 */}
+		<div className="max-w-xl mx-auto my-4">
 			<Progress
 				value={(remainingMs / (timeLimit * 1000)) * 100}
-				className="mb-2"
+				className="mb-4"
 			/>
-			<h3 className="text-xl font-semibold">
-				問題 {currentIndex + 1} / {total}
-			</h3>
-			<p className="mt-2 text-lg">{parts}</p>
-			{!showResult ? (
-				<button
-					type="button"
-					onClick={handleCheck}
-					className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-				>
-					回答を確認
-				</button>
-			) : (
-				<div className="space-y-2">
-					<p className="text-sm text-gray-600">
-						正解: {answersList.join(", ")}
-					</p>
+			<div className="text-center">
+				<h3 className="text-xl font-semibold mb-2">{current.question}</h3>
+				<div className="mt-2 text-lg leading-loose">
+					{parts.map((part, i) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+						<React.Fragment key={i}>{part}</React.Fragment>
+					))}
+				</div>
+			</div>
+			<div className="flex justify-center items-center mt-4 space-x-2">
+				{!showResult ? (
 					<button
 						type="button"
-						onClick={handleNext}
-						className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+						onClick={handleCheck}
+						className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
 					>
-						{currentIndex + 1 < total ? "次へ" : "完了"}
+						回答を確認
 					</button>
-				</div>
-			)}
+				) : (
+					<div className="space-y-2">
+						<p className="text-sm text-gray-600">
+							正解: {answersList.join(", ")}
+							{blanksList.map((blankItem, idx) => (
+								<span
+									key={`answer-detail-${idx}-${blankItem}`}
+									className="ml-2"
+								>
+									空欄{idx + 1}: {answersList[idx]}
+									{selectedOptions[idx] !== answersList[idx] && (
+										<span className="text-red-500">
+											(あなたの回答: {selectedOptions[idx] ?? "未選択"})
+										</span>
+									)}
+								</span>
+							))}
+						</p>
+						<button
+							type="button"
+							onClick={handleNext}
+							className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+						>
+							{currentIndex + 1 < total ? "次へ" : "完了"}
+						</button>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

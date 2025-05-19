@@ -23,6 +23,10 @@ export interface QuizParams {
 export async function getQuizQuestions(
 	params: QuizParams,
 ): Promise<(QuestionData & { questionId: string; cardId: string })[]> {
+	console.log(
+		"[quiz.ts] getQuizQuestions called with params:",
+		JSON.stringify(params),
+	);
 	const supabase = await createClient();
 
 	// Helper to extract plain text from Tiptap JSON content
@@ -60,6 +64,7 @@ export async function getQuizQuestions(
 	// Attempt to fetch due cards based on scheduling
 	const { data: initialCards, error: initialError } = await query;
 	if (initialError) throw initialError;
+	console.log("[quiz.ts] initialCards.length:", initialCards?.length ?? 0);
 	// Use due cards if available, otherwise fallback to all cards (reducing question count accordingly)
 	let cards = initialCards ?? [];
 	if (cards.length === 0) {
@@ -75,6 +80,7 @@ export async function getQuizQuestions(
 		const { data: allCards, error: fallbackError } = await fallbackQuery;
 		if (fallbackError) throw fallbackError;
 		cards = allCards ?? [];
+		console.log("[quiz.ts] allCards.length (after fallback):", cards.length);
 		if (cards.length === 0) {
 			throw new Error("対象のカードが見つかりません");
 		}
@@ -99,6 +105,7 @@ export async function getQuizQuestions(
 	// シャッフルと抽出
 	const list = params.shuffle ? cards.sort(() => Math.random() - 0.5) : cards;
 	const subset = list.slice(0, params.count);
+	console.log("[quiz.ts] subset.length (cards to process):", subset.length);
 
 	// モードマッピング
 	const modeMap: Record<QuizMode, QuestionType> = {
@@ -131,6 +138,10 @@ export async function getQuizQuestions(
 		[];
 
 	if (newItems.length > 0) {
+		console.log(
+			"[quiz.ts] newItems.length (cards for new question generation):",
+			newItems.length,
+		);
 		// テキスト抽出ペアを準備
 		const newPairs = newItems.map((card) => ({
 			front: extractText(card.front_content),

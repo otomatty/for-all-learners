@@ -27,6 +27,8 @@ export interface ClozeQuestion {
 	blanks: string[];
 	question: string;
 	answers: string[];
+	/** 各空欄に対する選択肢の配列。options[i] が answers[i] に対する選択肢群 (正解を含む) */
+	options: string[][];
 }
 
 export type QuestionData =
@@ -62,26 +64,28 @@ export async function generateQuestions(
 			prompt = `${JSON_ONLY_PREFIX}Generate a multiple-choice question${difficultyPrompt} based on the following flashcard. Provide a JSON object with these keys:
 "prompt" (string),
 "question" (string, the question text),
-"options" (array of 4 strings),
+"options" (array of 4 strings, ensure all options have roughly the same length),
 "correctAnswerIndex" (integer index of the correct option),
-"explanation" (string explanation for the correct answer).
+"explanation" (string, a detailed explanation in Markdown format of why the correct answer is correct and why the other options are incorrect. Use **bold** for emphasis and - for list items.).
 Ensure valid JSON only, no markdown fences.
 Front: ${front}
 Back: ${back}`;
 			break;
 		case "cloze":
-			prompt = `${JSON_ONLY_PREFIX}Generate a cloze (fill-in-the-blank) question${difficultyPrompt} based on the following flashcard. Provide a JSON object with these keys:
-"text" (string, include blank placeholders in curly braces),
-"blanks" (array of strings, each placeholder including curly braces),
-"answers" (array of strings for each blank without braces).
+			prompt = `${JSON_ONLY_PREFIX}Generate a cloze (fill-in-the-blank) question${difficultyPrompt} based on the following flashcard. The question should require understanding of the flashcard content, not just be guessable from context. Provide a JSON object with these keys:
+"text" (string, the cloze text with placeholders like {blank1}),
+"blanks" (array of strings, listing all blank placeholders like [\"{blank1}\", \"{blank2}\"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
+"question" (string, a question that guides the user to fill the blanks),
+"answers" (array of strings for each blank),
+"options" (array of arrays of strings. Each inner array should contain 4 options for the corresponding blank, including the correct answer. Ensure options are relevant and plausible yet distinguishable from the correct answer. Shuffle the options for each blank.).
 Ensure valid JSON only, no markdown fences.
 Front: ${front}
 Back: ${back}`;
 			break;
 		default:
 			prompt = `${JSON_ONLY_PREFIX}Generate a simple flashcard question${difficultyPrompt} based on the following flashcard. Provide a JSON object with these keys:
-"prompt" (string),
-"answer" (string).
+"question" (string, the question to ask),
+"answer" (string, the answer to the question).
 Ensure valid JSON only, no markdown fences.
 Front: ${front}
 Back: ${back}`;
@@ -112,7 +116,18 @@ Back: ${back}`;
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
 
 	try {
+		console.log("Raw JSON string from LLM (generateQuestions):", jsonStr);
 		const parsed = JSON.parse(jsonStr) as Omit<QuestionData, "type">;
+		if (type === "cloze") {
+			const clozeQuestion = parsed as ClozeQuestion;
+			if (!clozeQuestion.blanks || !Array.isArray(clozeQuestion.blanks)) {
+				clozeQuestion.blanks = [];
+				console.warn(
+					"[gemini.ts] generateQuestions: 'blanks' field was missing or not an array, defaulted to []. Problematic parsed data:",
+					JSON.stringify(parsed),
+				);
+			}
+		}
 		return { type, ...parsed } as QuestionData;
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
@@ -151,27 +166,30 @@ export async function generateBulkQuestions(
 	switch (type) {
 		case "multiple_choice":
 			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} multiple-choice questions${languagePrompt} based on the following flashcards. Use exactly this Japanese question template, replacing {prompt} with the prompt text:
-"\"{prompt}\" の内容を最もよく表している選択肢はどれですか？"\n
+""{prompt}" の内容を最もよく表している選択肢はどれですか？"
+
 Avoid any vague pronouns such as "上記の説明" or "それ". Provide ONLY a JSON array of objects, each with keys:
 "prompt" (string),
 "question" (string),
-"options" (array of 4 strings),
+"options" (array of 4 strings, ensure all options have roughly the same length),
 "correctAnswerIndex" (integer),
-"explanation" (string).
+"explanation" (string, a detailed explanation in Markdown format of why the correct answer is correct and why the other options are incorrect. Use **bold** for emphasis and - for list items.).
 Use valid JSON array only.
 `;
 			break;
 		case "cloze":
-			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} cloze (fill-in-the-blank) questions${languagePrompt} based on the following flashcards. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
-"text" (string, include blank placeholders in curly braces),
-"blanks" (array of strings, each placeholder including curly braces),
-"answers" (array of strings for each blank without braces).
-Use valid JSON array only.\n`;
+			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} cloze (fill-in-the-blank) questions${languagePrompt} based on the following flashcards. Each question should require understanding of the flashcard content, not just be guessable from context. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
+"text" (string, the cloze text with placeholders like {blank1}),
+"blanks" (array of strings, listing all blank placeholders like [\"{blank1}\", \"{blank2}\"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
+"question" (string, a question that guides the user to fill the blanks),
+"answers" (array of strings for each blank),
+"options" (array of arrays of strings. Each inner array should contain 4 options for the corresponding blank, including the correct answer. Ensure options are relevant and plausible yet distinguishable from the correct answer. Shuffle the options for each blank.).
+Use valid JSON array only.\\\\n`;
 			break;
 		default:
 			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} flashcard questions${languagePrompt} based on the following flashcards. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
-"prompt" (string),
-"answer" (string).
+"question" (string, the question to ask),
+"answer" (string, the answer to the question).
 Use valid JSON array only.\n`;
 			break;
 	}
@@ -206,8 +224,22 @@ Use valid JSON array only.\n`;
 	jsonStr = jsonStr.replace(/"\s*,/g, '",');
 
 	try {
+		console.log("Raw JSON string from LLM (generateBulkQuestions):", jsonStr);
 		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;
-		return arr.map((q) => ({ type, ...q }) as QuestionData);
+		const processedArr = arr.map((q) => {
+			if (type === "cloze") {
+				const clozeQuestion = q as ClozeQuestion;
+				if (!clozeQuestion.blanks || !Array.isArray(clozeQuestion.blanks)) {
+					clozeQuestion.blanks = [];
+					console.warn(
+						"[gemini.ts] generateBulkQuestions: 'blanks' field was missing or not an array in an item, defaulted to []. Problematic item:",
+						JSON.stringify(q),
+					);
+				}
+			}
+			return q;
+		});
+		return processedArr.map((q) => ({ type, ...q }) as QuestionData);
 	} catch (err: unknown) {
 		const msg = err instanceof Error ? err.message : String(err);
 		throw new Error(`Failed to parse bulk response JSON: ${msg}`);
