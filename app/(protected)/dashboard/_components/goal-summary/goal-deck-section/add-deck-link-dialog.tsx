@@ -10,14 +10,14 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useEffect, useTransition, useCallback } from "react";
 
 interface AddDeckLinkDialogProps {
@@ -37,14 +37,15 @@ export function AddDeckLinkDialog({
 }: AddDeckLinkDialogProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [availableDecks, setAvailableDecks] = useState<Deck[]>([]);
-	const [selectedDeckId, setSelectedDeckId] = useState<string>("");
+	const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
 	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
+	const [isCreatingNew, setIsCreatingNew] = useState(false);
 	const [isPending, startTransition] = useTransition();
-	// 特殊値: 新規作成モード
-	const CREATE_NEW_VALUE = "__new__";
 
 	useEffect(() => {
 		if (isDialogOpen) {
+			// Reset new deck creation state each time dialog opens
+			setIsCreatingNew(false);
 			// Open時のみ実行
 			startTransition(async () => {
 				const decks = await getAvailableDecksForGoal(goalId);
@@ -53,16 +54,18 @@ export function AddDeckLinkDialog({
 		}
 	}, [goalId, isDialogOpen]);
 
-	const handleAdd = useCallback(() => {
+	const handleAddSelected = useCallback(() => {
 		startTransition(async () => {
-			await addGoalDeckLink(goalId, selectedDeckId);
+			for (const deckId of selectedDeckIds) {
+				await addGoalDeckLink(goalId, deckId);
+			}
 			onSuccess();
 			setIsDialogOpen(false);
 			const decks = await getAvailableDecksForGoal(goalId);
 			setAvailableDecks(decks);
-			setSelectedDeckId("");
+			setSelectedDeckIds([]);
 		});
-	}, [goalId, selectedDeckId, onSuccess]);
+	}, [goalId, selectedDeckIds, onSuccess]);
 
 	const handleCreate = useCallback(() => {
 		startTransition(async () => {
@@ -77,7 +80,7 @@ export function AddDeckLinkDialog({
 			setIsDialogOpen(false);
 			const decks = await getAvailableDecksForGoal(goalId);
 			setAvailableDecks(decks);
-			setSelectedDeckId("");
+			setSelectedDeckIds([]);
 			setNewDeckTitle("");
 		});
 	}, [goalId, newDeckTitle, onSuccess]);
@@ -95,49 +98,94 @@ export function AddDeckLinkDialog({
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}
 				dialogTitle="デッキ追加"
+				className="!max-w-2xl"
 			>
-				<div className="space-y-2 p-4">
-					<Select value={selectedDeckId} onValueChange={setSelectedDeckId}>
-						<SelectTrigger>
-							<SelectValue placeholder="選択してください" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectGroup>
-								<SelectLabel>デッキを選択</SelectLabel>
-								{/* 新規作成オプション */}
-								<SelectItem key={CREATE_NEW_VALUE} value={CREATE_NEW_VALUE}>
-									新規デッキを追加
-								</SelectItem>
-								{availableDecks.map((deck) => (
-									<SelectItem key={deck.id} value={deck.id}>
-										{deck.title} ({deck.card_count})
-									</SelectItem>
-								))}
-							</SelectGroup>
-						</SelectContent>
-					</Select>
-					{/* 選択に応じて表示切替 */}
-					{selectedDeckId && selectedDeckId !== CREATE_NEW_VALUE && (
-						<Button disabled={isPending} onClick={handleAdd}>
-							既存デッキを追加
+				<div className="space-y-2 p-4 overflow-auto">
+					<Table className="w-full text-left">
+						<TableHeader>
+							<TableRow>
+								<TableHead className="px-2 md:px-4 w-[80px]">選択</TableHead>
+								<TableHead className="px-2 md:px-4">タイトル</TableHead>
+								<TableHead className="hidden md:table-cell px-2 md:px-4">
+									作成日
+								</TableHead>
+								<TableHead className="hidden sm:table-cell px-2 md:px-4">
+									カード数
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{availableDecks.map((deck) => (
+								<TableRow key={deck.id}>
+									<TableCell>
+										<Checkbox
+											checked={selectedDeckIds.includes(deck.id)}
+											onCheckedChange={(checked) => {
+												if (checked) {
+													setSelectedDeckIds((prev) => [...prev, deck.id]);
+												} else {
+													setSelectedDeckIds((prev) =>
+														prev.filter((id) => id !== deck.id),
+													);
+												}
+											}}
+										/>
+									</TableCell>
+									<TableCell className="px-2 md:px-4">{deck.title}</TableCell>
+									<TableCell className="hidden md:table-cell px-2 md:px-4">
+										{new Date(deck.created_at).toLocaleDateString()}
+									</TableCell>
+									<TableCell className="hidden sm:table-cell px-2 md:px-4">
+										{deck.card_count}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+					<div className="flex justify-end">
+						<Button
+							disabled={isPending || selectedDeckIds.length === 0}
+							onClick={handleAddSelected}
+						>
+							選択したデッキを追加
 						</Button>
-					)}
-					{selectedDeckId === CREATE_NEW_VALUE && (
-						<div className="pt-4 border-t border-border space-y-2">
-							<p className="text-sm font-medium">新規デッキを作成</p>
-							<Input
-								placeholder="タイトルを入力"
-								value={newDeckTitle}
-								onChange={(e) => setNewDeckTitle(e.currentTarget.value)}
-							/>
+					</div>
+					<div className="pt-4 border-t border-border">
+						{!isCreatingNew ? (
 							<Button
-								disabled={isPending || !newDeckTitle}
-								onClick={handleCreate}
+								variant="ghost"
+								className="w-full"
+								onClick={() => setIsCreatingNew(true)}
 							>
-								新規デッキを作成して追加
+								新しいデッキを作成する
 							</Button>
-						</div>
-					)}
+						) : (
+							<div className="space-y-2">
+								<Input
+									placeholder="タイトルを入力"
+									value={newDeckTitle}
+									onChange={(e) => setNewDeckTitle(e.currentTarget.value)}
+								/>
+								<div className="flex justify-end space-x-2">
+									<Button
+										variant="ghost"
+										onClick={() => {
+											setIsCreatingNew(false);
+											setNewDeckTitle("");
+										}}
+									>
+										キャンセル
+									</Button>
+									<Button
+										disabled={isPending || !newDeckTitle}
+										onClick={handleCreate}
+									>
+										新規デッキを作成して追加
+									</Button>
+								</div>
+							</div>
+						)}
+					</div>
 				</div>
 			</ResponsiveDialog>
 		</>

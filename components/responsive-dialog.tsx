@@ -102,7 +102,7 @@ export function ResponsiveDialog({
 			>
 				{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
 				{/* <DrawerTrigger asChild>{triggerElement}</DrawerTrigger> */}
-				<DrawerContent className="sm:max-w-[425px]">
+				<DrawerContent className={className}>
 					<DrawerHeader>
 						<DrawerTitle>{dialogTitle}</DrawerTitle>
 						<DrawerDescription>{dialogDescription}</DrawerDescription>
@@ -120,8 +120,6 @@ export function ResponsiveDialog({
 				onOpenChange(currentOpenState);
 			}}
 		>
-			{/* DropdownMenuから開く場合はTriggerは不要になることが多い */}
-			{/* <DialogTrigger asChild>{triggerElement}</DialogTrigger> */}
 			<DialogContent className={className}>
 				<DialogHeader className="text-left">
 					<DialogTitle>{dialogTitle}</DialogTitle>

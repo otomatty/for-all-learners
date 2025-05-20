@@ -9,6 +9,7 @@ export type Deck = {
 	card_count: number;
 	description: string;
 	is_public: boolean;
+	created_at: string;
 };
 export type DeckStudyLog = { deck: { title: string }; studied_at: string };
 
@@ -19,7 +20,7 @@ export async function getGoalDecks(goalId: string): Promise<Deck[]> {
 	const supabase = await createClient();
 	const { data, error } = await supabase
 		.from("goal_deck_links")
-		.select("decks(id, title, description, is_public, cards(id))")
+		.select("decks(id, title, description, is_public, cards(id), created_at)")
 		.eq("goal_id", goalId);
 
 	if (error) {
@@ -31,6 +32,7 @@ export async function getGoalDecks(goalId: string): Promise<Deck[]> {
 		card_count: row.decks.cards?.length ?? 0,
 		description: row.decks.description ?? "",
 		is_public: row.decks.is_public ?? false,
+		created_at: row.decks.created_at ?? "",
 	}));
 }
 
@@ -160,7 +162,7 @@ export async function getAvailableDecksForGoal(
 	// Fetch user's decks not linked
 	let query = supabase
 		.from("decks")
-		.select("id, title, description, is_public, cards(id)")
+		.select("id, title, description, is_public, cards(id), created_at")
 		.eq("user_id", user.id);
 	if (linkedIds.length > 0) {
 		// exclude linked decks
@@ -176,5 +178,6 @@ export async function getAvailableDecksForGoal(
 		card_count: d.cards?.length ?? 0,
 		description: d.description ?? "",
 		is_public: d.is_public ?? false,
+		created_at: d.created_at ?? "",
 	}));
 }
