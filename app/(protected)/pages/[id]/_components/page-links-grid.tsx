@@ -86,11 +86,11 @@ export default function PageLinksGrid({
 								href={`/pages/${page.id}`}
 								className="block h-full"
 							>
-								<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">
-									<CardHeader>
+								<Card className="h-full overflow-hidden transition-all hover:shadow-md py-3 md:py-4 gap-2">
+									<CardHeader className="px-2 md:px-4">
 										<CardTitle>{page.title}</CardTitle>
 									</CardHeader>
-									<CardContent>
+									<CardContent className="px-2 md:px-4">
 										{page.thumbnail_url ? (
 											<Image
 												src={page.thumbnail_url}
@@ -127,15 +127,15 @@ export default function PageLinksGrid({
 						{missingLinks.map((name) => (
 							<Card
 								key={name}
-								className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2 cursor-pointer"
+								className="h-full overflow-hidden transition-all hover:shadow-md py-2 md:py-4 gap-2 cursor-pointer"
 								onClick={() => handleMissingLinkClick(name)}
 							>
-								<CardHeader>
+								<CardHeader className="px-2 md:px-4">
 									<CardTitle className="text-muted-foreground">
 										{name}
 									</CardTitle>
 								</CardHeader>
-								<CardContent className="space-y-2">
+								<CardContent className="space-y-2 px-2 md:px-4">
 									<div className="h-4 bg-gray-200 rounded w-full" />
 									<div className="h-4 bg-gray-200 rounded w-full" />
 									<div className="h-4 bg-gray-200 rounded w-full" />

@@ -27,12 +27,14 @@ interface QuizFinishedProps {
 	score: number;
 	total: number;
 	questionSummaries: AnswerSummary[];
+	onRetryWrong?: () => void;
 }
 
 export default function QuizFinished({
 	score,
 	total,
 	questionSummaries,
+	onRetryWrong,
 }: QuizFinishedProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -44,6 +46,10 @@ export default function QuizFinished({
 	const continueQuiz = () => {
 		router.push(`${pathname}?${params.toString()}`);
 	};
+	// Determine if there are any wrong answers
+	const hasWrong = questionSummaries.some(
+		(ws) => ws.yourAnswer !== ws.correctAnswer,
+	);
 	useEffect(() => {
 		const end = Date.now() + 3 * 1000;
 		const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
@@ -130,7 +136,11 @@ export default function QuizFinished({
 						<Button variant="outline" onClick={goHome}>
 							ホーム
 						</Button>
-						<Button onClick={continueQuiz}>続ける</Button>
+						{hasWrong && onRetryWrong ? (
+							<Button onClick={onRetryWrong}>間違った問題のみ再演習</Button>
+						) : (
+							<Button onClick={continueQuiz}>続ける</Button>
+						)}
 					</CardFooter>
 				</Card>
 			</Container>

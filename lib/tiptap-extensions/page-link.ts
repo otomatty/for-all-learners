@@ -102,7 +102,7 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 					const decoAttrs = {
 						nodeName: "a",
 						href: hrefValue,
-						class: `${cls} underline cursor-pointer`,
+						class: `${cls} underline cursor-pointer whitespace-normal break-all`,
 						...(isExternal
 							? { target: "_blank", rel: "noopener noreferrer" }
 							: {}),
@@ -140,7 +140,7 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 					const decoAttrs: Record<string, string> = {
 						nodeName: "a",
 						href: exists ? `/pages/${pageId}` : "#",
-						class: `${cls} underline cursor-pointer`,
+						class: `${cls} underline cursor-pointer whitespace-normal break-all`,
 					};
 					// If no page exists, do not allow navigation
 					if (!exists) {

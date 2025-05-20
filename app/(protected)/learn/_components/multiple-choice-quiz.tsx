@@ -201,12 +201,35 @@ export default function MultipleChoiceQuiz({
 			})();
 		}
 	}, [isFinished, results]);
+
+	// Retry wrong questions callback
+	const retryWrong = () => {
+		const wrongQuestions = quizQuestions.filter(
+			(q, idx) =>
+				questionSummaries[idx].yourAnswer !==
+				questionSummaries[idx].correctAnswer,
+		);
+		if (wrongQuestions.length === 0) return;
+		const shuffled = shuffleQuestions(wrongQuestions);
+		setQuizQuestions(shuffled);
+		setQuestionSummaries([]);
+		setResults([]);
+		setCurrentIndex(0);
+		setScore(0);
+		setIsFinished(false);
+		setTimeRecorded(false);
+		setQuestionStartTime(Date.now());
+		expireTimeRef.current = Date.now() + timeLimit * 1000;
+		setRemainingMs(timeLimit * 1000);
+	};
+
 	if (isFinished) {
 		return (
 			<QuizFinished
 				score={score}
 				total={total}
 				questionSummaries={questionSummaries}
+				onRetryWrong={retryWrong}
 			/>
 		);
 	}

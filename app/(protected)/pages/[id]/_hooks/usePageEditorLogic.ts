@@ -195,7 +195,7 @@ export function usePageEditorLogic({
 		editorProps: {
 			attributes: {
 				class:
-					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose lg:prose-lg mx-auto min-h-[200px] px-3 py-2",
+					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose lg:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
 			},
 		},
 		onCreate({ editor }) {

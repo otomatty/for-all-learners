@@ -10,7 +10,7 @@ const skeletonKeys = Array.from(
 
 export function PagesListSkeleton() {
 	return (
-		<div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+		<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
 			{skeletonKeys.map((key) => (
 				<div
 					key={key}

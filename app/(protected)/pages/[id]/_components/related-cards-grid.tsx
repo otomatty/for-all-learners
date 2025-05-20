@@ -63,9 +63,9 @@ export default function RelatedCardsGrid({ pageId }: RelatedCardsGridProps) {
 				{cards.map((card) => (
 					<Card
 						key={card.id}
-						className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2"
+						className="h-full overflow-hidden transition-all hover:shadow-md py-2 md:py-4 gap-2"
 					>
-						<CardContent>
+						<CardContent className="p-2 md:p-4">
 							<p className="line-clamp-5 text-sm text-muted-foreground">
 								{extractText(card.front_content as JSONContent)
 									.replace(/\s+/g, " ")
