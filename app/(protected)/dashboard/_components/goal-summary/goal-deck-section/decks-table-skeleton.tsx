@@ -30,7 +30,6 @@ export function DecksTableSkeleton() {
 						<TableHead className="hidden md:table-cell">作成日</TableHead>
 						<TableHead className="hidden sm:table-cell">カード数</TableHead>
 					</TableRow>
-					<TableRow> {/* ダミー行ヘッダー用 */}</TableRow>
 				</TableHeader>
 				<TableBody>
 					{skeletonKeys.map((key) => (

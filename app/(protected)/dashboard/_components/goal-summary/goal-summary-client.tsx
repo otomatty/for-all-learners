@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import GoalHeatmap from "./goal-heatmap";
 import GoalSelect from "./goal-select";
 import TimeProgress from "./time-progress";
+import { createClient } from "@/lib/supabase/client";
 
 interface StudyGoal {
 	id: string;
@@ -82,6 +83,42 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 	const startDate = new Date(now);
 	startDate.setFullYear(startDate.getFullYear() - 1);
 
+	// Reviewモード用: 目標に紐づく復習対象カード数を取得
+	const [reviewCount, setReviewCount] = useState<number>(0);
+	useEffect(() => {
+		const fetchReviewCount = async () => {
+			if (!selectedGoalId) return;
+			const supabase = createClient();
+			// ゴールに紐づくデッキID取得
+			const { data: links, error: linksError } = await supabase
+				.from("goal_deck_links")
+				.select("deck_id")
+				.eq("goal_id", selectedGoalId);
+			if (linksError) {
+				console.error("Failed to fetch goal-deck links:", linksError);
+				return;
+			}
+			const deckIds = links.map((l) => l.deck_id);
+			if (deckIds.length === 0) {
+				setReviewCount(0);
+				return;
+			}
+			// 復習対象カード数カウント (next_review_at が null or 過去)
+			const nowIso = new Date().toISOString();
+			const { count, error: countError } = await supabase
+				.from("cards")
+				.select("id", { count: "exact", head: true })
+				.in("deck_id", deckIds)
+				.or(`next_review_at.is.null,next_review_at.lte.${nowIso}`);
+			if (countError) {
+				console.error("Failed to count due cards:", countError);
+				return;
+			}
+			setReviewCount(count ?? 0);
+		};
+		fetchReviewCount();
+	}, [selectedGoalId]);
+
 	const handleGoalChange = (newGoalId: string) => {
 		if (newGoalId !== selectedGoalId) {
 			setSelectedGoalId(newGoalId); // UIの即時反映のため
@@ -120,14 +157,14 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 					goalId={selectedGoal?.id}
 					goalTitle={selectedGoal?.title}
 					triggerText="すべてのデッキを学習する"
-					disabled={true}
 				/>
 				<QuizSettingsDialog
 					goalId={selectedGoal?.id}
 					goalTitle={selectedGoal?.title}
 					triggerText="すべてのデッキを復習する"
 					reviewMode={true}
-					disabled={true}
+					reviewCount={reviewCount}
+					disabled={reviewCount === 0}
 				/>
 			</div>
 		</div>

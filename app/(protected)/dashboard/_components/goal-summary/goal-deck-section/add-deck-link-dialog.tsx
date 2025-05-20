@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useEffect, useTransition, useCallback } from "react";
+import { DecksTableSkeleton } from "./decks-table-skeleton";
 
 interface AddDeckLinkDialogProps {
 	goalId: string;
@@ -101,47 +102,51 @@ export function AddDeckLinkDialog({
 				className="!max-w-2xl"
 			>
 				<div className="space-y-2 p-4 overflow-auto">
-					<Table className="w-full text-left">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="px-2 md:px-4 w-[80px]">選択</TableHead>
-								<TableHead className="px-2 md:px-4">タイトル</TableHead>
-								<TableHead className="hidden md:table-cell px-2 md:px-4">
-									作成日
-								</TableHead>
-								<TableHead className="hidden sm:table-cell px-2 md:px-4">
-									カード数
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{availableDecks.map((deck) => (
-								<TableRow key={deck.id}>
-									<TableCell>
-										<Checkbox
-											checked={selectedDeckIds.includes(deck.id)}
-											onCheckedChange={(checked) => {
-												if (checked) {
-													setSelectedDeckIds((prev) => [...prev, deck.id]);
-												} else {
-													setSelectedDeckIds((prev) =>
-														prev.filter((id) => id !== deck.id),
-													);
-												}
-											}}
-										/>
-									</TableCell>
-									<TableCell className="px-2 md:px-4">{deck.title}</TableCell>
-									<TableCell className="hidden md:table-cell px-2 md:px-4">
-										{new Date(deck.created_at).toLocaleDateString()}
-									</TableCell>
-									<TableCell className="hidden sm:table-cell px-2 md:px-4">
-										{deck.card_count}
-									</TableCell>
+					{isPending ? (
+						<DecksTableSkeleton />
+					) : (
+						<Table className="w-full text-left">
+							<TableHeader>
+								<TableRow>
+									<TableHead className="px-2 md:px-4 w-[80px]">選択</TableHead>
+									<TableHead className="px-2 md:px-4">タイトル</TableHead>
+									<TableHead className="hidden md:table-cell px-2 md:px-4">
+										作成日
+									</TableHead>
+									<TableHead className="hidden sm:table-cell px-2 md:px-4">
+										カード数
+									</TableHead>
 								</TableRow>
-							))}
-						</TableBody>
-					</Table>
+							</TableHeader>
+							<TableBody>
+								{availableDecks.map((deck) => (
+									<TableRow key={deck.id}>
+										<TableCell>
+											<Checkbox
+												checked={selectedDeckIds.includes(deck.id)}
+												onCheckedChange={(checked) => {
+													if (checked) {
+														setSelectedDeckIds((prev) => [...prev, deck.id]);
+													} else {
+														setSelectedDeckIds((prev) =>
+															prev.filter((id) => id !== deck.id),
+														);
+													}
+												}}
+											/>
+										</TableCell>
+										<TableCell className="px-2 md:px-4">{deck.title}</TableCell>
+										<TableCell className="hidden md:table-cell px-2 md:px-4">
+											{new Date(deck.created_at).toLocaleDateString()}
+										</TableCell>
+										<TableCell className="hidden sm:table-cell px-2 md:px-4">
+											{deck.card_count}
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					)}
 					<div className="flex justify-end">
 						<Button
 							disabled={isPending || selectedDeckIds.length === 0}

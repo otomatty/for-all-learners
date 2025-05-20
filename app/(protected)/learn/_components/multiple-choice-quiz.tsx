@@ -85,25 +85,28 @@ export default function MultipleChoiceQuiz({
 	// track when the user answered or time expired
 	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
 
-	// Keyboard navigation
+	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
 	useEffect(() => {
 		const handleKeyPress = (event: KeyboardEvent) => {
-			if (showAnswer) return; // Don't process key presses if answer is shown
-
-			const keyNum = Number.parseInt(event.key, 10);
-			if (keyNum >= 1 && keyNum <= 4) {
-				// Check if the number of options is less than the key pressed
-				if (keyNum <= currentQuestion.options.length) {
+			if (!showAnswer) {
+				// option selection via number keys
+				const keyNum = Number.parseInt(event.key, 10);
+				if (keyNum >= 1 && keyNum <= currentQuestion.options.length) {
 					handleOptionClick(keyNum - 1);
+				}
+			} else {
+				// proceed to next question
+				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
+					event.preventDefault();
+					handleNext();
 				}
 			}
 		};
-
 		window.addEventListener("keydown", handleKeyPress);
 		return () => {
 			window.removeEventListener("keydown", handleKeyPress);
 		};
-	}, [showAnswer, currentQuestion.options]); // Re-run if showAnswer or options change
+	}, [showAnswer, currentQuestion.options]);
 
 	// Log learning duration when quiz finishes
 	useEffect(() => {
@@ -291,7 +294,9 @@ export default function MultipleChoiceQuiz({
 				</CardContent>
 				<CardFooter className="flex justify-end">
 					<Button onClick={handleNext} disabled={!showAnswer}>
-						{currentIndex + 1 < total ? "Next" : "Finish"}
+						{currentIndex + 1 < total
+							? "次へ (Space/Enter/→)"
+							: "完了 (Space/Enter/→)"}
 					</Button>
 				</CardFooter>
 			</Card>

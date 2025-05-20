@@ -190,6 +190,25 @@ export default function ClozeQuiz({
 		timeLimit, // timeLimit を依存配列に追加
 	]);
 
+	// Keyboard navigation: Space/Enter to check or next when result shown
+	useEffect(() => {
+		const handleKeyPress = (event: KeyboardEvent) => {
+			if (!showResult) {
+				if ([" ", "Enter"].includes(event.key)) {
+					event.preventDefault();
+					handleCheck();
+				}
+			} else {
+				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
+					event.preventDefault();
+					handleNext();
+				}
+			}
+		};
+		window.addEventListener("keydown", handleKeyPress);
+		return () => window.removeEventListener("keydown", handleKeyPress);
+	}, [showResult, handleCheck, handleNext]);
+
 	// Prepare parts with error handling
 	let parts: React.ReactNode[];
 	try {
@@ -349,7 +368,9 @@ export default function ClozeQuiz({
 							onClick={handleNext}
 							className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
 						>
-							{currentIndex + 1 < total ? "次へ" : "完了"}
+							{currentIndex + 1 < total
+								? "次へ (Space/Enter/→)"
+								: "完了 (Space/Enter/→)"}
 						</button>
 					</div>
 				)}

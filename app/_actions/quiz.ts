@@ -49,10 +49,23 @@ export async function getQuizQuestions(
 	// カード取得クエリを構築
 	let query = supabase.from("cards").select("id, front_content, back_content");
 
+	// 目標に紐づくデッキIDのリスト
+	let deckIds: string[] | undefined;
 	if (params.deckId) {
+		// 単一デッキの場合
 		query = query.eq("deck_id", params.deckId);
 	} else if (params.goalId) {
-		query = query.eq("goal_id", params.goalId);
+		// ゴールに紐づく複数デッキを取得
+		const { data: links, error: linksError } = await supabase
+			.from("goal_deck_links")
+			.select("deck_id")
+			.eq("goal_id", params.goalId);
+		if (linksError) throw linksError;
+		deckIds = links.map((l) => l.deck_id);
+		if (!deckIds.length) {
+			throw new Error("対象のデッキが見つかりません");
+		}
+		query = query.in("deck_id", deckIds);
 	} else {
 		throw new Error("deckId または goalId を指定してください");
 	}
@@ -74,8 +87,9 @@ export async function getQuizQuestions(
 			.select("id, front_content, back_content");
 		if (params.deckId) {
 			fallbackQuery = fallbackQuery.eq("deck_id", params.deckId);
-		} else if (params.goalId) {
-			fallbackQuery = fallbackQuery.eq("goal_id", params.goalId);
+		} else if (params.goalId && deckIds) {
+			// ゴールに紐づくデッキからフェールバック取得
+			fallbackQuery = fallbackQuery.in("deck_id", deckIds);
 		}
 		const { data: allCards, error: fallbackError } = await fallbackQuery;
 		if (fallbackError) throw fallbackError;

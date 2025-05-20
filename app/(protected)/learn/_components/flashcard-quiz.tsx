@@ -4,7 +4,7 @@ import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { FlashcardQuestion } from "@/lib/gemini";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface FlashcardQuizProps {
@@ -86,11 +86,30 @@ export default function FlashcardQuiz({
 		}
 	}, [finished, results.map]);
 
-	const handleReveal = () => {
+	const handleReveal = useCallback(() => {
 		// record when user reveals answer
 		setAnswerTimestamp(Date.now());
 		setShowAnswer(true);
-	};
+	}, []);
+
+	// Keyboard navigation: Space/Enter to reveal or next when answer shown
+	useEffect(() => {
+		const handleKeyPress = (event: KeyboardEvent) => {
+			if (!showAnswer) {
+				if ([" ", "Enter"].includes(event.key)) {
+					event.preventDefault();
+					handleReveal();
+				}
+			} else {
+				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
+					event.preventDefault();
+					handleNext();
+				}
+			}
+		};
+		window.addEventListener("keydown", handleKeyPress);
+		return () => window.removeEventListener("keydown", handleKeyPress);
+	}, [showAnswer, handleReveal]);
 
 	const handleNext = () => {
 		// compute time until answer submission (excludes idle)
@@ -149,8 +168,8 @@ export default function FlashcardQuiz({
 			>
 				{showAnswer
 					? currentIndex + 1 < total
-						? "次へ"
-						: "完了"
+						? "次へ (Space/Enter/→)"
+						: "完了 (Space/Enter/→)"
 					: "回答を見る"}
 			</button>
 		</div>
