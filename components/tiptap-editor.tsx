@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"; // Buttonをインポート
 import Image from "@tiptap/extension-image";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
-import { LatexInlineNode } from '@/lib/tiptap-extensions/latex-inline-node';
+import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -15,6 +15,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 
 interface TiptapEditorProps {
 	content: string; // 初期コンテンツはJSON文字列として受け取る想定
@@ -58,6 +59,7 @@ const TiptapEditor = ({
 				types: ["heading", "paragraph"],
 			}),
 			Typography, // タイポグラフィ関連のショートカット（例: (c) -> ©）
+			Highlight,
 		],
 		content: content ? JSON.parse(content) : undefined, // JSON文字列をパース
 		onUpdate: ({ editor }) => {

@@ -9,6 +9,8 @@
 @import "./themes/blue.css";
 @import "./themes/yellow.css";
 @import "./themes/violet.css";
+@import "prismjs/themes/prism-tomorrow.css";
+
 
 @layer utilities {
 	.text-balance {
@@ -227,12 +229,13 @@
 	}
 
 	/* コードブロック用スタイル */
-	.prose pre {
+	/* .prose pre {
 		@apply bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-auto;
 	}
 	.prose pre code {
 		@apply font-mono text-sm leading-relaxed;
-	}
+	} */
+
 }
 
 /* GyazoImage 用スタイル */
