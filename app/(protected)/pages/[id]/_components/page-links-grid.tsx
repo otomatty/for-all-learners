@@ -22,8 +22,13 @@ interface PageLinksGridProps {
 		thumbnail_url: string | null;
 		content_tiptap: JSONContent;
 	}[];
-	nestedLinks: Record<string, string[]>;
 	missingLinks: string[];
+	incomingPages: {
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}[];
 }
 
 // JSONContent からプレーンテキストを抽出するヘルパー
@@ -39,8 +44,8 @@ function extractText(node: JSONContent): string {
 
 export default function PageLinksGrid({
 	outgoingPages,
-	nestedLinks,
 	missingLinks,
+	incomingPages,
 }: PageLinksGridProps) {
 	const router = useRouter();
 	const handleMissingLinkClick = React.useCallback(
@@ -74,13 +79,25 @@ export default function PageLinksGrid({
 		[router],
 	);
 
+	// outgoingPages と incomingPages をマージしてユニークなリンク一覧を作成
+	const linkedPages = React.useMemo(() => {
+		const map = new Map<string, (typeof outgoingPages)[0]>();
+		for (const p of outgoingPages) {
+			map.set(p.id, p);
+		}
+		for (const p of incomingPages) {
+			map.set(p.id, p);
+		}
+		return Array.from(map.values());
+	}, [outgoingPages, incomingPages]);
+
 	return (
 		<div className="my-8 space-y-8 min-h-[300px]">
-			{outgoingPages.length > 0 && (
+			{linkedPages.length > 0 && (
 				<section className="max-w-5xl mx-auto">
-					<h2 className="text-lg font-semibold mb-2">このページのリンク一覧</h2>
+					<h2 className="text-lg font-semibold mb-2">リンクしているページ</h2>
 					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-						{outgoingPages.map((page) => (
+						{linkedPages.map((page) => (
 							<Link
 								key={page.id}
 								href={`/pages/${page.id}`}
@@ -120,7 +137,9 @@ export default function PageLinksGrid({
 					</div>
 				</section>
 			)}
-			{missingLinks.length > 0 && (
+
+			{/* 未設定リンク一覧 */}
+			{missingLinks && missingLinks.length > 0 && (
 				<section className="max-w-5xl mx-auto">
 					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
 					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

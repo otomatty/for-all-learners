@@ -788,6 +788,39 @@ export type Database = {
         }
         Relationships: []
       }
+      page_page_links: {
+        Row: {
+          created_at: string
+          linked_id: string
+          page_id: string
+        }
+        Insert: {
+          created_at?: string
+          linked_id: string
+          page_id: string
+        }
+        Update: {
+          created_at?: string
+          linked_id?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_page_links_linked_id_fkey"
+            columns: ["linked_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_page_links_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_shares: {
         Row: {
           created_at: string | null
@@ -833,6 +866,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean
+          links_migrated: boolean
           scrapbox_page_content_synced_at: string | null
           scrapbox_page_id: string | null
           scrapbox_page_list_synced_at: string | null
@@ -846,6 +880,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
@@ -859,6 +894,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
