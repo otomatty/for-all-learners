@@ -1,4 +1,5 @@
 import "shiki/themes/tokyo-night.css"; // Import Shiki CSS theme
+import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";

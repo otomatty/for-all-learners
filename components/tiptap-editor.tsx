@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"; // Buttonをインポート
 import Image from "@tiptap/extension-image";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
+import { LatexInlineNode } from '@/lib/tiptap-extensions/latex-inline-node';
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -41,6 +42,7 @@ const TiptapEditor = ({
 			}),
 			CustomBlockquote, // Add the custom blockquote extension
 			CustomCodeBlock, // Add the custom code block extension
+			LatexInlineNode, // Add the new LaTeX inline node extension
 			Image.configure({
 				inline: false,
 				// allowBase64: true, // Base64は重いので基本的には非推奨

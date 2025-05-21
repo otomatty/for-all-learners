@@ -66,6 +66,7 @@
 		"html-react-parser": "^5.2.3",
 		"input-otp": "^1.4.2",
 		"jotai": "^2.12.3",
+		"katex": "^0.16.22",
 		"lodash.debounce": "^4.0.8",
 		"lucide-react": "^0.503.0",
 		"marked": "^15.0.11",
@@ -93,6 +94,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@tailwindcss/postcss": "^4.1.4",
+		"@types/katex": "^0.16.7",
 		"@types/lodash.debounce": "^4.0.9",
 		"@types/node": "^20",
 		"@types/react": "^19",
