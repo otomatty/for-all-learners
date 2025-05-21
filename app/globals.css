@@ -331,3 +331,12 @@
   fill: var(--primary);
   fill-opacity: 0.8;
 }
+
+/* Custom Blockquote Styles */
+blockquote {
+  margin: 1rem 0; /* my-4 */
+  padding-left: 1rem; /* pl-4 */
+  border-left-width: 4px; /* border-l-4 */
+  border-color: #6b7280; /* border-gray-500 */
+  font-style: italic; /* italic */
+}

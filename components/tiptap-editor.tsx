@@ -3,6 +3,8 @@
 import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { Button } from "@/components/ui/button"; // Buttonをインポート
 import Image from "@tiptap/extension-image";
+import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
+import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -34,7 +36,11 @@ const TiptapEditor = ({
 				// 必要に応じてStarterKitのオプションを設定
 				// 例: heading: { levels: [1, 2, 3] }
 				// history: false, // use y-prosemirror history if you use collaboration
+				blockquote: false, // Disable default blockquote in favor of CustomBlockquote
+				codeBlock: false, // Disable default codeBlock in favor of CustomCodeBlock
 			}),
+			CustomBlockquote, // Add the custom blockquote extension
+			CustomCodeBlock, // Add the custom code block extension
 			Image.configure({
 				inline: false,
 				// allowBase64: true, // Base64は重いので基本的には非推奨
