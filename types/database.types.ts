@@ -788,6 +788,39 @@ export type Database = {
         }
         Relationships: []
       }
+      page_page_links: {
+        Row: {
+          created_at: string
+          linked_id: string
+          page_id: string
+        }
+        Insert: {
+          created_at?: string
+          linked_id: string
+          page_id: string
+        }
+        Update: {
+          created_at?: string
+          linked_id?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_page_links_linked_id_fkey"
+            columns: ["linked_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_page_links_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_shares: {
         Row: {
           created_at: string | null
@@ -833,6 +866,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean
+          links_migrated: boolean
           scrapbox_page_content_synced_at: string | null
           scrapbox_page_id: string | null
           scrapbox_page_list_synced_at: string | null
@@ -846,6 +880,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
@@ -859,6 +894,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
+          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
@@ -1398,6 +1434,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_page_prompts: {
+        Row: {
+          created_at: string
+          id: string
+          prompt_key: string
+          template: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt_key: string
+          template: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt_key?: string
+          template?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_page_prompts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_quizlet_sets: {
         Row: {

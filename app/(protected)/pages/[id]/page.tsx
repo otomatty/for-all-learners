@@ -5,109 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
-// Add imports for page link transformation and content viewer
 import type { JSONContent } from "@tiptap/core";
-// テキストノード用型定義と型ガード
-type JSONTextNode = JSONContent & { type: "text"; text: string };
-function isTextNode(node: JSONContent): node is JSONTextNode {
-	const textNode = node as JSONTextNode;
-	return textNode.type === "text" && typeof textNode.text === "string";
-}
+import { extractLinkData } from "@/lib/utils/linkUtils";
+
 import EditPageForm from "./_components/edit-page-form";
-
-// JSONContent内のpageLinkおよびlegacy linkマーク用型定義
-type ContentMark = {
-	type: string;
-	attrs?: { pageId?: string | null; pageName?: string; href?: string };
-};
-
-/**
- * JSONContentから内部リンクの存在／未設定リンクを抽出するヘルパー
- */
-function extractLinkData(doc: JSONContent, pagesMap: Map<string, string>) {
-	const outgoingIds = new Set<string>();
-	const missingNames = new Set<string>();
-	function traverse(node: JSONContent) {
-		// Skip entire code blocks
-		if (node.type === "codeBlock") {
-			return;
-		}
-		if (node.marks) {
-			for (const mark of node.marks as ContentMark[]) {
-				// 新pageLinkマーク
-				if (
-					mark.type === "pageLink" &&
-					mark.attrs &&
-					mark.attrs.pageName !== undefined
-				) {
-					const { pageId, pageName } = mark.attrs;
-					// 外部リンクは除外
-					if (/^https?:\/\//.test(pageName)) continue;
-					if (pageId) outgoingIds.add(pageId);
-					else missingNames.add(pageName);
-				}
-				// レガシーlinkマーク
-				else if (
-					mark.type === "link" &&
-					mark.attrs &&
-					mark.attrs.pageId !== undefined
-				) {
-					// 外部リンクはテキストノードで判定して除外
-					if (
-						isTextNode(node) &&
-						/^\[https?:\/\//.test((node as JSONTextNode).text)
-					)
-						continue;
-					// インラインコード内のリンクは除外
-					const hasCodeMark = (node.marks as ContentMark[]).some(
-						(m) => m.type === "code",
-					);
-					if (hasCodeMark) continue;
-					const pageId = mark.attrs.pageId;
-					if (pageId) outgoingIds.add(pageId);
-					else if (isTextNode(node)) {
-						const textVal = (node as JSONTextNode).text;
-						const match = textVal.match(/\[([^\]]+)\]/);
-						const name = match ? match[1] : textVal;
-						missingNames.add(name);
-					}
-				}
-			}
-		}
-		if ("content" in node && Array.isArray(node.content)) {
-			for (const child of node.content) {
-				traverse(child as JSONContent);
-			}
-		}
-		// Detect plain bracket syntax ([...]) in text nodes, excluding external links and inline code
-		if (node.type === "text") {
-			// skip inline code marks
-			const hasCodeMark = (node.marks as ContentMark[] | undefined)?.some(
-				(m) => m.type === "code",
-			);
-			if (!hasCodeMark) {
-				const textVal = (node as JSONTextNode).text;
-				const bracketRegex = /\[([^\[\]]+)\]/g;
-				for (const match of textVal.matchAll(bracketRegex)) {
-					const title = match[1];
-					// skip external links
-					if (/^https?:\/\//.test(title)) continue;
-					const id = pagesMap.get(title);
-					if (id !== undefined) {
-						outgoingIds.add(id);
-					} else {
-						missingNames.add(title);
-					}
-				}
-			}
-		}
-	}
-	traverse(doc);
-	return {
-		outgoingIds: Array.from(outgoingIds),
-		missingNames: Array.from(missingNames),
-	};
-}
 
 export default async function PageDetail({
 	params,
@@ -156,51 +57,53 @@ export default async function PageDetail({
 		allPages.map((p) => [p.title, p.id]),
 	);
 
+	// 初回マイグレーション: legacy JSONのリンクを新テーブルに登録（links_migrated フラグで一度きり）
+	if (!page.links_migrated) {
+		const { outgoingIds } = extractLinkData(page.content_tiptap as JSONContent);
+		if (outgoingIds.length > 0) {
+			await supabase
+				.from("page_page_links")
+				.insert(
+					outgoingIds.map((linked_id) => ({ page_id: page.id, linked_id })),
+				);
+		}
+		// マイグレーション済みフラグを更新
+		await supabase
+			.from("pages")
+			.update({ links_migrated: true })
+			.eq("id", page.id);
+	}
+
 	// Transform page content to embed pageId in pageLink marks
 	const decoratedDoc = transformPageLinks(
 		page.content_tiptap as JSONContent,
 		pagesMap,
 	);
 
-	// --- 内部リンク一覧と未設定リンクを抽出 ---
-	const { outgoingIds, missingNames } = extractLinkData(decoratedDoc, pagesMap);
+	// --- 未設定リンク（missing links）を抽出 ---
+	const { missingNames } = extractLinkData(decoratedDoc);
+	const missingLinks = missingNames;
+
+	// --- このページがリンクしているページ一覧をDBから取得 ---
+	const { data: outRecs, error: outErr } = await supabase
+		.from("page_page_links")
+		.select("linked_id")
+		.eq("page_id", page.id);
+	if (outErr) throw outErr;
+	const outgoingIds = outRecs.map((r) => r.linked_id);
 	const { data: outgoingPages, error: fetchErr } = await supabase
 		.from("pages")
 		.select("id, title, content_tiptap, thumbnail_url")
 		.in("id", outgoingIds as string[]);
 	if (fetchErr) throw fetchErr;
 
-	const nestedLinks: Record<string, string[]> = {};
-	for (const p of outgoingPages) {
-		const { outgoingIds: nested } = extractLinkData(
-			p.content_tiptap as JSONContent,
-			pagesMap,
-		);
-		nestedLinks[p.id] = nested;
-	}
-	const missingLinks = missingNames;
-
-	// --- このページを参照しているページ（被リンク）を抽出 ---
-	const incomingPagesMeta = allPages
-		.filter((p) => p.id !== page.id) // 自分自身を除外
-		.filter((p) => {
-			// p.content_tiptap が null や undefined の場合、または型が期待通りでない場合のフォールバックを追加
-			if (!p.content_tiptap || typeof p.content_tiptap !== "object") {
-				return false;
-			}
-			try {
-				const { outgoingIds: idsFromOtherPage } = extractLinkData(
-					p.content_tiptap as JSONContent, // 型アサーションは元のコードに倣う
-					pagesMap,
-				);
-				return idsFromOtherPage.includes(page.id);
-			} catch (e) {
-				console.warn(`Failed to extract link data for page ${p.id}:`, e);
-				return false; // エラー発生時は含めない
-			}
-		});
-	const incomingIds = incomingPagesMeta.map((p) => p.id);
-
+	// --- このページを参照しているページ（被リンク）をDBから取得 ---
+	const { data: inRecs, error: inErr } = await supabase
+		.from("page_page_links")
+		.select("page_id")
+		.eq("linked_id", page.id);
+	if (inErr) throw inErr;
+	const incomingIds = inRecs.map((r) => r.page_id);
 	let incomingPages: Array<{
 		id: string;
 		title: string;
@@ -211,19 +114,13 @@ export default async function PageDetail({
 		const { data: fetchedIncomingPages, error: incomingErr } = await supabase
 			.from("pages")
 			.select("id, title, content_tiptap, thumbnail_url")
-			.in("id", incomingIds); // `as string[]` は不要、supabaseが型推論できるはず
-
-		if (incomingErr) {
-			console.error("Error fetching incoming pages:", incomingErr);
-			// エラー発生時も処理を続行させるため、空配列のままにするか、エラーをthrowするか検討。
-			// ここではコンソールにエラーを出力し、空配列を使用する。
-		} else if (fetchedIncomingPages) {
-			incomingPages = fetchedIncomingPages.map((p) => ({
-				...p,
-				content_tiptap: p.content_tiptap as JSONContent, // 型アサーション
-				thumbnail_url: p.thumbnail_url ?? null,
-			}));
-		}
+			.in("id", incomingIds as string[]);
+		if (incomingErr) throw incomingErr;
+		incomingPages = fetchedIncomingPages.map((p) => ({
+			...p,
+			content_tiptap: p.content_tiptap as JSONContent,
+			thumbnail_url: p.thumbnail_url ?? null,
+		}));
 	}
 
 	return (
@@ -241,9 +138,8 @@ export default async function PageDetail({
 							thumbnail_url: p.thumbnail_url ?? null,
 							content_tiptap: p.content_tiptap as JSONContent,
 						}))}
-						nestedLinks={nestedLinks}
+						incomingPages={incomingPages}
 						missingLinks={missingLinks}
-						incomingPages={incomingPages} // Add this line
 					/>
 				</div>
 			</div>
