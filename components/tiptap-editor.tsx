@@ -3,6 +3,9 @@
 import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { Button } from "@/components/ui/button"; // Buttonをインポート
 import Image from "@tiptap/extension-image";
+import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
+import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
+import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -12,6 +15,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 
 interface TiptapEditorProps {
 	content: string; // 初期コンテンツはJSON文字列として受け取る想定
@@ -34,7 +38,12 @@ const TiptapEditor = ({
 				// 必要に応じてStarterKitのオプションを設定
 				// 例: heading: { levels: [1, 2, 3] }
 				// history: false, // use y-prosemirror history if you use collaboration
+				blockquote: false, // Disable default blockquote in favor of CustomBlockquote
+				codeBlock: false, // Disable default codeBlock in favor of CustomCodeBlock
 			}),
+			CustomBlockquote, // Add the custom blockquote extension
+			CustomCodeBlock, // Add the custom code block extension
+			LatexInlineNode, // Add the new LaTeX inline node extension
 			Image.configure({
 				inline: false,
 				// allowBase64: true, // Base64は重いので基本的には非推奨
@@ -50,6 +59,7 @@ const TiptapEditor = ({
 				types: ["heading", "paragraph"],
 			}),
 			Typography, // タイポグラフィ関連のショートカット（例: (c) -> ©）
+			Highlight,
 		],
 		content: content ? JSON.parse(content) : undefined, // JSON文字列をパース
 		onUpdate: ({ editor }) => {

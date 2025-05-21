@@ -11,6 +11,8 @@ import {
 	existencePluginKey,
 } from "@/lib/tiptap-extensions/page-link";
 import { TagLink } from "@/lib/tiptap-extensions/tag-link";
+import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JSONContent } from "@tiptap/core";
@@ -20,6 +22,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
+
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import CodeBlockPrism from "tiptap-extension-code-block-prism";
+import CodeBlockComponent from "@/components/CodeBlockComponent";
+
 import { updatePage } from "@/app/_actions/updatePage";
 
 interface UsePageEditorLogicProps {
@@ -144,6 +151,66 @@ function annotateLinksInJSON(
 	return clone;
 }
 
+/**
+ * Convert inline LaTeX syntax ($...$) in text nodes to latexInlineNode nodes.
+ */
+function transformDollarInDoc(doc: JSONContent): JSONContent {
+	const clone = structuredClone(doc) as JSONContent;
+	const regex = /\$([^$]+)\$/g;
+
+	function transformNode(node: JSONContent): JSONContent[] {
+		// Text node: split by $...$
+		if (node.type === "text") {
+			const textNode = node as JSONTextNode;
+			const { text, marks } = textNode;
+			const nodes: JSONContent[] = [];
+			let lastIndex = 0;
+			let match = regex.exec(text);
+			while (match !== null) {
+				const [full, content] = match;
+				const index = match.index;
+				if (index > lastIndex) {
+					nodes.push({
+						type: "text",
+						text: text.slice(lastIndex, index),
+						marks,
+					});
+				}
+				nodes.push({
+					type: "latexInlineNode",
+					attrs: { content },
+				} as JSONContent);
+				lastIndex = index + full.length;
+				match = regex.exec(text);
+			}
+			if (lastIndex < text.length) {
+				nodes.push({ type: "text", text: text.slice(lastIndex), marks });
+			}
+			return nodes.length > 0 ? nodes : [node];
+		}
+		// Recursively transform children
+		if ("content" in node && Array.isArray(node.content)) {
+			const transformedChildren = node.content.flatMap((child) =>
+				transformNode(child as JSONContent),
+			);
+			return [{ ...node, content: transformedChildren }];
+		}
+		return [node];
+	}
+
+	clone.content =
+		clone.content?.flatMap((child) => transformNode(child as JSONContent)) ??
+		[];
+	return clone;
+}
+
+// Create a Prism-based code block extension with a React NodeView
+const CodeBlockWithCopy = CodeBlockPrism.extend({
+	addNodeView() {
+		return ReactNodeViewRenderer(CodeBlockComponent);
+	},
+});
+
 export function usePageEditorLogic({
 	page,
 	initialContent,
@@ -187,7 +254,13 @@ export function usePageEditorLogic({
 			GyazoImage,
 			PageLink,
 			TagLink,
-			CustomCodeBlock,
+			LatexInlineNode,
+			Highlight,
+			CodeBlockWithCopy.configure({
+				defaultLanguage: "javascript",
+			}),
+			// Code blocks highlighted via Prism
+			// Prism highlighting is applied on editor updates
 			Placeholder.configure({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,
@@ -203,8 +276,11 @@ export function usePageEditorLogic({
 			// Sanitize initial document to remove empty text nodes
 			const sanitized = sanitizeContent(initialDoc);
 
+			// Convert inline LaTeX syntax in sanitized document
+			const withLatex = transformDollarInDoc(sanitized);
+
 			try {
-				editor.commands.setContent(sanitized);
+				editor.commands.setContent(withLatex);
 			} catch (error) {
 				console.error("setContent 失敗:", error);
 

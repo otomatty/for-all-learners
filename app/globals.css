@@ -9,6 +9,8 @@
 @import "./themes/blue.css";
 @import "./themes/yellow.css";
 @import "./themes/violet.css";
+@import "prismjs/themes/prism-tomorrow.css";
+
 
 @layer utilities {
 	.text-balance {
@@ -227,12 +229,13 @@
 	}
 
 	/* コードブロック用スタイル */
-	.prose pre {
+	/* .prose pre {
 		@apply bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-auto;
 	}
 	.prose pre code {
 		@apply font-mono text-sm leading-relaxed;
-	}
+	} */
+
 }
 
 /* GyazoImage 用スタイル */
@@ -330,4 +333,13 @@
 .color-scale-4 {
   fill: var(--primary);
   fill-opacity: 0.8;
+}
+
+/* Custom Blockquote Styles */
+blockquote {
+  margin: 1rem 0; /* my-4 */
+  padding-left: 1rem; /* pl-4 */
+  border-left-width: 4px; /* border-l-4 */
+  border-color: #6b7280; /* border-gray-500 */
+  font-style: italic; /* italic */
 }
