@@ -20,6 +20,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { updatePage } from "@/app/_actions/updatePage";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -223,67 +224,17 @@ export function usePageEditorLogic({
 		setIsLoading(true);
 		isSavingRef.current = true;
 		try {
-			const rawContent = editor.getJSON() as JSONContent;
-			// Extract unique titles from bracket syntax
-			const fullText = editor.getText();
-			// Extract bracketed titles and tag titles (after #)
-			const bracketTitles = Array.from(
-				fullText.matchAll(/\[([^\[\]]+)\]/g),
-				(m) => m[1],
-			);
-			const tagTitles = Array.from(
-				fullText.matchAll(/#([^\s\[\]]+)/g),
-				(m) => m[1],
-			);
-			const titles = Array.from(new Set([...bracketTitles, ...tagTitles]));
-			const { data: pages } = await supabase
-				.from("pages")
-				.select("title,id")
-				.in("title", titles as string[]);
-			const titleIdMap = new Map<string, string | null>(
-				pages?.map((p) => [p.title, p.id]) ?? [],
-			);
-			// Annotate content with link marks
-			const content = annotateLinksInJSON(rawContent, titleIdMap);
-			// Extract first Gyazo image and compute raw URL for thumbnail
-			let firstImageRawUrl: string | null = null;
-			const findGyazoImage = (node: JSONContent): string | null => {
-				const attrs = (node as { attrs?: { src?: string } }).attrs;
-				if (node.type === "gyazoImage" && attrs?.src) {
-					const src = attrs.src;
-					const pageUrl = src
-						.replace(/^https:\/\/i\.gyazo\.com\//, "https://gyazo.com/")
-						.replace(/\.png$/, "");
-					return `${pageUrl}/raw`;
-				}
-				if ("content" in node && Array.isArray(node.content)) {
-					for (const child of node.content) {
-						const found = findGyazoImage(child as JSONContent);
-						if (found) return found;
-					}
-				}
-				return null;
-			};
-			firstImageRawUrl = findGyazoImage(content);
-			const { error } = await supabase
-				.from("pages")
-				.update({
-					title,
-					content_tiptap: content,
-					thumbnail_url: firstImageRawUrl,
-				})
-				.eq("id", page.id)
-				.select()
-				.single();
-			if (error) throw error;
+			const content = editor.getJSON() as JSONContent;
+			await updatePage({ id: page.id, title, content });
+			toast.success("保存完了");
 		} catch (err) {
-			console.error("EditPageForm save error:", err);
+			console.error("SavePage error:", err);
 			toast.error("保存に失敗しました");
 		} finally {
 			setIsLoading(false);
 			isSavingRef.current = false;
 		}
-	}, [editor, title, page.id, supabase, setIsLoading]);
+	}, [editor, title, page.id, setIsLoading]);
 
 	const handleGenerateContent = useCallback(async () => {
 		if (!title.trim()) {
