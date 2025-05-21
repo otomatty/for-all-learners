@@ -180,6 +180,52 @@ export default async function PageDetail({
 	}
 	const missingLinks = missingNames;
 
+	// --- このページを参照しているページ（被リンク）を抽出 ---
+	const incomingPagesMeta = allPages
+		.filter((p) => p.id !== page.id) // 自分自身を除外
+		.filter((p) => {
+			// p.content_tiptap が null や undefined の場合、または型が期待通りでない場合のフォールバックを追加
+			if (!p.content_tiptap || typeof p.content_tiptap !== "object") {
+				return false;
+			}
+			try {
+				const { outgoingIds: idsFromOtherPage } = extractLinkData(
+					p.content_tiptap as JSONContent, // 型アサーションは元のコードに倣う
+					pagesMap,
+				);
+				return idsFromOtherPage.includes(page.id);
+			} catch (e) {
+				console.warn(`Failed to extract link data for page ${p.id}:`, e);
+				return false; // エラー発生時は含めない
+			}
+		});
+	const incomingIds = incomingPagesMeta.map((p) => p.id);
+
+	let incomingPages: Array<{
+		id: string;
+		title: string;
+		content_tiptap: JSONContent;
+		thumbnail_url: string | null;
+	}> = [];
+	if (incomingIds.length > 0) {
+		const { data: fetchedIncomingPages, error: incomingErr } = await supabase
+			.from("pages")
+			.select("id, title, content_tiptap, thumbnail_url")
+			.in("id", incomingIds); // `as string[]` は不要、supabaseが型推論できるはず
+
+		if (incomingErr) {
+			console.error("Error fetching incoming pages:", incomingErr);
+			// エラー発生時も処理を続行させるため、空配列のままにするか、エラーをthrowするか検討。
+			// ここではコンソールにエラーを出力し、空配列を使用する。
+		} else if (fetchedIncomingPages) {
+			incomingPages = fetchedIncomingPages.map((p) => ({
+				...p,
+				content_tiptap: p.content_tiptap as JSONContent, // 型アサーション
+				thumbnail_url: p.thumbnail_url ?? null,
+			}));
+		}
+	}
+
 	return (
 		<Container>
 			<BackLink title="ページ一覧に戻る" path="/pages" />
@@ -197,6 +243,7 @@ export default async function PageDetail({
 						}))}
 						nestedLinks={nestedLinks}
 						missingLinks={missingLinks}
+						incomingPages={incomingPages} // Add this line
 					/>
 				</div>
 			</div>

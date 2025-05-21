@@ -37,6 +37,12 @@ interface EditPageFormProps {
 	}>;
 	nestedLinks: Record<string, string[]>;
 	missingLinks: string[];
+	incomingPages: Array<{ // Add this
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}>;
 }
 
 export default function EditPageForm({
@@ -46,6 +52,7 @@ export default function EditPageForm({
 	outgoingPages,
 	nestedLinks,
 	missingLinks,
+	incomingPages, // Destructure here
 }: EditPageFormProps) {
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
@@ -192,6 +199,7 @@ export default function EditPageForm({
 								outgoingPages={outgoingPages}
 								nestedLinks={nestedLinks}
 								missingLinks={missingLinks}
+								incomingPages={incomingPages} // Pass here
 							/>
 							{/* 関連カード */}
 							<RelatedCardsGrid pageId={page.id} />

@@ -24,6 +24,12 @@ interface PageLinksGridProps {
 	}[];
 	nestedLinks: Record<string, string[]>;
 	missingLinks: string[];
+	incomingPages: { // Add this
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}[];
 }
 
 // JSONContent からプレーンテキストを抽出するヘルパー
@@ -41,6 +47,7 @@ export default function PageLinksGrid({
 	outgoingPages,
 	nestedLinks,
 	missingLinks,
+	incomingPages, // Destructure here
 }: PageLinksGridProps) {
 	const router = useRouter();
 	const handleMissingLinkClick = React.useCallback(
@@ -120,6 +127,49 @@ export default function PageLinksGrid({
 					</div>
 				</section>
 			)}
+
+			{/* New incomingPages section */}
+			{incomingPages && incomingPages.length > 0 && (
+				<section className="max-w-5xl mx-auto">
+					<h2 className="text-lg font-semibold mb-2">このページを参照しているページ</h2>
+					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+						{incomingPages.map(page => (
+							<Link key={page.id} href={`/pages/${page.id}`} className="block h-full">
+								<Card className="h-full overflow-hidden transition-all hover:shadow-md py-3 md:py-4 gap-2">
+									<CardHeader className="px-2 md:px-4">
+										<CardTitle>{page.title}</CardTitle>
+									</CardHeader>
+									<CardContent className="px-2 md:px-4">
+										{page.thumbnail_url ? (
+											<Image
+												src={page.thumbnail_url}
+												alt={page.title}
+												width={400} 
+												height={200} 
+												className="w-full h-32 object-contain mb-2" 
+											/>
+										) : (
+											(() => {
+												const text = extractText(page.content_tiptap)
+													.replace(/\s+/g, " ")
+													.trim();
+												return (
+													text && (
+														<p className="line-clamp-5 text-sm text-muted-foreground mb-2">
+															{text}
+														</p>
+													)
+												);
+											})()
+										)}
+									</CardContent>
+								</Card>
+							</Link>
+						))}
+					</div>
+				</section>
+			)}
+			
 			{missingLinks.length > 0 && (
 				<section className="max-w-5xl mx-auto">
 					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
