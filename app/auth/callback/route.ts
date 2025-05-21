@@ -2,6 +2,7 @@ import { createAccount, getAccountById } from "@/app/_actions/accounts";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { initializeUserPromptTemplates } from "@/app/_actions/promptTemplate";
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
@@ -71,6 +72,8 @@ export async function GET(request: Request) {
 	}
 	// Ensure user settings are initialized
 	await getUserSettings();
+	// Initialize default user prompt templates
+	await initializeUserPromptTemplates();
 
 	// After successful auth, redirect to dashboard
 	return NextResponse.redirect(`${requestUrl.origin}/dashboard`);

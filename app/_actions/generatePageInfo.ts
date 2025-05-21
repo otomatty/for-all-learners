@@ -2,7 +2,7 @@
 
 import { geminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
-import type { JSONContent } from "@tiptap/core";
+import { getPromptTemplate } from "@/app/_actions/promptService";
 
 /**
  * サーバーアクション: ページタイトルを基にMarkdown形式の解説ドキュメントを生成
@@ -14,10 +14,10 @@ export async function generatePageInfo(title: string): Promise<string> {
 		throw new Error("タイトルが空です");
 	}
 
-	// モデルへのシステムプロンプトとタイトルを設定: Markdown形式で出力
-	const systemPrompt =
-		"以下のキーワードに基づいて、Wikipediaのような詳細な解説ドキュメントをMarkdown形式で出力してください。Markdownのみを返してください。";
-	const contents = createUserContent([systemPrompt, title]);
+	// プロンプトテンプレートを取得
+	const promptTemplate = await getPromptTemplate("page_info");
+	// モデルへのプロンプトとタイトルを設定
+	const contents = createUserContent([promptTemplate, title]);
 
 	// Gemini APIを呼び出し
 	const response = await geminiClient.models.generateContent({

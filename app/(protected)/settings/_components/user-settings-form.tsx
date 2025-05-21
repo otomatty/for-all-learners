@@ -22,6 +22,7 @@ import ExternalServices from "./external-sync-settings";
 import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
 import GeneralSettings from "./general";
 import LlmSettings from "./llm-settings";
+import PromptTemplates from "./prompt-templates";
 import NotificationSettings from "./notifications";
 import PaginationSettings from "./pagination";
 
@@ -184,6 +185,7 @@ export default function UserSettingsForm({
 					<TabsTrigger value="pagination">ページ表示</TabsTrigger>
 					<TabsTrigger value="external">外部サービス</TabsTrigger>
 					<TabsTrigger value="llm">LLM</TabsTrigger>
+					<TabsTrigger value="prompts">プロンプト</TabsTrigger>
 				</TabsList>
 				<div className="space-y-6">
 					<TabsContent value="general">
@@ -231,6 +233,9 @@ export default function UserSettingsForm({
 					</TabsContent>
 					<TabsContent value="llm">
 						<LlmSettings />
+					</TabsContent>
+					<TabsContent value="prompts">
+						<PromptTemplates />
 					</TabsContent>
 				</div>
 				<div className="mt-4">
