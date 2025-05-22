@@ -1,0 +1,45 @@
+MIT License
+
+Copyright (c) 2025 For All Learners Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Additional Terms:
+
+1. Basic functionality of this project (core features and APIs) is licensed under the MIT License above.
+2. Beta features, experimental code, and advanced AI algorithms (e.g., any code under `/beta`, `/experimental`, or `/algorithms` directories) are proprietary and not covered by the MIT License. All rights in those portions are reserved.
+3. To obtain a license for the proprietary components, please contact the project maintainers at [email protected].
+
+# 日本語訳
+
+## MITライセンス
+
+著作権 (c) 2025 For All Learners コントリビュータ
+
+本ソフトウェアおよび関連文書ファイル（以下「本ソフトウェア」）の複製を無償で取得したすべての者に対し、本ソフトウェアを制限なく使用、複製、改変、結合、出版、頒布、サブライセンス、販売する権利を許諾します。ただし、以下の条件を満たす場合に限ります。
+
+上記の著作権表示および本許諾表示は、本ソフトウェアのすべての複製または実質的な部分に記載するものとします。
+
+本ソフトウェアは「現状のまま」提供され、明示的にも黙示的にも、商品性、特定目的への適合性および権利非侵害についての保証を含め、いかなる保証もありません。著作者または著作権者は、本ソフトウェアの使用またはその他の取引に起因または関連して生じたいかなる請求、損害、その他の責任についても、一切責任を負いません。
+
+## 追加条項（日本語訳）
+
+1. 本プロジェクトの基本機能（コア機能およびAPI）は、上記MITライセンスの適用を受けます。
+2. Beta機能、実験的コードおよび高度なAIアルゴリズム（例: `/beta`、`/experimental`、`/algorithms` ディレクトリ下）はプロプライエタリであり、MITライセンスの対象外です。これらの部分に関する一切の権利を保有します。
+3. プロプライエタリコンポーネントのライセンス取得については、saedgewell@gmail.com 宛にご連絡ください。 
