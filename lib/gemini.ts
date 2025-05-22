@@ -116,7 +116,6 @@ Back: ${back}`;
 	jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
 
 	try {
-		console.log("Raw JSON string from LLM (generateQuestions):", jsonStr);
 		const parsed = JSON.parse(jsonStr) as Omit<QuestionData, "type">;
 		if (type === "cloze") {
 			const clozeQuestion = parsed as ClozeQuestion;
@@ -224,7 +223,6 @@ Use valid JSON array only.\n`;
 	jsonStr = jsonStr.replace(/"\s*,/g, '",');
 
 	try {
-		console.log("Raw JSON string from LLM (generateBulkQuestions):", jsonStr);
 		const arr = JSON.parse(jsonStr) as Array<Omit<QuestionData, "type">>;
 		const processedArr = arr.map((q) => {
 			if (type === "cloze") {

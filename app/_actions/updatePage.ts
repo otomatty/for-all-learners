@@ -7,13 +7,22 @@ import { extractLinkData } from "@/lib/utils/linkUtils";
 export type UpdatePageParams = {
 	id: string;
 	title: string;
-	content: JSONContent;
+	content: string;
 };
 
 /**
  * ページ更新と page_page_links の同期を行うサーバーアクション
  */
 export async function updatePage({ id, title, content }: UpdatePageParams) {
+	// content is received as a JSON string; parse to JSONContent
+	let parsedContent: JSONContent;
+	try {
+		parsedContent = JSON.parse(content) as JSONContent;
+	} catch (err) {
+		console.error("Failed to parse content JSON in updatePage:", err);
+		throw err;
+	}
+
 	const supabase = await createClient();
 
 	// 1) ページ更新＋サムネ・マイグレーションフラグON
@@ -22,7 +31,7 @@ export async function updatePage({ id, title, content }: UpdatePageParams) {
 		.from("pages")
 		.update({
 			title,
-			content_tiptap: content,
+			content_tiptap: parsedContent,
 			links_migrated: true,
 			thumbnail_url: firstImage,
 		})
@@ -32,7 +41,7 @@ export async function updatePage({ id, title, content }: UpdatePageParams) {
 	}
 
 	// 2) page_page_links をリセットして再同期
-	const { outgoingIds } = extractLinkData(content);
+	const { outgoingIds } = extractLinkData(parsedContent);
 	await supabase.from("page_page_links").delete().eq("page_id", id);
 	if (outgoingIds.length > 0) {
 		const { error: linksErr } = await supabase

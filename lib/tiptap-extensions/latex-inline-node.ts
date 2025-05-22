@@ -128,14 +128,7 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 			new InputRule({
 				find: /\$([^$]+)\$/,
 				handler: ({ range, match, commands }) => {
-					console.log(
-						"[LatexInlineNode] InputRule invoked, match:",
-						match,
-						"range:",
-						range,
-					);
 					const content = match[1];
-					console.log("[LatexInlineNode] Detected content:", content);
 					if (content) {
 						commands.deleteRange(range);
 						commands.insertContent({
@@ -153,10 +146,6 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 			new Plugin({
 				props: {
 					transformPastedHTML: (html: string): string => {
-						console.log(
-							"[LatexInlineNode] transformPastedHTML called with:",
-							html,
-						);
 						return html;
 					},
 					transformPastedText(
@@ -165,12 +154,6 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 						plain: boolean,
 						view: EditorView,
 					): string {
-						console.log(
-							"[LatexInlineNode] transformPastedText called with:",
-							text,
-							"plain:",
-							plain,
-						);
 						return text;
 					},
 				},

@@ -300,9 +300,43 @@ export function usePageEditorLogic({
 		setIsLoading(true);
 		isSavingRef.current = true;
 		try {
-			const content = editor.getJSON() as JSONContent;
-			await updatePage({ id: page.id, title, content });
-			toast.success("保存完了");
+			// Get editor content and remove H1
+			let content = editor.getJSON() as JSONContent;
+			// Remove heading level 1 nodes by converting them to paragraphs
+			const removeHeading1 = (doc: JSONContent): JSONContent => {
+				const recurse = (node: JSONContent): JSONContent => {
+					if (node.type === "heading") {
+						// Access attrs with proper type
+						const attrs = (node as JSONContent & { attrs?: { level: number } })
+							.attrs;
+						const level = attrs?.level;
+						if (!level || level === 1) {
+							return {
+								type: "paragraph",
+								content: node.content,
+							} as JSONContent;
+						}
+					}
+					if (Array.isArray(node.content)) {
+						return {
+							...node,
+							content: node.content.map(recurse),
+						};
+					}
+					return node;
+				};
+				return {
+					...doc,
+					content: doc.content?.map(recurse),
+				} as JSONContent;
+			};
+			content = removeHeading1(content);
+			// Serialize content as JSON string for server action
+			await updatePage({
+				id: page.id,
+				title,
+				content: JSON.stringify(content),
+			});
 		} catch (err) {
 			console.error("SavePage error:", err);
 			toast.error("保存に失敗しました");
@@ -323,8 +357,7 @@ export function usePageEditorLogic({
 			const markdown = await generatePageInfo(title);
 			const html = marked.parse(markdown);
 			editor.commands.setContent(html);
-			await savePage(); // 生成後すぐに保存
-			toast.success("コンテンツ生成完了");
+			await savePage();
 		} catch (error) {
 			console.error("generatePageInfo error:", error);
 			toast.error("生成に失敗しました");
