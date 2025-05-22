@@ -6,6 +6,7 @@ CREATE TABLE accounts (
   id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
   email TEXT UNIQUE,
   full_name TEXT,
+  user_slug TEXT UNIQUE,
   avatar_url TEXT,
   gender VARCHAR(10) CHECK (gender IN ('male','female','other','prefer_not_to_say')),
   birthdate DATE,

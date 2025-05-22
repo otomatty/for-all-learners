@@ -10,7 +10,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
 import React, { useState } from "react";
 
 interface PagesPageClientProps {
@@ -23,6 +22,10 @@ export default function PagesPageClient({
 	totalCount,
 }: PagesPageClientProps) {
 	const [sortBy, setSortBy] = useState<"updated" | "created">("updated");
+
+	const handleNewPage = () => {
+		window.location.href = "/pages/new";
+	};
 
 	return (
 		<>
@@ -47,9 +50,7 @@ export default function PagesPageClient({
 								<SelectItem value="created">作成順</SelectItem>
 							</SelectContent>
 						</Select>
-						<Button asChild className="hidden md:block">
-							<Link href="/pages/new">新規ページ</Link>
-						</Button>
+						<Button onClick={handleNewPage}>新規ページ</Button>
 					</div>
 				</div>
 

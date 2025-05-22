@@ -222,7 +222,7 @@ export async function revokeNoteShareLink(token: string) {
 	const supabase = await getSupabaseClient();
 	const { error } = await supabase
 		.from("share_links")
-		.update({ revoked_at: new Date().toISOString() })
+		.update({ expires_at: new Date().toISOString() })
 		.eq("token", token);
 	if (error) throw error;
 }
@@ -242,14 +242,11 @@ export async function joinNoteByLink(token: string) {
 
 	const { data: link, error: linkError } = await supabase
 		.from("share_links")
-		.select(
-			"resource_id, resource_type, permission_level, expires_at, revoked_at",
-		)
+		.select("resource_id, resource_type, permission_level, expires_at")
 		.eq("token", token)
 		.single();
 	if (linkError) throw linkError;
 	if (link.resource_type !== "note") throw new Error("Invalid resource type");
-	if (link.revoked_at) throw new Error("Link has been revoked");
 	if (link.expires_at && new Date(link.expires_at) < new Date())
 		throw new Error("Link has expired");
 
@@ -313,22 +310,104 @@ export async function getNoteDetail(slug: string) {
 	// Fetch note metadata
 	const { data: note, error: noteError } = await supabase
 		.from("notes")
-		.select("id, slug, title, description, visibility")
+		.select(
+			"id, slug, title, description, visibility, updated_at, page_count, participant_count",
+		)
 		.eq("slug", slug)
 		.single();
 	if (noteError || !note) throw noteError || new Error("Note not found");
-	// Fetch linked page IDs
-	const { data: linksData, error: linksError } = await supabase
-		.from("note_page_links")
-		.select("page_id")
-		.eq("note_id", note.id);
-	if (linksError) throw linksError;
-	const pageIds = linksData.map((l) => l.page_id);
-	// Fetch pages details
-	const { data: pages, error: pagesError } = await supabase
-		.from("pages")
-		.select("*")
-		.in("id", pageIds);
-	if (pagesError) throw pagesError;
-	return { note, pages };
+	// Only return note metadata; page listing handled client-side via API
+	return { note };
+}
+
+/**
+ * Fetch list of notes owned or shared with the user.
+ */
+export async function getNotesList() {
+	const supabase = await getSupabaseClient();
+	// Authentication
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
+	if (userError || !user) throw new Error("User not authenticated");
+	// Fetch notes owned by user
+	const { data: ownedNotes, error: ownedError } = await supabase
+		.from("notes")
+		.select(
+			"id, slug, title, description, visibility, updated_at, page_count, participant_count",
+		)
+		.eq("owner_id", user.id);
+	if (ownedError) throw ownedError;
+	// Fetch notes shared with user
+	const { data: sharedLinks, error: sharedError } = await supabase
+		.from("note_shares")
+		.select("note_id")
+		.eq("shared_with_user_id", user.id);
+	if (sharedError) throw sharedError;
+	const sharedNoteIds = sharedLinks.map((s) => s.note_id);
+	const { data: sharedNotes, error: sharedNotesError } = sharedNoteIds.length
+		? await supabase
+				.from("notes")
+				.select(
+					"id, slug, title, description, visibility, updated_at, page_count, participant_count",
+				)
+				.in("id", sharedNoteIds)
+		: { data: [], error: null };
+	if (sharedNotesError) throw sharedNotesError;
+	// Combine and map to NoteSummary
+	const allNotes = [...ownedNotes, ...sharedNotes];
+	return allNotes.map((n) => ({
+		id: n.id,
+		slug: n.slug,
+		title: n.title,
+		description: n.description,
+		visibility: n.visibility as "public" | "unlisted" | "invite" | "private",
+		pageCount: n.page_count,
+		participantCount: n.participant_count,
+		updatedAt: n.updated_at || "",
+	}));
+}
+
+// I'm adding a server action to fetch note pages with pagination
+export async function getNotePages({
+	slug,
+	limit,
+	offset,
+	sortBy,
+}: {
+	slug: string;
+	limit: number;
+	offset: number;
+	sortBy: "updated" | "created";
+}): Promise<{
+	pages: Database["public"]["Tables"]["pages"]["Row"][];
+	totalCount: number;
+}> {
+	console.log("Debug [getNotePages]: args", { slug, limit, offset, sortBy });
+	const supabase = await getSupabaseClient();
+	// Fetch note ID by slug
+	const { data: note, error: noteError } = await supabase
+		.from("notes")
+		.select("id")
+		.eq("slug", slug)
+		.single();
+	console.log("Debug [getNotePages]: note result", { note, noteError });
+	if (noteError || !note) throw new Error("Note not found");
+
+	// Fetch pages via RPC
+	const { data: rpcData, error: rpcError } = await supabase.rpc(
+		"get_note_pages",
+		{
+			p_note_id: note.id,
+			p_limit: limit,
+			p_offset: offset,
+			p_sort: sortBy,
+		},
+	);
+	if (rpcError) throw rpcError;
+	const pages = (rpcData?.[0]?.pages ??
+		[]) as Database["public"]["Tables"]["pages"]["Row"][];
+	const totalCount = rpcData?.[0]?.total_count ?? 0;
+	return { pages, totalCount };
 }

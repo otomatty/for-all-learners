@@ -229,3 +229,42 @@ CREATE POLICY delete_share_links
         AND owner_id = auth.uid()
     )
   );
+
+  BEGIN;
+
+-- 1. カラム追加（participant_count のデフォルトを 1 に）
+ALTER TABLE public.notes
+  ADD COLUMN page_count         integer NOT NULL DEFAULT 0,
+  ADD COLUMN participant_count  integer NOT NULL DEFAULT 1;
+
+-- 2. 既存データをバックフィル（シェア数 + 1 = オーナー含む人数）
+UPDATE public.notes
+SET page_count = (
+  SELECT COUNT(*) FROM public.note_page_links l WHERE l.note_id = notes.id
+);
+UPDATE public.notes
+SET participant_count = (
+  SELECT COUNT(*) FROM public.note_shares s WHERE s.note_id = notes.id
+) + 1;
+
+-- 3. トリガー関数：note_shares の INSERT/DELETE で自動増減
+CREATE OR REPLACE FUNCTION public.trg_update_participant_count()
+RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.notes SET participant_count = participant_count + 1 WHERE id = NEW.note_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.notes SET participant_count = participant_count - 1 WHERE id = OLD.note_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_note_shares_count ON public.note_shares;
+CREATE TRIGGER trg_note_shares_count
+  AFTER INSERT OR DELETE ON public.note_shares
+  FOR EACH ROW EXECUTE FUNCTION public.trg_update_participant_count();
+
+-- page_count 用トリガーはそのまま使ってOK
+
+COMMIT;

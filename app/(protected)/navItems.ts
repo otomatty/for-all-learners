@@ -4,10 +4,11 @@ export const navItems: NavItem[] = [
 	{ label: "デッキ", href: "/decks", icon: "LayoutList", status: "enabled" },
 	{
 		label: "ノート",
-		href: "/pages",
+		href: "/notes",
 		icon: "BookOpen",
 		status: "enabled",
 	},
+	{ label: "ページ", href: "/pages", icon: "FileText", status: "enabled" },
 	{ label: "レポート", href: "/reports", icon: "BarChart", status: "demo" },
 	// {
 	// 	label: "自習室",
