@@ -38,8 +38,18 @@
 - created_at TIMESTAMPTZ DEFAULT NOW()
 - UNIQUE(note_id, shared_with_user_id)
 
+### 2.5 share_links テーブル
+- id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+- resource_type VARCHAR(10) NOT NULL CHECK (resource_type IN ('note','page','deck'))
+- resource_id UUID NOT NULL  # 対象ノート／ページ／デッキのID
+- token TEXT UNIQUE NOT NULL
+- permission_level VARCHAR(10) NOT NULL CHECK (permission_level IN ('viewer','editor','owner'))
+- created_at TIMESTAMPTZ DEFAULT NOW()
+- expires_at TIMESTAMPTZ  # 有効期限（任意）
+- revoked_at TIMESTAMPTZ  # 無効化日時（任意）
+
 ## 3. RLS ポリシー
-- `notes`, `note_page_links`, `note_shares` に対し、`auth.uid() = owner_id` または適切な参照チェックでRow Level Securityを設定。
+- `notes`, `note_page_links`, `note_shares`, `share_links` に対し、`auth.uid() = owner_id` または適切な参照チェックでRow Level Securityを設定。
 
 ## 4. トリガー & 検証関数
 ```sql
@@ -63,7 +73,8 @@ CREATE TRIGGER trg_notes_slug_check
 2. `notes` テーブル作成
 3. slug検証用関数・トリガー作成
 4. `note_page_links`, `note_shares` テーブル作成
-5. 既存 `pages` の初期 `notes` 紐付けスクリプト
+5. `share_links` テーブル作成（`resource_type` に 'note' を含むようALTER含む）
+6. 既存 `pages` の初期 `notes` 紐付けスクリプト
 
 ## 6. Server Actions 実装
 - 配置場所: `app/_actions/notes.ts`
@@ -80,6 +91,9 @@ CREATE TRIGGER trg_notes_slug_check
   - slug・権限・トリガー例外のハンドリング
   - RLS, 所有者チェック
   - DB トランザクション
+  - `updateNote` 実行時に `data.visibility` が変更されている場合、サーバーAction内で以下を実行:
+    - 対象ノートの `note_shares` 全レコード（owner 除く）を削除または無効化
+    - 対象ノートの `share_links` 全レコードを削除または無効化
 
 ## 7. UI/UX 要件
 - `/notes/[slug]` ルーティング
@@ -173,7 +187,7 @@ CREATE TRIGGER trg_notes_slug_check
 - 共有モード
   1. public: 全員に閲覧公開（visibility = 'public'）
      - リンクなしで参照可能
-     - `share_links` は不要
+     - 「参加」ボタンをクリックすると `note_shares` に `permission_level: 'editor'` のレコードを挿入し、編集権限を付与
   2. unlisted: URL を知る人のみ閲覧
      - `share_links` に viewer 権限のトークンリンクを作成
      - owner はいつでも revoke 可能
@@ -182,6 +196,8 @@ CREATE TRIGGER trg_notes_slug_check
      - 招待メール送信ロジックを実装（任意）
   4. private: オーナーのみ
      - `note_shares`・`share_links` は全て無効化／削除
+  - visibility 変更時のレコード無効化:
+    - visibility が変更された場合、上記 Server Action `updateNote` 内で `note_shares`（owner 除く）および `share_links` のレコードを削除または無効化
 
 - サーバーアクション (app/_actions/notes.ts)
   - `shareNoteInvite(noteId: string, userId: string, permission: 'editor'|'viewer')`
@@ -189,12 +205,13 @@ CREATE TRIGGER trg_notes_slug_check
   - `generateNoteShareLink(noteId: string, permission: 'viewer')`
   - `revokeNoteShareLink(token: string)`
   - `joinNoteByLink(token: string)`
-  - 各関数で RLS + 所有者チェック + トークン有効性検証
+  - `joinNotePublic(slug: string)`
 
 - UI
   - 共有設定ダイアログ: モード選択ラジオ / 招待ユーザーリスト管理 / リンク生成＆コピー
   - 招待ユーザーは権限切替・削除可
   - unlisted モードでは「共有用URL」を入力欄に表示
+  - public モードではノート詳細画面に「参加」ボタンを表示し、クリックで編集権限を取得
 
 ### 12.2 Pages 共有機能
 
@@ -225,4 +242,148 @@ CREATE TRIGGER trg_notes_slug_check
   - copy-to-clipboard、expires_at 設定オプション
 
 - RLS ポリシー
-  - `note_shares`, `page_shares`, `share_links` に対して `auth.uid()` と resource 所有者／招待ユーザー照合を実装 
+  - `note_shares`, `page_shares`, `share_links` に対して `auth.uid()` と resource 所有者／招待ユーザー照合を実装
+
+### 12.3 同時編集機能
+- 目的: 複数ユーザーが同時にノート／ページをリアルタイムで編集できるようにする
+- 技術選定:
+  - Tiptap Collaboration と Y.js による CRDT ベースの共同編集
+  - Supabase Realtime を使用して Y.js 更新を配信
+
+#### 12.3.1 依存パッケージ
+- yjs
+- @tiptap/extension-collaboration
+- @tiptap/extension-collaboration-cursor
+- @supabase/supabase-js
+- buffer  # Node.js 環境での Uint8Array サポート
+
+#### 12.3.2 環境変数
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+#### 12.3.3 クライアント実装詳細
+1. Y.Doc の初期化
+   ```ts
+   import * as Y from 'yjs';
+   const ydoc = new Y.Doc();
+   ```
+2. Tiptap Editor に Collaboration extensions を組み込む
+   ```ts
+   import { Editor } from '@tiptap/react';
+   import Collaboration from '@tiptap/extension-collaboration';
+   import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+
+   const editor = new Editor({
+     extensions: [
+       Collaboration.configure({ document: ydoc }),
+       CollaborationCursor.configure({
+         provider: channel,
+         user: { id: auth.uid(), name: user.name, color: user.color }
+       }),
+       // 他の拡張...
+     ],
+     content: initialContentJSON,
+   });
+   ```
+3. Supabase Realtime チャンネルの購読と Y.js update の適用
+   ```ts
+   import { createClient } from '@supabase/supabase-js';
+   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   const channel = supabase.channel(`notes:${noteId}`);
+
+   channel.on('broadcast', { event: 'yjs-update' }, ({ payload }) => {
+     Y.applyUpdate(ydoc, new Uint8Array(payload.update));
+   });
+   await channel.subscribe();
+   ```
+4. Y.js update イベントの送信
+   ```ts
+   ydoc.on('update', update => {
+     channel.send({
+       type: 'broadcast',
+       event: 'yjs-update',
+       payload: { update: Array.from(update) }
+     });
+   });
+   ```
+5. スナップショット保存（例: 30秒ごとまたは編集停止後）
+   ```ts
+   const saveSnapshot = async () => {
+     const update = Y.encodeStateAsUpdate(ydoc);
+     await fetch('/api/pages/collab-save', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ pageId, update: Array.from(update) }),
+     });
+   };
+   setInterval(saveSnapshot, 30000);
+   ```
+
+#### 12.3.4 サーバーサイド実装詳細
+##### API エンドポイント: `/api/pages/collab-save.ts`
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import * as Y from 'yjs';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { pageId, update } = req.body as { pageId: string; update: number[] };
+  const ydoc = new Y.Doc();
+  // クライアント保存済みスナップショットをロードする場合はここで初期化
+
+  // Y.js update を適用
+  Y.applyUpdate(ydoc, new Uint8Array(update));
+
+  // TipTap コンテンツに変換
+  const tiptapJSON = ydoc.get('prosemirror', Y.XmlFragment).toJSON();
+
+  // Supabase でページを更新
+  await supabase
+    .from('pages')
+    .update({ content_tiptap: JSON.stringify(tiptapJSON) })
+    .eq('id', pageId);
+
+  res.status(200).end();
+}
+```  
+##### Server Action 実装例
+- API エンドポイントの代わりに Next.js Server Actions を利用して、`saveCollabSnapshot` 関数を `app/_actions/pages.ts` に定義できます。
+
+```ts
+// app/_actions/pages.ts
+'use server';
+import * as Y from 'yjs';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
+
+export async function saveCollabSnapshot(
+  pageId: string,
+  update: number[]
+) {
+  const ydoc = new Y.Doc();
+  Y.applyUpdate(ydoc, new Uint8Array(update));
+  const tiptapJSON = ydoc
+    .get('prosemirror', Y.XmlFragment)
+    .toJSON();
+
+  await supabase
+    .from('pages')
+    .update({ content_tiptap: JSON.stringify(tiptapJSON) })
+    .eq('id', pageId);
+}
+```
+
+クライアントからは以下のように呼び出します:
+```ts
+import { saveCollabSnapshot } from 'app/_actions/pages';
+
+async function handleSnapshot(update: number[]) {
+  await saveCollabSnapshot(pageId, update);
+}
+```  
