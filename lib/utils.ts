@@ -45,15 +45,23 @@ export type ParsedAdminInquiriesSearchParams = {
 	searchQuery?: string;
 };
 
-export function parseAdminInquiriesSearchParams(searchParams?: {
+export function parseAdminInquiriesSearchParams(inputSearchParams?: {
 	[key: string]: string | string[] | undefined;
-}): ParsedAdminInquiriesSearchParams {
-	const params = new URLSearchParams();
-	if (searchParams) {
-		for (const key in searchParams) {
-			const value = searchParams[key];
-			if (typeof value === "string") {
-				params.set(key, value);
+} | URLSearchParams): ParsedAdminInquiriesSearchParams {
+	let params: URLSearchParams;
+
+	if (inputSearchParams instanceof URLSearchParams) {
+		params = inputSearchParams;
+	} else {
+		params = new URLSearchParams();
+		if (inputSearchParams) {
+			for (const key in inputSearchParams) {
+				const value = inputSearchParams[key];
+				if (typeof value === "string") {
+					params.set(key, value);
+				}
+				// Note: string[] is not handled here as URLSearchParams.set expects a string.
+				// If string[] is a valid use case, further logic would be needed.
 			}
 		}
 	}
@@ -78,7 +86,7 @@ export function parseAdminInquiriesSearchParams(searchParams?: {
 	const priority =
 		(params.get("priority") as InquiryPriority | undefined) || undefined;
 	const categoryId = params.get("categoryId") || undefined;
-	const searchQuery = params.get("q") || undefined;
+	const searchQuery = params.get("searchQuery") || undefined; // Corrected from "q" to "searchQuery" based on test
 
 	return {
 		page: page > 0 ? page : 1,

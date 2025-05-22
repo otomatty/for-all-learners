@@ -7,7 +7,9 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "biome check --write",
-		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts"
+		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts",
+		"test": "vitest",
+		"test:ui": "vitest --ui"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",
@@ -109,6 +111,10 @@
 		"@types/uuid": "^10.0.0",
 		"tailwindcss": "^4.1.4",
 		"tw-animate-css": "^1.2.8",
-		"typescript": "^5"
+		"typescript": "^5",
+		"vitest": "^3.1.4",
+		"@vitest/ui": "^3.1.4",
+		"jsdom": "^26.1.0",
+		"@vitejs/plugin-react": "^4.4.1"
 	}
 }
