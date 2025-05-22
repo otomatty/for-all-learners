@@ -2,7 +2,7 @@
 import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 /**
  * Payload for creating a note.
@@ -33,7 +33,10 @@ async function getSupabaseClient(): Promise<SupabaseClient<Database>> {
  */
 export async function createNote(payload: CreateNotePayload) {
 	const supabase = await getSupabaseClient();
-	const { data: user, error: userError } = await supabase.auth.getUser();
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
 	if (userError || !user) throw new Error("User not authenticated");
 
 	const { slug, title, description, visibility } = payload;
@@ -54,7 +57,10 @@ export async function createNote(payload: CreateNotePayload) {
  */
 export async function updateNote(id: string, payload: UpdateNotePayload) {
 	const supabase = await getSupabaseClient();
-	const { data: user, error: userError } = await supabase.auth.getUser();
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
 	if (userError || !user) throw new Error("User not authenticated");
 
 	const { data: existing, error: fetchError } = await supabase
@@ -228,7 +234,10 @@ export async function revokeNoteShareLink(token: string) {
  */
 export async function joinNoteByLink(token: string) {
 	const supabase = await getSupabaseClient();
-	const { data: user, error: userError } = await supabase.auth.getUser();
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
 	if (userError || !user) throw new Error("User not authenticated");
 
 	const { data: link, error: linkError } = await supabase
@@ -266,7 +275,10 @@ export async function joinNoteByLink(token: string) {
  */
 export async function joinNotePublic(slug: string) {
 	const supabase = await getSupabaseClient();
-	const { data: user, error: userError } = await supabase.auth.getUser();
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
 	if (userError || !user) throw new Error("User not authenticated");
 
 	const { data: note, error: noteError } = await supabase
@@ -290,4 +302,33 @@ export async function joinNotePublic(slug: string) {
 		.single();
 	if (error) throw error;
 	return data;
+}
+
+/**
+ * Fetch note details with linked pages.
+ * @param slug - Note slug
+ */
+export async function getNoteDetail(slug: string) {
+	const supabase = await getSupabaseClient();
+	// Fetch note metadata
+	const { data: note, error: noteError } = await supabase
+		.from("notes")
+		.select("id, slug, title, description, visibility")
+		.eq("slug", slug)
+		.single();
+	if (noteError || !note) throw noteError || new Error("Note not found");
+	// Fetch linked page IDs
+	const { data: linksData, error: linksError } = await supabase
+		.from("note_page_links")
+		.select("page_id")
+		.eq("note_id", note.id);
+	if (linksError) throw linksError;
+	const pageIds = linksData.map((l) => l.page_id);
+	// Fetch pages details
+	const { data: pages, error: pagesError } = await supabase
+		.from("pages")
+		.select("*")
+		.in("id", pageIds);
+	if (pagesError) throw pagesError;
+	return { note, pages };
 }
