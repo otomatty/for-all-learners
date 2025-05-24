@@ -29,6 +29,7 @@ interface PageLinksGridProps {
 		thumbnail_url: string | null;
 		content_tiptap: JSONContent;
 	}[];
+	nestedLinks: Record<string, string[]>;
 }
 
 // JSONContent からプレーンテキストを抽出するヘルパー
@@ -46,6 +47,7 @@ export default function PageLinksGrid({
 	outgoingPages,
 	missingLinks,
 	incomingPages,
+	nestedLinks,
 }: PageLinksGridProps) {
 	const router = useRouter();
 	const handleMissingLinkClick = React.useCallback(

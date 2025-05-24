@@ -63,11 +63,14 @@ export async function GET(request: Request) {
 				`${requestUrl.origin}/auth/login?error=no_email_for_account`,
 			);
 		}
+		// Generate slug from email (before '@')
+		const emailSlug = user.email.split("@")[0];
 		await createAccount({
 			id: user.id,
 			email: user.email,
 			full_name: user.user_metadata?.full_name ?? null,
 			avatar_url: user.user_metadata?.avatar_url ?? null,
+			user_slug: emailSlug,
 		});
 	}
 	// Ensure user settings are initialized

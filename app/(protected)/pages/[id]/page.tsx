@@ -36,6 +36,10 @@ export default async function PageDetail({
 	}
 	// Use mutable page for potential re-fetch after content sync
 	const page = pageData;
+	console.log(
+		"DEBUG: raw content_tiptap:",
+		JSON.stringify(page.content_tiptap),
+	);
 
 	// Fetch user's Cosense projectName for manual sync
 	const { data: relation, error: relError } = await supabase
@@ -56,33 +60,85 @@ export default async function PageDetail({
 	const pagesMap = new Map<string, string>(
 		allPages.map((p) => [p.title, p.id]),
 	);
-
-	// 初回マイグレーション: legacy JSONのリンクを新テーブルに登録（links_migrated フラグで一度きり）
-	if (!page.links_migrated) {
-		const { outgoingIds } = extractLinkData(page.content_tiptap as JSONContent);
-		if (outgoingIds.length > 0) {
-			await supabase
-				.from("page_page_links")
-				.insert(
-					outgoingIds.map((linked_id) => ({ page_id: page.id, linked_id })),
-				);
-		}
-		// マイグレーション済みフラグを更新
-		await supabase
-			.from("pages")
-			.update({ links_migrated: true })
-			.eq("id", page.id);
-	}
+	console.log("DEBUG: pagesMap keys:", Array.from(pagesMap.keys()));
 
 	// Transform page content to embed pageId in pageLink marks
 	const decoratedDoc = transformPageLinks(
 		page.content_tiptap as JSONContent,
 		pagesMap,
 	);
+	console.log("DEBUG: decoratedDoc:", JSON.stringify(decoratedDoc));
 
-	// --- 未設定リンク（missing links）を抽出 ---
-	const { missingNames } = extractLinkData(decoratedDoc);
-	const missingLinks = missingNames;
+	// Sync bracketed links on each page load (insert new links only)
+	function extractBracketedNames(doc: JSONContent): string[] {
+		const names = new Set<string>();
+		function recurse(node: unknown): void {
+			if (typeof node === "object" && node !== null) {
+				const n = node as { text?: string; content?: unknown[] };
+				if (typeof n.text === "string") {
+					for (const m of n.text.matchAll(/\[([^\[\]]+)\]/g)) {
+						names.add(m[1]);
+					}
+				}
+				if (Array.isArray(n.content)) {
+					for (const child of n.content) {
+						recurse(child);
+					}
+				}
+			}
+		}
+		recurse(doc);
+		return Array.from(names);
+	}
+	const bracketedNames = extractBracketedNames(
+		page.content_tiptap as JSONContent,
+	);
+	console.log("DEBUG: bracketedNames:", bracketedNames);
+	// Fetch pages for bracketed titles not in pagesMap
+	const missingTitles = bracketedNames.filter((name) => !pagesMap.has(name));
+	if (missingTitles.length > 0) {
+		const { data: fetchedPages, error: fetchPagesError } = await supabase
+			.from("pages")
+			.select("id, title")
+			.in("title", missingTitles);
+		if (fetchPagesError) throw fetchPagesError;
+		for (const p of fetchedPages) {
+			pagesMap.set(p.title, p.id);
+		}
+	}
+	const outgoingBracketIds: string[] = [];
+	const missingBracketNames: string[] = [];
+	for (const name of bracketedNames) {
+		const id = pagesMap.get(name);
+		if (id) outgoingBracketIds.push(id);
+		else missingBracketNames.push(name);
+	}
+	console.log(
+		"DEBUG: outgoingBracketIds:",
+		outgoingBracketIds,
+		"missingBracketNames:",
+		missingBracketNames,
+	);
+	if (outgoingBracketIds.length > 0) {
+		console.log(
+			"DEBUG: inserting page_page_links for page",
+			page.id,
+			outgoingBracketIds,
+		);
+		const { error: upsertError } = await supabase
+			.from("page_page_links")
+			.upsert(
+				outgoingBracketIds.map((linked_id) => ({
+					page_id: page.id,
+					linked_id,
+				})),
+				{ ignoreDuplicates: true },
+			);
+		console.log("DEBUG: upsertError:", upsertError);
+	} else {
+		console.log("DEBUG: no bracketed links to sync for page", page.id);
+	}
+	const missingLinks = missingBracketNames;
 
 	// --- このページがリンクしているページ一覧をDBから取得 ---
 	const { data: outRecs, error: outErr } = await supabase
@@ -96,6 +152,14 @@ export default async function PageDetail({
 		.select("id, title, content_tiptap, thumbnail_url")
 		.in("id", outgoingIds as string[]);
 	if (fetchErr) throw fetchErr;
+
+	// Compute nestedLinks for each outgoing page
+	const nestedLinks: Record<string, string[]> = {};
+	for (const p of outgoingPages) {
+		nestedLinks[p.id] = extractLinkData(
+			p.content_tiptap as JSONContent,
+		).outgoingIds;
+	}
 
 	// --- このページを参照しているページ（被リンク）をDBから取得 ---
 	const { data: inRecs, error: inErr } = await supabase
@@ -140,6 +204,7 @@ export default async function PageDetail({
 						}))}
 						incomingPages={incomingPages}
 						missingLinks={missingLinks}
+						nestedLinks={nestedLinks}
 					/>
 				</div>
 			</div>

@@ -983,7 +983,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean
-          links_migrated: boolean
           scrapbox_page_content_synced_at: string | null
           scrapbox_page_id: string | null
           scrapbox_page_list_synced_at: string | null
@@ -997,7 +996,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
-          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
@@ -1011,7 +1009,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean
-          links_migrated?: boolean
           scrapbox_page_content_synced_at?: string | null
           scrapbox_page_id?: string | null
           scrapbox_page_list_synced_at?: string | null
@@ -1769,6 +1766,10 @@ export type Database = {
       encrypt_user_llm_api_key: {
         Args: { data: string; key: string }
         Returns: string
+      }
+      extract_page_link_ids: {
+        Args: { content: Json }
+        Returns: string[]
       }
       extract_tiptap_text: {
         Args: { doc: Json }

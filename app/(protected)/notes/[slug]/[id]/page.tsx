@@ -57,21 +57,6 @@ export default async function PageDetail({ params }: PageDetailProps) {
 		allPages.map((p) => [p.title, p.id]),
 	);
 
-	if (!page.links_migrated) {
-		const { outgoingIds } = extractLinkData(page.content_tiptap as JSONContent);
-		if (outgoingIds.length > 0) {
-			await supabase
-				.from("page_page_links")
-				.insert(
-					outgoingIds.map((linked_id) => ({ page_id: page.id, linked_id })),
-				);
-		}
-		await supabase
-			.from("pages")
-			.update({ links_migrated: true })
-			.eq("id", page.id);
-	}
-
 	const decoratedDoc = transformPageLinks(
 		page.content_tiptap as JSONContent,
 		pagesMap,
@@ -117,6 +102,14 @@ export default async function PageDetail({ params }: PageDetailProps) {
 		}));
 	}
 
+	// Compute nestedLinks for each outgoing page
+	const nestedLinks: Record<string, string[]> = {};
+	for (const p of outgoingPages) {
+		nestedLinks[p.id] = extractLinkData(
+			p.content_tiptap as JSONContent,
+		).outgoingIds;
+	}
+
 	return (
 		<Container>
 			<BackLink title="ページ一覧に戻る" path={`/notes/${noteSlug}`} />
@@ -134,6 +127,7 @@ export default async function PageDetail({ params }: PageDetailProps) {
 						}))}
 						incomingPages={incomingPages}
 						missingLinks={missingLinks}
+						nestedLinks={nestedLinks}
 					/>
 				</div>
 			</div>

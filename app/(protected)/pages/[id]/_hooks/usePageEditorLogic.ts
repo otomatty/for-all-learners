@@ -1,15 +1,10 @@
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
-import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import {
 	CustomBulletList,
 	CustomOrderedList,
 } from "@/lib/tiptap-extensions/custom-list";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
-import {
-	PageLink,
-	existencePluginKey,
-} from "@/lib/tiptap-extensions/page-link";
+import { PageLink } from "@/lib/tiptap-extensions/page-link";
 import { TagLink } from "@/lib/tiptap-extensions/tag-link";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
@@ -19,7 +14,6 @@ import type { JSONContent } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { marked } from "marked";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +22,12 @@ import CodeBlockPrism from "tiptap-extension-code-block-prism";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
 
 import { updatePage } from "@/app/_actions/updatePage";
+import { useSplitPage } from "./useSplitPage";
+import { useGenerateContent } from "./useGenerateContent";
+import { useAutoSave } from "./useAutoSave";
+import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
+import { updatePageLinks } from "@/app/_actions/updatePageLinks";
+import { extractLinkData } from "@/lib/utils/linkUtils";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -89,65 +89,6 @@ function sanitizeContent(doc: JSONContent): JSONContent {
 		return newNode;
 	};
 	clone.content = (clone.content ?? []).map(recurse);
-	return clone;
-}
-
-// Add helper to annotate bracketed text as link marks
-function annotateLinksInJSON(
-	doc: JSONContent,
-	titleIdMap: Map<string, string | null>,
-): JSONContent {
-	const clone = structuredClone(doc) as JSONContent;
-	const regex = /\[([^\[\]]+)\]/g;
-	const recurse = (node: JSONContent): JSONContent | JSONContent[] => {
-		if (node.type === "text") {
-			const textNode = node as JSONTextNode;
-			const { text, marks } = textNode;
-			let lastIndex = 0;
-			const nodes: JSONContent[] = [];
-			// Find bracket matches sequentially
-			let match: RegExpExecArray | null = regex.exec(text);
-			while (match) {
-				const [full, title] = match;
-				const index = match.index;
-				if (index > lastIndex) {
-					nodes.push({
-						type: "text",
-						text: text.slice(lastIndex, index),
-						marks,
-					});
-				}
-				const pageId = titleIdMap.get(title) ?? null;
-				const href = pageId ? `/pages/${pageId}` : "#";
-				// Preserve brackets in link text
-				nodes.push({
-					type: "text",
-					text: full,
-					marks: [...(marks ?? []), { type: "link", attrs: { href, pageId } }],
-				});
-				lastIndex = index + full.length;
-				// Move to next match
-				match = regex.exec(text);
-			}
-			if (lastIndex < text.length) {
-				nodes.push({ type: "text", text: text.slice(lastIndex), marks });
-			}
-			return nodes.length > 0 ? nodes : [node];
-		}
-		if ("content" in node && Array.isArray(node.content)) {
-			const children = node.content.flatMap((child) => {
-				const res = recurse(child as JSONContent);
-				return Array.isArray(res) ? res : [res];
-			});
-			return { ...node, content: children };
-		}
-		return node;
-	};
-	clone.content =
-		clone.content?.flatMap((child) => {
-			const res = recurse(child);
-			return Array.isArray(res) ? res : [res];
-		}) ?? [];
 	return clone;
 }
 
@@ -290,11 +231,6 @@ export function usePageEditorLogic({
 		},
 	});
 
-	const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-	const isFirstUpdate = useRef(true);
-
-	const existenceTimeout = useRef<NodeJS.Timeout | null>(null);
-
 	const savePage = useCallback(async () => {
 		if (!editor) return;
 		setIsLoading(true);
@@ -346,73 +282,65 @@ export function usePageEditorLogic({
 		}
 	}, [editor, title, page.id, setIsLoading]);
 
-	const handleGenerateContent = useCallback(async () => {
-		if (!title.trim()) {
-			toast.error("タイトルを入力してください");
-			return;
-		}
-		if (!editor) return;
-		setIsGenerating(true);
-		try {
-			const markdown = await generatePageInfo(title);
-			const html = marked.parse(markdown);
-			editor.commands.setContent(html);
-			await savePage();
-		} catch (error) {
-			console.error("generatePageInfo error:", error);
-			toast.error("生成に失敗しました");
-		} finally {
-			setIsGenerating(false);
-		}
-	}, [title, editor, savePage, setIsGenerating]);
+	// Content generation hook
+	const handleGenerateContent = useGenerateContent(
+		editor,
+		title,
+		savePage,
+		setIsGenerating,
+	);
 
-	// Add wrapSelectionWithPageLink for bubble menu and keyboard shortcuts
-	const wrapSelectionWithPageLink = useCallback(async () => {
+	// Callback to wrap selected text in brackets for page link
+	const wrapSelectionWithPageLink = useCallback(() => {
 		if (!editor) return;
 		const { from, to } = editor.state.selection;
-		const text = editor.state.doc.textBetween(from, to, "");
-
-		if (!text) {
-			toast.error("テキストを選択してページリンクを作成してください");
+		if (from >= to) {
+			toast.error("リンクを作成するにはテキストを選択してください");
 			return;
 		}
-
-		// 選択範囲をブラケットで囲むだけに修正
+		const selectedText = editor.state.doc.textBetween(from, to, "");
+		const linkText = `[${selectedText}]`;
 		editor
 			.chain()
 			.focus()
-			.insertContentAt(from, "[")
-			.insertContentAt(to + 1, "]")
+			.deleteRange({ from, to })
+			.insertContentAt(from, linkText)
 			.run();
 	}, [editor]);
 
-	// Autosave on editor updates
+	// Callback for splitting page into a new page
+	const splitPage = useSplitPage(editor, page.id, savePage);
+
+	// Autosave hook
+	useAutoSave(editor, savePage, isDirty);
+
+	// Link existence check hook
+	useLinkExistenceChecker(editor, supabase);
+
+	// Client-side link synchronization hook
+	const linkSyncTimeout = useRef<NodeJS.Timeout | null>(null);
 	useEffect(() => {
 		if (!editor) return;
-		const onUpdate = () => {
-			if (isFirstUpdate.current) {
-				isFirstUpdate.current = false;
-				return;
-			}
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-			saveTimeout.current = setTimeout(savePage, 2000);
+		const syncLinks = () => {
+			if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
+			linkSyncTimeout.current = setTimeout(async () => {
+				try {
+					const json = editor.getJSON() as JSONContent;
+					const { outgoingIds } = extractLinkData(json);
+					await updatePageLinks({ pageId: page.id, outgoingIds });
+				} catch (err) {
+					console.error("リンク同期エラー:", err);
+				}
+			}, 500);
 		};
-		editor.on("update", onUpdate);
+		editor.on("update", syncLinks);
+		// Initial sync
+		syncLinks();
 		return () => {
-			editor.off("update", onUpdate);
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
+			editor.off("update", syncLinks);
+			if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
 		};
-	}, [savePage, editor]);
-
-	// Autosave on title changes (when dirty)
-	useEffect(() => {
-		if (!editor || !isDirty) return;
-		if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		saveTimeout.current = setTimeout(savePage, 2000);
-		return () => {
-			if (saveTimeout.current) clearTimeout(saveTimeout.current);
-		};
-	}, [isDirty, savePage, editor]);
+	}, [editor, page.id]);
 
 	useEffect(() => {
 		if (editor && initialContent) {
@@ -426,59 +354,11 @@ export function usePageEditorLogic({
 		}
 	}, [editor, initialContent]);
 
-	// リンク先の存在チェックをエディタ更新時にデバウンス実行
-	useEffect(() => {
-		if (!editor) return;
-		const checkExistence = async () => {
-			// テキスト全体を取得
-			const fullText = editor.getText();
-			// Extract bracketed titles and tag titles (after #)
-			const bracketTitles = Array.from(
-				fullText.matchAll(/\[([^\[\]]+)\]/g),
-				(m) => m[1],
-			);
-			const tagTitles = Array.from(
-				fullText.matchAll(/#([^\s\[\]]+)/g),
-				(m) => m[1],
-			);
-			const titles = Array.from(new Set([...bracketTitles, ...tagTitles]));
-			// Build map of title to page ID (null if not exists)
-			const existMap = new Map<string, string | null>();
-			if (titles.length > 0) {
-				const { data: pages } = await supabase
-					.from("pages")
-					.select("title,id")
-					.in("title", titles as string[]);
-				const pageMap = new Map<string, string>(
-					pages?.map((p) => [p.title, p.id]) ?? [],
-				);
-				for (const t of titles) {
-					existMap.set(t, pageMap.get(t) ?? null);
-				}
-			}
-			// メタ情報としてセット
-			const tr = editor.state.tr.setMeta(existencePluginKey, existMap);
-			editor.view.dispatch(tr);
-		};
-
-		const handler = () => {
-			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
-			existenceTimeout.current = setTimeout(checkExistence, 500);
-		};
-
-		editor.on("update", handler);
-		// 初回チェックを即時実行して、再読み込み時にもリンク状態を反映
-		handler();
-		return () => {
-			editor.off("update", handler);
-			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
-		};
-	}, [editor, supabase]);
-
 	return {
 		editor,
 		savePage, // 必要であれば外部から直接呼び出すことも可能にする
 		handleGenerateContent,
 		wrapSelectionWithPageLink,
+		splitPage,
 	};
 }

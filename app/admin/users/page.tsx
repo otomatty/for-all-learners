@@ -17,7 +17,7 @@ export default async function UsersPage() {
 	// Fetch accounts from public.accounts
 	const { data: accounts, error: acctErr } = await supabase
 		.from("accounts")
-		.select("id, full_name, email, gender, birthdate, avatar_url")
+		.select("id, full_name, email, gender, birthdate, avatar_url, user_slug")
 		.order("id", { ascending: true });
 	if (acctErr || !accounts) throw acctErr;
 
@@ -31,7 +31,8 @@ export default async function UsersPage() {
 	// Combine account records with auth metadata
 	const users: AccountWithAuth[] = accounts.map((acct) => {
 		// pick only the six fields we need from the account row
-		const { id, full_name, email, gender, birthdate, avatar_url } = acct;
+		const { id, full_name, email, gender, birthdate, avatar_url, user_slug } =
+			acct;
 		const authUser = authUsers.find((u) => u.id === id);
 		return {
 			id,
@@ -40,6 +41,7 @@ export default async function UsersPage() {
 			gender,
 			birthdate,
 			avatar_url,
+			user_slug,
 			registered_at: authUser?.created_at ?? null,
 			last_sign_in_at: authUser?.last_sign_in_at ?? null,
 		};

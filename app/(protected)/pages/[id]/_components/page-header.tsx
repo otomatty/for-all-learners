@@ -10,6 +10,7 @@ import { toast } from "sonner";
 interface PageHeaderProps {
 	title: string;
 	onTitleChange: (newTitle: string) => void;
+	onEnterPress?: () => void;
 	cosenseProjectName?: string | null;
 	scrapboxPageContentSyncedAt?: string | null;
 	scrapboxPageListSyncedAt?: string | null;
@@ -18,6 +19,7 @@ interface PageHeaderProps {
 export function PageHeader({
 	title,
 	onTitleChange,
+	onEnterPress,
 	cosenseProjectName,
 	scrapboxPageContentSyncedAt,
 	scrapboxPageListSyncedAt,
@@ -66,6 +68,12 @@ export function PageHeader({
 				aria-level={1}
 				value={title}
 				onChange={(e) => onTitleChange(e.target.value)}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						onEnterPress?.();
+					}
+				}}
 				placeholder="ページタイトルを入力"
 				className="!text-4xl font-bold flex-1 resize-none whitespace-pre-wrap break-words border-0 bg-transparent focus-visible:outline-none focus-visible:ring-0"
 			/>

@@ -79,16 +79,6 @@ export function PagesList({ pages }: PagesListProps) {
 								) : (
 									<div className="w-full h-32 flex items-center justify-center bg-gray-100 text-sm text-center text-gray-500 p-4">
 										この画像のドメインは許可されていません。
-										<Link
-											href="https://gyazo.com"
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-blue-500 hover:underline"
-										>
-											Gyazo
-											<ArrowUpRight className="w-4 h-4" />
-										</Link>
-										をご利用ください。
 									</div>
 								)
 							) : (

@@ -16,6 +16,12 @@ interface PageTabsProps {
 	nestedLinks: Record<string, string[]>;
 	missingLinks: string[];
 	pageId: string;
+	incomingPages: {
+		id: string;
+		title: string;
+		thumbnail_url: string | null;
+		content_tiptap: JSONContent;
+	}[];
 }
 
 export default function PageTabs({
@@ -23,6 +29,7 @@ export default function PageTabs({
 	nestedLinks,
 	missingLinks,
 	pageId,
+	incomingPages,
 }: PageTabsProps) {
 	return (
 		<Tabs defaultValue="links" className="my-8 max-w-5xl mx-auto">
@@ -35,6 +42,7 @@ export default function PageTabs({
 					outgoingPages={outgoingPages}
 					nestedLinks={nestedLinks}
 					missingLinks={missingLinks}
+					incomingPages={incomingPages}
 				/>
 			</TabsContent>
 			<TabsContent value="cards">

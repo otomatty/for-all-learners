@@ -46,7 +46,7 @@ export default function NotesList({ notes }: NotesListProps) {
 					<Link
 						key={note.id}
 						href={`/notes/${note.slug}`}
-						className="block hover:shadow-md transition"
+						className="block hover:shadow-md rounded-xl transition"
 					>
 						<Card>
 							<CardHeader>

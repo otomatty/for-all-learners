@@ -7,7 +7,7 @@ import type { Database } from "@/types/database.types";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type { KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { useDateShortcut } from "../_hooks/useDateShortcut";
@@ -23,6 +23,9 @@ import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
 import PageLinksGrid from "./page-links-grid";
 import RelatedCardsGrid from "./related-cards-grid";
 import FloatingToolbar from "./floating-toolbar";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -42,6 +45,7 @@ interface EditPageFormProps {
 		thumbnail_url: string | null;
 		content_tiptap: JSONContent;
 	}>;
+	nestedLinks: Record<string, string[]>;
 }
 
 export default function EditPageForm({
@@ -51,7 +55,12 @@ export default function EditPageForm({
 	outgoingPages,
 	missingLinks,
 	incomingPages,
+	nestedLinks,
 }: EditPageFormProps) {
+	const originalTitle = page.title;
+	const [showLinkAlert, setShowLinkAlert] = useState(false);
+	const [hasPromptedLink, setHasPromptedLink] = useState(false);
+
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
 	const isNewPage = searchParams.get("newPage") === "true";
@@ -68,16 +77,44 @@ export default function EditPageForm({
 		isOnline,
 	} = usePageFormState({ page, isNewPage });
 
-	const { editor, handleGenerateContent, wrapSelectionWithPageLink } =
-		usePageEditorLogic({
-			page,
-			initialContent,
+	// Moved useEffect here now that title is declared
+	useEffect(() => {
+		console.log("Debug: useEffect for link alert triggered", {
 			title,
-			supabase,
-			setIsLoading,
-			setIsGenerating,
-			isDirty,
+			originalTitle,
+			hasPromptedLink,
+			incomingPagesLength: incomingPages.length,
 		});
+		if (
+			!hasPromptedLink &&
+			title !== originalTitle &&
+			incomingPages.length > 0
+		) {
+			console.log("Debug: conditions met, showing alert");
+			setShowLinkAlert(true);
+			setHasPromptedLink(true);
+		}
+	}, [originalTitle, incomingPages.length, hasPromptedLink, title]);
+
+	// Debug: log whenever showLinkAlert state changes
+	useEffect(() => {
+		console.log("Debug: showLinkAlert state changed:", showLinkAlert);
+	}, [showLinkAlert]);
+
+	const {
+		editor,
+		handleGenerateContent,
+		wrapSelectionWithPageLink,
+		splitPage,
+	} = usePageEditorLogic({
+		page,
+		initialContent,
+		title,
+		supabase,
+		setIsLoading,
+		setIsGenerating,
+		isDirty,
+	});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =
 		useSpeechControls({
@@ -163,6 +200,43 @@ export default function EditPageForm({
 
 	return (
 		<>
+			{showLinkAlert && (
+				<Alert className="mb-4">
+					<AlertTitle>リンク更新の確認</AlertTitle>
+					<AlertDescription>
+						このページを参照している {incomingPages.length}{" "}
+						件のリンクが見つかりました。
+						<br />
+						タイトルを更新するとリンクテキストを「{originalTitle}」→「{title}
+						」に変更しますか？
+					</AlertDescription>
+					<div className="mt-2 flex gap-2">
+						<Button
+							onClick={async () => {
+								try {
+									await updateIncomingPageLinks({
+										currentPageId: page.id,
+										oldTitle: originalTitle,
+										newTitle: title,
+										incomingPageIds: incomingPages.map((p) => p.id),
+									});
+									toast.success("リンクを更新しました");
+								} catch (err) {
+									console.error("リンク更新エラー:", err);
+									toast.error("リンクの更新に失敗しました");
+								} finally {
+									setShowLinkAlert(false);
+								}
+							}}
+						>
+							更新する
+						</Button>
+						<Button variant="outline" onClick={() => setShowLinkAlert(false)}>
+							後で
+						</Button>
+					</div>
+				</Alert>
+			)}
 			<div className="flex gap-2">
 				<div className="flex-1 space-y-6">
 					{editor && (
@@ -172,6 +246,20 @@ export default function EditPageForm({
 									cosenseProjectName={cosenseProjectName}
 									title={title}
 									onTitleChange={setTitle}
+									onEnterPress={() => {
+										if (!editor) return;
+										editor
+											.chain()
+											.focus()
+											.insertContentAt(0, [
+												{
+													type: "paragraph",
+													content: [{ type: "text", text: "" }],
+												},
+											])
+											.setTextSelection(1)
+											.run();
+									}}
 									scrapboxPageContentSyncedAt={
 										page.scrapbox_page_content_synced_at
 									}
@@ -180,6 +268,7 @@ export default function EditPageForm({
 								<EditPageBubbleMenu
 									editor={editor}
 									wrapSelectionWithPageLink={wrapSelectionWithPageLink}
+									splitPage={splitPage}
 								/>
 								{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
 									<ContentSkeleton />
@@ -197,6 +286,7 @@ export default function EditPageForm({
 								outgoingPages={outgoingPages}
 								missingLinks={missingLinks}
 								incomingPages={incomingPages}
+								nestedLinks={nestedLinks}
 							/>
 							{/* 関連カード */}
 							<RelatedCardsGrid pageId={page.id} />

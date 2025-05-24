@@ -26,17 +26,20 @@ import {
 	List,
 	ListOrdered,
 	Strikethrough,
+	Scissors,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface EditPageBubbleMenuProps {
 	editor: Editor | null;
-	wrapSelectionWithPageLink: () => Promise<void>;
+	wrapSelectionWithPageLink: () => void;
+	splitPage: () => void;
 }
 
 export function EditPageBubbleMenu({
 	editor,
 	wrapSelectionWithPageLink,
+	splitPage,
 }: EditPageBubbleMenuProps) {
 	if (!editor) return null;
 
@@ -278,6 +281,37 @@ export function EditPageBubbleMenu({
 							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
 						>
 							<Link2 className="w-5 h-5" />
+						</button>
+					)}
+
+					{/* Page Split */}
+					{!isMobile ? (
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									type="button"
+									onClick={splitPage}
+									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+								>
+									<Scissors className="w-5 h-5" />
+								</button>
+							</TooltipTrigger>
+							<TooltipContent side="top">
+								<div className="flex items-center space-x-1">
+									<span>ページ分割</span>
+									<Badge variant="secondary">
+										{isMac ? "⌘+Shift+P" : "Ctrl+Shift+P"}
+									</Badge>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					) : (
+						<button
+							type="button"
+							onClick={splitPage}
+							className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+						>
+							<Scissors className="w-5 h-5" />
 						</button>
 					)}
 

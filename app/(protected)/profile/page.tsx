@@ -20,6 +20,7 @@ export default async function ProfilePage() {
 		account = await createAccount({
 			id: user.id,
 			email: user.email ?? undefined,
+			user_slug: user.id,
 		});
 	}
 

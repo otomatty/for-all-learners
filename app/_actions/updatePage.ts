@@ -32,7 +32,6 @@ export async function updatePage({ id, title, content }: UpdatePageParams) {
 		.update({
 			title,
 			content_tiptap: parsedContent,
-			links_migrated: true,
 			thumbnail_url: firstImage,
 		})
 		.eq("id", id);
