@@ -83,9 +83,10 @@ export async function initializeUserPromptTemplates(): Promise<void> {
 		{ prompt_key: "page_wiki" as const, template: DEFAULT_WIKI_PROMPT },
 		{ prompt_key: "page_info" as const, template: DEFAULT_PAGE_INFO_PROMPT },
 	];
-	const { error } = await supabase
-		.from("user_page_prompts")
-		.insert(defaultTemplates.map((t) => ({ ...t, user_id: user.id })));
+	const { error } = await supabase.from("user_page_prompts").upsert(
+		defaultTemplates.map((t) => ({ ...t, user_id: user.id })),
+		{ onConflict: "user_id, prompt_key" },
+	);
 	if (error) {
 		console.error("initializeUserPromptTemplates error:", error);
 		throw new Error(error.message);

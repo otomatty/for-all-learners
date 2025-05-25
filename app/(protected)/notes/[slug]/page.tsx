@@ -28,6 +28,7 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 		<Container className="max-w-7xl">
 			<BackLink path="/notes" title="Notes一覧へ戻る" />
 			<NoteHeader
+				id={note.id}
 				title={note.title}
 				slug={note.slug}
 				description={note.description}
@@ -37,6 +38,7 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 				pageCount={note.page_count}
 				participantCount={note.participant_count}
 				updatedAt={note.updated_at}
+				ownerId={note.owner_id}
 			/>
 			<NotePagesClient slug={slug} totalCount={note.page_count} />
 		</Container>

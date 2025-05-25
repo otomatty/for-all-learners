@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Card,
 	CardHeader,
@@ -9,9 +9,12 @@ import {
 	CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ShareSettingsModal } from "@/components/ShareSettingsModal";
 import { BookOpen, Users, Clock } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface NoteHeaderProps {
+	id: string;
 	title: string;
 	slug: string;
 	description: string | null;
@@ -19,9 +22,11 @@ interface NoteHeaderProps {
 	pageCount: number;
 	participantCount: number;
 	updatedAt: string;
+	ownerId: string;
 }
 
 export default function NoteHeader({
+	id,
 	title,
 	slug,
 	description,
@@ -29,7 +34,24 @@ export default function NoteHeader({
 	pageCount,
 	participantCount,
 	updatedAt,
+	ownerId,
 }: NoteHeaderProps) {
+	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+	useEffect(() => {
+		const supabase = createClient();
+		async function fetchUser() {
+			const {
+				data: { user },
+				error,
+			} = await supabase.auth.getUser();
+			if (!error && user) {
+				setCurrentUserId(user.id);
+			}
+		}
+		fetchUser();
+	}, []);
+
 	const formattedDate = new Date(updatedAt).toLocaleDateString("ja-JP");
 	const visibilityLabel =
 		visibility === "public"
@@ -74,6 +96,21 @@ export default function NoteHeader({
 				</div>
 			</CardContent>
 			<div className="px-4 pb-4 flex justify-end">
+				{currentUserId === ownerId && (
+					<ShareSettingsModal
+						note={{
+							id,
+							title,
+							slug,
+							description,
+							visibility,
+							pageCount,
+							participantCount,
+							updatedAt,
+							ownerId,
+						}}
+					/>
+				)}
 				<Badge variant={badgeVariant}>{visibilityLabel}</Badge>
 			</div>
 		</Card>

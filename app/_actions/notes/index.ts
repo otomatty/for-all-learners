@@ -15,3 +15,5 @@ export * from "./joinNotePublic";
 export * from "./getNoteDetail";
 export * from "./getNotesList";
 export * from "./getNotePages";
+export * from "./getNoteShares";
+export * from "./getNoteShareLinks";
