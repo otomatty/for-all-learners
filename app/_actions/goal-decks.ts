@@ -10,6 +10,7 @@ export type Deck = {
 	description: string;
 	is_public: boolean;
 	created_at: string;
+	updated_at?: string;
 };
 export type DeckStudyLog = { deck: { title: string }; studied_at: string };
 
@@ -20,7 +21,9 @@ export async function getGoalDecks(goalId: string): Promise<Deck[]> {
 	const supabase = await createClient();
 	const { data, error } = await supabase
 		.from("goal_deck_links")
-		.select("decks(id, title, description, is_public, cards(id), created_at)")
+		.select(
+			"decks(id, title, description, is_public, cards(id), created_at, updated_at)",
+		)
 		.eq("goal_id", goalId);
 
 	if (error) {
@@ -33,6 +36,7 @@ export async function getGoalDecks(goalId: string): Promise<Deck[]> {
 		description: row.decks.description ?? "",
 		is_public: row.decks.is_public ?? false,
 		created_at: row.decks.created_at ?? "",
+		updated_at: row.decks.updated_at ?? undefined,
 	}));
 }
 

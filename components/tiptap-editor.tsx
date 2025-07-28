@@ -2,10 +2,11 @@
 
 import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { Button } from "@/components/ui/button"; // Buttonをインポート
-import Image from "@tiptap/extension-image";
-import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
+import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
+import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
@@ -15,7 +16,6 @@ import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
-import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 
 interface TiptapEditorProps {
 	content: string; // 初期コンテンツはJSON文字列として受け取る想定

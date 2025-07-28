@@ -8,7 +8,15 @@ import {
 } from "@/app/_actions/goal-decks";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
@@ -17,7 +25,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { DecksTableSkeleton } from "./decks-table-skeleton";
 
@@ -39,14 +46,18 @@ export function AddDeckLinkDialog({
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [availableDecks, setAvailableDecks] = useState<Deck[]>([]);
 	const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortBy, setSortBy] = useState<string>("updated_at_desc");
 	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
 	const [isCreatingNew, setIsCreatingNew] = useState(false);
 	const [isPending, startTransition] = useTransition();
 
 	useEffect(() => {
 		if (isDialogOpen) {
-			// Reset new deck creation state each time dialog opens
+			// Reset states each time dialog opens
 			setIsCreatingNew(false);
+			setSearchQuery("");
+			setSortBy("updated_at_desc");
 			// Open時のみ実行
 			startTransition(async () => {
 				const decks = await getAvailableDecksForGoal(goalId);
@@ -86,6 +97,46 @@ export function AddDeckLinkDialog({
 		});
 	}, [goalId, newDeckTitle, onSuccess]);
 
+	// フィルタリングとソート
+	const filteredAndSortedDecks = availableDecks
+		.filter((deck) =>
+			deck.title.toLowerCase().includes(searchQuery.toLowerCase()),
+		)
+		.sort((a, b) => {
+			switch (sortBy) {
+				case "updated_at_desc":
+					return (
+						new Date(b.updated_at || 0).getTime() -
+						new Date(a.updated_at || 0).getTime()
+					);
+				case "updated_at_asc":
+					return (
+						new Date(a.updated_at || 0).getTime() -
+						new Date(b.updated_at || 0).getTime()
+					);
+				case "created_at_desc":
+					return (
+						new Date(b.created_at || 0).getTime() -
+						new Date(a.created_at || 0).getTime()
+					);
+				case "created_at_asc":
+					return (
+						new Date(a.created_at || 0).getTime() -
+						new Date(b.created_at || 0).getTime()
+					);
+				case "title_asc":
+					return a.title.localeCompare(b.title);
+				case "title_desc":
+					return b.title.localeCompare(a.title);
+				case "card_count_desc":
+					return (b.card_count || 0) - (a.card_count || 0);
+				case "card_count_asc":
+					return (a.card_count || 0) - (b.card_count || 0);
+				default:
+					return 0;
+			}
+		});
+
 	return (
 		<>
 			<Button
@@ -101,51 +152,115 @@ export function AddDeckLinkDialog({
 				dialogTitle="デッキ追加"
 				className="!max-w-2xl"
 			>
-				<div className="space-y-2 p-4 overflow-auto">
+				<div className="space-y-2 p-4 max-h-[70vh] overflow-auto">
+					{/* 検索とソート */}
+					<div className="flex gap-2 mb-4">
+						<Input
+							placeholder="デッキを検索"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="flex-1"
+						/>
+						<Select value={sortBy} onValueChange={setSortBy}>
+							<SelectTrigger className="w-48">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="updated_at_desc">
+									更新日（新しい順）
+								</SelectItem>
+								<SelectItem value="updated_at_asc">更新日（古い順）</SelectItem>
+								<SelectItem value="created_at_desc">
+									作成日（新しい順）
+								</SelectItem>
+								<SelectItem value="created_at_asc">作成日（古い順）</SelectItem>
+								<SelectItem value="title_asc">タイトル（昇順）</SelectItem>
+								<SelectItem value="title_desc">タイトル（降順）</SelectItem>
+								<SelectItem value="card_count_desc">
+									カード数（多い順）
+								</SelectItem>
+								<SelectItem value="card_count_asc">
+									カード数（少ない順）
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 					{isPending ? (
 						<DecksTableSkeleton />
 					) : (
-						<Table className="w-full text-left">
-							<TableHeader>
-								<TableRow>
-									<TableHead className="px-2 md:px-4 w-[80px]">選択</TableHead>
-									<TableHead className="px-2 md:px-4">タイトル</TableHead>
-									<TableHead className="hidden md:table-cell px-2 md:px-4">
-										作成日
-									</TableHead>
-									<TableHead className="hidden sm:table-cell px-2 md:px-4">
-										カード数
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{availableDecks.map((deck) => (
-									<TableRow key={deck.id}>
-										<TableCell>
-											<Checkbox
-												checked={selectedDeckIds.includes(deck.id)}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														setSelectedDeckIds((prev) => [...prev, deck.id]);
-													} else {
-														setSelectedDeckIds((prev) =>
-															prev.filter((id) => id !== deck.id),
-														);
-													}
-												}}
-											/>
-										</TableCell>
-										<TableCell className="px-2 md:px-4">{deck.title}</TableCell>
-										<TableCell className="hidden md:table-cell px-2 md:px-4">
-											{new Date(deck.created_at).toLocaleDateString()}
-										</TableCell>
-										<TableCell className="hidden sm:table-cell px-2 md:px-4">
-											{deck.card_count}
-										</TableCell>
+						<div className="max-h-[300px] overflow-y-auto border rounded-md">
+							<Table className="w-full text-left">
+								<TableHeader className="sticky top-0 bg-background">
+									<TableRow>
+										<TableHead className="px-2 md:px-4 w-[80px]">
+											選択
+										</TableHead>
+										<TableHead className="px-2 md:px-4">タイトル</TableHead>
+										<TableHead className="hidden md:table-cell px-2 md:px-4">
+											作成日
+										</TableHead>
+										<TableHead className="hidden md:table-cell px-2 md:px-4">
+											更新日
+										</TableHead>
+										<TableHead className="hidden sm:table-cell px-2 md:px-4">
+											カード数
+										</TableHead>
 									</TableRow>
-								))}
-							</TableBody>
-						</Table>
+								</TableHeader>
+								<TableBody>
+									{filteredAndSortedDecks.length === 0 ? (
+										<TableRow>
+											<TableCell
+												colSpan={5}
+												className="text-center py-4 text-muted-foreground"
+											>
+												デッキが見つかりません
+											</TableCell>
+										</TableRow>
+									) : (
+										filteredAndSortedDecks.map((deck) => (
+											<TableRow key={deck.id}>
+												<TableCell>
+													<Checkbox
+														checked={selectedDeckIds.includes(deck.id)}
+														onCheckedChange={(checked) => {
+															if (checked) {
+																setSelectedDeckIds((prev) => [
+																	...prev,
+																	deck.id,
+																]);
+															} else {
+																setSelectedDeckIds((prev) =>
+																	prev.filter((id) => id !== deck.id),
+																);
+															}
+														}}
+													/>
+												</TableCell>
+												<TableCell className="px-2 md:px-4">
+													{deck.title}
+												</TableCell>
+												<TableCell className="hidden md:table-cell px-2 md:px-4">
+													{new Date(deck.created_at).toLocaleDateString(
+														"ja-JP",
+													)}
+												</TableCell>
+												<TableCell className="hidden md:table-cell px-2 md:px-4">
+													{deck.updated_at
+														? new Date(deck.updated_at).toLocaleDateString(
+																"ja-JP",
+															)
+														: "なし"}
+												</TableCell>
+												<TableCell className="hidden sm:table-cell px-2 md:px-4">
+													{deck.card_count}
+												</TableCell>
+											</TableRow>
+										))
+									)}
+								</TableBody>
+							</Table>
+						</div>
 					)}
 					<div className="flex justify-end">
 						<Button

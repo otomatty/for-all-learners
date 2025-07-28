@@ -17,13 +17,13 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button"; // Button をインポート
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCallback, useEffect, useState } from "react";
 import { ChangelogEntryItem } from "./_components/ChangelogEntryItem";
 import { ChangelogForm } from "./_components/ChangelogForm";
 import { ChangelogHeader } from "./_components/ChangelogHeader";
-import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CommitHistorySection } from "./_components/CommitHistorySection";
+import { EmptyChangelogMessage } from "./_components/EmptyChangelogMessage";
 
 export default function ChangelogPage() {
 	const [changelogEntries, setChangelogEntries] = useState<ChangeLogEntry[]>(

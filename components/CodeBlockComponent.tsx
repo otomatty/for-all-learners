@@ -1,9 +1,9 @@
-import React from "react";
 import {
-	NodeViewWrapper,
 	NodeViewContent,
 	type NodeViewProps,
+	NodeViewWrapper,
 } from "@tiptap/react";
+import React from "react";
 
 /**
  * React component for rendering code blocks with a copy button.

@@ -60,10 +60,6 @@ export default function ClozeQuiz({
 		answers: [],
 		options: [], // 初期値に options を追加
 	};
-	console.log(
-		"[ClozeQuiz] Processing current question:",
-		JSON.stringify(current),
-	); // 問題データの内容をログ出力
 	const { text, blanks, answers, options } = current;
 
 	// Prepare safe data lists and log errors if data is invalid

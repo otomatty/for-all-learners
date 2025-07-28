@@ -10,11 +10,11 @@ import {
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/types/database.types";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SearchBar } from "./search-bar";
-import type { Database } from "@/types/database.types";
 
 interface MobileNavProps {
 	isAdmin: boolean;

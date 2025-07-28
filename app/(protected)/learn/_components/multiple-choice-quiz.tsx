@@ -2,22 +2,22 @@
 
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
-import { Progress } from "@/components/ui/progress";
-import type { MultipleChoiceQuestion } from "@/lib/gemini";
-import React, { useState, useEffect, useRef } from "react";
-import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardHeader,
 	CardContent,
-	CardFooter,
-	CardTitle,
 	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import { CircleCheck, CircleX } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {

@@ -4,9 +4,9 @@ import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 
+import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
 import type { JSONContent } from "@tiptap/core";
-import { extractLinkData } from "@/lib/utils/linkUtils";
 
 import EditPageForm from "../../../pages/[id]/_components/edit-page-form";
 

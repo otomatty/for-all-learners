@@ -1,3 +1,4 @@
+import { getDefaultNote } from "@/app/_actions/notes";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { type NextRequest, NextResponse } from "next/server";
@@ -13,12 +14,15 @@ export async function GET(req: NextRequest) {
 		return NextResponse.redirect(new URL("/auth/login", req.url));
 	}
 
+	// Get or create default note for the user
+	const defaultNote = await getDefaultNote();
+
 	// Insert a blank page with default Tiptap doc
 	const defaultContent = {
 		type: "doc",
 		content: [],
 	} as unknown as Database["public"]["Tables"]["pages"]["Row"]["content_tiptap"];
-	const { data, error } = await supabase
+	const { data: page, error: pageError } = await supabase
 		.from("pages")
 		.insert({
 			user_id: user.id,
@@ -29,13 +33,24 @@ export async function GET(req: NextRequest) {
 		.select("id")
 		.single();
 
-	if (error) {
-		console.error("New page creation error:", error);
-		throw error;
+	if (pageError) {
+		console.error("New page creation error:", pageError);
+		throw pageError;
+	}
+
+	// Link the page to the default note
+	const { error: linkError } = await supabase.from("note_page_links").insert({
+		note_id: defaultNote.id,
+		page_id: page.id,
+	});
+
+	if (linkError) {
+		console.error("Error linking page to default note:", linkError);
+		throw linkError;
 	}
 
 	// Redirect to the newly created page (using ID as temporary slug)
 	return NextResponse.redirect(
-		new URL(`/pages/${encodeURIComponent(data.id)}`, req.url),
+		new URL(`/pages/${encodeURIComponent(page.id)}`, req.url),
 	);
 }

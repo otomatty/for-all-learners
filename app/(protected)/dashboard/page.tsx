@@ -1,5 +1,6 @@
 // actions
 import { getAccountById } from "@/app/_actions/accounts";
+import { getAllDueCountsByUser } from "@/app/_actions/cards";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
@@ -10,7 +11,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { GoalSummary } from "./_components/goal-summary";
 import { QuickActionTiles } from "./_components/quick-action-tiles";
-import { getAllDueCountsByUser } from "@/app/_actions/cards";
 
 export default async function DashboardPage({
 	searchParams: searchParamsPromise, // Renaming to clarify it's a promise

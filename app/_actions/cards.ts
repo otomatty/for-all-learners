@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { isUserPaid, getUserPlanFeatures } from "@/app/_actions/subscriptions";
-import type { Database } from "@/types/database.types";
+import { getUserPlanFeatures, isUserPaid } from "@/app/_actions/subscriptions";
 import type { QuestionType } from "@/lib/gemini";
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 
 export async function getCardsByDeck(deckId: string) {
 	const supabase = await createClient();

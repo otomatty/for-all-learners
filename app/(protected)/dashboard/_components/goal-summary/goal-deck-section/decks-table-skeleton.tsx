@@ -1,13 +1,13 @@
-import React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
-	TableHeader,
-	TableRow,
-	TableHead,
 	TableBody,
 	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
 
 /**
  * ロード中に表示するデッキ一覧テーブルのスケルトン

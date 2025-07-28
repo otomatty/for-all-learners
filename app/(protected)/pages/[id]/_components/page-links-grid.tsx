@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
-import type { JSONContent } from "@tiptap/core";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import type { JSONContent } from "@tiptap/core";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React from "react";
 import { toast } from "sonner";
 
 // テキストノード用型定義と型ガード

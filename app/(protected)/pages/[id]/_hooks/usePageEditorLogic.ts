@@ -4,10 +4,10 @@ import {
 	CustomOrderedList,
 } from "@/lib/tiptap-extensions/custom-list";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
+import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
+import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import { PageLink } from "@/lib/tiptap-extensions/page-link";
 import { TagLink } from "@/lib/tiptap-extensions/tag-link";
-import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
-import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JSONContent } from "@tiptap/core";
@@ -17,17 +17,17 @@ import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
+import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import CodeBlockPrism from "tiptap-extension-code-block-prism";
-import CodeBlockComponent from "@/components/CodeBlockComponent";
 
 import { updatePage } from "@/app/_actions/updatePage";
-import { useSplitPage } from "./useSplitPage";
-import { useGenerateContent } from "./useGenerateContent";
-import { useAutoSave } from "./useAutoSave";
-import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
 import { updatePageLinks } from "@/app/_actions/updatePageLinks";
 import { extractLinkData } from "@/lib/utils/linkUtils";
+import { useAutoSave } from "./useAutoSave";
+import { useGenerateContent } from "./useGenerateContent";
+import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
+import { useSplitPage } from "./useSplitPage";
 
 interface UsePageEditorLogicProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];

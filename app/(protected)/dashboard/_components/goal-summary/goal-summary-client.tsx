@@ -1,13 +1,13 @@
 "use client";
 
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
 import GoalHeatmap from "./goal-heatmap";
 import GoalSelect from "./goal-select";
 import TimeProgress from "./time-progress";
-import { createClient } from "@/lib/supabase/client";
 
 interface StudyGoal {
 	id: string;

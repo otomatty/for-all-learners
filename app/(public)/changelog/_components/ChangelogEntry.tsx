@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import React from "react";
 import type { ChangeLogEntry } from "../../../_actions/changelog";
 import { ChangeItem } from "./ChangeItem";
-import { Button } from "@/components/ui/button";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 export function ChangelogEntry({ entry }: { entry: ChangeLogEntry }) {
 	const [expanded, setExpanded] = React.useState(false);
 	const visibleChanges = expanded ? entry.changes : entry.changes.slice(0, 3);

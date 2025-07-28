@@ -1,5 +1,9 @@
 "use client";
 
+import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
+import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
 // Types
@@ -7,7 +11,7 @@ import type { Database } from "@/types/database.types";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { useDateShortcut } from "../_hooks/useDateShortcut";
@@ -18,14 +22,10 @@ import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
+import FloatingToolbar from "./floating-toolbar";
 import { PageHeader } from "./page-header";
-import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
 import PageLinksGrid from "./page-links-grid";
 import RelatedCardsGrid from "./related-cards-grid";
-import FloatingToolbar from "./floating-toolbar";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];

@@ -25,8 +25,8 @@ import {
 	Link2,
 	List,
 	ListOrdered,
-	Strikethrough,
 	Scissors,
+	Strikethrough,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 

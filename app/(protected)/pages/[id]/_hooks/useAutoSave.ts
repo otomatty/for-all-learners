@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
+import { useEffect, useRef } from "react";
 
 /**
  * Hook to autosave page on editor updates and title changes.

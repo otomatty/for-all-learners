@@ -1,8 +1,9 @@
 import { createAccount, getAccountById } from "@/app/_actions/accounts";
+import { createDefaultNote } from "@/app/_actions/notes";
+import { initializeUserPromptTemplates } from "@/app/_actions/promptTemplate";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { initializeUserPromptTemplates } from "@/app/_actions/promptTemplate";
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
@@ -72,6 +73,8 @@ export async function GET(request: Request) {
 			avatar_url: user.user_metadata?.avatar_url ?? null,
 			user_slug: emailSlug,
 		});
+		// Create default note for new user
+		await createDefaultNote(user.id);
 	}
 	// Ensure user settings are initialized
 	await getUserSettings();

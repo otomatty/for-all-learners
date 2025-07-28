@@ -1,11 +1,11 @@
 import { isAdmin } from "@/app/_actions/admin";
+import { getCurrentUser } from "@/app/_actions/auth";
+import { getUserPlan } from "@/app/_actions/subscriptions";
 import { AuthHeader } from "@/components/auth-header";
 import { Container } from "@/components/container";
 import { redirect } from "next/navigation";
 import type React from "react";
 import pkg from "../../package.json";
-import { getCurrentUser } from "@/app/_actions/auth";
-import { getUserPlan } from "@/app/_actions/subscriptions";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;

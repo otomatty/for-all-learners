@@ -1,9 +1,9 @@
-import React from "react";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
-import { getNoteDetail } from "@/app/_actions/notes";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import React from "react";
 import NoteHeader from "./_components/note-header";
 import NotePagesClient from "./page-client";
 

@@ -1,7 +1,7 @@
 "use server";
 
-import { getSupabaseClient } from "./getSupabaseClient";
 import type { Database } from "@/types/database.types";
+import { getSupabaseClient } from "./getSupabaseClient";
 
 /**
  * ノートに紐づくページをページネーション付きで取得します。
@@ -52,6 +52,17 @@ export async function getNotePages({
 	console.log("Debug [getNotePages]: note result", { note, noteError });
 	if (noteError || !note) throw new Error("Note not found");
 
+	// Debug: fetch linked pages for this note
+	console.log(
+		"Debug [getNotePages]: fetching note_page_links for note",
+		note.id,
+	);
+	const { data: npl, error: nplError } = await supabase
+		.from("note_page_links")
+		.select("page_id")
+		.eq("note_id", note.id);
+	console.log("Debug [getNotePages]: note_page_links", npl, nplError);
+
 	// Fetch pages via RPC
 	const { data: rpcData, error: rpcError } = await supabase.rpc(
 		"get_note_pages",
@@ -63,8 +74,10 @@ export async function getNotePages({
 		},
 	);
 	if (rpcError) throw rpcError;
+	console.log("Debug [getNotePages]: rpcData", rpcData);
 	const pages = (rpcData?.[0]?.pages ??
 		[]) as Database["public"]["Tables"]["pages"]["Row"][];
 	const totalCount = rpcData?.[0]?.total_count ?? 0;
+	console.log("Debug [getNotePages]: pages", pages, "totalCount", totalCount);
 	return { pages, totalCount };
 }

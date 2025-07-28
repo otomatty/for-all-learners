@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
-import type { Editor } from "@tiptap/react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { existencePluginKey } from "@/lib/tiptap-extensions/page-link";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Editor } from "@tiptap/react";
+import { useEffect, useRef } from "react";
 
 /**
  * Hook to check and set existence metadata for page and tag links.

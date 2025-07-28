@@ -5,9 +5,9 @@ import type React from "react";
 import CosenseSyncSettings, {
 	type CosenseProject,
 } from "./cosense-sync-settings";
+import GyazoSyncSettings from "./gyazo-sync-settings";
 import IntegrationCardShell from "./integration-card-shell";
 import ServiceIntegrationDetails from "./service-integration-details";
-import GyazoSyncSettings from "./gyazo-sync-settings";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];

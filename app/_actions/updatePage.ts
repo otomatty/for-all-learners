@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { JSONContent } from "@tiptap/core";
 import { extractLinkData } from "@/lib/utils/linkUtils";
+import type { JSONContent } from "@tiptap/core";
 
 export type UpdatePageParams = {
 	id: string;

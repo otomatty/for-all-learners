@@ -1,7 +1,7 @@
+import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import tippy, { type Instance, type Props } from "tippy.js";
-import { searchPages } from "@/lib/utils/searchPages";
 
 // State for tag suggestion
 interface TagSuggestionState {

@@ -4,7 +4,7 @@ import { CosenseSyncBadge } from "@/components/ui/cosense-sync-badge";
 import { Textarea } from "@/components/ui/textarea";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface PageHeaderProps {

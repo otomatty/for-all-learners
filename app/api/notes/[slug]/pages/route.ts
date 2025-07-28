@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getNotePages } from "@/app/_actions/notes";
+import { NextResponse } from "next/server";
 
 export async function GET(
 	req: Request,

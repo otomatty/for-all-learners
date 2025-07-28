@@ -19,11 +19,16 @@ import { getSupabaseClient } from "./getSupabaseClient";
  */
 export async function linkPageToNote(noteId: string, pageId: string) {
 	const supabase = await getSupabaseClient();
+	console.log("Debug [linkPageToNote]: linking page to note", {
+		noteId,
+		pageId,
+	});
 	const { data, error } = await supabase
 		.from("note_page_links")
 		.insert([{ note_id: noteId, page_id: pageId }])
 		.select("*")
 		.single();
+	console.log("Debug [linkPageToNote]: result", { data, error });
 	if (error) throw error;
 	return data;
 }

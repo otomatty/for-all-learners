@@ -1,6 +1,5 @@
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
 	Command,
 	CommandEmpty,
@@ -9,7 +8,15 @@ import {
 	CommandItem,
 	CommandList,
 } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import { Camera, Mic } from "lucide-react";
@@ -53,6 +60,7 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 	>([]);
 	const [selectedDeckId, setSelectedDeckId] = useState<string>("");
 	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [sortBy, setSortBy] = useState<string>("updated_at_desc");
 	const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
 	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
 	const router = useRouter();
@@ -61,9 +69,42 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 	const deckList: DeckWithCount[] = externalDecks
 		? externalDecks
 		: fetchedDecks.map((d) => ({ ...d, todayReviewCount: 0 }));
-	const filteredDecks = deckList.filter((deck) =>
-		deck.title.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
+
+	// フィルタリングとソート
+	const filteredAndSortedDecks = deckList
+		.filter((deck) =>
+			deck.title.toLowerCase().includes(searchQuery.toLowerCase()),
+		)
+		.sort((a, b) => {
+			switch (sortBy) {
+				case "updated_at_desc":
+					return (
+						new Date(b.updated_at || 0).getTime() -
+						new Date(a.updated_at || 0).getTime()
+					);
+				case "updated_at_asc":
+					return (
+						new Date(a.updated_at || 0).getTime() -
+						new Date(b.updated_at || 0).getTime()
+					);
+				case "created_at_desc":
+					return (
+						new Date(b.created_at || 0).getTime() -
+						new Date(a.created_at || 0).getTime()
+					);
+				case "created_at_asc":
+					return (
+						new Date(a.created_at || 0).getTime() -
+						new Date(b.created_at || 0).getTime()
+					);
+				case "title_asc":
+					return a.title.localeCompare(b.title);
+				case "title_desc":
+					return b.title.localeCompare(a.title);
+				default:
+					return 0;
+			}
+		});
 
 	const selectedDeck = deckList.find((deck) => deck.id === selectedDeckId);
 
@@ -84,7 +125,8 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 			const { data, error } = await supabase
 				.from("decks")
 				.select("*")
-				.eq("user_id", user.id);
+				.eq("user_id", user.id)
+				.order("updated_at", { ascending: false });
 			if (error) {
 				console.error("Failed to fetch decks:", error);
 				return;
@@ -133,9 +175,28 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 			onOpenChange={onOpenChange}
 			dialogTitle={dialogTitle}
 		>
-			<div className="space-y-4">
+			<div className="space-y-4 max-h-[70vh] overflow-y-auto">
 				<div>
-					<Label>デッキを選択</Label>
+					<div className="flex items-center justify-between mb-2">
+						<Label>デッキを選択</Label>
+						<Select value={sortBy} onValueChange={setSortBy}>
+							<SelectTrigger className="w-40">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="updated_at_desc">
+									更新日（新しい順）
+								</SelectItem>
+								<SelectItem value="updated_at_asc">更新日（古い順）</SelectItem>
+								<SelectItem value="created_at_desc">
+									作成日（新しい順）
+								</SelectItem>
+								<SelectItem value="created_at_asc">作成日（古い順）</SelectItem>
+								<SelectItem value="title_asc">タイトル（昇順）</SelectItem>
+								<SelectItem value="title_desc">タイトル（降順）</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 					<div className="mt-1 text-sm text-gray-600">
 						選択中：{selectedDeck?.title ?? "なし"}
 					</div>
@@ -145,12 +206,12 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 							value={searchQuery}
 							onValueChange={(value) => setSearchQuery(value)}
 						/>
-						<CommandList>
-							{filteredDecks.length === 0 ? (
+						<CommandList className="max-h-[200px] overflow-y-auto">
+							{filteredAndSortedDecks.length === 0 ? (
 								<CommandEmpty>デッキが見つかりません</CommandEmpty>
 							) : (
 								<CommandGroup heading="デッキ">
-									{filteredDecks.map((deck) => (
+									{filteredAndSortedDecks.map((deck) => (
 										<CommandItem
 											key={deck.id}
 											onSelect={() => handleDeckSelect(deck.id)}
@@ -160,7 +221,17 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 													: ""
 											}
 										>
-											{deck.title}
+											<div className="flex flex-col items-start">
+												<span>{deck.title}</span>
+												<span className="text-xs text-muted-foreground">
+													更新:{" "}
+													{deck.updated_at
+														? new Date(deck.updated_at).toLocaleDateString(
+																"ja-JP",
+															)
+														: "なし"}
+												</span>
+											</div>
 										</CommandItem>
 									))}
 								</CommandGroup>

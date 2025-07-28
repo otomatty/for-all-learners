@@ -1,10 +1,10 @@
 "use server";
 
-import { getUserPromptTemplate } from "./promptTemplate";
 import {
-	DEFAULT_WIKI_PROMPT,
 	DEFAULT_PAGE_INFO_PROMPT,
+	DEFAULT_WIKI_PROMPT,
 } from "@/lib/promptDefaults";
+import { getUserPromptTemplate } from "./promptTemplate";
 
 /**
  * 指定したプロンプトキーに対応するテンプレートを取得し、存在しない場合はデフォルトを返します。

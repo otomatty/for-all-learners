@@ -1,23 +1,23 @@
 "use client";
 
-import React from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-	GripVertical,
-	MoreVertical,
-	SparklesIcon,
-	TrendingUpIcon,
-	BugIcon,
-	ShieldCheckIcon,
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
 	DropdownMenu,
-	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+	BugIcon,
+	GripVertical,
+	MoreVertical,
+	ShieldCheckIcon,
+	SparklesIcon,
+	TrendingUpIcon,
+} from "lucide-react";
+import React from "react";
 
 type ReleaseNoteItem = {
 	type: "new" | "improvement" | "fix" | "security";

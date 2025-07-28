@@ -1,8 +1,8 @@
 import { mergeAttributes, wrappingInputRule } from "@tiptap/core";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
-import { Plugin, PluginKey } from "prosemirror-state";
 import { sinkListItem } from "prosemirror-schema-list";
+import { Plugin, PluginKey } from "prosemirror-state";
 
 export const CustomBulletList = BulletList.extend({
 	addInputRules() {

@@ -1,8 +1,8 @@
 import { type QuizParams, getQuizQuestions } from "@/app/_actions/quiz";
 import { Container } from "@/components/container";
-import QuizSession from "./_components/quiz-session";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import QuizSession from "./_components/quiz-session";
 
 export default async function SessionPage() {
 	const cookieStore = await cookies();

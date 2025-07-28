@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import CreateNoteForm from "./create-note-form";
 
 export default function CreateNoteDialog() {

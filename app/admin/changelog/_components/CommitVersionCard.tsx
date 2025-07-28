@@ -1,13 +1,13 @@
-import React from "react";
 import {
-	Tag,
 	Calendar,
 	Code2,
-	GitCommit,
 	FileDiff,
-	Plus,
+	GitCommit,
 	Minus,
+	Plus,
+	Tag,
 } from "lucide-react";
+import React from "react";
 
 interface CommitVersionCardProps {
 	version: string;

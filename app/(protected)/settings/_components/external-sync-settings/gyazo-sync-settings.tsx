@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import React, { useState } from "react";
 
 interface GyazoSyncSettingsProps {
 	initialEnabled: boolean;

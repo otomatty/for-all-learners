@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import {
 	getAllUserPromptTemplates,
 	updateUserPromptTemplate,
 } from "@/app/_actions/promptTemplate";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import React, { useState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 
 // プロンプト行の型定義

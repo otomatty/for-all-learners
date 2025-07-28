@@ -2,6 +2,9 @@
 export * from "./getSupabaseClient";
 export * from "./types";
 export * from "./createNote";
+export * from "./createDefaultNote";
+export * from "./getDefaultNote";
+export * from "./migrateOrphanedPages";
 export * from "./updateNote";
 export * from "./deleteNote";
 export * from "./linkPageToNote";
@@ -17,3 +20,5 @@ export * from "./getNotesList";
 export * from "./getNotePages";
 export * from "./getNoteShares";
 export * from "./getNoteShareLinks";
+export * from "./checkPageConflict";
+export * from "./batchMovePages";

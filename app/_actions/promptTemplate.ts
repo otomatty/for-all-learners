@@ -1,11 +1,11 @@
 "use server";
 
+import {
+	DEFAULT_PAGE_INFO_PROMPT,
+	DEFAULT_WIKI_PROMPT,
+} from "@/lib/promptDefaults";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import {
-	DEFAULT_WIKI_PROMPT,
-	DEFAULT_PAGE_INFO_PROMPT,
-} from "@/lib/promptDefaults";
 
 /**
  * 指定キーのプロンプトテンプレートを取得します。

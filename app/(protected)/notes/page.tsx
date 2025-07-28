@@ -1,10 +1,10 @@
-import React from "react";
 import { getNotesList } from "@/app/_actions/notes";
+import { Container } from "@/components/container";
+import React from "react";
+import CreateNoteDialog from "./_components/create-note-dialog";
 import type { NoteSummary } from "./_components/notes-list";
 import NotesList from "./_components/notes-list";
 import RecommendedPublicNotes from "./_components/recommended-public-notes";
-import CreateNoteDialog from "./_components/create-note-dialog";
-import { Container } from "@/components/container";
 
 const mockRecommended: NoteSummary[] = [
 	{

@@ -1,16 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardHeader,
 	CardContent,
 	CardFooter,
+	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const TIPS = [
 	"単語帳は一度に10枚ずつ進めると定着率UP！",

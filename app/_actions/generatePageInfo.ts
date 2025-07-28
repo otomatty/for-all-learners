@@ -1,8 +1,8 @@
 "use server";
 
+import { getPromptTemplate } from "@/app/_actions/promptService";
 import { geminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
-import { getPromptTemplate } from "@/app/_actions/promptService";
 
 /**
  * サーバーアクション: ページタイトルを基にMarkdown形式の解説ドキュメントを生成

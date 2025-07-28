@@ -1,6 +1,6 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
-import path from "node:path";
 
 // PWA plugin options
 const pwaOptions = {

@@ -1,42 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import {
+	generateNoteShareLink,
+	getNoteShareLinks,
+	getNoteShares,
+	joinNoteByLink,
+	joinNotePublic,
+	revokeNoteShareLink,
+	shareNote,
+	unshareNote,
+	updateNote,
+} from "@/app/_actions/notes";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
-	DialogTrigger,
+	DialogClose,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-	DialogClose,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	Table,
-	TableHeader,
-	TableRow,
-	TableHead,
 	TableBody,
 	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
-import { Copy, Trash2, UserPlus, Lock, Link, Globe } from "lucide-react";
-import {
-	getNoteShares,
-	getNoteShareLinks,
-	shareNote,
-	unshareNote,
-	generateNoteShareLink,
-	revokeNoteShareLink,
-	joinNoteByLink,
-	joinNotePublic,
-	updateNote,
-} from "@/app/_actions/notes";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createClient } from "@/lib/supabase/client";
 import { atom, useAtom } from "jotai";
-import { Badge } from "@/components/ui/badge";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Copy, Globe, Link, Lock, Trash2, UserPlus } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
 // ウィザードの現在ステップを管理するAtom
 const currentStepAtom = atom(0);

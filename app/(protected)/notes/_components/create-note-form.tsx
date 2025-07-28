@@ -1,41 +1,41 @@
 "use client";
 
-import React, { useTransition, useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { createNote, type CreateNotePayload } from "@/app/_actions/notes";
+import { type CreateNotePayload, createNote } from "@/app/_actions/notes";
+import { shareNote } from "@/app/_actions/notes";
+import { validateSlug } from "@/app/_actions/slug";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Form,
+	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
-	FormControl,
-	FormDescription,
 	FormMessage,
 } from "@/components/ui/form";
-import { createClient } from "@/lib/supabase/client";
-import { validateSlug } from "@/app/_actions/slug";
-import { Loader2, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
-	SelectTrigger,
-	SelectValue,
 	SelectContent,
 	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
 	Sheet,
 	SheetContent,
-	SheetHeader,
-	SheetTitle,
 	SheetDescription,
 	SheetFooter,
+	SheetHeader,
+	SheetTitle,
 } from "@/components/ui/sheet";
-import { shareNote } from "@/app/_actions/notes";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/client";
+import { Check, Loader2, X } from "lucide-react";
+import React, { useTransition, useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 
 interface CreateNoteFormProps {
 	onSuccess: () => void;

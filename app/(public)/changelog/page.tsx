@@ -1,10 +1,10 @@
-import { ChangelogEntry } from "./_components/ChangelogEntry";
 import type { Metadata } from "next";
 import React from "react";
 import {
 	type ChangeLogEntry,
 	getChangelogData,
 } from "../../_actions/changelog";
+import { ChangelogEntry } from "./_components/ChangelogEntry";
 import HeaderSection from "./_components/header-section";
 
 export const metadata: Metadata = {

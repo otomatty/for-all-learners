@@ -22,9 +22,9 @@ import ExternalServices from "./external-sync-settings";
 import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";
 import GeneralSettings from "./general";
 import LlmSettings from "./llm-settings";
-import PromptTemplates from "./prompt-templates";
 import NotificationSettings from "./notifications";
 import PaginationSettings from "./pagination";
+import PromptTemplates from "./prompt-templates";
 
 // ユーザー設定の型
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];

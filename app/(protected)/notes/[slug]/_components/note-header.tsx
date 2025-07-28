@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { ShareSettingsModal } from "@/components/ShareSettingsModal";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
-	CardHeader,
 	CardContent,
-	CardTitle,
 	CardDescription,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ShareSettingsModal } from "@/components/ShareSettingsModal";
-import { BookOpen, Users, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { BookOpen, Clock, Users } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
 interface NoteHeaderProps {
 	id: string;

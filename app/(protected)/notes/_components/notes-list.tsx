@@ -1,16 +1,16 @@
 "use client";
-import React from "react";
-import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
-	CardHeader,
 	CardContent,
-	CardFooter,
-	CardTitle,
 	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Clock } from "lucide-react";
+import { BookOpen, Clock, Users } from "lucide-react";
+import Link from "next/link";
+import React from "react";
 
 export type NoteSummary = {
 	id: string;

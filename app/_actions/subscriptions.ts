@@ -17,8 +17,13 @@ export async function getUserSubscription(
 		.eq("user_id", userId)
 		.in("status", ["active", "trialing"])
 		.order("current_period_end", { ascending: false })
-		.single();
-	if (error) throw error;
+		.maybeSingle();
+
+	// データが見つからない場合はnullを返す（エラーではない）
+	if (error) {
+		console.error("getUserSubscription error:", error);
+		return null;
+	}
 	return data;
 }
 
@@ -27,8 +32,28 @@ export async function getUserSubscription(
  * @param userId Supabase Auth のユーザーID
  */
 export async function isUserPaid(userId: string): Promise<boolean> {
+	// ユーザーID検証
+	if (!userId || userId.trim() === "") {
+		console.error("isUserPaid: 無効なユーザーID", { userId });
+		return false;
+	}
+
 	const subscription = await getUserSubscription(userId);
-	return subscription !== null;
+	// 無料プランのIDで判定（price_xxxxxxxxxxxxxx_free の場合は無料）
+	const isPaid =
+		subscription !== null && !subscription.plan_id.includes("_free");
+
+	// デバッグログ（開発時に有用）
+	if (process.env.NODE_ENV === "development") {
+		console.log("isUserPaid デバッグ情報:", {
+			userId: userId,
+			subscription: subscription,
+			planId: subscription?.plan_id,
+			isPaid: isPaid,
+		});
+	}
+
+	return isPaid;
 }
 
 /**
@@ -47,9 +72,12 @@ export async function getUserPlanFeatures(
 		.from("plans")
 		.select("features")
 		.eq("id", subscription.plan_id)
-		.single();
-	if (error) throw error;
-	return plan.features;
+		.maybeSingle();
+	if (error) {
+		console.error("getUserPlanFeatures error:", error);
+		return null;
+	}
+	return plan?.features || null;
 }
 
 /**
@@ -66,7 +94,10 @@ export async function getUserPlan(
 		.from("plans")
 		.select("*")
 		.eq("id", subscription.plan_id)
-		.single();
-	if (error) throw error;
+		.maybeSingle();
+	if (error) {
+		console.error("getUserPlan error:", error);
+		return null;
+	}
 	return plan;
 }

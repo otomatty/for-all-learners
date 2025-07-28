@@ -1,25 +1,25 @@
 "use client";
-import type React from "react";
-import { useState } from "react";
+import type { QuizMode } from "@/app/_actions/quiz";
+import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import type {
 	ClozeQuestion,
 	FlashcardQuestion,
 	MultipleChoiceQuestion,
 } from "@/lib/gemini";
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/container";
-import {
-	Card,
-	CardHeader,
-	CardContent,
-	CardFooter,
-	CardTitle,
-} from "@/components/ui/card";
-import MultipleChoiceQuiz from "./multiple-choice-quiz";
-import FlashcardQuiz from "./flashcard-quiz";
-import ClozeQuiz from "./cloze-quiz";
-import type { QuizMode } from "@/app/_actions/quiz";
 import Link from "next/link";
+import type React from "react";
+import { useState } from "react";
+import ClozeQuiz from "./cloze-quiz";
+import FlashcardQuiz from "./flashcard-quiz";
+import MultipleChoiceQuiz from "./multiple-choice-quiz";
 
 interface QuizSessionProps {
 	mode: QuizMode;

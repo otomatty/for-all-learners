@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useState, useRef } from "react";
 import {
 	Popover,
-	PopoverTrigger,
 	PopoverContent,
+	PopoverTrigger,
 } from "@/components/ui/popover";
-import { DeletePageDialog } from "./delete-page-dialog";
 import {
-	Sparkles,
-	Volume2,
-	Pause,
-	MoreVertical,
-	RotateCw,
 	CreditCard,
 	ImagePlus,
+	MoreVertical,
+	Pause,
+	RotateCw,
+	Sparkles,
 	Trash2,
+	Volume2,
 } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { DeletePageDialog } from "./delete-page-dialog";
 import ToolbarButton from "./toolbar-button";
 
 interface FloatingToolbarProps {

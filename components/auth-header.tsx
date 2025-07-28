@@ -16,9 +16,9 @@ import {
 import { UserNav } from "@/components/user-nav";
 import { useActiveUsers } from "@/hooks/use-active-users";
 import { createClient } from "@/lib/supabase/client"; // Supabaseクライアントのパスを適宜修正してください
+import type { Database } from "@/types/database.types";
 import { UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import type { Database } from "@/types/database.types";
 
 export interface AuthHeaderProps {
 	version?: string;

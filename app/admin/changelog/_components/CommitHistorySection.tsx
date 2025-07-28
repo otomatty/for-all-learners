@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-	createVersionCommitStaging,
-	processVersionCommitStaging,
-	getVersionCommitStagingByVersion,
-} from "@/app/_actions/version";
 import { createChangelogEntry } from "@/app/_actions/changelog";
 import {
+	createVersionCommitStaging,
+	getVersionCommitStagingByVersion,
+	processVersionCommitStaging,
+} from "@/app/_actions/version";
+import {
+	type DragEndEvent,
 	PointerSensor,
 	useSensor,
 	useSensors,
-	type DragEndEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import React, { useEffect, useState } from "react";
 
-import { CommitVersionCard } from "./CommitVersionCard";
 import { CommitDetails } from "./CommitDetails";
+import { CommitVersionCard } from "./CommitVersionCard";
 import { ReleaseNotePreview } from "./ReleaseNotePreview";
 
 /**

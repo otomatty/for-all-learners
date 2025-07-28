@@ -1,7 +1,7 @@
 "use server";
 
-import { getSupabaseClient } from "./getSupabaseClient";
 import { randomUUID } from "node:crypto";
+import { getSupabaseClient } from "./getSupabaseClient";
 
 /**
  * ノート用の共有リンクを生成します。

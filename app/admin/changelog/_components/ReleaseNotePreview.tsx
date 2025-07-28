@@ -1,18 +1,18 @@
 "use client";
 
-import React from "react";
 import {
 	DndContext,
-	closestCenter,
 	type DragEndEvent,
+	closestCenter,
 	type useSensors,
 } from "@dnd-kit/core";
 import {
 	SortableContext,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableReleaseNoteItem } from "./SortableReleaseNoteItem";
+import React from "react";
 import { ReleaseNotePreviewSkeleton } from "./ReleaseNotePreviewSkeleton";
+import { SortableReleaseNoteItem } from "./SortableReleaseNoteItem";
 
 // Release note item type
 export type ReleaseNoteItem = {

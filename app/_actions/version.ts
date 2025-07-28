@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { geminiClient } from "@/lib/gemini/client";
-import { createUserContent } from "@google/genai";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
+import { createUserContent } from "@google/genai";
 
 // 型定義: Gemini 応答の候補
 interface GenerateReleaseNotesResponse {

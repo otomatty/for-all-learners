@@ -11,7 +11,6 @@
 @import "./themes/violet.css";
 @import "prismjs/themes/prism-tomorrow.css";
 
-
 @layer utilities {
 	.text-balance {
 		text-wrap: balance;
@@ -235,7 +234,6 @@
 	.prose pre code {
 		@apply font-mono text-sm leading-relaxed;
 	} */
-
 }
 
 /* GyazoImage 用スタイル */
@@ -315,31 +313,31 @@
 /* globals.css の末尾に追加（置き換え） */
 /* 空セル */
 .color-empty {
-  fill: var(--background);
+	fill: var(--background);
 }
 /* 濃淡つきセル */
 .color-scale-1 {
-  fill: var(--primary);
-  fill-opacity: 0.2;
+	fill: var(--primary);
+	fill-opacity: 0.2;
 }
 .color-scale-2 {
-  fill: var(--primary);
-  fill-opacity: 0.4;
+	fill: var(--primary);
+	fill-opacity: 0.4;
 }
 .color-scale-3 {
-  fill: var(--primary);
-  fill-opacity: 0.6;
+	fill: var(--primary);
+	fill-opacity: 0.6;
 }
 .color-scale-4 {
-  fill: var(--primary);
-  fill-opacity: 0.8;
+	fill: var(--primary);
+	fill-opacity: 0.8;
 }
 
 /* Custom Blockquote Styles */
 blockquote {
-  margin: 1rem 0; /* my-4 */
-  padding-left: 1rem; /* pl-4 */
-  border-left-width: 4px; /* border-l-4 */
-  border-color: #6b7280; /* border-gray-500 */
-  font-style: italic; /* italic */
+	margin: 1rem 0; /* my-4 */
+	padding-left: 1rem; /* pl-4 */
+	border-left-width: 4px; /* border-l-4 */
+	border-color: #6b7280; /* border-gray-500 */
+	font-style: italic; /* italic */
 }

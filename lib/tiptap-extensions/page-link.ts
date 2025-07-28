@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
+import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { toast } from "sonner";
-import { searchPages } from "@/lib/utils/searchPages";
 import tippy, { type Instance, type Props } from "tippy.js";
 
 // プラグインキーの作成
