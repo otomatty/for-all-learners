@@ -1,32 +1,40 @@
 "use client";
 
 import {
+	batchMovePages,
+	checkBatchConflicts,
+	moveToTrash,
+	deletePagesPermanently,
+} from "@/app/_actions/notes";
+import {
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import {
+	DndContext,
+	type DragEndEvent,
+	type DragOverEvent,
+	DragOverlay,
+	type DragStartEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { NoteSummary } from "../../_components/notes-list";
+import type { ConflictInfo, ConflictResolution } from "../types";
+import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
+import { TrashPanel } from "./trash-panel";
+import DraggedPagePreview from "./dragged-page-preview";
 import NotesTree from "./notes-tree";
 import OperationPanel from "./operation-panel";
 import PagesList from "./pages-list";
-import {
-	DndContext,
-	DragOverlay,
-	useSensor,
-	useSensors,
-	PointerSensor,
-	KeyboardSensor,
-	DragStartEvent,
-	DragEndEvent,
-	DragOverEvent,
-} from "@dnd-kit/core";
-import {
-	sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
-import DraggedPagePreview from "./dragged-page-preview";
-import { batchMovePages } from "@/app/_actions/notes";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface NotesExplorerProps {
 	notes: NoteSummary[];
@@ -38,7 +46,27 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	);
 	const [selectedPageIds, setSelectedPageIds] = useState<string[]>([]);
 	const [activeId, setActiveId] = useState<string | null>(null);
-	const [draggedPages, setDraggedPages] = useState<{ id: string; title: string }[]>([]);
+	const [draggedPages, setDraggedPages] = useState<
+		{ id: string; title: string }[]
+	>([]);
+
+	// 競合解決ダイアログの状態
+	const [pendingOperation, setPendingOperation] = useState<{
+		pageIds: string[];
+		targetNoteId: string;
+		isCopy: boolean;
+		conflicts: ConflictInfo[];
+	} | null>(null);
+
+	// 削除確認ダイアログの状態
+	const [pendingDelete, setPendingDelete] = useState<{
+		pages: Array<{ id: string; title: string; updatedAt?: Date }>;
+		noteId: string;
+	} | null>(null);
+
+	// ゴミ箱パネルの状態
+	const [selectedTrashIds, setSelectedTrashIds] = useState<string[]>([]);
+	const [showTrashPanel, setShowTrashPanel] = useState(false);
 
 	const selectedNote = notes.find((note) => note.id === selectedNoteId);
 
@@ -51,7 +79,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	);
 
 	// ドラッグ開始
@@ -63,10 +91,14 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 		if (selectedPageIds.includes(active.id as string)) {
 			// 複数選択されている場合は選択されたページ全て
 			// TODO: 実際のページタイトルを取得する必要がある
-			setDraggedPages(selectedPageIds.map(id => ({ id, title: `Page ${id}` })));
+			setDraggedPages(
+				selectedPageIds.map((id) => ({ id, title: `Page ${id}` })),
+			);
 		} else {
 			// 単一ページの場合
-			setDraggedPages([{ id: active.id as string, title: `Page ${active.id}` }]);
+			setDraggedPages([
+				{ id: active.id as string, title: `Page ${active.id}` },
+			]);
 		}
 	};
 
@@ -78,16 +110,16 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	// ドラッグ終了
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
-		
+
 		setActiveId(null);
 		setDraggedPages([]);
 
 		if (!over) return;
 
-		const sourcePageIds = selectedPageIds.includes(active.id as string) 
-			? selectedPageIds 
+		const sourcePageIds = selectedPageIds.includes(active.id as string)
+			? selectedPageIds
 			: [active.id as string];
-		
+
 		const targetNoteId = over.id as string;
 		const sourceNoteId = selectedNoteId;
 
@@ -99,53 +131,181 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	};
 
 	// ページ移動/コピー処理
-	const handlePageMove = async (pageIds: string[], targetNoteId: string, isCopy: boolean) => {
+	const handlePageMove = async (
+		pageIds: string[],
+		targetNoteId: string,
+		isCopy: boolean,
+	) => {
 		if (!selectedNoteId) return;
 
 		try {
-			toast.loading(`${isCopy ? 'コピー' : '移動'}中...`);
+			toast.loading(`${isCopy ? "コピー" : "移動"}の準備中...`);
+
+			// まず競合をチェック
+			const conflicts = await checkBatchConflicts({
+				pageIds,
+				targetNoteId,
+				isCopy,
+			});
+
+			toast.dismiss();
+
+			if (conflicts.length > 0) {
+				// 競合がある場合はダイアログを表示
+				setPendingOperation({
+					pageIds,
+					targetNoteId,
+					isCopy,
+					conflicts,
+				});
+				return;
+			}
+
+			// 競合がない場合は直接実行
+			await executeBatchMove(pageIds, targetNoteId, isCopy, []);
+		} catch (error) {
+			toast.dismiss();
+			toast.error("処理に失敗しました");
+			console.error("ページ移動エラー:", error);
+		}
+	};
+
+	// バッチ移動の実行
+	const executeBatchMove = async (
+		pageIds: string[],
+		targetNoteId: string,
+		isCopy: boolean,
+		conflictResolutions: ConflictResolution[],
+	) => {
+		if (!selectedNoteId) return;
+
+		try {
+			toast.loading(`${isCopy ? "コピー" : "移動"}中...`);
 
 			const result = await batchMovePages({
 				pageIds,
 				sourceNoteId: selectedNoteId,
 				targetNoteId,
 				isCopy,
-				conflictResolutions: [] // まずは競合解決なしで実行
+				conflictResolutions,
 			});
 
 			toast.dismiss();
 
-			if (result.success && result.conflicts.length === 0) {
+			if (result.success) {
 				// 成功時
-				toast.success(`${result.movedPages.length}件のページを${isCopy ? 'コピー' : '移動'}しました`);
-				
+				toast.success(
+					`${result.movedPages.length}件のページを${isCopy ? "コピー" : "移動"}しました`,
+				);
+
 				// 選択をクリア
 				setSelectedPageIds([]);
-				
+
 				// UIを更新（リフレッシュ）
 				window.location.reload(); // TODO: より効率的な更新方法を実装
-				
-			} else if (result.conflicts.length > 0) {
-				// 競合がある場合
-				toast.warning(`${result.conflicts.length}件の同名競合があります`);
-				
-				// TODO: 競合解決ダイアログを表示
-				console.log("競合:", result.conflicts);
-				
 			} else {
 				// エラーがある場合
-				toast.error(`処理中にエラーが発生しました: ${result.errors[0]?.error || '不明なエラー'}`);
+				toast.error(
+					`処理中にエラーが発生しました: ${result.errors[0]?.error || "不明なエラー"}`,
+				);
 			}
-
 		} catch (error) {
 			toast.dismiss();
-			toast.error('処理に失敗しました');
-			console.error('ページ移動エラー:', error);
+			toast.error("処理に失敗しました");
+			console.error("ページ移動エラー:", error);
 		}
 	};
 
+	// 競合解決の実行
+	const handleConflictResolve = async (resolutions: ConflictResolution[]) => {
+		if (!pendingOperation) return;
+
+		const { pageIds, targetNoteId, isCopy } = pendingOperation;
+		setPendingOperation(null);
+
+		await executeBatchMove(pageIds, targetNoteId, isCopy, resolutions);
+	};
+
+	// 競合解決のキャンセル
+	const handleConflictCancel = () => {
+		setPendingOperation(null);
+		toast.info("操作をキャンセルしました");
+	};
+
+	// 削除処理の開始
+	const handleDeletePages = async (pageIds: string[]) => {
+		if (!selectedNoteId || pageIds.length === 0) return;
+
+		// TODO: 実際のページ情報を取得する
+		// 現在は仮のデータを使用
+		const pageInfos = pageIds.map((id) => ({
+			id,
+			title: `Page ${id}`,
+			updatedAt: new Date(),
+		}));
+
+		setPendingDelete({
+			pages: pageInfos,
+			noteId: selectedNoteId,
+		});
+	};
+
+	// 削除の実行
+	const handleDeleteConfirm = async (deleteType: "trash" | "permanent") => {
+		if (!pendingDelete) return;
+
+		const { pages, noteId } = pendingDelete;
+		const pageIds = pages.map((p) => p.id);
+
+		setPendingDelete(null);
+
+		try {
+			if (deleteType === "trash") {
+				toast.loading("ゴミ箱に移動中...");
+				const result = await moveToTrash({ pageIds, noteId });
+				toast.dismiss();
+
+				if (result.success) {
+					toast.success(result.message);
+					setSelectedPageIds([]);
+					window.location.reload(); // TODO: より効率的な更新方法を実装
+				} else {
+					toast.error(result.message);
+				}
+			} else {
+				toast.loading("完全削除中...");
+				const result = await deletePagesPermanently({ pageIds });
+				toast.dismiss();
+
+				if (result.success) {
+					toast.success(result.message);
+					setSelectedPageIds([]);
+					window.location.reload(); // TODO: より効率的な更新方法を実装
+				} else {
+					toast.error(result.message);
+				}
+			}
+		} catch (error) {
+			toast.dismiss();
+			toast.error("削除に失敗しました");
+			console.error("Delete error:", error);
+		}
+	};
+
+	// 削除のキャンセル
+	const handleDeleteCancel = () => {
+		setPendingDelete(null);
+		toast.info("削除をキャンセルしました");
+	};
+
+	// ゴミ箱復元完了時の処理
+	const handleTrashRestoreComplete = () => {
+		// ページ一覧を更新
+		window.location.reload(); // TODO: より効率的な更新方法を実装
+	};
+
 	return (
-		<DndContext 
+		<DndContext
 			sensors={sensors}
 			onDragStart={handleDragStart}
 			onDragOver={handleDragOver}
@@ -206,18 +366,64 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 				<OperationPanel
 					selectedPageIds={selectedPageIds}
 					onClearSelection={() => setSelectedPageIds([])}
-					onMovePages={(targetNoteId) => handlePageMove(selectedPageIds, targetNoteId, false)}
-					onCopyPages={(targetNoteId) => handlePageMove(selectedPageIds, targetNoteId, true)}
+					onMovePages={(targetNoteId) =>
+						handlePageMove(selectedPageIds, targetNoteId, false)
+					}
+					onCopyPages={(targetNoteId) =>
+						handlePageMove(selectedPageIds, targetNoteId, true)
+					}
+					onDeletePages={() => handleDeletePages(selectedPageIds)}
+					onToggleTrash={() => setShowTrashPanel(!showTrashPanel)}
+					showTrashPanel={showTrashPanel}
 					notes={notes}
 				/>
 			</div>
 
 			{/* ドラッグオーバーレイ */}
 			<DragOverlay>
-				{activeId ? (
-					<DraggedPagePreview pages={draggedPages} />
-				) : null}
+				{activeId ? <DraggedPagePreview pages={draggedPages} /> : null}
 			</DragOverlay>
+
+			{/* 競合解決ダイアログ */}
+			<ConflictResolutionDialog
+				open={!!pendingOperation}
+				conflicts={pendingOperation?.conflicts || []}
+				onResolve={handleConflictResolve}
+				onCancel={handleConflictCancel}
+			/>
+
+			{/* 削除確認ダイアログ */}
+			<DeleteConfirmationDialog
+				open={!!pendingDelete}
+				pages={pendingDelete?.pages || []}
+				onConfirm={handleDeleteConfirm}
+				onCancel={handleDeleteCancel}
+			/>
+
+			{/* ゴミ箱パネル */}
+			{showTrashPanel && (
+				<div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+					<div className="bg-background rounded-lg shadow-lg w-full max-w-4xl h-[80vh] flex flex-col">
+						<div className="p-4 border-b flex items-center justify-between">
+							<h2 className="text-lg font-semibold">ゴミ箱</h2>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setShowTrashPanel(false)}
+							>
+								×
+							</Button>
+						</div>
+						<div className="flex-1 overflow-hidden">
+							<TrashPanel
+								selectedTrashIds={selectedTrashIds}
+								onSelectTrash={setSelectedTrashIds}
+								onRestoreComplete={handleTrashRestoreComplete}
+							/>
+						</div>
+					</div>
+				</div>
+			)}
 		</DndContext>
 	);
 }

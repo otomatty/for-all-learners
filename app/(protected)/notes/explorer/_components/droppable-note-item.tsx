@@ -1,8 +1,8 @@
 "use client";
 
-import { useDroppable } from "@dnd-kit/core";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useDroppable } from "@dnd-kit/core";
 import { Folder, FolderOpen } from "lucide-react";
 import type { NoteSummary } from "../../_components/notes-list";
 
@@ -15,7 +15,7 @@ interface DroppableNoteItemProps {
 export default function DroppableNoteItem({
 	note,
 	isSelected,
-	onSelect
+	onSelect,
 }: DroppableNoteItemProps) {
 	const { isOver, setNodeRef } = useDroppable({
 		id: note.id,
@@ -34,7 +34,7 @@ export default function DroppableNoteItem({
 		}
 	};
 
-	const getVisibilityColor = (visibility: string) => {
+	const getVisibilityColor = (visibility: string): "default" | "secondary" | "destructive" | "outline" => {
 		switch (visibility) {
 			case "public":
 				return "secondary";
@@ -54,9 +54,15 @@ export default function DroppableNoteItem({
 				"p-3 rounded-md cursor-pointer transition-colors",
 				"hover:bg-accent/50 border border-transparent",
 				isSelected && "bg-accent border-border shadow-sm",
-				isOver && "bg-primary/10 border-primary border-dashed"
+				isOver && "bg-primary/10 border-primary border-dashed",
 			)}
 			onClick={() => onSelect(note.id)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onSelect(note.id);
+				}
+			}}
 		>
 			<div className="flex items-center gap-2 mb-2">
 				{isSelected ? (
@@ -67,22 +73,24 @@ export default function DroppableNoteItem({
 				<span className="text-sm font-medium truncate flex-1">
 					{note.title}
 				</span>
-				<span className="text-xs">
-					{getVisibilityIcon(note.visibility)}
-				</span>
+				<span className="text-xs">{getVisibilityIcon(note.visibility)}</span>
 			</div>
-			
+
 			<div className="flex items-center justify-between">
 				<span className="text-xs text-muted-foreground">
 					{note.pageCount}ページ
 				</span>
-				<Badge 
-					variant={getVisibilityColor(note.visibility) as any}
+				<Badge
+					variant={getVisibilityColor(note.visibility)}
 					className="text-xs"
 				>
-					{note.visibility === "public" ? "公開" :
-					 note.visibility === "unlisted" ? "限定" :
-					 note.visibility === "invite" ? "招待" : "非公開"}
+					{note.visibility === "public"
+						? "公開"
+						: note.visibility === "unlisted"
+							? "限定"
+							: note.visibility === "invite"
+								? "招待"
+								: "非公開"}
 				</Badge>
 			</div>
 

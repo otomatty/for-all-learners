@@ -13,7 +13,7 @@ import { getSupabaseClient } from "./getSupabaseClient";
  *   noteId: "note-123",
  *   pageTitle: "重複タイトル"
  * });
- * 
+ *
  * if (conflicts.length > 0) {
  *   console.log("同名ページが存在します:", conflicts);
  * }
@@ -27,7 +27,7 @@ import { getSupabaseClient } from "./getSupabaseClient";
 export async function checkPageConflict({
 	noteId,
 	pageTitle,
-	excludePageId
+	excludePageId,
 }: {
 	noteId: string;
 	pageTitle: string;
@@ -35,11 +35,11 @@ export async function checkPageConflict({
 }) {
 	const supabase = await getSupabaseClient();
 
-	// ノート内の同タイトルページを検索
+	// ノート内の同タイトルページを検索（内容のプレビューも含む）
 	let query = supabase
 		.from("pages")
 		.select(`
-			id, title, created_at, updated_at,
+			id, title, created_at, updated_at, content,
 			note_page_links!inner(note_id)
 		`)
 		.eq("note_page_links.note_id", noteId)

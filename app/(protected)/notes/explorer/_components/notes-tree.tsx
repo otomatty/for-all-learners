@@ -19,7 +19,6 @@ export default function NotesTree({
 	selectedNoteId,
 	onSelectNote,
 }: NotesTreeProps) {
-
 	return (
 		<div className="h-full flex flex-col">
 			{/* 新規作成ボタン */}

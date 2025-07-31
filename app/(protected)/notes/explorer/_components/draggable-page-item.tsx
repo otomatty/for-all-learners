@@ -1,12 +1,12 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { FileText, MoreHorizontal, GripVertical } from "lucide-react";
-import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
+import { useDraggable } from "@dnd-kit/core";
+import { FileText, GripVertical, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 
@@ -19,22 +19,21 @@ interface DraggablePageItemProps {
 export default function DraggablePageItem({
 	page,
 	isSelected,
-	onSelect
+	onSelect,
 }: DraggablePageItemProps) {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		isDragging
-	} = useDraggable({
-		id: page.id,
-	});
+	const { attributes, listeners, setNodeRef, transform, isDragging } =
+		useDraggable({
+			id: page.id,
+		});
 
-	const updatedAt = new Date(page.updated_at || page.created_at).toLocaleDateString("ja-JP");
+	const updatedAt = new Date(
+		page.updated_at || page.created_at || new Date(),
+	).toLocaleDateString("ja-JP");
 
 	const style = {
-		transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+		transform: transform
+			? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+			: undefined,
 	};
 
 	return (
@@ -45,12 +44,12 @@ export default function DraggablePageItem({
 				"border rounded-lg p-3 transition-colors group",
 				"hover:bg-accent/50",
 				isSelected && "bg-accent border-primary",
-				isDragging && "opacity-50"
+				isDragging && "opacity-50",
 			)}
 		>
 			<div className="flex items-start gap-3">
 				{/* ドラッグハンドル */}
-				<div 
+				<div
 					{...listeners}
 					{...attributes}
 					className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
@@ -61,9 +60,7 @@ export default function DraggablePageItem({
 				{/* 選択チェックボックス */}
 				<Checkbox
 					checked={isSelected}
-					onCheckedChange={(checked) =>
-						onSelect(page.id, checked as boolean)
-					}
+					onCheckedChange={(checked) => onSelect(page.id, checked as boolean)}
 					className="mt-1"
 				/>
 
@@ -78,12 +75,9 @@ export default function DraggablePageItem({
 							{page.title}
 						</Link>
 					</div>
-					
-					<div className="text-xs text-muted-foreground space-y-1">
+
+					<div className="text-xs text-muted-foreground">
 						<div>更新: {updatedAt}</div>
-						{page.summary && (
-							<div className="line-clamp-2">{page.summary}</div>
-						)}
 					</div>
 				</div>
 

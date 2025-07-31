@@ -2,14 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Clipboard, Copy, Move, Search, Trash2, X } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { Clipboard, Copy, Move, Search, Trash2, X } from "lucide-react";
 import type { NoteSummary } from "../../_components/notes-list";
 
 interface OperationPanelProps {
@@ -17,6 +17,9 @@ interface OperationPanelProps {
 	onClearSelection: () => void;
 	onMovePages: (targetNoteId: string) => void;
 	onCopyPages: (targetNoteId: string) => void;
+	onDeletePages: () => void;
+	onToggleTrash: () => void;
+	showTrashPanel: boolean;
 	notes: NoteSummary[];
 }
 
@@ -25,13 +28,15 @@ export default function OperationPanel({
 	onClearSelection,
 	onMovePages,
 	onCopyPages,
+	onDeletePages,
+	onToggleTrash,
+	showTrashPanel,
 	notes,
 }: OperationPanelProps) {
 	const hasSelection = selectedPageIds.length > 0;
 
 	const handleDelete = () => {
-		// TODO: 削除確認ダイアログを開く
-		console.log("削除操作:", selectedPageIds);
+		onDeletePages();
 	};
 
 	return (
@@ -55,9 +60,18 @@ export default function OperationPanel({
 							</Button>
 						</>
 					) : (
-						<span className="text-sm text-muted-foreground">
-							🗑️ ゴミ箱 | 📋 クリップボード | 🔍 検索結果
-						</span>
+						<div className="flex items-center gap-4 text-sm text-muted-foreground">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onToggleTrash}
+								className={`h-6 px-2 ${showTrashPanel ? 'bg-muted' : ''}`}
+							>
+								<Trash2 className="h-3 w-3 mr-1" />
+								ゴミ箱
+							</Button>
+							<span>📋 クリップボード | 🔍 検索結果</span>
+						</div>
 					)}
 				</div>
 
@@ -66,11 +80,7 @@ export default function OperationPanel({
 					<div className="flex items-center gap-2">
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="outline"
-									size="sm"
-									className="gap-1"
-								>
+								<Button variant="outline" size="sm" className="gap-1">
 									<Move className="h-3 w-3" />
 									移動
 								</Button>
@@ -86,14 +96,10 @@ export default function OperationPanel({
 								))}
 							</DropdownMenuContent>
 						</DropdownMenu>
-						
+
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="outline"
-									size="sm"
-									className="gap-1"
-								>
+								<Button variant="outline" size="sm" className="gap-1">
 									<Copy className="h-3 w-3" />
 									コピー
 								</Button>

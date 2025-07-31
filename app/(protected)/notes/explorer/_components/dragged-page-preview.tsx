@@ -1,7 +1,7 @@
 "use client";
 
-import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FileText } from "lucide-react";
 
 interface DraggedPagePreviewProps {
 	pages: { id: string; title: string }[];
@@ -40,9 +40,7 @@ export default function DraggedPagePreview({ pages }: DraggedPagePreviewProps) {
 					</div>
 				))}
 				{pages.length > 3 && (
-					<div className="text-center">
-						...他{pages.length - 3}件
-					</div>
+					<div className="text-center">...他{pages.length - 3}件</div>
 				)}
 			</div>
 		</div>

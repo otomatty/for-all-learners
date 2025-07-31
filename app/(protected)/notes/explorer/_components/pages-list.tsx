@@ -8,15 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
-import {
-	Calendar,
-	FileText,
-	Grid3X3,
-	List,
-	MoreHorizontal,
-	Search,
-} from "lucide-react";
-import Link from "next/link";
+import { Calendar, FileText, Grid3X3, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import DraggablePageItem from "./draggable-page-item";
 
@@ -91,7 +83,7 @@ export default function PagesList({
 		return (
 			<div className="h-full flex items-center justify-center">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2" />
 					<p className="text-sm text-muted-foreground">読み込み中...</p>
 				</div>
 			</div>

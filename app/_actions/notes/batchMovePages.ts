@@ -1,13 +1,13 @@
 "use server";
 
+import { checkPageConflict } from "./checkPageConflict";
 import { getSupabaseClient } from "./getSupabaseClient";
 import { linkPageToNote } from "./linkPageToNote";
 import { unlinkPageFromNote } from "./unlinkPageFromNote";
-import { checkPageConflict } from "./checkPageConflict";
 
 export interface ConflictResolution {
 	pageId: string;
-	action: 'rename' | 'skip' | 'replace';
+	action: "rename" | "manual-rename" | "skip" | "replace";
 	newTitle?: string;
 }
 
@@ -55,7 +55,7 @@ export async function batchMovePages({
 	sourceNoteId,
 	targetNoteId,
 	isCopy = false,
-	conflictResolutions = []
+	conflictResolutions = [],
 }: {
 	pageIds: string[];
 	sourceNoteId: string;
@@ -64,12 +64,12 @@ export async function batchMovePages({
 	conflictResolutions?: ConflictResolution[];
 }): Promise<BatchMoveResult> {
 	const supabase = await getSupabaseClient();
-	
+
 	const result: BatchMoveResult = {
 		success: true,
 		movedPages: [],
 		conflicts: [],
-		errors: []
+		errors: [],
 	};
 
 	try {
@@ -86,13 +86,15 @@ export async function batchMovePages({
 		for (const page of pages) {
 			try {
 				// 競合解決方法を取得
-				const resolution = conflictResolutions.find(r => r.pageId === page.id);
-				
+				const resolution = conflictResolutions.find(
+					(r) => r.pageId === page.id,
+				);
+
 				// 同名競合をチェック
 				const conflicts = await checkPageConflict({
 					noteId: targetNoteId,
 					pageTitle: page.title,
-					excludePageId: isCopy ? undefined : page.id
+					excludePageId: isCopy ? undefined : page.id,
 				});
 
 				if (conflicts.length > 0 && !resolution) {
@@ -100,22 +102,33 @@ export async function batchMovePages({
 					result.conflicts.push({
 						pageId: page.id,
 						pageTitle: page.title,
-						conflictingPages: conflicts
+						conflictingPages: conflicts,
 					});
 					result.success = false;
 					continue;
 				}
 
 				// タイトル変更が必要な場合
-				if (resolution?.action === 'rename' && resolution.newTitle) {
+				if (
+					(resolution?.action === "rename" ||
+						resolution?.action === "manual-rename") &&
+					resolution.newTitle
+				) {
 					await supabase
 						.from("pages")
 						.update({ title: resolution.newTitle })
 						.eq("id", page.id);
-				} else if (resolution?.action === 'skip') {
+				} else if (resolution?.action === "rename" && !resolution.newTitle) {
+					// 自動リネームの場合
+					const autoTitle = `${page.title} (2)`;
+					await supabase
+						.from("pages")
+						.update({ title: autoTitle })
+						.eq("id", page.id);
+				} else if (resolution?.action === "skip") {
 					// スキップする場合
 					continue;
-				} else if (resolution?.action === 'replace') {
+				} else if (resolution?.action === "replace") {
 					// 置き換える場合は既存のページを削除
 					for (const conflictPage of conflicts) {
 						await unlinkPageFromNote(targetNoteId, conflictPage.id);
@@ -131,23 +144,21 @@ export async function batchMovePages({
 				}
 
 				result.movedPages.push(page.id);
-
 			} catch (error) {
 				console.error(`Error processing page ${page.id}:`, error);
 				result.errors.push({
 					pageId: page.id,
-					error: error instanceof Error ? error.message : "Unknown error"
+					error: error instanceof Error ? error.message : "Unknown error",
 				});
 				result.success = false;
 			}
 		}
-
 	} catch (error) {
 		console.error("Batch move error:", error);
 		result.success = false;
 		result.errors.push({
 			pageId: "batch",
-			error: error instanceof Error ? error.message : "Unknown error"
+			error: error instanceof Error ? error.message : "Unknown error",
 		});
 	}
 
