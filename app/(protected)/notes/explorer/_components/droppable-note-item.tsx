@@ -34,7 +34,9 @@ export default function DroppableNoteItem({
 		}
 	};
 
-	const getVisibilityColor = (visibility: string): "default" | "secondary" | "destructive" | "outline" => {
+	const getVisibilityColor = (
+		visibility: string,
+	): "default" | "secondary" | "destructive" | "outline" => {
 		switch (visibility) {
 			case "public":
 				return "secondary";

@@ -22,7 +22,7 @@ import { linkPageToNote } from "./linkPageToNote";
  */
 export async function restoreFromTrash({
 	trashIds,
-	targetNoteId
+	targetNoteId,
 }: {
 	trashIds: string[];
 	targetNoteId?: string;
@@ -31,7 +31,10 @@ export async function restoreFromTrash({
 
 	try {
 		// 現在のユーザーIDを取得
-		const { data: { user }, error: userError } = await supabase.auth.getUser();
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
 		if (userError || !user) {
 			throw new Error("認証が必要です");
 		}
@@ -53,9 +56,11 @@ export async function restoreFromTrash({
 		for (const trashItem of trashItems) {
 			// 復元先ノートIDを決定（指定がない場合は元のノート）
 			const restoreNoteId = targetNoteId || trashItem.original_note_id;
-			
+
 			if (!restoreNoteId) {
-				throw new Error(`ページ "${trashItem.page_title}" の復元先ノートが特定できません`);
+				throw new Error(
+					`ページ "${trashItem.page_title}" の復元先ノートが特定できません`,
+				);
 			}
 
 			// ページが削除されていないか確認
@@ -65,7 +70,7 @@ export async function restoreFromTrash({
 				.eq("id", trashItem.page_id)
 				.single();
 
-			if (pageCheckError && pageCheckError.code !== 'PGRST116') {
+			if (pageCheckError && pageCheckError.code !== "PGRST116") {
 				throw pageCheckError;
 			}
 
@@ -81,7 +86,7 @@ export async function restoreFromTrash({
 					.single();
 
 				if (createError) throw createError;
-				
+
 				// 新しいページIDでノートにリンク
 				await linkPageToNote(restoreNoteId, newPage.id);
 				restoredPages.push(newPage.id);
@@ -104,16 +109,15 @@ export async function restoreFromTrash({
 			success: true,
 			restoredCount: restoredPages.length,
 			restoredPages,
-			message: `${restoredPages.length}件のページを復元しました`
+			message: `${restoredPages.length}件のページを復元しました`,
 		};
-
 	} catch (error) {
 		console.error("Restore from trash error:", error);
 		return {
 			success: false,
 			restoredCount: 0,
 			restoredPages: [],
-			message: error instanceof Error ? error.message : "復元に失敗しました"
+			message: error instanceof Error ? error.message : "復元に失敗しました",
 		};
 	}
 }

@@ -65,7 +65,7 @@ export default function OperationPanel({
 								variant="ghost"
 								size="sm"
 								onClick={onToggleTrash}
-								className={`h-6 px-2 ${showTrashPanel ? 'bg-muted' : ''}`}
+								className={`h-6 px-2 ${showTrashPanel ? "bg-muted" : ""}`}
 							>
 								<Trash2 className="h-3 w-3 mr-1" />
 								ゴミ箱

@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-	TrashIcon,
-	RotateCcwIcon,
-	XIcon,
-	CalendarIcon,
-	AlertTriangleIcon,
-	RefreshCwIcon,
-} from "lucide-react";
-import { toast } from "sonner";
-import {
+	type TrashItem,
+	deletePagesPermanently,
 	getTrashItems,
 	restoreFromTrash,
-	deletePagesPermanently,
-	type TrashItem,
 } from "@/app/_actions/notes";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+	AlertTriangleIcon,
+	CalendarIcon,
+	RefreshCwIcon,
+	RotateCcwIcon,
+	TrashIcon,
+	XIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface TrashPanelProps {
 	selectedTrashIds: string[];

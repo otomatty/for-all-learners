@@ -21,7 +21,7 @@ import { getSupabaseClient } from "./getSupabaseClient";
  */
 export async function moveToTrash({
 	pageIds,
-	noteId
+	noteId,
 }: {
 	pageIds: string[];
 	noteId: string;
@@ -30,7 +30,10 @@ export async function moveToTrash({
 
 	try {
 		// 現在のユーザーIDを取得
-		const { data: { user }, error: userError } = await supabase.auth.getUser();
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
 		if (userError || !user) {
 			throw new Error("認証が必要です");
 		}
@@ -49,19 +52,17 @@ export async function moveToTrash({
 		// 各ページをゴミ箱に移動
 		for (const page of pages) {
 			// ゴミ箱テーブルに追加
-			const { error: trashError } = await supabase
-				.from("page_trash")
-				.insert({
-					page_id: page.id,
-					user_id: user.id,
-					original_note_id: noteId,
-					page_title: page.title,
-					page_content: page.content,
-					metadata: {
-						deleted_from_note: noteId,
-						deleted_by: user.id
-					}
-				});
+			const { error: trashError } = await supabase.from("page_trash").insert({
+				page_id: page.id,
+				user_id: user.id,
+				original_note_id: noteId,
+				page_title: page.title,
+				page_content: page.content,
+				metadata: {
+					deleted_from_note: noteId,
+					deleted_by: user.id,
+				},
+			});
 
 			if (trashError) throw trashError;
 
@@ -78,15 +79,15 @@ export async function moveToTrash({
 		return {
 			success: true,
 			deletedCount: pages.length,
-			message: `${pages.length}件のページをゴミ箱に移動しました`
+			message: `${pages.length}件のページをゴミ箱に移動しました`,
 		};
-
 	} catch (error) {
 		console.error("Move to trash error:", error);
 		return {
 			success: false,
 			deletedCount: 0,
-			message: error instanceof Error ? error.message : "ゴミ箱への移動に失敗しました"
+			message:
+				error instanceof Error ? error.message : "ゴミ箱への移動に失敗しました",
 		};
 	}
 }

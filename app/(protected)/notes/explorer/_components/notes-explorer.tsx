@@ -3,9 +3,10 @@
 import {
 	batchMovePages,
 	checkBatchConflicts,
-	moveToTrash,
 	deletePagesPermanently,
+	moveToTrash,
 } from "@/app/_actions/notes";
+import { Button } from "@/components/ui/button";
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -29,12 +30,11 @@ import type { NoteSummary } from "../../_components/notes-list";
 import type { ConflictInfo, ConflictResolution } from "../types";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import { TrashPanel } from "./trash-panel";
 import DraggedPagePreview from "./dragged-page-preview";
 import NotesTree from "./notes-tree";
 import OperationPanel from "./operation-panel";
 import PagesList from "./pages-list";
-import { Button } from "@/components/ui/button";
+import { TrashPanel } from "./trash-panel";
 
 interface NotesExplorerProps {
 	notes: NoteSummary[];

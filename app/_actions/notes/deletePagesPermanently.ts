@@ -18,7 +18,7 @@ import { getSupabaseClient } from "./getSupabaseClient";
  * @returns 処理結果
  */
 export async function deletePagesPermanently({
-	pageIds
+	pageIds,
 }: {
 	pageIds: string[];
 }) {
@@ -26,7 +26,10 @@ export async function deletePagesPermanently({
 
 	try {
 		// 現在のユーザーIDを取得
-		const { data: { user }, error: userError } = await supabase.auth.getUser();
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
 		if (userError || !user) {
 			throw new Error("認証が必要です");
 		}
@@ -70,15 +73,15 @@ export async function deletePagesPermanently({
 		return {
 			success: true,
 			deletedCount: pages.length,
-			message: `${pages.length}件のページを完全に削除しました`
+			message: `${pages.length}件のページを完全に削除しました`,
 		};
-
 	} catch (error) {
 		console.error("Permanent delete error:", error);
 		return {
 			success: false,
 			deletedCount: 0,
-			message: error instanceof Error ? error.message : "完全削除に失敗しました"
+			message:
+				error instanceof Error ? error.message : "完全削除に失敗しました",
 		};
 	}
 }

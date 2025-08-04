@@ -33,7 +33,7 @@ export interface TrashItem {
  */
 export async function getTrashItems({
 	limit = 100,
-	offset = 0
+	offset = 0,
 }: {
 	limit?: number;
 	offset?: number;
@@ -42,7 +42,10 @@ export async function getTrashItems({
 
 	try {
 		// 現在のユーザーIDを取得
-		const { data: { user }, error: userError } = await supabase.auth.getUser();
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
 		if (userError || !user) {
 			throw new Error("認証が必要です");
 		}
@@ -70,7 +73,7 @@ export async function getTrashItems({
 		if (trashError) throw trashError;
 
 		// データを整形
-		const formattedTrashItems: TrashItem[] = (trashItems || []).map(item => ({
+		const formattedTrashItems: TrashItem[] = (trashItems || []).map((item) => ({
 			id: item.id,
 			pageId: item.page_id,
 			pageTitle: item.page_title,
@@ -78,8 +81,10 @@ export async function getTrashItems({
 			originalNoteId: item.original_note_id,
 			originalNoteTitle: item.notes?.title,
 			deletedAt: new Date(item.deleted_at),
-			autoDeleteAt: item.auto_delete_at ? new Date(item.auto_delete_at) : undefined,
-			metadata: item.metadata || {}
+			autoDeleteAt: item.auto_delete_at
+				? new Date(item.auto_delete_at)
+				: undefined,
+			metadata: item.metadata || {},
 		}));
 
 		// 総件数を取得
@@ -94,9 +99,8 @@ export async function getTrashItems({
 			success: true,
 			trashItems: formattedTrashItems,
 			totalCount: count || 0,
-			hasMore: (offset + limit) < (count || 0)
+			hasMore: offset + limit < (count || 0),
 		};
-
 	} catch (error) {
 		console.error("Get trash items error:", error);
 		return {
@@ -104,7 +108,8 @@ export async function getTrashItems({
 			trashItems: [],
 			totalCount: 0,
 			hasMore: false,
-			message: error instanceof Error ? error.message : "ゴミ箱の取得に失敗しました"
+			message:
+				error instanceof Error ? error.message : "ゴミ箱の取得に失敗しました",
 		};
 	}
 }

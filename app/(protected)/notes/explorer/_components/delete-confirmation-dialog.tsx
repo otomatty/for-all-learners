@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrashIcon, AlertTriangleIcon, FileIcon } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangleIcon, FileIcon, TrashIcon } from "lucide-react";
+import { useState } from "react";
 
 interface PageInfo {
 	id: string;
@@ -25,7 +25,7 @@ interface PageInfo {
 interface DeleteConfirmationDialogProps {
 	open: boolean;
 	pages: PageInfo[];
-	onConfirm: (deleteType: 'trash' | 'permanent') => void;
+	onConfirm: (deleteType: "trash" | "permanent") => void;
 	onCancel: () => void;
 }
 
@@ -33,9 +33,9 @@ export function DeleteConfirmationDialog({
 	open,
 	pages,
 	onConfirm,
-	onCancel
+	onCancel,
 }: DeleteConfirmationDialogProps) {
-	const [deleteType, setDeleteType] = useState<'trash' | 'permanent'>('trash');
+	const [deleteType, setDeleteType] = useState<"trash" | "permanent">("trash");
 
 	const handleConfirm = () => {
 		onConfirm(deleteType);
@@ -48,9 +48,7 @@ export function DeleteConfirmationDialog({
 					<DialogTitle className="flex items-center gap-2">
 						<TrashIcon className="h-5 w-5 text-destructive" />
 						ページの削除確認
-						<Badge variant="secondary">
-							{pages.length}件のページ
-						</Badge>
+						<Badge variant="secondary">{pages.length}件のページ</Badge>
 					</DialogTitle>
 				</DialogHeader>
 
@@ -84,7 +82,9 @@ export function DeleteConfirmationDialog({
 						<h4 className="text-sm font-medium">削除方法を選択:</h4>
 						<RadioGroup
 							value={deleteType}
-							onValueChange={(value) => setDeleteType(value as 'trash' | 'permanent')}
+							onValueChange={(value) =>
+								setDeleteType(value as "trash" | "permanent")
+							}
 						>
 							{/* ゴミ箱に移動 */}
 							<div className="flex items-start space-x-3">
@@ -101,9 +101,16 @@ export function DeleteConfirmationDialog({
 
 							{/* 完全削除 */}
 							<div className="flex items-start space-x-3">
-								<RadioGroupItem value="permanent" id="permanent" className="mt-1" />
+								<RadioGroupItem
+									value="permanent"
+									id="permanent"
+									className="mt-1"
+								/>
 								<div className="flex-1">
-									<Label htmlFor="permanent" className="text-base font-medium text-destructive">
+									<Label
+										htmlFor="permanent"
+										className="text-base font-medium text-destructive"
+									>
 										完全削除
 									</Label>
 									<p className="text-sm text-muted-foreground mt-1">
@@ -115,7 +122,7 @@ export function DeleteConfirmationDialog({
 					</div>
 
 					{/* 完全削除の警告 */}
-					{deleteType === 'permanent' && (
+					{deleteType === "permanent" && (
 						<Alert variant="destructive">
 							<AlertTriangleIcon className="h-4 w-4" />
 							<AlertDescription>
@@ -130,11 +137,11 @@ export function DeleteConfirmationDialog({
 					<Button variant="outline" onClick={onCancel}>
 						キャンセル
 					</Button>
-					<Button 
-						variant={deleteType === 'permanent' ? 'destructive' : 'default'}
+					<Button
+						variant={deleteType === "permanent" ? "destructive" : "default"}
 						onClick={handleConfirm}
 					>
-						{deleteType === 'trash' ? (
+						{deleteType === "trash" ? (
 							<>
 								<TrashIcon className="h-4 w-4 mr-2" />
 								ゴミ箱に移動
