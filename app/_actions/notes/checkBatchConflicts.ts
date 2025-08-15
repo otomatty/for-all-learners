@@ -58,12 +58,12 @@ export async function checkBatchConflicts({
 			const existingPagesWithPreview = conflictPages.map((conflictPage) => ({
 				id: conflictPage.id,
 				title: conflictPage.title,
-				createdAt: new Date(conflictPage.created_at),
-				updatedAt: new Date(conflictPage.updated_at),
-				preview: conflictPage.content
-					? conflictPage.content.length > 200
-						? conflictPage.content.substring(0, 200) + "..."
-						: conflictPage.content
+				createdAt: new Date(conflictPage.created_at || new Date()),
+				updatedAt: new Date(conflictPage.updated_at || new Date()),
+				preview: conflictPage.content_tiptap
+					? JSON.stringify(conflictPage.content_tiptap).length > 200
+						? `${JSON.stringify(conflictPage.content_tiptap).substring(0, 200)}...`
+						: JSON.stringify(conflictPage.content_tiptap)
 					: undefined,
 			}));
 

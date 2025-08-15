@@ -17,7 +17,13 @@ export interface BatchMoveResult {
 	conflicts: Array<{
 		pageId: string;
 		pageTitle: string;
-		conflictingPages: any[];
+		conflictingPages: Array<{
+			id: string;
+			title: string;
+			created_at: string | null;
+			updated_at: string | null;
+			content_tiptap: Record<string, unknown> | null;
+		}>;
 	}>;
 	errors: Array<{
 		pageId: string;
@@ -102,7 +108,16 @@ export async function batchMovePages({
 					result.conflicts.push({
 						pageId: page.id,
 						pageTitle: page.title,
-						conflictingPages: conflicts,
+						conflictingPages: conflicts.map((conflict) => ({
+							id: conflict.id,
+							title: conflict.title,
+							created_at: conflict.created_at,
+							updated_at: conflict.updated_at,
+							content_tiptap: conflict.content_tiptap as Record<
+								string,
+								unknown
+							> | null,
+						})),
 					});
 					result.success = false;
 					continue;

@@ -79,8 +79,11 @@ export async function restoreFromTrash({
 				const { data: newPage, error: createError } = await supabase
 					.from("pages")
 					.insert({
+						user_id: user.id,
 						title: trashItem.page_title,
-						content: trashItem.page_content || "",
+						content_tiptap: trashItem.page_content
+							? JSON.parse(trashItem.page_content)
+							: { type: "doc", content: [] },
 					})
 					.select("id")
 					.single();

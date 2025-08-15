@@ -39,7 +39,7 @@ export async function checkPageConflict({
 	let query = supabase
 		.from("pages")
 		.select(`
-			id, title, created_at, updated_at, content,
+			id, title, created_at, updated_at, content_tiptap,
 			note_page_links!inner(note_id)
 		`)
 		.eq("note_page_links.note_id", noteId)

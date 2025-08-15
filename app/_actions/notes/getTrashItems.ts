@@ -6,12 +6,12 @@ export interface TrashItem {
 	id: string;
 	pageId: string;
 	pageTitle: string;
-	pageContent?: string;
-	originalNoteId?: string;
+	pageContent?: string | null;
+	originalNoteId?: string | null;
 	originalNoteTitle?: string;
 	deletedAt: Date;
-	autoDeleteAt?: Date;
-	metadata: Record<string, any>;
+	autoDeleteAt?: Date | null;
+	metadata: Record<string, unknown> | null;
 }
 
 /**
@@ -80,11 +80,12 @@ export async function getTrashItems({
 			pageContent: item.page_content,
 			originalNoteId: item.original_note_id,
 			originalNoteTitle: item.notes?.title,
-			deletedAt: new Date(item.deleted_at),
-			autoDeleteAt: item.auto_delete_at
-				? new Date(item.auto_delete_at)
-				: undefined,
-			metadata: item.metadata || {},
+			deletedAt: new Date(item.deleted_at || new Date()),
+			autoDeleteAt: item.auto_delete_at ? new Date(item.auto_delete_at) : null,
+			metadata:
+				typeof item.metadata === "object" && item.metadata !== null
+					? (item.metadata as Record<string, unknown>)
+					: {},
 		}));
 
 		// 総件数を取得

@@ -142,7 +142,7 @@ export function TrashPanel({
 	};
 
 	// 自動削除までの日数を計算
-	const getDaysUntilAutoDelete = (autoDeleteAt?: Date) => {
+	const getDaysUntilAutoDelete = (autoDeleteAt?: Date | null) => {
 		if (!autoDeleteAt) return null;
 		const now = new Date();
 		const diffTime = autoDeleteAt.getTime() - now.getTime();

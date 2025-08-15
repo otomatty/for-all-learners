@@ -20,6 +20,10 @@ export interface NavItem {
 	icon: keyof typeof Icons;
 	status: NavItemStatus;
 	hasNotification?: boolean;
+	subItems?: Array<{
+		label: string;
+		href: string;
+	}>;
 }
 
 interface AppNavDropdownProps {

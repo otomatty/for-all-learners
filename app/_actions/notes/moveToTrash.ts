@@ -41,7 +41,7 @@ export async function moveToTrash({
 		// ページの詳細情報を取得
 		const { data: pages, error: pagesError } = await supabase
 			.from("pages")
-			.select("id, title, content")
+			.select("id, title, content_tiptap")
 			.in("id", pageIds);
 
 		if (pagesError) throw pagesError;
@@ -57,7 +57,7 @@ export async function moveToTrash({
 				user_id: user.id,
 				original_note_id: noteId,
 				page_title: page.title,
-				page_content: page.content,
+				page_content: JSON.stringify(page.content_tiptap),
 				metadata: {
 					deleted_from_note: noteId,
 					deleted_by: user.id,
