@@ -42,7 +42,7 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 
 	// Call Gemini API for transcription
 	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash-preview-04-17",
+		model: "gemini-2.5-flash",
 		contents,
 	});
 

@@ -7,6 +7,7 @@ import type {
 } from "@/app/(protected)/notes/explorer/types";
 import { batchMovePages } from "@/app/_actions/notes/batchMovePages";
 import { checkBatchConflicts } from "@/app/_actions/notes/checkBatchConflicts";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { toast } from "sonner";
 import { NotesExplorerSidebar } from "./notes-sidebar";
@@ -132,9 +133,9 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 	};
 
 	return (
-		<>
+		<SidebarProvider defaultOpen={false}>
 			<NotesExplorerSidebar notes={notes} onPageMove={handlePageMove} />
-			{children}
+			<SidebarInset className="bg-secondary">{children}</SidebarInset>
 			{pendingOperation && (
 				<ConflictResolutionDialog
 					open={!!pendingOperation}
@@ -143,6 +144,6 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 					onCancel={handleConflictCancel}
 				/>
 			)}
-		</>
+		</SidebarProvider>
 	);
 }

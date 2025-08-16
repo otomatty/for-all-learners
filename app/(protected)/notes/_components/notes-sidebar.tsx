@@ -11,8 +11,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarProvider,
-	useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -90,106 +88,65 @@ export function NotesExplorerSidebar({
 	};
 
 	return (
-		<SidebarProvider defaultOpen={false}>
-			<DndContext
-				sensors={sensors}
-				onDragStart={handleDragStart}
-				onDragEnd={handleDragEnd}
-			>
-				<Sidebar side="left" variant="floating" collapsible="offcanvas">
-					<SidebarHeader>
-						<div className="flex items-center gap-2 px-2 py-1">
-							<FolderOpen className="h-4 w-4" />
-							<span className="font-semibold">ノートエクスプローラー</span>
-						</div>
-					</SidebarHeader>
-					<SidebarContent>
-						<SidebarGroup>
-							<SidebarGroupLabel>ノート一覧</SidebarGroupLabel>
-							<SidebarGroupContent>
-								<SidebarMenu>
-									<SortableContext
-										items={notes.map((note) => note.id)}
-										strategy={verticalListSortingStrategy}
-									>
-										{notes.map((note) => {
-											const isCurrentNote = note.slug === currentNoteSlug;
-
-											return (
-												<SidebarMenuItem key={note.id}>
-													<SidebarMenuButton
-														asChild
-														isActive={isCurrentNote}
-														className={cn(
-															"relative",
-															isCurrentNote && "bg-sidebar-accent",
-														)}
-													>
-														<div
-															id={note.id}
-															className="flex items-center justify-between w-full cursor-pointer"
-														>
-															<div className="flex items-center gap-2 flex-1">
-																<ChevronRight className="h-3 w-3" />
-																<span className="truncate">{note.title}</span>
-															</div>
-															<span className="text-xs text-muted-foreground">
-																{note.pageCount}
-															</span>
-															{isCurrentNote && currentPageId && (
-																<div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
-															)}
-														</div>
-													</SidebarMenuButton>
-												</SidebarMenuItem>
-											);
-										})}
-									</SortableContext>
-								</SidebarMenu>
-							</SidebarGroupContent>
-						</SidebarGroup>
-					</SidebarContent>
-				</Sidebar>
-			</DndContext>
-
-			{/* フローティングボタン */}
-			<FloatingExplorerButton />
-		</SidebarProvider>
-	);
-}
-
-// フローティングボタンコンポーネント
-function FloatingExplorerButton() {
-	const { toggleSidebar, state } = useSidebar();
-
-	// サイドバーが開いているかどうかを判定
-	const isOpen = state === "expanded";
-
-	// サイドバーの実際の幅に合わせて位置を調整
-	// Radix UIのSidebarは通常256px (w-60) または288px (w-72) の幅を使用
-	const leftPosition = isOpen ? "left-60" : "left-0"; // 60 = 240px / 4
-
-	return (
-		<Button
-			onClick={toggleSidebar}
-			size="icon"
-			className={cn(
-				"fixed top-1/2 -translate-y-1/2 rounded-r-lg rounded-l-none h-12 w-10 shadow-lg z-50 transition-all duration-300",
-				leftPosition,
-			)}
-			variant="default"
+		<DndContext
+			sensors={sensors}
+			onDragStart={handleDragStart}
+			onDragEnd={handleDragEnd}
 		>
-			<ChevronRight
-				className={cn(
-					"h-5 w-5 transition-transform duration-300",
-					isOpen && "rotate-180",
-				)}
-			/>
-			<span className="sr-only">
-				{isOpen
-					? "ノートエクスプローラーを閉じる"
-					: "ノートエクスプローラーを開く"}
-			</span>
-		</Button>
+			<Sidebar side="left" variant="floating" collapsible="offcanvas">
+				<SidebarHeader>
+					<div className="flex items-center gap-2 px-2 py-1">
+						<FolderOpen className="h-4 w-4" />
+						<span className="font-semibold">ノートエクスプローラー</span>
+					</div>
+				</SidebarHeader>
+				<SidebarContent>
+					<SidebarGroup>
+						<SidebarGroupLabel>ノート一覧</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								<SortableContext
+									items={notes.map((note) => note.id)}
+									strategy={verticalListSortingStrategy}
+								>
+									{notes.map((note) => {
+										const isCurrentNote = note.slug === currentNoteSlug;
+
+										return (
+											<SidebarMenuItem key={note.id}>
+												<SidebarMenuButton
+													asChild
+													isActive={isCurrentNote}
+													className={cn(
+														"relative",
+														isCurrentNote && "bg-sidebar-accent",
+													)}
+												>
+													<div
+														id={note.id}
+														className="flex items-center justify-between w-full cursor-pointer"
+													>
+														<div className="flex items-center gap-2 flex-1">
+															<ChevronRight className="h-3 w-3" />
+															<span className="truncate">{note.title}</span>
+														</div>
+														<span className="text-xs text-muted-foreground">
+															{note.pageCount}
+														</span>
+														{isCurrentNote && currentPageId && (
+															<div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
+														)}
+													</div>
+												</SidebarMenuButton>
+											</SidebarMenuItem>
+										);
+									})}
+								</SortableContext>
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				</SidebarContent>
+			</Sidebar>
+		</DndContext>
 	);
 }

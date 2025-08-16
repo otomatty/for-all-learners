@@ -91,7 +91,7 @@ export function UserNav({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" className="flex items-center gap-2">
+				<Button variant="ghost" className="flex items-center gap-2 p-0">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
 							src={account.avatar_url || "https://placehold.co/400x400"}

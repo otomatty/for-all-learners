@@ -113,24 +113,20 @@ export default async function PageDetail({ params }: PageDetailProps) {
 	return (
 		<Container>
 			<BackLink title="ページ一覧に戻る" path={`/notes/${noteSlug}`} />
-			<div className="flex gap-4">
-				<div className="flex-1">
-					<EditPageForm
-						page={page}
-						initialContent={decoratedDoc}
-						cosenseProjectName={cosenseProjectName}
-						outgoingPages={outgoingPages.map((p) => ({
-							id: p.id,
-							title: p.title,
-							thumbnail_url: p.thumbnail_url ?? null,
-							content_tiptap: p.content_tiptap as JSONContent,
-						}))}
-						incomingPages={incomingPages}
-						missingLinks={missingLinks}
-						nestedLinks={nestedLinks}
-					/>
-				</div>
-			</div>
+			<EditPageForm
+				page={page}
+				initialContent={decoratedDoc}
+				cosenseProjectName={cosenseProjectName}
+				outgoingPages={outgoingPages.map((p) => ({
+					id: p.id,
+					title: p.title,
+					thumbnail_url: p.thumbnail_url ?? null,
+					content_tiptap: p.content_tiptap as JSONContent,
+				}))}
+				incomingPages={incomingPages}
+				missingLinks={missingLinks}
+				nestedLinks={nestedLinks}
+			/>
 		</Container>
 	);
 }

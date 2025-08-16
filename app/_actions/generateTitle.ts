@@ -18,7 +18,7 @@ export async function generateTitleFromTranscript(
 		"この文章を5文字〜20文字程度の日本語タイトルに要約してください。";
 	const contents = createUserContent([systemPrompt, transcript]);
 	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash-preview-04-17",
+		model: "gemini-2.5-flash",
 		contents,
 	});
 	// Extract raw content

@@ -152,7 +152,7 @@ export function AudioCardGenerator({
 				duration_sec: Math.floor(
 					(Date.now() - recordingStartRef.current) / 1000,
 				),
-				model_name: "gemini-2.5-flash-preview-04-17",
+				model_name: "gemini-2.5-flash",
 			});
 			toast.success("文字起こし完了", {
 				description: `${transcript.substring(0, 50)}...`,

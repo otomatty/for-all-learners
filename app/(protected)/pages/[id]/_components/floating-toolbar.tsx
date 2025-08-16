@@ -10,6 +10,7 @@ import {
 	ImagePlus,
 	MoreVertical,
 	Pause,
+	Plus,
 	RotateCw,
 	Sparkles,
 	Trash2,
@@ -32,6 +33,10 @@ interface FloatingToolbarProps {
 	onGenerateCards: () => void;
 	onUploadImage: (file: File) => void;
 	onDeletePage: () => Promise<void>;
+	/** 現在のパス情報を渡す（note内かどうかの判定用） */
+	currentPath?: string;
+	/** note slug（note内ページの場合） */
+	noteSlug?: string;
 }
 
 export default function FloatingToolbar({
@@ -47,9 +52,22 @@ export default function FloatingToolbar({
 	onGenerateCards,
 	onUploadImage,
 	onDeletePage,
+	currentPath,
+	noteSlug,
 }: FloatingToolbarProps) {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// 新規ページ作成ハンドラ
+	const handleCreateNewPage = () => {
+		if (noteSlug) {
+			// Note内のページの場合、そのnoteに属する新規ページを作成
+			window.location.href = `/notes/${encodeURIComponent(noteSlug)}/new`;
+		} else {
+			// 一般ページの場合、独立したページを作成
+			window.location.href = "/pages/new";
+		}
+	};
 
 	return (
 		<>
@@ -65,6 +83,17 @@ export default function FloatingToolbar({
 				}}
 			/>
 			<div className="sticky top-16 right-4 flex flex-col gap-4 z-50 p-4 bg-background rounded-lg border border-border">
+				{/* 新規ページ作成ボタン */}
+				<button
+					type="button"
+					className="w-6 h-6 text-blue-500 hover:text-blue-600 cursor-pointer bg-transparent border-none p-0"
+					onClick={handleCreateNewPage}
+					title={
+						noteSlug ? `${noteSlug}に新規ページを追加` : "新規ページを作成"
+					}
+				>
+					<Plus className="w-full h-full" />
+				</button>
 				<Popover>
 					<PopoverTrigger asChild>
 						<Sparkles

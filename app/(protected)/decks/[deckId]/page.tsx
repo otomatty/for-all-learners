@@ -9,6 +9,12 @@ import ActionMenu from "./_components/action-menu";
 import { CardsList } from "./_components/cards-list";
 import { CardsListSkeleton } from "./_components/cards-list-skeleton";
 import DeckSelector from "./_components/deck-selector";
+import { DeckNoteManager } from "./_components/deck-note-manager";
+import {
+	getNotesLinkedToDeck,
+	getAvailableNotesForDeck,
+} from "@/app/_actions/note-deck-links";
+import type { Database } from "@/types/database.types";
 
 export default async function DeckPage({
 	params,
@@ -57,6 +63,16 @@ export default async function DeckPage({
 
 	const canEdit = isOwner || permission === "edit";
 
+	// Note-Deck Links データ取得（管理権限がある場合のみ）
+	let linkedNotes: Database["public"]["Tables"]["notes"]["Row"][] = [];
+	let availableNotes: Database["public"]["Tables"]["notes"]["Row"][] = [];
+	if (canEdit) {
+		[linkedNotes, availableNotes] = await Promise.all([
+			getNotesLinkedToDeck(deckId).catch(() => []),
+			getAvailableNotesForDeck(deckId).catch(() => []),
+		]);
+	}
+
 	return (
 		<Container>
 			<BackLink title="デッキ一覧に戻る" path="/decks" />
@@ -70,9 +86,26 @@ export default async function DeckPage({
 					deckIsPublic={deck.is_public ?? false}
 				/>
 			)}
-			<Suspense fallback={<CardsListSkeleton deckId={deckId} />}>
-				<CardsListWrapper deckId={deckId} canEdit={canEdit} userId={user.id} />
-			</Suspense>
+			<div className="flex gap-4">
+				<div className="flex-1">
+					<Suspense fallback={<CardsListSkeleton deckId={deckId} />}>
+						<CardsListWrapper
+							deckId={deckId}
+							canEdit={canEdit}
+							userId={user.id}
+						/>
+					</Suspense>
+				</div>
+				{canEdit && (
+					<div className="w-80 shrink-0">
+						<DeckNoteManager
+							deckId={deckId}
+							linkedNotes={linkedNotes}
+							availableNotes={availableNotes}
+						/>
+					</div>
+				)}
+			</div>
 		</Container>
 	);
 }

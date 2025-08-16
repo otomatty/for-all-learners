@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { toast } from "sonner";
@@ -66,6 +66,12 @@ export default function EditPageForm({
 	const isNewPage = searchParams.get("newPage") === "true";
 	const supabase = createClient();
 	const router = useRouter();
+	const pathname = usePathname();
+
+	// パス解析してnote slugを取得
+	const noteSlug = pathname.startsWith("/notes/")
+		? decodeURIComponent(pathname.split("/")[2])
+		: undefined;
 
 	const {
 		title,
@@ -308,6 +314,8 @@ export default function EditPageForm({
 						onGenerateCards={handleNavigateToGenerateCards}
 						onUploadImage={handleUploadImage}
 						onDeletePage={handleDeletePage}
+						currentPath={pathname}
+						noteSlug={noteSlug}
 					/>
 				</div>
 			</div>

@@ -42,7 +42,7 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 	]);
 	// Gemini に OCR を要求
 	const responseRaw = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash-preview-04-17",
+		model: "gemini-2.5-flash",
 		contents,
 	});
 	const { candidates } = responseRaw as ImageOcrResponse;

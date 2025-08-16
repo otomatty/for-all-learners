@@ -94,7 +94,7 @@ Back: ${back}`;
 
 	// Use Google GenAI SDK client to generate content
 	const apiResponse = await geminiClient.models.generateContent({
-		model: process.env.GEMINI_MODEL || "gemini-2.5-flash-preview-04-17",
+		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 		contents: prompt,
 	});
 	const content = apiResponse.text;
@@ -199,7 +199,7 @@ Use valid JSON array only.\n`;
 
 	// Call Gemini once for all cards
 	const apiResponse = await geminiClient.models.generateContent({
-		model: process.env.GEMINI_MODEL || "gemini-2.5-flash-preview-04-17",
+		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 		contents: prompt,
 	});
 	const raw = apiResponse.text;

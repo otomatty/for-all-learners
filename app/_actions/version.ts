@@ -87,7 +87,7 @@ export async function processVersionCommitStaging(
 ${commitListText}`;
 	const contents = createUserContent([systemPrompt]);
 	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash-preview-04-17",
+		model: "gemini-2.5-flash",
 		contents,
 	});
 	const { candidates } = response as unknown as GenerateReleaseNotesResponse;

@@ -796,6 +796,52 @@ export type Database = {
         }
         Relationships: []
       }
+      note_deck_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          deck_id: string
+          id: string
+          note_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deck_id: string
+          id?: string
+          note_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deck_id?: string
+          id?: string
+          note_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_deck_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_deck_links_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_deck_links_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_page_links: {
         Row: {
           created_at: string

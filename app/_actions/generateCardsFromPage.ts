@@ -133,7 +133,7 @@ export async function generateRawCardsFromPageContent(
 	let generatedRawCards: GeneratedRawCard[];
 	try {
 		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash-preview-04-17", // モデル名は適宜調整してください
+			model: "gemini-2.5-flash", // モデル名は適宜調整してください
 			contents,
 		});
 

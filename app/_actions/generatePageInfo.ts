@@ -21,7 +21,7 @@ export async function generatePageInfo(title: string): Promise<string> {
 
 	// Gemini APIを呼び出し
 	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash-preview-04-17",
+		model: "gemini-2.5-flash",
 		contents,
 	});
 
