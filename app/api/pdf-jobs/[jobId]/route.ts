@@ -16,7 +16,7 @@ const supabaseAdmin = createClient(
  */
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { jobId: string } },
+	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
 		const {
@@ -30,7 +30,7 @@ export async function GET(
 			);
 		}
 
-		const { jobId } = params;
+		const { jobId } = await params;
 
 		if (!jobId) {
 			return NextResponse.json(
@@ -135,7 +135,7 @@ export async function GET(
  */
 export async function PATCH(
 	request: NextRequest,
-	{ params }: { params: { jobId: string } },
+	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
 		const {
@@ -149,7 +149,7 @@ export async function PATCH(
 			);
 		}
 
-		const { jobId } = params;
+		const { jobId } = await params;
 		const { action } = await request.json();
 
 		if (!jobId) {
@@ -321,7 +321,7 @@ export async function PATCH(
  */
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { jobId: string } },
+	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
 		const {
@@ -335,7 +335,7 @@ export async function DELETE(
 			);
 		}
 
-		const { jobId } = params;
+		const { jobId } = await params;
 
 		if (!jobId) {
 			return NextResponse.json(
