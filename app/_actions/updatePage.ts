@@ -10,6 +10,7 @@ export type UpdatePageParams = {
 	title: string;
 	content: string;
 	autoGenerateThumbnail?: boolean; // デフォルト: true
+	forceRegenerateThumbnail?: boolean; // 既存サムネイルを上書きするかどうか（デフォルト: false）
 };
 
 /**
@@ -21,6 +22,7 @@ export async function updatePage({
 	title,
 	content,
 	autoGenerateThumbnail = true,
+	forceRegenerateThumbnail = false,
 }: UpdatePageParams) {
 	// content is received as a JSON string; parse to JSONContent
 	let parsedContent: JSONContent;
@@ -33,19 +35,49 @@ export async function updatePage({
 
 	const supabase = await createClient();
 
-	// 1) 自動サムネイル生成
-	const thumbnailUrl = autoGenerateThumbnail
-		? extractFirstImageUrl(parsedContent)
-		: null;
+	// 1) 現在のページ情報を取得（既存サムネイルチェック用）
+	const { data: currentPage, error: fetchErr } = await supabase
+		.from("pages")
+		.select("thumbnail_url")
+		.eq("id", id)
+		.single();
 
-	// ログ出力（デバッグ用）
-	if (autoGenerateThumbnail) {
-		console.log(
-			`[updatePage] ページ ${id}: サムネイル抽出結果 = ${thumbnailUrl || "画像なし"}`,
+	if (fetchErr) {
+		console.error(
+			"Failed to fetch current page for thumbnail check:",
+			fetchErr,
 		);
+		throw fetchErr;
 	}
 
-	// 2) ページ更新
+	// 2) サムネイル生成ロジック
+	let thumbnailUrl: string | null = currentPage.thumbnail_url;
+
+	if (autoGenerateThumbnail) {
+		// 強制再生成モード または 既存のサムネイルがない場合に新しく生成
+		if (forceRegenerateThumbnail || !currentPage.thumbnail_url) {
+			const extractedThumbnail = extractFirstImageUrl(parsedContent);
+			if (extractedThumbnail) {
+				thumbnailUrl = extractedThumbnail;
+				const action = forceRegenerateThumbnail ? "強制再生成" : "新規生成";
+				console.log(
+					`[updatePage] ページ ${id}: サムネイル${action} = ${extractedThumbnail}`,
+				);
+			} else if (forceRegenerateThumbnail) {
+				// 強制再生成モードでも画像が見つからない場合はnullに設定
+				thumbnailUrl = null;
+				console.log(
+					`[updatePage] ページ ${id}: 画像なしのためサムネイルをクリア`,
+				);
+			}
+		} else {
+			console.log(
+				`[updatePage] ページ ${id}: 既存サムネイル保持 = ${currentPage.thumbnail_url}`,
+			);
+		}
+	}
+
+	// 3) ページ更新
 	const { error: pageErr } = await supabase
 		.from("pages")
 		.update({
@@ -58,7 +90,7 @@ export async function updatePage({
 		throw pageErr;
 	}
 
-	// 3) page_page_links をリセットして再同期
+	// 4) page_page_links をリセットして再同期
 	const { outgoingIds } = extractLinkData(parsedContent);
 	await supabase.from("page_page_links").delete().eq("page_id", id);
 	if (outgoingIds.length > 0) {

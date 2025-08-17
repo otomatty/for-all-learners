@@ -156,11 +156,66 @@ console.log(`[updatePage] ページ ${id}: サムネイル抽出結果 = ${thumb
 console.warn(`Image URL from disallowed domain: ${url}`);
 ```
 
+## 既存ページ対応機能
+
+### サムネイル保持ロジック
+`updatePage` では既存のサムネイルがある場合は**自動的に保持**されます：
+
+```typescript
+// 既存サムネイルがない場合のみ新しく生成
+await updatePage({
+  id: 'page-id',
+  title: 'ページタイトル',
+  content: JSON.stringify(tiptapContent)
+  // 既存サムネイルがあれば保持、なければ自動生成
+});
+
+// 強制的にサムネイルを再生成する場合
+await updatePage({
+  id: 'page-id',
+  title: 'ページタイトル',
+  content: JSON.stringify(tiptapContent),
+  forceRegenerateThumbnail: true // 既存サムネイルを上書き
+});
+```
+
+### バッチ更新機能
+サムネイル未設定ページの一括更新が可能：
+
+```typescript
+import { 
+  batchUpdateMissingThumbnails,
+  batchUpdateUserThumbnails,
+  getThumbnailStats 
+} from '@/app/_actions/batchUpdateThumbnails';
+
+// 全ユーザーのサムネイル未設定ページを一括更新（テスト実行）
+const result = await batchUpdateMissingThumbnails(undefined, true, 100);
+
+// 特定ユーザーのサムネイル未設定ページを一括更新（実際の更新）
+const userResult = await batchUpdateUserThumbnails('user-id', false);
+
+// サムネイル統計情報の取得
+const stats = await getThumbnailStats();
+console.log(`総ページ数: ${stats.totalPages}, 未設定: ${stats.withoutThumbnail}`);
+```
+
+### 管理者向けUI
+`app/admin/_components/ThumbnailBatchUpdate.tsx` で管理者向けのバッチ更新UIを提供：
+
+- 📊 **統計表示**: ページ数とサムネイル設定状況
+- 🧪 **テスト実行**: 実際に更新せずに結果を確認
+- ⚡ **一括更新**: サムネイル未設定ページの一括処理
+- 👤 **ユーザー別**: 特定ユーザーのページのみ対象
+- 📈 **結果表示**: 成功/失敗の詳細レポート
+
 ## 今後の拡張可能性
 
-### P1機能（重要）
-- [ ] 新規ページ作成時の自動サムネイル設定
-- [ ] 既存ページの一括サムネイル更新（管理者機能）
+### ✅ 実装済み機能
+- [x] 新規ページ作成時の自動サムネイル設定
+- [x] 既存ページの一括サムネイル更新（管理者機能）
+- [x] 既存サムネイルの保持ロジック
+- [x] 強制再生成オプション
 
 ### P2機能（追加）
 - [ ] サムネイル履歴管理
