@@ -95,7 +95,8 @@
 		"tailwind-merge": "^3.2.0",
 		"tiptap-extension-code-block-prism": "^0.0.2-e",
 		"tiptap-extension-code-block-shiki": "^0.5.1",
-		"vaul": "^1.1.2"
+		"vaul": "^1.1.2",
+		"vitest": "^3.2.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

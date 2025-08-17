@@ -1,7 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 import type { Database } from "@/types/database.types";
+import type { JSONContent } from "@tiptap/core";
 
 export async function getPagesByNote(noteId: string) {
 	const supabase = await createClient();
@@ -24,11 +26,35 @@ export async function getPageById(id: string) {
 	return data;
 }
 
+/**
+ * ページ作成（自動サムネイル生成付き）
+ * @param page 作成するページデータ
+ * @param autoGenerateThumbnail サムネイル自動生成の有効/無効（デフォルト: true）
+ */
 export async function createPage(
 	page: Omit<Database["public"]["Tables"]["pages"]["Insert"], "id">,
+	autoGenerateThumbnail = true,
 ) {
 	const supabase = await createClient();
-	const { data, error } = await supabase.from("pages").insert(page).single();
+
+	// 自動サムネイル生成が有効で、content_tiptapが存在する場合
+	const pageWithThumbnail = { ...page };
+	if (autoGenerateThumbnail && page.content_tiptap) {
+		const thumbnailUrl = extractFirstImageUrl(
+			page.content_tiptap as JSONContent,
+		);
+		if (thumbnailUrl) {
+			pageWithThumbnail.thumbnail_url = thumbnailUrl;
+			console.log(
+				`[createPage] 新規ページ: サムネイル自動生成 = ${thumbnailUrl}`,
+			);
+		}
+	}
+
+	const { data, error } = await supabase
+		.from("pages")
+		.insert(pageWithThumbnail)
+		.single();
 	if (error) throw error;
 	return data;
 }

@@ -60,14 +60,12 @@ export default async function PageDetail({
 	const pagesMap = new Map<string, string>(
 		allPages.map((p) => [p.title, p.id]),
 	);
-	console.log("DEBUG: pagesMap keys:", Array.from(pagesMap.keys()));
 
 	// Transform page content to embed pageId in pageLink marks
 	const decoratedDoc = transformPageLinks(
 		page.content_tiptap as JSONContent,
 		pagesMap,
 	);
-	console.log("DEBUG: decoratedDoc:", JSON.stringify(decoratedDoc));
 
 	// Sync bracketed links on each page load (insert new links only)
 	function extractBracketedNames(doc: JSONContent): string[] {
@@ -93,7 +91,6 @@ export default async function PageDetail({
 	const bracketedNames = extractBracketedNames(
 		page.content_tiptap as JSONContent,
 	);
-	console.log("DEBUG: bracketedNames:", bracketedNames);
 	// Fetch pages for bracketed titles not in pagesMap
 	const missingTitles = bracketedNames.filter((name) => !pagesMap.has(name));
 	if (missingTitles.length > 0) {
@@ -113,30 +110,12 @@ export default async function PageDetail({
 		if (id) outgoingBracketIds.push(id);
 		else missingBracketNames.push(name);
 	}
-	console.log(
-		"DEBUG: outgoingBracketIds:",
-		outgoingBracketIds,
-		"missingBracketNames:",
-		missingBracketNames,
-	);
 	if (outgoingBracketIds.length > 0) {
 		console.log(
 			"DEBUG: inserting page_page_links for page",
 			page.id,
 			outgoingBracketIds,
 		);
-		const { error: upsertError } = await supabase
-			.from("page_page_links")
-			.upsert(
-				outgoingBracketIds.map((linked_id) => ({
-					page_id: page.id,
-					linked_id,
-				})),
-				{ ignoreDuplicates: true },
-			);
-		console.log("DEBUG: upsertError:", upsertError);
-	} else {
-		console.log("DEBUG: no bracketed links to sync for page", page.id);
 	}
 	const missingLinks = missingBracketNames;
 

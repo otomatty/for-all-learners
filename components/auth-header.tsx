@@ -47,7 +47,7 @@ export function AuthHeader({
 
 	return (
 		<header className="sticky top-0 z-50 bg-background bg-opacity-80 backdrop-blur-md border-b border-border">
-			<div className="container mx-auto flex items-center justify-between py-2 px-4 gap-8">
+			<div className="container max-w-7xl mx-auto flex items-center justify-between py-2 px-4 gap-8">
 				<div className="flex items-center flex-1 gap-8">
 					<Logo
 						version={version}
