@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
 			"storage.googleapis.com",
 		],
 	},
+	experimental: {
+		serverActions: {
+			bodySizeLimit: "25mb", // PDF処理用に25MBまで拡張
+		},
+	},
 };
 
 // Export merged config using PWA plugin

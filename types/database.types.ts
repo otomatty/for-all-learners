@@ -223,6 +223,7 @@ export type Database = {
           review_interval: number
           source_audio_url: string | null
           source_ocr_image_url: string | null
+          source_pdf_url: string | null
           stability: number
           updated_at: string | null
           user_id: string
@@ -241,6 +242,7 @@ export type Database = {
           review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
+          source_pdf_url?: string | null
           stability?: number
           updated_at?: string | null
           user_id: string
@@ -259,6 +261,7 @@ export type Database = {
           review_interval?: number
           source_audio_url?: string | null
           source_ocr_image_url?: string | null
+          source_pdf_url?: string | null
           stability?: number
           updated_at?: string | null
           user_id?: string

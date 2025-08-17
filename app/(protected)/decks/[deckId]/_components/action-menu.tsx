@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
 	Camera,
+	FileText,
 	MoreHorizontal,
 	Pencil,
 	SquarePlus,
@@ -92,6 +93,12 @@ export default function ActionMenu({
 						画像を読み込む
 					</Link>
 				</Button>
+				<Button asChild variant="outline" size="sm">
+					<Link href={`/decks/${deckId}/pdf`}>
+						<FileText className="h-4 w-4" />
+						PDFを読み込む
+					</Link>
+				</Button>
 				<ResponsiveDialog
 					triggerText="編集"
 					dialogTitle="デッキを編集"
@@ -134,6 +141,12 @@ export default function ActionMenu({
 					<Link href={`/decks/${deckId}/ocr`}>
 						<Camera className="h-4 w-4" />
 						画像を読み込む
+					</Link>
+				</Button>
+				<Button asChild size="sm">
+					<Link href={`/decks/${deckId}/pdf`}>
+						<FileText className="h-4 w-4" />
+						PDFを読み込む
 					</Link>
 				</Button>
 

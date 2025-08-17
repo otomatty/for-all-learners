@@ -57,13 +57,22 @@ interface PdfCardGenerationRequest {
   processingOptions: {
     questionType: 'auto' | 'multiple_choice' | 'descriptive';
     generateMode: 'all' | 'problems_only' | 'key_points';
+    chunkSize: number;          // ページ分割サイズ（デフォルト: 5ページ）
   };
 }
 
+interface PdfChunk {
+  chunkId: string;              // チャンクID
+  pageNumbers: number[];        // 含まれるページ番号
+  text: string;                 // 抽出されたテキスト
+  tokenCount: number;           // 推定トークン数
+}
+
 interface PdfProcessingResult {
-  extractedText: string;        // 抽出されたテキスト全体
+  chunks: PdfChunk[];           // 分割されたチャンク
   detectedProblems: PdfProblem[]; // 検出された問題
   processingLog: ProcessingLog; // 処理ログ
+  totalPages: number;           // 総ページ数
 }
 
 interface PdfProblem {
@@ -73,51 +82,75 @@ interface PdfProblem {
   problemType: 'multiple_choice' | 'descriptive' | 'unknown';
   confidence: number;           // 検出精度 (0-1)
   pageNumber: number;           // ページ番号
+  chunkId: string;              // 元チャンクID
 }
 
+// 既存のカードテーブル構造に合わせる
 interface GeneratedPdfCard {
-  front_content: string;        // 問題文
-  back_content: string;         // 解答
+  front_content: JSONContent;   // TiptapJSON形式の問題文
+  back_content: JSONContent;    // TiptapJSON形式の解答
   source_pdf_url: string;       // PDFファイルのURL
   source_page: number;          // 元ページ番号
-  problem_id: string;           // 問題ID
-  confidence_score: number;     // 生成精度
+  metadata: {
+    problem_id: string;         // 問題ID
+    confidence_score: number;   // 生成精度
+    chunk_id: string;           // 元チャンクID
+    processing_model: string;   // 使用LLMモデル
+  };
+}
+
+// TiptapJSON形式（既存カードと統一）
+interface JSONContent {
+  type: 'doc';
+  content: Array<{
+    type: 'paragraph' | 'heading' | 'blockquote' | 'codeBlock';
+    content?: Array<{
+      type: 'text';
+      text: string;
+      marks?: Array<{ type: string; attrs?: any }>;
+    }>;
+    attrs?: any;
+  }>;
 }
 ```
 
 #### 主要機能
 
-**1. PDFアップロード・処理機能**
-- 目的: PDFファイルのアップロード、テキスト抽出、問題検出
-- 入力: PDFファイル（最大10MB）
-- 出力: 抽出テキスト、検出された問題リスト
+**1. PDFアップロード・チャンク分割機能**
+- 目的: PDFファイルのアップロード、ページごとのテキスト抽出、適切なサイズでの分割
+- 入力: PDFファイル（最大50MB）
+- 出力: ページ別テキスト、分割されたチャンク
 - 処理フロー:
   1. PDFファイルアップロード（Supabase Storage）
-  2. PDFテキスト抽出（PDF.js またはサーバーサイドライブラリ）
-  3. LLMによる問題・解答分離
-  4. 問題タイプ判定
-- 制約: 10MB以下、テキストベースPDFのみ
+  2. ページ単位でのテキスト抽出（PDF.js またはサーバーサイドライブラリ）
+  3. トークン数計算とチャンクサイズ調整（推奨：5ページまたは4000トークン）
+  4. 適切な情報量でのチャンク分割
+  5. 各チャンクのメタデータ生成
+- 制約: 50MB以下、テキストベースPDFのみ、最大チャンク数20個
 
-**2. 問題・解答分離機能**
-- 目的: 抽出テキストから問題文と解答を自動分離
-- 入力: 抽出されたテキスト
+**2. チャンクベース問題・解答分離機能**
+- 目的: 各チャンクから問題文と解答を並列処理で自動分離
+- 入力: 分割されたPDFチャンク
 - 出力: 構造化された問題・解答ペア
 - 処理フロー:
-  1. パターンマッチングによる問題番号検出
-  2. LLMによる問題・解答の関連性分析
-  3. 信頼度スコア算出
-- 制約: 日本語のみ、標準的な問題形式
+  1. 各チャンクを並列でLLMに送信
+  2. パターンマッチングと文脈解析による問題番号検出
+  3. 問題・解答の関連性分析とページ跨ぎ対応
+  4. 信頼度スコア算出とフィルタリング
+  5. チャンク間での重複問題の除去
+- 制約: 日本語のみ、並列処理数最大5チャンク
 
-**3. カード生成・編集機能**
-- 目的: 分離された問題・解答からフラッシュカード生成
+**3. TiptapJSON形式カード生成機能**
+- 目的: 分離された問題・解答を既存システム互換のカード形式で生成
 - 入力: 構造化された問題・解答ペア
-- 出力: 編集可能なカード候補
+- 出力: TiptapJSON形式の編集可能カード候補
 - 処理フロー:
-  1. LLMによるカード最適化（問題文の整理、解答の補完）
-  2. カード候補の生成
-  3. ユーザーによる選択・編集
-  4. デッキへの保存
-- 制約: 最大50問まで一度に処理
+  1. プレーンテキストからTiptapJSON変換
+  2. 数式・図表マークアップの適用
+  3. カード候補のプレビュー生成
+  4. ユーザー選択・編集インターフェース
+  5. 既存cardsテーブルへの保存
+- 制約: 最大100問まで一度に処理、既存カード形式との完全互換
 
 ### 4.2 重要機能（P1）
 
@@ -163,28 +196,30 @@ interface GeneratedPdfCard {
 - **ストレージ**: Supabase Storage (PDFファイル保存)
 
 ### 5.2 パフォーマンス要件
-- PDFアップロード: 10MB以下、30秒以内
-- テキスト抽出: 10ページ以下で60秒以内
-- カード生成: 20問以下で120秒以内
-- 同時処理: 10ユーザーまで
+- PDFアップロード: 50MB以下、60秒以内
+- チャンク分割・テキスト抽出: 50ページ以下で120秒以内
+- 並列問題分離処理: チャンクあたり60秒以内
+- カード生成: 100問以下で300秒以内（5分）
+- 同時処理: 5ユーザーまで（チャンク並列処理考慮）
 
 ### 5.3 セキュリティ要件
 - ファイルタイプ検証: PDFのみ許可
-- ファイルサイズ制限: 10MB上限
+- ファイルサイズ制限: 50MB上限
 - ユーザー認証: 既存Supabase Auth使用
 - データ保護: アップロードファイルの自動削除（24時間後）
+- チャンク処理: 並列処理時のメモリ使用量制限
 
 ## 6. 開発計画
 
-### 6.1 フェーズ1: MVP（2週間）
+### 6.1 フェーズ1: MVP（3週間）
 - [ ] PDFアップロード・ストレージ保存
-- [ ] PDF.jsによるテキスト抽出
-- [ ] 基本的な問題・解答分離（パターンマッチング）
-- [ ] 既存カード生成フローとの統合
-- [ ] 基本UI実装
+- [ ] ページ単位テキスト抽出とチャンク分割機能
+- [ ] チャンク並列処理による問題・解答分離
+- [ ] TiptapJSON形式カード生成・保存
+- [ ] 基本UI実装（プログレス表示含む）
 
-期間: 2週間
-成功基準: 10問以下の過去問PDFから70%以上の精度でカード生成
+期間: 3週間
+成功基準: 20ページ以下の過去問PDFから80%以上の精度でカード生成
 
 ### 6.2 フェーズ2: 機能拡張（3週間）
 - [ ] LLMによる高精度問題分離

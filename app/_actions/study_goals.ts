@@ -123,17 +123,6 @@ export async function getUserGoalLimits(userId: string) {
 			isPaid,
 			remainingGoals: maxGoals - currentCount,
 		};
-
-		// デバッグログ（開発時に有用）
-		if (process.env.NODE_ENV === "development") {
-			console.log("getUserGoalLimits デバッグ情報:", {
-				userId: userId,
-				currentGoalsCount: currentGoals.length,
-				isPaid: isPaid,
-				result: result,
-			});
-		}
-
 		return result;
 	} catch (error) {
 		console.error("getUserGoalLimits error:", error);
@@ -146,15 +135,6 @@ export async function getUserGoalLimits(userId: string) {
 			isPaid: false,
 			remainingGoals: 3 - currentGoals.length,
 		};
-
-		// デバッグログ（開発時に有用）
-		if (process.env.NODE_ENV === "development") {
-			console.log("getUserGoalLimits フォールバック情報:", {
-				userId: userId,
-				error: error,
-				fallbackResult: fallbackResult,
-			});
-		}
 
 		return fallbackResult;
 	}
