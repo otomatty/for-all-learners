@@ -16,7 +16,7 @@ export default function ContactSection() {
 						</p>
 					</div>
 					<div className="flex flex-col gap-2 min-[400px]:flex-row">
-						<Link href="/contact">
+						<Link href="/inquiry">
 							<Button size="lg" className="h-12">
 								お問い合わせ
 							</Button>

@@ -43,16 +43,6 @@ export async function isUserPaid(userId: string): Promise<boolean> {
 	const isPaid =
 		subscription !== null && !subscription.plan_id.includes("_free");
 
-	// デバッグログ（開発時に有用）
-	if (process.env.NODE_ENV === "development") {
-		console.log("isUserPaid デバッグ情報:", {
-			userId: userId,
-			subscription: subscription,
-			planId: subscription?.plan_id,
-			isPaid: isPaid,
-		});
-	}
-
 	return isPaid;
 }
 

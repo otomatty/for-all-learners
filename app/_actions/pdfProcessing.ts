@@ -148,40 +148,72 @@ export async function createPdfChunks(
 	return chunks;
 }
 
-// 全PDFテキストから問題を一括抽出
+/**
+ * 全PDFテキストから一問一答カードに適した問題を一括抽出
+ *
+ * @description PDFから抽出されたテキストを基に、既存の問題文・解答・解説を
+ * 一問一答学習カード形式に変換して抽出します。新しい問題は生成せず、
+ * PDFの内容を忠実に反映することを最優先とします。
+ *
+ * @param pagesText - PDFページごとのテキスト配列
+ * @returns 一問一答形式に変換された問題配列
+ *
+ * @example
+ * const problems = await extractProblemsFromAllPages([
+ *   { pageNumber: 1, text: "問1. 次のうち正しいものは？\n(1)A (2)B\n正解：(2)" }
+ * ]);
+ */
 export async function extractProblemsFromAllPages(
 	pagesText: Array<{ pageNumber: number; text: string }>,
 ): Promise<PdfProblem[]> {
 	const systemPrompt = `
-あなたはPDFから問題と解答を抽出する専門家です。
-以下のテキストから問題文を検出し、解答や解説が含まれている場合は一緒に抽出してください。
+あなたはPDF学習カード作成の専門家です。
+以下のPDFテキストから実際に記載されている問題を忠実に抽出し、一問一答学習カードに適した形式に変換してください。
+
+**重要：PDFの内容をベースにした抽出・変換のみ行うこと**
+- 新しい問題は作成しない
+- PDFに記載されている問題文・解答・解説のみを使用
+- 内容の忠実性を最優先とする
+
+**一問一答カード変換の原則:**
+- 表面: PDFの問題文をシンプルで明確に変換
+- 裏面: PDFの解答を簡潔で覚えやすく変換
+- 3秒以内で確認できる内容を目指す
 
 出力形式:
 [
   {
-    "problemText": "問題文（選択肢も含む）",
-    "answerText": "解答（あれば）",
-    "explanationText": "解説（あれば）",
+    "problemText": "PDFの問題文を簡潔に変換（選択肢は含めない）",
+    "answerText": "PDFの解答を簡潔に変換（推測不可な場合はnull）",
+    "explanationText": "PDFの解説から重要ポイントのみ抽出（20字以内推奨）",
     "problemType": "multiple_choice" | "descriptive" | "calculation" | "unknown",
     "confidence": 0.0-1.0の信頼度,
     "pageNumber": ページ番号（数値）
   }
 ]
 
-抽出ルール:
-1. **問題文**: 問題番号は除去し、本文と選択肢を完全に含める
-2. **解答**: 明確に解答が記載されている場合のみ抽出（推測しない）
-3. **解説**: 詳細な説明や解法が記載されている場合のみ抽出
-4. **問題タイプ**: 選択肢があれば"multiple_choice"、計算問題なら"calculation"、記述なら"descriptive"
-5. **信頼度**: 問題文・解答・解説の完全性に基づいて設定
-6. **ページ番号**: 問題が見つかったページ番号を正確に記録
+抽出・変換ルール:
+1. **問題文**: PDFの問題から問題番号・選択肢を除去し、質問部分のみを忠実に抽出
+   - 元: "問1. 次のうち正しいものを選べ。(1)A (2)B (3)C"
+   - 変換: "〇〇について正しいものは何か？"（PDFの文脈に基づく）
 
-重要な注意事項:
-- 解答や解説が明確でない場合は null または空文字にする
-- 解答が確実でない場合は推測せず、後の処理で生成する
-- 問題文は必須、解答・解説はオプション
-- 複数の問題がある場合は個別に抽出
-- ページをまたぐ問題の場合は最初のページ番号を記録
+2. **解答**: PDFに記載された解答から正解のみを忠実に抽出
+   - 元: "正解は(2)Bです。なぜなら..."
+   - 変換: "B" または PDFに記載された解答内容
+
+3. **解説**: PDFの解説から覚えるべき重要ポイントのみを忠実に抽出
+   - 元: PDFの詳細な解説
+   - 変換: 解説の要点（20字以内推奨）
+
+4. **問題タイプ**: PDFの問題形式に基づいて正確に判定
+5. **信頼度**: PDFでの問題・解答の明確さに基づいて評価
+
+重要な制約事項:
+- PDFに記載されていない情報は推測・生成しない
+- 解答がPDFで不明確な場合は null にする
+- PDFの内容を忠実に反映することを最優先とする
+- 複雑すぎてカード化に適さない問題は confidence を下げる
+- 学習カードとして不適切な内容（手順説明等）は除外
 `;
 
 	try {
@@ -276,7 +308,23 @@ export async function extractProblemsFromAllPages(
 // - extractProblemsFromChunk
 // 新しい一括処理: extractProblemsFromAllPages を使用してください
 
-// 問題に対して解答・解説を生成
+/**
+ * PDF抽出問題に対して一問一答形式の解答・解説を生成
+ *
+ * @description PDFから抽出された問題文に対して、一般的な知識に基づいて
+ * 簡潔で覚えやすい解答と補足説明を生成します。不確実な内容については
+ * 謙虚にconfidenceを下げて対応します。
+ *
+ * @param problem - PDF抽出された問題オブジェクト
+ * @returns 一問一答形式に最適化された解答・解説・信頼度
+ *
+ * @example
+ * const result = await generateAnswerAndExplanation({
+ *   problemText: "効率性を向上させる基本原則は何か？",
+ *   // ... other properties
+ * });
+ * // result: { answerText: "生産性の向上", explanationText: "基本原則", confidence: 0.8 }
+ */
 export async function generateAnswerAndExplanation(
 	problem: PdfProblem,
 ): Promise<{
@@ -286,32 +334,51 @@ export async function generateAnswerAndExplanation(
 }> {
 	try {
 		const systemPrompt = `
-あなたは教育専門家です。以下の問題文に対して、適切な解答と詳細な解説を生成してください。
+あなたは一問一答学習カードの専門家です。以下のPDF抽出問題に対して、一般的な知識に基づいて簡潔な解答を生成してください。
 
-問題文:
+**重要：PDF抽出された問題に基づく解答生成**
+- この問題はPDFから抽出されたものです
+- 一般的な知識・常識に基づいて適切な解答を生成してください
+- 推測が困難な専門的内容の場合は confidence を下げてください
+
+抽出された問題文:
 ${problem.problemText}
 
 出力形式（JSON）:
 {
-  "answerText": "正解（簡潔に）",
-  "explanationText": "詳細な解説",
+  "answerText": "簡潔で覚えやすい正解",
+  "explanationText": "重要ポイントのみの補足（必要時のみ）",
   "confidence": 0.0-1.0の信頼度
 }
 
-解答・解説生成ルール:
-1. **解答**: 選択肢問題なら選択肢記号、計算問題なら数値、記述問題なら簡潔な答え
-2. **解説**: 以下を含む：
-   - なぜその答えが正しいのか
-   - 他の選択肢がなぜ間違いか（選択肢問題の場合）
-   - 関連する重要な概念や知識
-   - 覚えるべきポイント
-   - 実務での応用例（可能な場合）
+一問一答カード生成ルール:
+1. **解答**: 3秒で確認できる簡潔さを最優先
+   - 選択肢問題: 正解の内容のみ（記号不要）
+   - 計算問題: 数値と単位のみ
+   - 記述問題: キーワードまたは一文で要約
+   - 推測困難な場合: 「要確認」等の適切な表示
 
-品質基準:
-- 学習者が理解しやすい具体的な説明
-- 専門用語には簡潔な説明を併記
-- 論理的で納得できる解答根拠
-- 実践的な学習価値のある内容
+2. **解説**: 20字以内で覚えるべき重要ポイントのみ
+   - 暗記のコツやゴロ合わせ
+   - 混同しやすい概念との違い
+   - 実務で重要な理由（簡潔に）
+   - 推測困難な場合は空文字
+
+3. **信頼度評価**: PDF問題の解答可能性を正確に評価
+   - 一般知識で解答可能: 0.7-0.9
+   - 専門知識が必要: 0.4-0.6
+   - 推測困難: 0.1-0.3
+
+品質基準（一問一答特化）:
+- 暗記効率: 繰り返し学習に最適化
+- 即答性: 瞬時に答えを確認できる
+- 要点集約: 本質的な内容のみに絞る
+- 謙虚さ: 不確実な内容は無理に解答しない
+
+例:
+❌ 推測: "恐らく○○だと思います。詳細は..."
+⭕ 適切: "効率性の向上" + 補足: "生産性の基本原則"
+⭕ 謙虚: "要確認" + 補足: "専門的内容"
 `;
 
 		const contents = createUserContent([systemPrompt, ""]);
@@ -473,12 +540,15 @@ export async function generateCardsFromProblems(
 	);
 
 	return filteredProblems.map((problem) => {
-		// 解答と解説を組み合わせた詳細な裏面コンテンツを作成
+		// 一問一答形式：答えを主役とした簡潔な裏面コンテンツを作成
 		const answerText = problem.answerText || "解答が見つかりませんでした";
-		const explanationText =
-			problem.explanationText || "詳細な解説は抽出されませんでした";
+		const explanationText = problem.explanationText || "";
 
-		const backContentText = `## 解答\n${answerText}\n\n## 解説\n${explanationText}`;
+		// 一問一答形式：答えメインで、必要時のみ補足を追加
+		let backContentText = answerText;
+		if (explanationText && explanationText.trim() !== "") {
+			backContentText += `\n\n${explanationText}`;
+		}
 
 		return {
 			front_content: convertTextToTiptapJSON(problem.problemText),
@@ -600,8 +670,11 @@ export async function generateCardsFromDualPdfData(
 	);
 
 	return dualPdfData.map((item) => {
-		// 解答と解説を組み合わせた詳細な裏面コンテンツを作成
-		const backContentText = `## 解答\n${item.answerText}\n\n## 解説\n${item.explanationText || "（解説情報なし）"}`;
+		// 一問一答形式：答えメインで、必要時のみ補足を追加
+		let backContentText = item.answerText;
+		if (item.explanationText && item.explanationText.trim() !== "") {
+			backContentText += `\n\n${item.explanationText}`;
+		}
 
 		return {
 			front_content: convertTextToTiptapJSON(item.questionText),
