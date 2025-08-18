@@ -2,6 +2,7 @@
 
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
 import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
+import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 // Supabase
@@ -106,6 +107,45 @@ export default function EditPageForm({
 	useEffect(() => {
 		console.log("Debug: showLinkAlert state changed:", showLinkAlert);
 	}, [showLinkAlert]);
+
+	// 自動サムネイル設定（ページ表示時）
+	useEffect(() => {
+		const autoSetThumbnail = async () => {
+			// サムネイルが既に設定されている場合はスキップ
+			if (page.thumbnail_url) {
+				return;
+			}
+
+			// initialContentがある場合のみ実行
+			if (!initialContent) {
+				return;
+			}
+
+			try {
+				const result = await autoSetThumbnailOnPageView(
+					page.id,
+					initialContent,
+					page.thumbnail_url,
+				);
+
+				if (result.thumbnailSet && result.thumbnailUrl) {
+					console.log(
+						`[EditPageForm] サムネイル自動設定完了: ${result.thumbnailUrl}`,
+					);
+					// 必要に応じてページを再読み込みまたは状態を更新
+					// ここでは控えめにログのみ出力
+				} else if (result.error) {
+					console.warn(
+						`[EditPageForm] サムネイル自動設定エラー: ${result.error}`,
+					);
+				}
+			} catch (error) {
+				console.error("サムネイル自動設定でエラーが発生:", error);
+			}
+		};
+
+		autoSetThumbnail();
+	}, [page.id, page.thumbnail_url, initialContent]);
 
 	const {
 		editor,

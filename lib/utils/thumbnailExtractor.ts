@@ -8,14 +8,10 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-
-// 許可されているドメイン一覧（セキュリティ対策）
-const ALLOWED_DOMAINS = [
-	"scrapbox.io", // Scrapbox
-	"gyazo.com", // Gyazo
-	"i.gyazo.com", // Gyazo画像直接URL
-	"i.ytimg.com", // YouTubeサムネイル
-] as const;
+import {
+	ALLOWED_IMAGE_DOMAINS,
+	isAllowedImageDomain,
+} from "./domainValidation";
 
 /**
  * 画像抽出結果の型定義
@@ -24,24 +20,6 @@ export interface ThumbnailExtractionResult {
 	thumbnailUrl: string | null;
 	imageCount: number;
 	extractedFrom: "gyazoImage" | "image" | null;
-}
-
-/**
- * ドメイン許可チェック
- * @param url チェック対象のURL
- * @returns 許可されているドメインかどうか
- */
-function isAllowedDomain(url: string): boolean {
-	try {
-		const { hostname } = new URL(url);
-		return ALLOWED_DOMAINS.includes(
-			hostname as (typeof ALLOWED_DOMAINS)[number],
-		);
-	} catch (error) {
-		// malformedなURLの場合はfalseを返す
-		console.warn(`Invalid URL format: ${url}`, error);
-		return false;
-	}
 }
 
 /**
@@ -58,7 +36,7 @@ export function extractFirstImageUrl(content: JSONContent): string | null {
 			const src = node.attrs?.src;
 			if (typeof src === "string" && src.trim() !== "") {
 				// ドメイン許可チェック
-				if (isAllowedDomain(src)) {
+				if (isAllowedImageDomain(src)) {
 					return src;
 				}
 				console.warn(`Image URL from disallowed domain: ${src}`);
@@ -107,7 +85,7 @@ export function extractThumbnailInfo(
 				imageCount++;
 
 				// 最初の有効な画像のみ記録
-				if (!firstImageUrl && isAllowedDomain(src)) {
+				if (!firstImageUrl && isAllowedImageDomain(src)) {
 					firstImageUrl = src;
 					extractedFrom = node.type as "gyazoImage" | "image";
 				}
@@ -152,7 +130,7 @@ export function isValidImageUrl(url: string): boolean {
 	}
 
 	// ドメインチェック
-	if (!isAllowedDomain(url)) {
+	if (!isAllowedImageDomain(url)) {
 		return false;
 	}
 

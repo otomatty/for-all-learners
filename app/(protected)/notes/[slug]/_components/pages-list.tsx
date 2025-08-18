@@ -1,22 +1,12 @@
 "use client";
 
 import type { Database, Json } from "@/types/database.types";
+import { isAllowedImageDomain } from "@/lib/utils/domainValidation";
 import { DraggablePageItem } from "./draggable-pages-list";
 
 interface PagesListProps {
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
 	slug: string;
-}
-
-const ALLOWED_DOMAINS = ["scrapbox.io", "gyazo.com", "i.ytimg.com"];
-
-function isAllowedDomain(url: string): boolean {
-	try {
-		const { hostname } = new URL(url);
-		return ALLOWED_DOMAINS.includes(hostname);
-	} catch {
-		return false;
-	}
 }
 
 function extractTextFromTiptap(node: Json): string {
@@ -45,14 +35,16 @@ export function PagesList({ pages, slug }: PagesListProps) {
 	}
 
 	return (
-		<div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+		<div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 			{pages.map((page) => (
 				<DraggablePageItem
 					key={page.id}
 					page={page}
 					slug={slug}
 					extractTextFromTiptap={extractTextFromTiptap}
-					isAllowedDomain={isAllowedDomain}
+					isAllowedDomain={(url: string) =>
+						isAllowedImageDomain(url, true, "[Notes PagesList]")
+					}
 				/>
 			))}
 		</div>

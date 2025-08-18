@@ -209,6 +209,30 @@ console.log(`総ページ数: ${stats.totalPages}, 未設定: ${stats.withoutThu
 - 👤 **ユーザー別**: 特定ユーザーのページのみ対象
 - 📈 **結果表示**: 成功/失敗の詳細レポート
 
+### ページ表示時の自動設定
+`EditPageForm`コンポーネントでページを開いた際に自動でサムネイルを設定：
+
+```typescript
+import { autoSetThumbnailOnPageView } from '@/app/_actions/autoSetThumbnail';
+
+// ページ表示時にサムネイル未設定なら自動生成
+const result = await autoSetThumbnailOnPageView(
+  pageId,
+  tiptapContent,
+  currentThumbnailUrl
+);
+
+if (result.thumbnailSet) {
+  console.log(`サムネイル自動設定完了: ${result.thumbnailUrl}`);
+}
+```
+
+**特徴:**
+- 🚀 **軽量処理**: 既存サムネイルがあれば即座にスキップ
+- 🔄 **リアルタイム**: ページを開くだけで自動設定
+- ⚡ **高速判定**: 画像有無を事前チェック
+- 🛡️ **安全性**: エラー時も画面表示に影響なし
+
 ## 今後の拡張可能性
 
 ### ✅ 実装済み機能
@@ -216,6 +240,7 @@ console.log(`総ページ数: ${stats.totalPages}, 未設定: ${stats.withoutThu
 - [x] 既存ページの一括サムネイル更新（管理者機能）
 - [x] 既存サムネイルの保持ロジック
 - [x] 強制再生成オプション
+- [x] **ページ表示時の自動サムネイル設定**（NEW!）
 
 ### P2機能（追加）
 - [ ] サムネイル履歴管理

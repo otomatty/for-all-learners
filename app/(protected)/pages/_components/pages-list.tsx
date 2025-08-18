@@ -4,27 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Database, Json } from "@/types/database.types";
 import Image from "next/image";
 import Link from "next/link";
+import { isAllowedImageDomain } from "@/lib/utils/domainValidation";
+
 interface PagesListProps {
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
-}
-
-// 許可するドメイン一覧
-const ALLOWED_DOMAINS = [
-	"scrapbox.io", // Scrapbox
-	"gyazo.com", // Gyazo
-	"i.ytimg.com", // YouTubeのサムネイル
-];
-
-/**
- * Checks if the given URL's domain is allowed.
- */
-function isAllowedDomain(url: string): boolean {
-	try {
-		const { hostname } = new URL(url);
-		return ALLOWED_DOMAINS.includes(hostname);
-	} catch {
-		return false;
-	}
 }
 
 /**
@@ -67,7 +50,11 @@ export function PagesList({ pages }: PagesListProps) {
 						</CardHeader>
 						<CardContent className="px-4">
 							{page.thumbnail_url ? (
-								isAllowedDomain(page.thumbnail_url) ? (
+								isAllowedImageDomain(
+									page.thumbnail_url,
+									true,
+									`[PagesList:${page.title}]`,
+								) ? (
 									<Image
 										src={page.thumbnail_url}
 										alt={page.title}
@@ -78,6 +65,8 @@ export function PagesList({ pages }: PagesListProps) {
 								) : (
 									<div className="w-full h-32 flex items-center justify-center bg-gray-100 text-sm text-center text-gray-500 p-4">
 										この画像のドメインは許可されていません。
+										<br />
+										<span className="text-xs">URL: {page.thumbnail_url}</span>
 									</div>
 								)
 							) : (
