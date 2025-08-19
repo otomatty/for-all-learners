@@ -6,6 +6,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+	Copy,
 	CreditCard,
 	ImagePlus,
 	MoreVertical,
@@ -33,6 +34,7 @@ interface FloatingToolbarProps {
 	onGenerateCards: () => void;
 	onUploadImage: (file: File) => void;
 	onDeletePage: () => Promise<void>;
+	onDuplicatePage: () => void;
 	/** 現在のパス情報を渡す（note内かどうかの判定用） */
 	currentPath?: string;
 	/** note slug（note内ページの場合） */
@@ -52,6 +54,7 @@ export default function FloatingToolbar({
 	onGenerateCards,
 	onUploadImage,
 	onDeletePage,
+	onDuplicatePage,
 	currentPath,
 	noteSlug,
 }: FloatingToolbarProps) {
@@ -148,6 +151,11 @@ export default function FloatingToolbar({
 							icon={<ImagePlus />}
 							text="画像をアップロード"
 							onClick={() => fileInputRef.current?.click()}
+						/>
+						<ToolbarButton
+							icon={<Copy />}
+							text="ページを複製"
+							onClick={onDuplicatePage}
 						/>
 						<ToolbarButton
 							icon={<Trash2 />}

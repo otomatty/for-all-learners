@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteDeck } from "@/app/_actions/decks";
+import { duplicateDeck } from "@/app/_actions/duplicateDeck";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import {
 	AlertDialog,
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
 	Camera,
+	Copy,
 	FileText,
 	MoreHorizontal,
 	Pencil,
@@ -66,6 +68,23 @@ export default function ActionMenu({
 			toast.error("デッキの削除に失敗しました");
 		} finally {
 			setShowDelete(false);
+		}
+	};
+
+	const handleDuplicate = async () => {
+		try {
+			toast.loading("デッキを複製しています...");
+			const newDeck = await duplicateDeck({
+				originalDeckId: deckId,
+				newTitle: `${deckTitle} copy`,
+			});
+			toast.dismiss();
+			toast.success(`デッキ「${deckTitle}」を複製しました`);
+			router.push(`/decks/${newDeck.id}`);
+		} catch (err) {
+			console.error("[ActionMenu] デッキ複製エラー:", err);
+			toast.dismiss();
+			toast.error("デッキの複製に失敗しました");
 		}
 	};
 
@@ -117,6 +136,10 @@ export default function ActionMenu({
 						initialIsPublic={deckIsPublic}
 					/>
 				</ResponsiveDialog>
+				<Button variant="outline" size="sm" onClick={handleDuplicate}>
+					<Copy className="h-4 w-4" />
+					複製する
+				</Button>
 				<Button
 					variant="outline"
 					size="sm"
@@ -178,6 +201,14 @@ export default function ActionMenu({
 						>
 							<Pencil className="h-4 w-4" />
 							デッキを編集する
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onSelect={() => {
+								setTimeout(() => handleDuplicate(), 0);
+							}}
+						>
+							<Copy className="h-4 w-4" />
+							デッキを複製する
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							onSelect={() => {

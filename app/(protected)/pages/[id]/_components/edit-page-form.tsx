@@ -3,6 +3,7 @@
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
 import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
+import { duplicatePage } from "@/app/_actions/duplicatePage";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 // Supabase
@@ -244,6 +245,38 @@ export default function EditPageForm({
 		router.push(`/pages/${page.id}/generate-cards`);
 	}, [router, page.id]);
 
+	// Handler for duplicating page
+	const handleDuplicatePage = useCallback(async () => {
+		setIsLoading(true);
+		toast.loading("ページを複製しています...");
+		try {
+			// note内のページかどうかを判定
+			const isInNote = noteSlug !== undefined;
+
+			const newPage = await duplicatePage({
+				originalPageId: page.id,
+				newTitle: `${title} copy`,
+				linkToSameNote: isInNote,
+			});
+
+			toast.dismiss();
+			toast.success(`ページ「${title}」を複製しました`);
+
+			// 複製されたページに移動
+			if (isInNote) {
+				router.push(`/notes/${encodeURIComponent(noteSlug)}/${newPage.id}`);
+			} else {
+				router.push(`/pages/${newPage.id}`);
+			}
+		} catch (err) {
+			console.error("ページ複製エラー:", err);
+			toast.dismiss();
+			toast.error("ページの複製に失敗しました");
+		} finally {
+			setIsLoading(false);
+		}
+	}, [page.id, title, noteSlug, router, setIsLoading]);
+
 	return (
 		<>
 			{showLinkAlert && (
@@ -354,6 +387,7 @@ export default function EditPageForm({
 						onGenerateCards={handleNavigateToGenerateCards}
 						onUploadImage={handleUploadImage}
 						onDeletePage={handleDeletePage}
+						onDuplicatePage={handleDuplicatePage}
 						currentPath={pathname}
 						noteSlug={noteSlug}
 					/>

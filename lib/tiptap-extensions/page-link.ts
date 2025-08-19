@@ -67,13 +67,36 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 			const decos: Decoration[] = [];
 			// Determine the active paragraph range based on the caret position
 			const { $from } = state.selection;
-			const paraStart = $from.start(1);
-			const paraEnd = $from.end(1);
+			// Safely get paragraph boundaries with bounds checking
+			let paraStart: number;
+			let paraEnd: number;
+			try {
+				// Check if depth 1 exists and has valid boundaries
+				if ($from.depth >= 1) {
+					paraStart = $from.start(1);
+					paraEnd = $from.end(1);
+				} else {
+					// Fallback to document boundaries
+					paraStart = 0;
+					paraEnd = state.doc.content.size;
+				}
+			} catch (error) {
+				console.warn("Failed to resolve paragraph boundaries:", error);
+				// Fallback to safe boundaries
+				paraStart = Math.max(0, $from.pos - 100);
+				paraEnd = Math.min(state.doc.content.size, $from.pos + 100);
+			}
 			// Iterate through text nodes and add decorations
 			state.doc.descendants((node, pos) => {
 				if (!node.isText) return;
-				// Determine if inside code block or inline code
-				const $pos = state.doc.resolve(pos);
+				// Safely resolve position and determine if inside code block or inline code
+				let $pos;
+				try {
+					$pos = state.doc.resolve(pos);
+				} catch (error) {
+					console.warn("Failed to resolve position in descendants:", error);
+					return; // Skip this node if position cannot be resolved
+				}
 				const isCodeContext =
 					$pos.parent.type.name === "codeBlock" ||
 					node.marks.some((mark) => mark.type.name === "code");
