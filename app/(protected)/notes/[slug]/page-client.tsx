@@ -15,8 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+
 import { PagesList } from "./_components/pages-list";
 
 interface NotePagesClientProps {
@@ -84,15 +83,6 @@ export default function NotePagesClient({
 		[fetchNextPage, hasNextPage, isFetchingNextPage],
 	);
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-
-		if (!over || active.id === over.id) return;
-
-		// ここでは並び替えのみ対応（ノート間の移動はサイドバーから）
-		console.log("Reordering pages:", active.id, "to", over.id);
-	};
-
 	return (
 		<>
 			<div className="flex justify-end mb-4 items-center space-x-2">
@@ -120,17 +110,7 @@ export default function NotePagesClient({
 			{isLoading ? (
 				<PagesListSkeleton />
 			) : (
-				<DndContext
-					collisionDetection={closestCenter}
-					onDragEnd={handleDragEnd}
-				>
-					<SortableContext
-						items={pages.map((p) => p.id)}
-						strategy={rectSortingStrategy}
-					>
-						<PagesList pages={pages} slug={slug} />
-					</SortableContext>
-				</DndContext>
+				<PagesList pages={pages} slug={slug} />
 			)}
 			<div ref={sentinelRef} />
 			<div className="hidden md:block fixed bottom-0 right-0 p-2 border-t border-l bg-background text-sm text-muted-foreground mt-4">

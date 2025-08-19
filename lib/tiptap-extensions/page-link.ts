@@ -3,6 +3,7 @@ import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import type { ResolvedPos } from "prosemirror-model";
 import { toast } from "sonner";
 import tippy, { type Instance, type Props } from "tippy.js";
 
@@ -90,7 +91,7 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 			state.doc.descendants((node, pos) => {
 				if (!node.isText) return;
 				// Safely resolve position and determine if inside code block or inline code
-				let $pos;
+				let $pos: ResolvedPos;
 				try {
 					$pos = state.doc.resolve(pos);
 				} catch (error) {
