@@ -1,30 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { NavItem } from "@/lib/navigation/types";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-export type NavItemStatus =
-	| "enabled"
-	| "disabled"
-	| "demo"
-	| "coming-soon"
-	| "new";
-
-export interface NavItem {
-	label: string;
-	href: string;
-	icon: keyof typeof Icons;
-	status: NavItemStatus;
-	hasNotification?: boolean;
-	subItems?: Array<{
-		label: string;
-		href: string;
-	}>;
-}
 
 interface AppNavDropdownProps {
 	items: NavItem[];

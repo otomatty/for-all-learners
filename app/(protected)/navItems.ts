@@ -1,30 +1,10 @@
-import type { NavItem } from "@/components/app-nav-dropdown";
+// このファイルは非推奨です。
+// 新しいナビゲーション設定は lib/navigation/config.ts を使用してください。
+// 後方互換性のため一時的に残していますが、将来的に削除予定です。
 
-export const navItems: NavItem[] = [
-	{ label: "デッキ", href: "/decks", icon: "LayoutList", status: "enabled" },
-	{ label: "目標", href: "/goals", icon: "Target", status: "enabled" },
-	{
-		label: "ノート",
-		href: "/notes",
-		icon: "BookOpen",
-		status: "enabled",
-		subItems: [
-			{ label: "ノート一覧", href: "/notes" },
-			{ label: "エクスプローラー", href: "/notes/explorer" },
-		],
-	},
-	{ label: "ページ", href: "/pages", icon: "FileText", status: "enabled" },
-	{ label: "レポート", href: "/reports", icon: "BarChart", status: "demo" },
-	// {
-	// 	label: "自習室",
-	// 	href: "/study-room",
-	// 	icon: "DoorOpen",
-	// 	status: "coming-soon",
-	// },
-	// {
-	// 	label: "学習計画",
-	// 	href: "/plans",
-	// 	icon: "Calendar",
-	// 	status: "coming-soon",
-	// },
-];
+import { navigationConfig } from "@/lib/navigation/config";
+
+/**
+ * @deprecated lib/navigation/config.ts の navigationConfig.desktop を使用してください
+ */
+export const navItems = navigationConfig.desktop;

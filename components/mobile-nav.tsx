@@ -9,6 +9,7 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { UserNav } from "@/components/user-nav";
+import { useNavigation } from "@/hooks/use-navigation";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 import { Menu } from "lucide-react";
@@ -24,18 +25,10 @@ interface MobileNavProps {
 
 export function MobileNav({ isAdmin, account, plan }: MobileNavProps) {
 	const pathname = usePathname();
+	const { getMobileNavItems, getActiveItem } = useNavigation();
 
-	const navItems = isAdmin
-		? [
-				{ href: "/admin/users", label: "ユーザー一覧" },
-				{ href: "/admin/announcements", label: "お知らせ" },
-				{ href: "/admin/contact", label: "お問い合わせ" },
-			]
-		: [
-				{ href: "/learn", label: "学習を始める" },
-				{ href: "/decks", label: "デッキ" },
-				{ href: "/pages", label: "ノート" },
-			];
+	const navItems = getMobileNavItems(isAdmin);
+	const activeItem = getActiveItem(pathname, navItems);
 
 	return (
 		<div className="md:hidden">
@@ -61,7 +54,7 @@ export function MobileNav({ isAdmin, account, plan }: MobileNavProps) {
 									href={item.href}
 									className={cn(
 										"block px-4 py-2 text-sm transition-colors hover:bg-gray-100",
-										pathname === item.href
+										activeItem === item.href
 											? "font-semibold text-foreground"
 											: "text-foreground/60",
 									)}

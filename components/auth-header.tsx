@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminNav } from "@/components/admin-nav";
-import AppNavDropdown, { type NavItem } from "@/components/app-nav-dropdown";
+import AppNavDropdown from "@/components/app-nav-dropdown";
 import { MobileNav } from "@/components/mobile-nav";
 import { PageHelpButton } from "@/components/page-help-button";
 import { SearchBar } from "@/components/search-bar";
@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client"; // Supabaseクライアン
 import type { Database } from "@/types/database.types";
 import { UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import type { NavItem } from "@/lib/navigation/types";
 
 export interface AuthHeaderProps {
 	version?: string;
