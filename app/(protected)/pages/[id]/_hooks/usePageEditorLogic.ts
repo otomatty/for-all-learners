@@ -23,7 +23,9 @@ import CodeBlockPrism from "tiptap-extension-code-block-prism";
 
 import { updatePage } from "@/app/_actions/updatePage";
 import { updatePageLinks } from "@/app/_actions/updatePageLinks";
+import { ensurePageLinksSync } from "@/app/_actions/ensurePageLinksSync";
 import { extractLinkData } from "@/lib/utils/linkUtils";
+import { existencePluginKey } from "@/lib/tiptap-extensions/page-link";
 import { useAutoSave } from "./useAutoSave";
 import { useGenerateContent } from "./useGenerateContent";
 import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
@@ -38,6 +40,8 @@ interface UsePageEditorLogicProps {
 	setIsLoading: (loading: boolean) => void;
 	setIsGenerating: (generating: boolean) => void;
 	isDirty: boolean;
+	setIsDirty: (dirty: boolean) => void;
+	noteSlug?: string;
 }
 
 // Define a text node type to strip legacy link marks
@@ -161,6 +165,8 @@ export function usePageEditorLogic({
 	setIsLoading,
 	setIsGenerating,
 	isDirty,
+	setIsDirty,
+	noteSlug,
 }: UsePageEditorLogicProps) {
 	// Track saving state to block navigation
 	const isSavingRef = useRef(false);
@@ -194,7 +200,7 @@ export function usePageEditorLogic({
 			CustomBulletList,
 			CustomOrderedList,
 			GyazoImage,
-			PageLink,
+			PageLink.configure({ noteSlug }),
 			TagLink,
 			LatexInlineNode,
 			Highlight,
@@ -268,20 +274,40 @@ export function usePageEditorLogic({
 				} as JSONContent;
 			};
 			content = removeHeading1(content);
-			// Serialize content as JSON string for server action
+
+			// 1. ページ保存
 			await updatePage({
 				id: page.id,
 				title,
 				content: JSON.stringify(content),
 			});
+
+			// 2. リンク同期（確実に完了を待つ）
+			const { outgoingIds } = extractLinkData(content);
+			await updatePageLinks({ pageId: page.id, outgoingIds });
+
+			// 3. existence mapを強制更新
+			try {
+				const result = await ensurePageLinksSync(page.id);
+				const existMap = new Map<string, string | null>(
+					Object.entries(result.existMap),
+				);
+				const tr = editor.state.tr.setMeta(existencePluginKey, existMap);
+				editor.view.dispatch(tr);
+			} catch (syncError) {
+				console.warn("リンク存在確認の更新に失敗:", syncError);
+				// 重要ではないのでエラーは表示しない
+			}
 		} catch (err) {
 			console.error("SavePage error:", err);
 			toast.error("保存に失敗しました");
 		} finally {
 			setIsLoading(false);
 			isSavingRef.current = false;
+			// 保存完了後はdirtyをリセット
+			setIsDirty(false);
 		}
-	}, [editor, title, page.id, setIsLoading]);
+	}, [editor, title, page.id, setIsLoading, setIsDirty]);
 
 	// Content generation hook
 	const handleGenerateContent = useGenerateContent(
@@ -307,10 +333,29 @@ export function usePageEditorLogic({
 			.deleteRange({ from, to })
 			.insertContentAt(from, linkText)
 			.run();
-	}, [editor]);
+
+		// エディターコンテンツが変更されたのでdirtyにする
+		setIsDirty(true);
+	}, [editor, setIsDirty]);
 
 	// Callback for splitting page into a new page
 	const splitPage = useSplitPage(editor, page.id, savePage);
+
+	// エディターコンテンツ変更の監視
+	useEffect(() => {
+		if (!editor) return;
+
+		const handleUpdate = () => {
+			// エディターコンテンツが変更されたらdirtyにする
+			setIsDirty(true);
+		};
+
+		editor.on("update", handleUpdate);
+
+		return () => {
+			editor.off("update", handleUpdate);
+		};
+	}, [editor, setIsDirty]);
 
 	// Autosave hook
 	useAutoSave(editor, savePage, isDirty);
@@ -330,25 +375,42 @@ export function usePageEditorLogic({
 
 	// Client-side link synchronization hook
 	const linkSyncTimeout = useRef<NodeJS.Timeout | null>(null);
+	const hasInitialLinkSync = useRef<boolean>(false);
+
 	useEffect(() => {
 		if (!editor) return;
-		const syncLinks = () => {
-			if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
-			linkSyncTimeout.current = setTimeout(async () => {
-				try {
-					const json = editor.getJSON() as JSONContent;
-					const { outgoingIds } = extractLinkData(json);
-					await updatePageLinks({ pageId: page.id, outgoingIds });
-				} catch (err) {
-					console.error("リンク同期エラー:", err);
+
+		const syncLinks = async (immediate = false) => {
+			try {
+				const json = editor.getJSON() as JSONContent;
+				const { outgoingIds } = extractLinkData(json);
+				await updatePageLinks({ pageId: page.id, outgoingIds });
+
+				if (!hasInitialLinkSync.current) {
+					hasInitialLinkSync.current = true;
 				}
-			}, 500);
+			} catch (err) {
+				console.error("リンク同期エラー:", err);
+			}
 		};
-		editor.on("update", syncLinks);
-		// Initial sync
-		syncLinks();
+
+		const debouncedSyncLinks = (immediate = false) => {
+			// 初回またはimmediateフラグがtrueの場合は即座に実行
+			const delay = immediate || !hasInitialLinkSync.current ? 0 : 500;
+
+			if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
+			linkSyncTimeout.current = setTimeout(() => syncLinks(immediate), delay);
+		};
+
+		const updateHandler = () => debouncedSyncLinks(false);
+
+		editor.on("update", updateHandler);
+
+		// Initial sync - 即座に実行
+		debouncedSyncLinks(true);
+
 		return () => {
-			editor.off("update", syncLinks);
+			editor.off("update", updateHandler);
 			if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
 		};
 	}, [editor, page.id]);

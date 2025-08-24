@@ -9,7 +9,7 @@ interface UsePageFormStateProps {
 export function usePageFormState({ page, isNewPage }: UsePageFormStateProps) {
 	const [title, setTitleInternal] = useState(page.title);
 	const [isLoading, setIsLoading] = useState(false);
-	// isDirty は、page.title (保存済みのタイトル) から変更されたかどうかを示す
+	// isDirty は、タイトルまたはコンテンツが変更されたかどうかを示す
 	const [isDirty, setIsDirty] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [isOnline, setIsOnline] = useState<boolean>(true);
@@ -40,6 +40,7 @@ export function usePageFormState({ page, isNewPage }: UsePageFormStateProps) {
 		isLoading,
 		setIsLoading,
 		isDirty,
+		setIsDirty, // エディターコンテンツ変更時に使用
 		isGenerating,
 		setIsGenerating,
 		isOnline,

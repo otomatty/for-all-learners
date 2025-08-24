@@ -36,10 +36,6 @@ export default async function PageDetail({
 	}
 	// Use mutable page for potential re-fetch after content sync
 	const page = pageData;
-	console.log(
-		"DEBUG: raw content_tiptap:",
-		JSON.stringify(page.content_tiptap),
-	);
 
 	// Fetch user's Cosense projectName for manual sync
 	const { data: relation, error: relError } = await supabase
@@ -109,13 +105,6 @@ export default async function PageDetail({
 		const id = pagesMap.get(name);
 		if (id) outgoingBracketIds.push(id);
 		else missingBracketNames.push(name);
-	}
-	if (outgoingBracketIds.length > 0) {
-		console.log(
-			"DEBUG: inserting page_page_links for page",
-			page.id,
-			outgoingBracketIds,
-		);
 	}
 	const missingLinks = missingBracketNames;
 

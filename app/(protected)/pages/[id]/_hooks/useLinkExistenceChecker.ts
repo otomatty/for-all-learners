@@ -11,10 +11,12 @@ export function useLinkExistenceChecker(
 	supabase: SupabaseClient,
 ) {
 	const existenceTimeout = useRef<NodeJS.Timeout | null>(null);
+	const hasInitialCheck = useRef<boolean>(false);
 
 	useEffect(() => {
 		if (!editor) return;
-		const checkExistence = async () => {
+
+		const checkExistence = async (immediate = false) => {
 			const fullText = editor.getText();
 			const bracketMatches = Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g));
 			const tagMatches = Array.from(fullText.matchAll(/#([^\s\[\]]+)/g));
@@ -37,19 +39,36 @@ export function useLinkExistenceChecker(
 					existMap.set(t, pageMap.get(t) ?? null);
 				}
 			}
+
+			// 存在確認状態を設定
 			const tr = editor.state.tr.setMeta(existencePluginKey, existMap);
 			editor.view.dispatch(tr);
+
+			if (!hasInitialCheck.current) {
+				hasInitialCheck.current = true;
+			}
 		};
 
-		const handler = () => {
+		const debouncedHandler = (immediate = false) => {
+			// 初回またはimmediateフラグがtrueの場合は即座に実行
+			const delay = immediate || !hasInitialCheck.current ? 0 : 500;
+
 			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
-			existenceTimeout.current = setTimeout(checkExistence, 500);
+			existenceTimeout.current = setTimeout(
+				() => checkExistence(immediate),
+				delay,
+			);
 		};
 
-		editor.on("update", handler);
-		handler();
+		const updateHandler = () => debouncedHandler(false);
+
+		editor.on("update", updateHandler);
+
+		// 初回は即座に実行
+		debouncedHandler(true);
+
 		return () => {
-			editor.off("update", handler);
+			editor.off("update", updateHandler);
 			if (existenceTimeout.current) clearTimeout(existenceTimeout.current);
 		};
 	}, [editor, supabase]);

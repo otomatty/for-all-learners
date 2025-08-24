@@ -24,7 +24,7 @@ import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
-import FloatingToolbar from "./floating-toolbar";
+import ResponsiveToolbar from "./responsive-toolbar";
 import { PageHeader } from "./page-header";
 import PageLinksGrid from "./page-links-grid";
 import RelatedCardsGrid from "./related-cards-grid";
@@ -80,6 +80,7 @@ export default function EditPageForm({
 		setTitle,
 		setIsLoading,
 		isDirty,
+		setIsDirty,
 		isGenerating,
 		setIsGenerating,
 		isOnline,
@@ -87,27 +88,15 @@ export default function EditPageForm({
 
 	// Moved useEffect here now that title is declared
 	useEffect(() => {
-		console.log("Debug: useEffect for link alert triggered", {
-			title,
-			originalTitle,
-			hasPromptedLink,
-			incomingPagesLength: incomingPages.length,
-		});
 		if (
 			!hasPromptedLink &&
 			title !== originalTitle &&
 			incomingPages.length > 0
 		) {
-			console.log("Debug: conditions met, showing alert");
 			setShowLinkAlert(true);
 			setHasPromptedLink(true);
 		}
 	}, [originalTitle, incomingPages.length, hasPromptedLink, title]);
-
-	// Debug: log whenever showLinkAlert state changes
-	useEffect(() => {
-		console.log("Debug: showLinkAlert state changed:", showLinkAlert);
-	}, [showLinkAlert]);
 
 	// 自動サムネイル設定（ページ表示時）
 	useEffect(() => {
@@ -161,6 +150,8 @@ export default function EditPageForm({
 		setIsLoading,
 		setIsGenerating,
 		isDirty,
+		setIsDirty,
+		noteSlug,
 	});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =
@@ -366,32 +357,34 @@ export default function EditPageForm({
 								missingLinks={missingLinks}
 								incomingPages={incomingPages}
 								nestedLinks={nestedLinks}
+								noteSlug={noteSlug}
 							/>
 							{/* 関連カード */}
 							<RelatedCardsGrid pageId={page.id} />
 						</div>
 					)}
 				</div>
-				{/* フローティングアクションメニュー */}
-				<div className="hidden md:block sticky top-0">
-					<FloatingToolbar
-						title={title}
-						onGenerateContent={handleGenerateContent}
-						isGenerating={isGenerating}
-						isDirty={isDirty}
-						isNewPage={isNewPage}
-						onReadAloud={handleReadAloud}
-						onPauseReadAloud={handlePause}
-						onResetReadAloud={handleReset}
-						isPlaying={isPlaying}
-						onGenerateCards={handleNavigateToGenerateCards}
-						onUploadImage={handleUploadImage}
-						onDeletePage={handleDeletePage}
-						onDuplicatePage={handleDuplicatePage}
-						currentPath={pathname}
-						noteSlug={noteSlug}
-					/>
-				</div>
+				{/* レスポンシブツールバー */}
+				<ResponsiveToolbar
+					title={title}
+					onGenerateContent={handleGenerateContent}
+					isGenerating={isGenerating}
+					isDirty={isDirty}
+					isNewPage={isNewPage}
+					onReadAloud={handleReadAloud}
+					onPauseReadAloud={handlePause}
+					onResetReadAloud={handleReset}
+					isPlaying={isPlaying}
+					onGenerateCards={handleNavigateToGenerateCards}
+					onUploadImage={handleUploadImage}
+					onDeletePage={handleDeletePage}
+					onDuplicatePage={handleDuplicatePage}
+					currentPath={pathname}
+					noteSlug={noteSlug}
+					onCreateNewPage={() => {}} // ダミー実装（ResponsiveToolbar内で処理）
+					onShowDeleteConfirm={() => {}} // ダミー実装（ResponsiveToolbar内で処理）
+					onOpenImageUpload={() => {}} // ダミー実装（ResponsiveToolbar内で処理）
+				/>
 			</div>
 			{!isOnline && (
 				<div className="fixed bottom-0 left-0 w-full bg-yellow-500 text-white text-center py-2">

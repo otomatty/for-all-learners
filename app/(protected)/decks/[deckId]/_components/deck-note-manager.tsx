@@ -173,7 +173,7 @@ export function DeckNoteManager({
 							disabled={isPending || availableNotes.length === 0}
 							size="sm"
 							variant="outline"
-							className="w-full max-w-xs"
+							className="w-full"
 						>
 							<Plus className="w-4 h-4 mr-2" />
 							ノートを追加

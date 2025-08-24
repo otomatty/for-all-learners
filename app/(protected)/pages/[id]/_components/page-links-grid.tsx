@@ -30,6 +30,8 @@ interface PageLinksGridProps {
 		content_tiptap: JSONContent;
 	}[];
 	nestedLinks: Record<string, string[]>;
+	/** note内ページの場合のnoteSlug */
+	noteSlug?: string;
 }
 
 // JSONContent からプレーンテキストを抽出するヘルパー
@@ -48,6 +50,7 @@ export default function PageLinksGrid({
 	missingLinks,
 	incomingPages,
 	nestedLinks,
+	noteSlug,
 }: PageLinksGridProps) {
 	const router = useRouter();
 	const handleMissingLinkClick = React.useCallback(
@@ -76,9 +79,34 @@ export default function PageLinksGrid({
 				toast.error("ページ作成に失敗しました");
 				return;
 			}
-			router.push(`/pages/${insertedPage.id}?newPage=true`);
+
+			// noteSlugが指定されている場合はnoteに関連付け
+			if (noteSlug) {
+				// noteIDを取得
+				const { data: note, error: noteError } = await supabase
+					.from("notes")
+					.select("id")
+					.eq("slug", noteSlug)
+					.single();
+
+				if (!noteError && note) {
+					// note_page_linksに挿入
+					const { error: linkError } = await supabase
+						.from("note_page_links")
+						.insert({ note_id: note.id, page_id: insertedPage.id });
+
+					if (linkError) {
+						console.error("ページのnote関連付けに失敗:", linkError);
+					}
+				}
+			}
+			// 適切なURLにリダイレクト
+			const redirectUrl = noteSlug
+				? `/notes/${encodeURIComponent(noteSlug)}/${insertedPage.id}?newPage=true`
+				: `/pages/${insertedPage.id}?newPage=true`;
+			router.push(redirectUrl);
 		},
-		[router],
+		[router, noteSlug],
 	);
 
 	// outgoingPages と incomingPages をマージしてユニークなリンク一覧を作成
@@ -99,43 +127,44 @@ export default function PageLinksGrid({
 				<section className="max-w-5xl mx-auto">
 					<h2 className="text-lg font-semibold mb-2">リンクしているページ</h2>
 					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-						{linkedPages.map((page) => (
-							<Link
-								key={page.id}
-								href={`/pages/${page.id}`}
-								className="block h-full"
-							>
-								<Card className="h-full overflow-hidden transition-all hover:shadow-md py-3 md:py-4 gap-2">
-									<CardHeader className="px-2 md:px-4">
-										<CardTitle>{page.title}</CardTitle>
-									</CardHeader>
-									<CardContent className="px-2 md:px-4">
-										{page.thumbnail_url ? (
-											<Image
-												src={page.thumbnail_url}
-												alt={page.title}
-												width={400}
-												height={200}
-												className="w-full h-32 object-contain mb-2"
-											/>
-										) : (
-											(() => {
-												const text = extractText(page.content_tiptap)
-													.replace(/\s+/g, " ")
-													.trim();
-												return (
-													text && (
-														<p className="line-clamp-5 text-sm text-muted-foreground mb-2">
-															{text}
-														</p>
-													)
-												);
-											})()
-										)}
-									</CardContent>
-								</Card>
-							</Link>
-						))}
+						{linkedPages.map((page) => {
+							const href = noteSlug
+								? `/notes/${encodeURIComponent(noteSlug)}/${page.id}`
+								: `/pages/${page.id}`;
+							return (
+								<Link key={page.id} href={href} className="block h-full">
+									<Card className="h-full overflow-hidden transition-all hover:shadow-md py-3 md:py-4 gap-2">
+										<CardHeader className="px-2 md:px-4">
+											<CardTitle>{page.title}</CardTitle>
+										</CardHeader>
+										<CardContent className="px-2 md:px-4">
+											{page.thumbnail_url ? (
+												<Image
+													src={page.thumbnail_url}
+													alt={page.title}
+													width={400}
+													height={200}
+													className="w-full h-32 object-contain mb-2"
+												/>
+											) : (
+												(() => {
+													const text = extractText(page.content_tiptap)
+														.replace(/\s+/g, " ")
+														.trim();
+													return (
+														text && (
+															<p className="line-clamp-5 text-sm text-muted-foreground mb-2">
+																{text}
+															</p>
+														)
+													);
+												})()
+											)}
+										</CardContent>
+									</Card>
+								</Link>
+							);
+						})}
 					</div>
 				</section>
 			)}

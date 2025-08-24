@@ -52,11 +52,6 @@ export async function getNotePages({
 	console.log("Debug [getNotePages]: note result", { note, noteError });
 	if (noteError || !note) throw new Error("Note not found");
 
-	// Debug: fetch linked pages for this note
-	console.log(
-		"Debug [getNotePages]: fetching note_page_links for note",
-		note.id,
-	);
 	const { data: npl, error: nplError } = await supabase
 		.from("note_page_links")
 		.select("page_id")

@@ -6,6 +6,14 @@ import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { toast } from "sonner";
 import tippy, { type Instance, type Props } from "tippy.js";
+import { pagePreviewService } from "@/lib/services/page-preview-service";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import {
+	PageLinkPreviewCard,
+	PageLinkPreviewCardLoading,
+	PageLinkPreviewCardError,
+} from "@/components/page-link-preview-card";
 
 // プラグインキーの作成
 const pageLinkPluginKey = new PluginKey("pageLinkPlugin");
@@ -50,7 +58,10 @@ export const existencePluginKey = new PluginKey<Map<string, string | null>>(
 const existencePlugin = new Plugin<Map<string, string | null>>({
 	key: existencePluginKey,
 	state: {
-		init: () => new Map<string, string | null>(),
+		init: () => {
+			// 初期状態では空のMapを返すが、すぐにuseLinkExistenceCheckerが更新する
+			return new Map<string, string | null>();
+		},
 		apply(tr, value) {
 			const meta = tr.getMeta(existencePluginKey) as
 				| Map<string, string | null>
@@ -130,6 +141,10 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 						...(isExternal
 							? { target: "_blank", rel: "noopener noreferrer" }
 							: {}),
+						// 未設定リンク（pageIdがない場合）にdata-page-title属性を設定
+						...(!exists && !isExternal ? { "data-page-title": title } : {}),
+						// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
+						...(pageId && !isExternal ? { "data-page-id": pageId } : {}),
 					};
 					if (start >= paraStart && end <= paraEnd) {
 						decos.push(Decoration.inline(start, end, decoAttrs));
@@ -363,18 +378,199 @@ const suggestionPlugin = new Plugin<SuggestionState>({
 	},
 });
 
+// ページプレビュー用のプラグイン
+const previewPluginKey = new PluginKey("pagePreviewPlugin");
+
+// グローバルな状態管理
+let hidePreviewTimeout: NodeJS.Timeout | null = null;
+
+const previewPlugin = new Plugin({
+	key: previewPluginKey,
+	state: {
+		init: () => ({
+			tip: null as Instance<Props> | null,
+			currentPageId: null as string | null,
+		}),
+		apply(tr, state) {
+			return state;
+		},
+	},
+	props: {
+		handleDOMEvents: {
+			mouseover(view, event) {
+				const target = event.target as HTMLElement;
+				if (target.tagName === "A" && target.hasAttribute("data-page-id")) {
+					const pageId = target.getAttribute("data-page-id");
+					if (pageId) {
+						// 非表示タイムアウトをクリア（re-hover時）
+						if (hidePreviewTimeout) {
+							clearTimeout(hidePreviewTimeout);
+							hidePreviewTimeout = null;
+						}
+
+						// 既存のホバータイムアウトをクリア
+						const targetEl = target as HTMLElement & {
+							_hoverTimeout?: NodeJS.Timeout;
+						};
+						if (targetEl._hoverTimeout) {
+							clearTimeout(targetEl._hoverTimeout);
+						}
+
+						// 500ms後にプレビュー表示
+						targetEl._hoverTimeout = setTimeout(() => {
+							showPreview(pageId, target);
+						}, 500);
+					}
+				}
+				return false;
+			},
+			mouseout(view, event) {
+				const target = event.target as HTMLElement;
+				if (target.tagName === "A" && target.hasAttribute("data-page-id")) {
+					// 表示タイムアウトをクリア
+					const targetEl = target as HTMLElement & {
+						_hoverTimeout?: NodeJS.Timeout;
+					};
+					if (targetEl._hoverTimeout) {
+						clearTimeout(targetEl._hoverTimeout);
+						targetEl._hoverTimeout = undefined;
+					}
+
+					// 200ms後にプレビューを非表示（マウスが戻ってくる可能性を考慮）
+					if (hidePreviewTimeout) {
+						clearTimeout(hidePreviewTimeout);
+					}
+					hidePreviewTimeout = setTimeout(() => {
+						hidePreview();
+						hidePreviewTimeout = null;
+					}, 200);
+				}
+				return false;
+			},
+		},
+	},
+});
+
+// プレビュー表示用のグローバル関数
+let globalTip: Instance<Props> | null = null;
+let globalReactRoot: ReturnType<typeof createRoot> | null = null;
+let globalContainer: HTMLElement | null = null;
+let currentPageId: string | null = null;
+
+function showPreview(pageId: string, referenceElement: HTMLElement) {
+	// 同じページの場合は何もしない
+	if (currentPageId === pageId && globalTip) {
+		return;
+	}
+
+	currentPageId = pageId;
+
+	// コンテナを再利用または作成
+	if (!globalContainer) {
+		globalContainer = document.createElement("div");
+		globalContainer.className = "preview-container";
+		globalReactRoot = createRoot(globalContainer);
+	}
+
+	// 統一されたコンポーネントで初期表示（ローディング状態）
+	if (globalReactRoot) {
+		globalReactRoot.render(
+			React.createElement(PageLinkPreviewCard, {
+				preview: null,
+				isLoading: true,
+				error: undefined,
+			}),
+		);
+	}
+
+	// tippy.jsインスタンスを再利用または作成
+	if (!globalTip) {
+		globalTip = tippy(referenceElement, {
+			trigger: "manual",
+			interactive: false,
+			placement: "top-start",
+			arrow: true,
+			theme: "light",
+			maxWidth: 320,
+			content: globalContainer,
+			animation: false, // アニメーション無効化
+			duration: 0, // 即座に表示
+		});
+	} else {
+		// 既存のtippyインスタンスの参照要素を更新
+		globalTip.setProps({
+			getReferenceClientRect: () => referenceElement.getBoundingClientRect(),
+		});
+	}
+
+	globalTip.show();
+
+	// データを取得してプレビューを更新
+	pagePreviewService
+		.getPreview(pageId)
+		.then((preview) => {
+			// ページIDが変わっていないかチェック
+			if (currentPageId === pageId && globalReactRoot) {
+				// 同じコンポーネントのpropsだけ更新
+				globalReactRoot.render(
+					React.createElement(PageLinkPreviewCard, {
+						preview,
+						isLoading: false,
+						error: undefined,
+					}),
+				);
+			}
+		})
+		.catch((error) => {
+			// ページIDが変わっていないかチェック
+			if (currentPageId === pageId && globalReactRoot) {
+				const errorMessage =
+					error instanceof Error ? error.message : "読み込みに失敗しました";
+				// 同じコンポーネントでエラー状態に更新
+				globalReactRoot.render(
+					React.createElement(PageLinkPreviewCard, {
+						preview: null,
+						isLoading: false,
+						error: errorMessage,
+					}),
+				);
+			}
+		});
+}
+
+function hidePreview() {
+	if (globalTip) {
+		globalTip.hide();
+		// DOM要素は再利用のため破棄しない
+	}
+	currentPageId = null;
+	// ReactルートとコンテナはreasonableTimeまで保持
+}
+
 // ブラケットリンク用のExtension
 export const PageLink = Extension.create({
 	name: "pageLink",
+	addOptions() {
+		return {
+			noteSlug: null as string | null,
+		};
+	},
 	addProseMirrorPlugins() {
+		const { noteSlug } = this.options;
 		return [
 			bracketPlugin,
 			existencePlugin,
 			suggestionPlugin,
+			previewPlugin,
 			new Plugin({
 				key: pageLinkPluginKey,
 				props: {
 					handleClick: (view, pos, event) => {
+						console.log("🔗 PageLink: handleClickが呼ばれました", {
+							pos,
+							event,
+							target: event.target,
+						});
 						// クリックされた位置のノードとテキスト情報を取得
 						const { state } = view;
 						const $pos = state.doc.resolve(pos);
@@ -417,62 +613,124 @@ export const PageLink = Extension.create({
 
 						if (!bracketContent) return false;
 
+						console.log("🔗 PageLink: ブラケットリンククリック検出", {
+							bracketContent,
+							noteSlug,
+						});
+
 						// Convert underscores to spaces for page title search and creation
 						const searchTitle = bracketContent.replace(/_/g, " ");
 
 						// 外部リンクかどうかをチェック
 						if (/^https?:\/\//.test(bracketContent)) {
+							console.log("🔗 PageLink: 外部リンクとして処理");
 							window.open(bracketContent, "_blank");
 							return true;
 						}
 
 						// 内部リンクの処理
+						console.log("🔗 PageLink: 内部リンクとして処理開始", {
+							searchTitle,
+							noteSlug,
+						});
 						(async () => {
-							const supabase = createClient();
-							const {
-								data: { user },
-								error: authError,
-							} = await supabase.auth.getUser();
-							if (authError || !user) {
-								toast.error("ログインしてください");
-								return;
-							}
-
-							const { data: pages, error: searchError } = await supabase
-								.from("pages")
-								.select("id")
-								.eq("title", searchTitle)
-								.limit(1);
-							if (searchError) {
-								console.error("ページの検索に失敗しました:", searchError);
-								toast.error("ページの検索に失敗しました");
-								return;
-							}
-
-							let pageId: string;
-							if (pages && pages.length > 0) {
-								pageId = pages[0].id;
-							} else {
-								const { data: newPage, error: insertError } = await supabase
-									.from("pages")
-									.insert({
-										user_id: user.id,
-										title: searchTitle,
-										content_tiptap: { type: "doc", content: [] },
-										is_public: false,
-									})
-									.select("id")
-									.single();
-								if (insertError || !newPage) {
-									console.error("ページの作成に失敗しました:", insertError);
-									toast.error("ページの作成に失敗しました");
+							try {
+								console.log("🔗 PageLink: Supabaseクライアント作成");
+								const supabase = createClient();
+								const {
+									data: { user },
+									error: authError,
+								} = await supabase.auth.getUser();
+								console.log("🔗 PageLink: ユーザー認証確認", {
+									user: !!user,
+									authError,
+								});
+								if (authError || !user) {
+									toast.error("ログインしてください");
 									return;
 								}
-								pageId = newPage.id;
-								toast.success(`新しいページ「${searchTitle}」を作成しました`);
-							}
 
-							window.location.href = `/pages/${pageId}?newPage=${pages?.length === 0}`;
+								console.log("🔗 PageLink: ページ検索開始", { searchTitle });
+								const { data: pages, error: searchError } = await supabase
+									.from("pages")
+									.select("id")
+									.eq("title", searchTitle)
+									.limit(1);
+								console.log("🔗 PageLink: ページ検索結果", {
+									pages,
+									searchError,
+								});
+								if (searchError) {
+									console.error("ページの検索に失敗しました:", searchError);
+									toast.error("ページの検索に失敗しました");
+									return;
+								}
+
+								let pageId: string;
+								if (pages && pages.length > 0) {
+									console.log("🔗 PageLink: 既存ページを発見");
+									pageId = pages[0].id;
+								} else {
+									console.log("🔗 PageLink: 新規ページ作成開始");
+									const { data: newPage, error: insertError } = await supabase
+										.from("pages")
+										.insert({
+											user_id: user.id,
+											title: searchTitle,
+											content_tiptap: { type: "doc", content: [] },
+											is_public: false,
+										})
+										.select("id")
+										.single();
+									if (insertError || !newPage) {
+										console.error("ページの作成に失敗しました:", insertError);
+										toast.error("ページの作成に失敗しました");
+										return;
+									}
+									pageId = newPage.id;
+
+									// noteSlugが指定されている場合はnoteに関連付け
+									if (noteSlug) {
+										// noteIDを取得
+										const { data: note, error: noteError } = await supabase
+											.from("notes")
+											.select("id")
+											.eq("slug", noteSlug)
+											.single();
+
+										if (!noteError && note) {
+											// note_page_linksに挿入
+											const { error: linkError } = await supabase
+												.from("note_page_links")
+												.insert({ note_id: note.id, page_id: pageId });
+
+											if (linkError) {
+												console.error("ページのnote関連付けに失敗:", linkError);
+											}
+										}
+									}
+
+									toast.success(`新しいページ「${searchTitle}」を作成しました`);
+								}
+
+								// 適切なURLに遷移
+								if (noteSlug && pages?.length === 0) {
+									// 新規作成されたページでnoteコンテキストの場合
+									window.location.href = `/notes/${encodeURIComponent(noteSlug)}/${pageId}?newPage=true`;
+								} else if (noteSlug) {
+									// 既存ページでnoteコンテキストの場合
+									window.location.href = `/notes/${encodeURIComponent(noteSlug)}/${pageId}`;
+								} else {
+									// 通常のページコンテキスト
+									window.location.href = `/pages/${pageId}?newPage=${pages?.length === 0}`;
+								}
+								console.log("🔗 PageLink: 処理完了");
+							} catch (error) {
+								console.error("🔗 PageLink: エラーが発生しました:", error);
+								toast.error(
+									`ページ処理中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
+								);
+							}
 						})();
 
 						return true;
@@ -480,6 +738,11 @@ export const PageLink = Extension.create({
 					// Intercept DOM click on <a> tags to perform navigation
 					handleDOMEvents: {
 						click(view, event) {
+							console.log("🔗 PageLink: DOMクリック検出", {
+								event,
+								target: event.target,
+								tagName: (event.target as HTMLElement)?.tagName,
+							});
 							const target = event.target as HTMLAnchorElement;
 							if (target.tagName === "A") {
 								// Create and navigate for new-page links
@@ -489,32 +752,70 @@ export const PageLink = Extension.create({
 									// Convert underscores to spaces for new page title
 									const titleWithSpaces = newTitle.replace(/_/g, " ");
 									(async () => {
-										const supabase = createClient();
-										const {
-											data: { user },
-											error: authError,
-										} = await supabase.auth.getUser();
-										if (authError || !user) {
-											toast.error("ログインしてください");
-											return;
+										try {
+											const supabase = createClient();
+											const {
+												data: { user },
+												error: authError,
+											} = await supabase.auth.getUser();
+											if (authError || !user) {
+												toast.error("ログインしてください");
+												return;
+											}
+											// Insert new page
+											const { data: newPage, error: insertError } =
+												await supabase
+													.from("pages")
+													.insert({
+														user_id: user.id,
+														title: titleWithSpaces,
+														content_tiptap: { type: "doc", content: [] },
+														is_public: false,
+													})
+													.select("id")
+													.single();
+											if (insertError || !newPage) {
+												console.error("ページ作成失敗:", insertError);
+												toast.error("ページ作成に失敗しました");
+												return;
+											}
+
+											// noteSlugが指定されている場合はnoteに関連付け
+											if (noteSlug) {
+												// noteIDを取得
+												const { data: note, error: noteError } = await supabase
+													.from("notes")
+													.select("id")
+													.eq("slug", noteSlug)
+													.single();
+
+												if (!noteError && note) {
+													// note_page_linksに挿入
+													const { error: linkError } = await supabase
+														.from("note_page_links")
+														.insert({ note_id: note.id, page_id: newPage.id });
+
+													if (linkError) {
+														console.error(
+															"ページのnote関連付けに失敗:",
+															linkError,
+														);
+													}
+												}
+
+												window.location.href = `/notes/${encodeURIComponent(noteSlug)}/${newPage.id}?newPage=true`;
+											} else {
+												window.location.href = `/pages/${newPage.id}?newPage=true`;
+											}
+										} catch (error) {
+											console.error(
+												"🔗 PageLink DOM: エラーが発生しました:",
+												error,
+											);
+											toast.error(
+												`ページ作成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
+											);
 										}
-										// Insert new page
-										const { data: newPage, error: insertError } = await supabase
-											.from("pages")
-											.insert({
-												user_id: user.id,
-												title: titleWithSpaces,
-												content_tiptap: { type: "doc", content: [] },
-												is_public: false,
-											})
-											.select("id")
-											.single();
-										if (insertError || !newPage) {
-											console.error("ページ作成失敗:", insertError);
-											toast.error("ページ作成に失敗しました");
-											return;
-										}
-										window.location.href = `/pages/${newPage.id}?newPage=true`;
 									})();
 									return true;
 								}

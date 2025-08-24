@@ -19,41 +19,17 @@ export const ALLOWED_IMAGE_DOMAINS = [
  * 画像URLのドメインが許可されているかチェック
  *
  * @param url チェック対象のURL
- * @param debug デバッグログを出力するかどうか（デフォルト: false）
- * @param logPrefix ログのプレフィックス（デバッグ時に使用）
  * @returns 許可されているドメインかどうか
  */
-export function isAllowedImageDomain(
-	url: string,
-	debug = false,
-	logPrefix = "[DomainValidation]",
-): boolean {
+export function isAllowedImageDomain(url: string): boolean {
 	try {
 		const { hostname } = new URL(url);
 		const isAllowed = ALLOWED_IMAGE_DOMAINS.includes(
 			hostname as (typeof ALLOWED_IMAGE_DOMAINS)[number],
 		);
 
-		if (debug) {
-			if (!isAllowed) {
-				console.warn(`${logPrefix} 許可されていないドメインの画像:`, {
-					thumbnailUrl: url,
-					hostname: hostname,
-					allowedDomains: ALLOWED_IMAGE_DOMAINS,
-				});
-			} else {
-				console.log(`${logPrefix} 許可されたドメインの画像:`, {
-					thumbnailUrl: url,
-					hostname: hostname,
-				});
-			}
-		}
-
 		return isAllowed;
 	} catch (error) {
-		if (debug) {
-			console.error(`${logPrefix} 不正なURL形式:`, url, error);
-		}
 		return false;
 	}
 }
