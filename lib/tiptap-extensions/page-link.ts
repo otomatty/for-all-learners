@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
 import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
+import type { ResolvedPos } from "prosemirror-model";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
-import type { ResolvedPos } from "prosemirror-model";
 import { toast } from "sonner";
 import tippy, { type Instance, type Props } from "tippy.js";
 

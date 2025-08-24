@@ -9,6 +9,12 @@
 
 "use client";
 
+import {
+	type BatchUpdateResult,
+	batchUpdateMissingThumbnails,
+	batchUpdateUserThumbnails,
+	getThumbnailStats,
+} from "@/app/_actions/batchUpdateThumbnails";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -24,12 +30,6 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import {
-	batchUpdateMissingThumbnails,
-	batchUpdateUserThumbnails,
-	getThumbnailStats,
-	type BatchUpdateResult,
-} from "@/app/_actions/batchUpdateThumbnails";
 
 /**
  * サムネイル統計情報の型定義

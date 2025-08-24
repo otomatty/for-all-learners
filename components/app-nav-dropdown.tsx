@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/navigation/types";
+import { cn } from "@/lib/utils";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";

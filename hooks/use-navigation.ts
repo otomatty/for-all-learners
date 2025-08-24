@@ -1,8 +1,8 @@
 import { navigationConfig } from "@/lib/navigation/config";
 import type {
-	NavItem,
-	MobileNavItem,
 	AdminNavItem,
+	MobileNavItem,
+	NavItem,
 } from "@/lib/navigation/types";
 
 /**

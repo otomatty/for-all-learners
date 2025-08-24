@@ -1,9 +1,9 @@
 "use client";
 
-import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
-import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { duplicatePage } from "@/app/_actions/duplicatePage";
+import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
+import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 // Supabase
@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { toast } from "sonner";

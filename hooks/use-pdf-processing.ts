@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import {
+	processDualPdfBatchOcr,
+	processLargeDualPdfInBatches,
+} from "@/app/_actions/pdfBatchOcr";
+import { generateCardsFromDualPdfData } from "@/app/_actions/pdfProcessing";
 // PDF処理関数は一時的にコメントアウト（未実装）
 // import {
 // 	extractTextFromPdfWithFallback,
 // 	extractPdfPagesAsImages,
 // } from "@/lib/utils/pdfClientUtils";
 import { processExtractedText } from "@/app/_actions/pdfUpload";
-import {
-	processDualPdfBatchOcr,
-	processLargeDualPdfInBatches,
-} from "@/app/_actions/pdfBatchOcr";
-import { generateCardsFromDualPdfData } from "@/app/_actions/pdfProcessing";
 import type {
-	ProcessingStatus,
-	ProcessingResult,
 	GeneratedCard,
-	UsePdfProcessingReturn,
 	ProcessingMode,
+	ProcessingResult,
+	ProcessingStatus,
+	UsePdfProcessingReturn,
 } from "@/types/pdf-card-generator";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 export function usePdfProcessing(userId: string): UsePdfProcessingReturn {
 	// クライアント環境チェック

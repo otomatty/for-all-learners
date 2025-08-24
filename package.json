@@ -93,6 +93,7 @@
 		"shiki": "^3.4.2",
 		"sonner": "^2.0.3",
 		"tailwind-merge": "^3.2.0",
+		"tesseract.js": "^6.0.1",
 		"tiptap-extension-code-block-prism": "^0.0.2-e",
 		"tiptap-extension-code-block-shiki": "^0.5.1",
 		"vaul": "^1.1.2",
@@ -109,6 +110,8 @@
 		"@types/react-dom": "^19",
 		"@types/sanitize-html": "^2.16.0",
 		"@types/uuid": "^10.0.0",
+		"@vitest/ui": "^3.2.4",
+		"jsdom": "^26.1.0",
 		"tailwindcss": "^4.1.4",
 		"tw-animate-css": "^1.2.8",
 		"typescript": "^5"

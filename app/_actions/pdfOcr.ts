@@ -3,8 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { transcribeImage } from "./transcribeImage";
 import {
-	transcribeImagesBatch,
 	type BatchOcrPage,
+	transcribeImagesBatch,
 } from "./transcribeImageBatch";
 
 export interface PdfOcrResult {

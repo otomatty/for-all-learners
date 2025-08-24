@@ -3,9 +3,9 @@
  */
 
 import {
+	type PdfProcessingOptions,
 	type PdfValidationResult,
 	validatePdfProcessingRequest,
-	type PdfProcessingOptions,
 } from "./pdfValidation";
 
 export interface PdfUploadProgress {

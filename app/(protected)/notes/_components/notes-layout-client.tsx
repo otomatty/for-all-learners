@@ -7,7 +7,7 @@ import type {
 } from "@/app/(protected)/notes/explorer/types";
 import { batchMovePages } from "@/app/_actions/notes/batchMovePages";
 import { checkBatchConflicts } from "@/app/_actions/notes/checkBatchConflicts";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { toast } from "sonner";
 import { NotesExplorerSidebar } from "./notes-sidebar";

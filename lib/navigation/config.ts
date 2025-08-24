@@ -1,4 +1,4 @@
-import type { NavItem, MobileNavItem, AdminNavItem } from "./types";
+import type { AdminNavItem, MobileNavItem, NavItem } from "./types";
 
 /**
  * デスクトップ用ナビゲーション項目

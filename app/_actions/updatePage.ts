@@ -2,6 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
+import {
+	type SmartThumbnailUpdateParams,
+	debugThumbnailDecision,
+	decideThumbnailUpdate,
+	generateThumbnailUpdateLog,
+} from "@/lib/utils/smartThumbnailUpdater";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 import type { JSONContent } from "@tiptap/core";
 
@@ -11,6 +17,7 @@ export type UpdatePageParams = {
 	content: string;
 	autoGenerateThumbnail?: boolean; // デフォルト: true
 	forceRegenerateThumbnail?: boolean; // 既存サムネイルを上書きするかどうか（デフォルト: false）
+	enableSmartThumbnailUpdate?: boolean; // スマートサムネイル更新を有効にするか（デフォルト: true）
 };
 
 /**
@@ -23,6 +30,7 @@ export async function updatePage({
 	content,
 	autoGenerateThumbnail = true,
 	forceRegenerateThumbnail = false,
+	enableSmartThumbnailUpdate = true,
 }: UpdatePageParams) {
 	// content is received as a JSON string; parse to JSONContent
 	let parsedContent: JSONContent;
@@ -50,30 +58,51 @@ export async function updatePage({
 		throw fetchErr;
 	}
 
-	// 2) サムネイル生成ロジック
+	// 2) スマートサムネイル更新ロジック
 	let thumbnailUrl: string | null = currentPage.thumbnail_url;
 
 	if (autoGenerateThumbnail) {
-		// 強制再生成モード または 既存のサムネイルがない場合に新しく生成
-		if (forceRegenerateThumbnail || !currentPage.thumbnail_url) {
-			const extractedThumbnail = extractFirstImageUrl(parsedContent);
-			if (extractedThumbnail) {
-				thumbnailUrl = extractedThumbnail;
-				const action = forceRegenerateThumbnail ? "強制再生成" : "新規生成";
-				console.log(
-					`[updatePage] ページ ${id}: サムネイル${action} = ${extractedThumbnail}`,
-				);
-			} else if (forceRegenerateThumbnail) {
-				// 強制再生成モードでも画像が見つからない場合はnullに設定
-				thumbnailUrl = null;
-				console.log(
-					`[updatePage] ページ ${id}: 画像なしのためサムネイルをクリア`,
-				);
+		if (enableSmartThumbnailUpdate) {
+			// スマートサムネイル更新: 先頭画像の変更を検知して自動更新
+			const updateParams: SmartThumbnailUpdateParams = {
+				pageId: id,
+				currentContent: parsedContent,
+				currentThumbnailUrl: currentPage.thumbnail_url,
+				forceUpdate: forceRegenerateThumbnail,
+			};
+
+			const decision = decideThumbnailUpdate(updateParams);
+			debugThumbnailDecision(updateParams, decision);
+
+			if (decision.shouldUpdate) {
+				thumbnailUrl = decision.newThumbnailUrl;
+				const logMessage = generateThumbnailUpdateLog(id, decision);
+				console.log(logMessage);
+			} else {
+				const logMessage = generateThumbnailUpdateLog(id, decision);
+				console.log(logMessage);
 			}
 		} else {
-			console.log(
-				`[updatePage] ページ ${id}: 既存サムネイル保持 = ${currentPage.thumbnail_url}`,
-			);
+			// 従来のロジック（後方互換性のため保持）
+			if (forceRegenerateThumbnail || !currentPage.thumbnail_url) {
+				const extractedThumbnail = extractFirstImageUrl(parsedContent);
+				if (extractedThumbnail) {
+					thumbnailUrl = extractedThumbnail;
+					const action = forceRegenerateThumbnail ? "強制再生成" : "新規生成";
+					console.log(
+						`[updatePage] ページ ${id}: サムネイル${action} = ${extractedThumbnail}`,
+					);
+				} else if (forceRegenerateThumbnail) {
+					thumbnailUrl = null;
+					console.log(
+						`[updatePage] ページ ${id}: 画像なしのためサムネイルをクリア`,
+					);
+				}
+			} else {
+				console.log(
+					`[updatePage] ページ ${id}: 既存サムネイル保持 = ${currentPage.thumbnail_url}`,
+				);
+			}
 		}
 	}
 

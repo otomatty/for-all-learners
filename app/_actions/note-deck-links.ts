@@ -1,13 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import type { Database } from "@/types/database.types";
 import type {
-	NoteDeckLink,
 	CreateNoteDeckLinkPayload,
+	NoteDeckLink,
 	NoteDeckLinkWithRelations,
 } from "@/types/note-deck-links";
-import type { Database } from "@/types/database.types";
+import { revalidatePath } from "next/cache";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
 type Note = Database["public"]["Tables"]["notes"]["Row"];

@@ -1,12 +1,12 @@
 "use server";
 
 import { geminiClient } from "@/lib/gemini/client";
-import { createPartFromUri, createUserContent } from "@google/genai";
-import {
-	getGeminiQuotaManager,
-	executeWithQuotaCheck,
-} from "@/lib/utils/geminiQuotaManager";
 import { createClient } from "@/lib/supabase/server";
+import {
+	executeWithQuotaCheck,
+	getGeminiQuotaManager,
+} from "@/lib/utils/geminiQuotaManager";
+import { createPartFromUri, createUserContent } from "@google/genai";
 
 // 音声カード型定義
 interface AudioCard {

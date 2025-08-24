@@ -6,7 +6,6 @@ import React, { useState, useCallback, useEffect } from "react";
 // Define page row type
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 
-import { PagesListSkeleton } from "@/app/(protected)/pages/_components/pages-list-skeleton";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -15,6 +14,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { PagesListSkeleton } from "./_components/pages-list-skeleton";
 
 import { PagesList } from "./_components/pages-list";
 

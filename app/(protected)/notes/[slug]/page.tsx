@@ -1,16 +1,16 @@
+import {
+	getAvailableDecksForNote,
+	getDecksLinkedToNote,
+} from "@/app/_actions/note-deck-links";
 import { getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import React from "react";
+import { NoteDeckManager } from "./_components/note-deck-manager";
 import NoteHeader from "./_components/note-header";
 import NotePagesClient from "./page-client";
-import { NoteDeckManager } from "./_components/note-deck-manager";
-import {
-	getDecksLinkedToNote,
-	getAvailableDecksForNote,
-} from "@/app/_actions/note-deck-links";
 
 interface NoteDetailPageProps {
 	params: Promise<{ slug: string }>;

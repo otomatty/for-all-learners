@@ -1,20 +1,20 @@
 import { getCardsByDeck } from "@/app/_actions/cards";
 import { getDeckById, getDecksByUser } from "@/app/_actions/decks";
+import {
+	getAvailableNotesForDeck,
+	getNotesLinkedToDeck,
+} from "@/app/_actions/note-deck-links";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 import ActionMenu from "./_components/action-menu";
 import { CardsList } from "./_components/cards-list";
 import { CardsListSkeleton } from "./_components/cards-list-skeleton";
-import DeckSelector from "./_components/deck-selector";
 import { DeckNoteManager } from "./_components/deck-note-manager";
-import {
-	getNotesLinkedToDeck,
-	getAvailableNotesForDeck,
-} from "@/app/_actions/note-deck-links";
-import type { Database } from "@/types/database.types";
+import DeckSelector from "./_components/deck-selector";
 
 export default async function DeckPage({
 	params,

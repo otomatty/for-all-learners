@@ -1,15 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { geminiClient } from "@/lib/gemini/client";
-import { createUserContent } from "@google/genai";
-import type { Json } from "@/types/database.types";
+import { createClient } from "@/lib/supabase/server";
 import {
-	removeDuplicateProblems,
+	type PdfProblem,
 	convertTextToTiptapJSON,
 	estimateTokenCount,
-	type PdfProblem,
+	removeDuplicateProblems,
 } from "@/lib/utils/pdfUtils";
+import type { Json } from "@/types/database.types";
+import { createUserContent } from "@google/genai";
 
 // PDF処理関連の型定義
 export interface PdfChunk {

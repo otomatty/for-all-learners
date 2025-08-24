@@ -1,19 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import {
 	createNoteDeckLink,
 	removeNoteDeckLink,
 } from "@/app/_actions/note-deck-links";
-import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,12 +14,22 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, ExternalLink, Search } from "lucide-react";
-import { toast } from "sonner";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import type { Database } from "@/types/database.types";
+import { ExternalLink, Plus, Search, X } from "lucide-react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
 

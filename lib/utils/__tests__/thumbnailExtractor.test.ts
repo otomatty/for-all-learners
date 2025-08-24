@@ -6,13 +6,13 @@
  * @author AI Assistant
  */
 
-import { describe, it, expect } from "vitest";
+import type { JSONContent } from "@tiptap/core";
+import { describe, expect, it } from "vitest";
 import {
 	extractFirstImageUrl,
 	extractThumbnailInfo,
 	isValidImageUrl,
 } from "../thumbnailExtractor";
-import type { JSONContent } from "@tiptap/core";
 
 /**
  * thumbnailExtractor モジュールのテストスイート

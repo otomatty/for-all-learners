@@ -7,8 +7,8 @@
  * @author AI Assistant
  */
 
-import { describe, it, expect } from "vitest";
 import type { JSONContent } from "@tiptap/core";
+import { describe, expect, it } from "vitest";
 
 // テスト用のサンプルコンテンツ
 const pageWithGyazoImage: JSONContent = {

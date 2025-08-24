@@ -1,11 +1,11 @@
 "use server";
 
 import { geminiClient } from "@/lib/gemini/client";
-import { createPartFromUri, createUserContent } from "@google/genai";
 import {
-	getGeminiQuotaManager,
 	executeWithQuotaCheck,
+	getGeminiQuotaManager,
 } from "@/lib/utils/geminiQuotaManager";
+import { createPartFromUri, createUserContent } from "@google/genai";
 
 // バッチOCR処理の型定義
 export interface BatchOcrPage {

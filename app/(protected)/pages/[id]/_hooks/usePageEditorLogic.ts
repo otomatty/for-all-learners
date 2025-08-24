@@ -27,6 +27,7 @@ import { extractLinkData } from "@/lib/utils/linkUtils";
 import { useAutoSave } from "./useAutoSave";
 import { useGenerateContent } from "./useGenerateContent";
 import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
+import { useSmartThumbnailSync } from "./useSmartThumbnailSync";
 import { useSplitPage } from "./useSplitPage";
 
 interface UsePageEditorLogicProps {
@@ -317,6 +318,16 @@ export function usePageEditorLogic({
 	// Link existence check hook
 	useLinkExistenceChecker(editor, supabase);
 
+	// Smart thumbnail sync hook
+	const { manualSync: manualThumbnailSync } = useSmartThumbnailSync({
+		editor,
+		pageId: page.id,
+		title,
+		currentThumbnailUrl: page.thumbnail_url,
+		enabled: true, // 常に有効
+		debounceMs: 2000, // 2秒のデバウンス（autosaveと同じタイミング）
+	});
+
 	// Client-side link synchronization hook
 	const linkSyncTimeout = useRef<NodeJS.Timeout | null>(null);
 	useEffect(() => {
@@ -360,5 +371,6 @@ export function usePageEditorLogic({
 		handleGenerateContent,
 		wrapSelectionWithPageLink,
 		splitPage,
+		manualThumbnailSync, // 手動サムネイル同期機能
 	};
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import type { Database, Json } from "@/types/database.types";
-import { isAllowedImageDomain } from "@/lib/utils/domainValidation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAllowedImageDomain } from "@/lib/utils/domainValidation";
+import type { Database, Json } from "@/types/database.types";
 import Image from "next/image";
 import Link from "next/link";
 
