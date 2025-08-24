@@ -62,11 +62,10 @@ export default function NotePagesClient({
 	);
 
 	useEffect(() => {
-		console.log("Debug: pages in component", pages);
 		if (isError) {
 			console.error("Debug: error fetching pages", error);
 		}
-	}, [pages, isError, error]);
+	}, [isError, error]);
 
 	const sentinelRef = useCallback(
 		(node: HTMLElement | null) => {

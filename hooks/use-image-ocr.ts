@@ -3,13 +3,34 @@
  * ローディング状態、プログレス、エラーハンドリングを統合管理
  */
 
-import {
-	ClientOcr,
-	type OcrProcessingEvent,
-	type OcrResult,
-} from "@/lib/ocr/ocr-client";
+import { processGyazoImageOcr } from "@/app/_actions/transcribeImage";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+
+// Server Action用の結果型
+export interface ServerOcrResult {
+	success: boolean;
+	text: string;
+	confidence?: number;
+	error?: string;
+}
+
+// 互換性のためのOcrResult型定義
+export interface OcrResult {
+	success: boolean;
+	text: string;
+	confidence?: number;
+	processingTime?: number;
+	error?: string;
+	warnings?: string[];
+}
+
+// プログレス表示用（簡略化）
+export interface OcrProcessingEvent {
+	stage: "preprocessing" | "recognizing" | "completed" | "error";
+	progress: number;
+	message: string;
+}
 
 export interface UseImageOcrOptions {
 	language?: string;
@@ -75,44 +96,48 @@ export function useImageOcr(
 			let loadingToastId: string | number | undefined;
 			if (showToasts) {
 				loadingToastId = toast.loading("画像からテキストを抽出中...", {
-					description: "処理には数秒かかります",
+					description: "サーバーで処理中です",
 				});
 			}
 
 			try {
-				// プログレスハンドラー
-				const handleProgress = (event: OcrProcessingEvent) => {
-					if (cancelRequested) {
-						return;
-					}
+				// プログレス表示（擬似的な進捗）
+				setProgress(10);
+				setCurrentStage("画像を取得中...");
 
-					setProgress(event.progress);
-					setCurrentStage(event.message);
+				console.log("[useImageOcr] Starting OCR processing for:", imageUrl);
 
-					// 詳細なプログレス情報をログ出力
-					console.log("[useImageOcr] Progress:", {
-						stage: event.stage,
-						progress: event.progress,
-						message: event.message,
+				// 処理中の進捗表示
+				const progressInterval = setInterval(() => {
+					setProgress((prev) => {
+						if (prev < 80) return prev + 10;
+						return prev;
 					});
-				};
+				}, 500);
 
-				// OCR処理実行
-				const result = await ClientOcr.processImage(
-					imageUrl,
-					{
-						language,
-						maxImageSize,
-						imageQuality,
-						enableProgress,
-					},
-					handleProgress,
-				);
+				// Server Actionを呼び出し
+				setCurrentStage("OCR処理中...");
+				const serverResult = await processGyazoImageOcr(imageUrl);
+
+				clearInterval(progressInterval);
 
 				if (cancelRequested) {
 					console.log("[useImageOcr] OCR was cancelled");
 					return null;
 				}
+
+				// 結果を互換性のある形式に変換
+				const result: OcrResult = {
+					success: serverResult.success,
+					text: serverResult.text,
+					confidence: serverResult.confidence,
+					processingTime: 0, // サーバーサイドでは計測していない
+					error: serverResult.error,
+					warnings:
+						!serverResult.success && serverResult.error
+							? [serverResult.error]
+							: undefined,
+				};
 
 				setLastResult(result);
 
@@ -136,16 +161,6 @@ export function useImageOcr(
 									: "テキストが検出されませんでした",
 							duration: 4000,
 						});
-
-						// 警告がある場合
-						if (result.warnings && result.warnings.length > 0) {
-							setTimeout(() => {
-								toast.warning("注意事項があります", {
-									description: result.warnings?.[0] ?? "警告が発生しました",
-									duration: 5000,
-								});
-							}, 500);
-						}
 					}
 
 					// 完了コールバック
@@ -156,7 +171,6 @@ export function useImageOcr(
 					console.log("[useImageOcr] OCR completed successfully:", {
 						textLength: result.text.length,
 						confidence: result.confidence,
-						processingTime: result.processingTime,
 					});
 				} else {
 					// エラー処理
@@ -208,17 +222,7 @@ export function useImageOcr(
 				setCancelRequested(false);
 			}
 		},
-		[
-			isProcessing,
-			language,
-			maxImageSize,
-			imageQuality,
-			enableProgress,
-			showToasts,
-			onComplete,
-			onError,
-			cancelRequested,
-		],
+		[isProcessing, showToasts, onComplete, onError, cancelRequested],
 	);
 
 	const clearError = useCallback(() => {
@@ -270,7 +274,7 @@ export function useQuickImageOcr() {
 			setIsLoading(true);
 
 			try {
-				const result = await ClientOcr.processImage(imageUrl);
+				const result = await processGyazoImageOcr(imageUrl);
 
 				if (result.success && result.text.length > 0) {
 					onSuccess(result.text);

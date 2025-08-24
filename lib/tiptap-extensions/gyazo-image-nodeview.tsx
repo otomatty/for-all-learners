@@ -16,7 +16,7 @@ import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import { Copy, FileText, Loader2 } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 /**
  * A NodeView component that displays the Gyazo image normally,
@@ -27,15 +27,21 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 	node,
 	selected,
 	editor,
+	getPos,
 }) => {
 	const src = node.attrs.src as string;
 	const fullWidth = node.attrs.fullWidth as boolean;
-	// Convert back to gyazo.com URL without .png
-	const pageUrl = src
-		.replace(/^https:\/\/i\.gyazo\.com\//, "https://gyazo.com/")
-		.replace(/\.png$/, "");
-	// Use raw endpoint for Gyazo images
-	const rawUrl = `${pageUrl}/raw`;
+
+	// メモ化してURLの再計算を防ぐ
+	const { pageUrl, rawUrl } = useMemo(() => {
+		// Convert back to gyazo.com URL without .png
+		const pageUrl = src
+			.replace(/^https:\/\/i\.gyazo\.com\//, "https://gyazo.com/")
+			.replace(/\.png$/, "");
+		// Use raw endpoint for Gyazo images
+		const rawUrl = `${pageUrl}/raw`;
+		return { pageUrl, rawUrl };
+	}, [src]);
 
 	// OCR処理のハンドリング
 	const { processImage, isProcessing, progress, currentStage } = useImageOcr({
@@ -52,37 +58,114 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 	// エディタにテキストを挿入する関数
 	const insertOcrTextToEditor = useCallback(
 		(text: string) => {
-			if (!editor) return;
+			if (!editor || !getPos) {
+				console.error("Editor or getPos function not available");
+				return;
+			}
 
-			// 現在のノードの位置を取得
-			const pos = editor.view.posAtDOM(
-				editor.view.dom.querySelector("[data-node-view-content]") ||
-					editor.view.dom,
-				0,
-			);
+			try {
+				// 現在のノードの正確な位置を取得
+				const currentPos = getPos();
+				if (typeof currentPos !== "number" || currentPos < 0) {
+					console.error("Invalid node position:", currentPos);
+					return;
+				}
 
-			// ノードの後ろに段落とテキストを挿入
-			editor
-				.chain()
-				.focus()
-				.insertContentAt(pos + 1, [
-					{
-						type: "paragraph",
-						content: [],
-					},
-					{
-						type: "paragraph",
-						content: [
+				// ノードのサイズを取得（画像ノードは通常1つのポジション）
+				const nodeSize = node.nodeSize || 1;
+
+				// ノードの直後の位置を計算
+				const insertPosition = currentPos + nodeSize;
+
+				// ドキュメントのサイズをチェック
+				const docSize = editor.state.doc.content.size;
+				if (insertPosition > docSize) {
+					console.warn(
+						"Insert position exceeds document size, using document end",
+						{
+							insertPosition,
+							docSize,
+						},
+					);
+				}
+
+				console.log("Inserting OCR text at position:", insertPosition, {
+					currentPos,
+					nodeSize,
+					nodeType: node.type.name,
+					docSize,
+				});
+
+				// OCR結果を整形
+				const formattedText = text.trim();
+				if (!formattedText) {
+					console.warn("OCR text is empty, skipping insertion");
+					return;
+				}
+
+				// ノードの直後に段落とテキストを挿入
+				const insertResult = editor
+					.chain()
+					.focus()
+					.insertContentAt(insertPosition, [
+						{
+							type: "paragraph",
+							content: [],
+						},
+						{
+							type: "paragraph",
+							content: [
+								{
+									type: "text",
+									text: `${formattedText}`,
+								},
+							],
+						},
+					])
+					.run();
+
+				if (!insertResult) {
+					console.warn("Insert operation failed, trying fallback");
+					throw new Error("Insert operation returned false");
+				}
+
+				console.log("OCR text successfully inserted");
+			} catch (error) {
+				console.error("Failed to insert OCR text:", error);
+
+				// フォールバック: カーソル位置に挿入
+				try {
+					const fallbackResult = editor
+						.chain()
+						.focus()
+						.insertContent([
 							{
-								type: "text",
-								text: `📝 OCR抽出テキスト:\n${text}`,
+								type: "paragraph",
+								content: [],
 							},
-						],
-					},
-				])
-				.run();
+							{
+								type: "paragraph",
+								content: [
+									{
+										type: "text",
+										text: `${text.trim()}`,
+									},
+								],
+							},
+						])
+						.run();
+
+					if (fallbackResult) {
+						console.log("OCR text inserted using fallback method");
+					} else {
+						console.error("Both insertion methods failed");
+					}
+				} catch (fallbackError) {
+					console.error("Fallback insertion also failed:", fallbackError);
+				}
+			}
 		},
-		[editor],
+		[editor, getPos, node],
 	);
 
 	// OCR処理を開始
@@ -153,7 +236,6 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 													<div className="flex items-center gap-3">
 														<Loader2 className="h-5 w-5 animate-spin text-blue-600" />
 														<div className="text-sm">
-															<div className="font-medium">OCR処理中...</div>
 															<div className="text-gray-600">
 																{currentStage}
 															</div>

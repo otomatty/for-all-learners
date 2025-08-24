@@ -94,6 +94,47 @@ function parseRetryDelay(retryDelayStr: string): number {
  * Server action to extract text from an image via Gemini API.
  * リトライロジック付きで改良版。
  */
+/**
+ * Gyazo画像をOCR処理する（Server Action）
+ * CORSの問題を回避するためにサーバーサイドで処理
+ */
+export async function processGyazoImageOcr(imageUrl: string): Promise<{
+	success: boolean;
+	text: string;
+	confidence?: number;
+	error?: string;
+}> {
+	try {
+		// サーバーサイドで画像を取得（CORSの問題なし）
+		const response = await fetch(imageUrl);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch image: ${response.status}`);
+		}
+
+		// 画像データをBase64に変換
+		const arrayBuffer = await response.arrayBuffer();
+		const base64Data = Buffer.from(arrayBuffer).toString("base64");
+		const mimeType = response.headers.get("content-type") || "image/jpeg";
+		const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+		// 既存のtranscribeImage関数を使用
+		const text = await transcribeImage(dataUrl);
+
+		return {
+			success: true,
+			text,
+			confidence: 95, // Geminiの信頼度は通常高い
+		};
+	} catch (error) {
+		console.error("Gyazo OCR processing failed:", error);
+		return {
+			success: false,
+			text: "",
+			error: error instanceof Error ? error.message : "Unknown error",
+		};
+	}
+}
+
 export async function transcribeImage(imageUrl: string): Promise<string> {
 	if (!imageUrl) {
 		throw new Error("No image URL provided for transcription");
