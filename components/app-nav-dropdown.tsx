@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "./ui/button";
 
 interface AppNavDropdownProps {
 	items: NavItem[];
@@ -15,7 +15,6 @@ interface AppNavDropdownProps {
 export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const pathname = usePathname();
 
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent) => {
@@ -47,13 +46,9 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 				}
 			`}</style>
 			<div className="relative" ref={containerRef}>
-				<button
-					type="button"
-					onClick={() => setOpen(!open)}
-					className="p-2 rounded-md hover:bg-gray-100 focus:outline-none"
-				>
+				<Button onClick={() => setOpen(!open)} variant="ghost" size="icon">
 					<Icons.Grip className="w-4 h-4" />
-				</button>
+				</Button>
 
 				{open && (
 					<div className="p-4 absolute right-0 mt-2 w-xs max-h-96 overflow-y-auto bg-white rounded-md shadow-lg ring-opacity-5 z-50 border border-border">

@@ -49,11 +49,7 @@ export function PagesList({ pages, slug }: PagesListProps) {
 						</CardHeader>
 						<CardContent className="px-4">
 							{page.thumbnail_url ? (
-								isAllowedImageDomain(
-									page.thumbnail_url,
-									true,
-									`[Notes PagesList:${page.title}]`,
-								) ? (
+								isAllowedImageDomain(page.thumbnail_url) ? (
 									<Image
 										src={page.thumbnail_url}
 										alt={page.title}

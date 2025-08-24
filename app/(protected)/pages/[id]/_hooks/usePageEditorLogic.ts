@@ -317,7 +317,7 @@ export function usePageEditorLogic({
 		setIsGenerating,
 	);
 
-	// Callback to wrap selected text in brackets for page link
+	// Callback to toggle page link brackets for selected text
 	const wrapSelectionWithPageLink = useCallback(() => {
 		if (!editor) return;
 		const { from, to } = editor.state.selection;
@@ -325,13 +325,27 @@ export function usePageEditorLogic({
 			toast.error("リンクを作成するにはテキストを選択してください");
 			return;
 		}
+
 		const selectedText = editor.state.doc.textBetween(from, to, "");
-		const linkText = `[${selectedText}]`;
+
+		// Check if the selected text is already wrapped in brackets
+		const bracketPattern = /^\[(.+)\]$/;
+		const match = selectedText.match(bracketPattern);
+
+		let newText: string;
+		if (match) {
+			// If already wrapped in brackets, remove them
+			newText = match[1];
+		} else {
+			// If not wrapped, add brackets
+			newText = `[${selectedText}]`;
+		}
+
 		editor
 			.chain()
 			.focus()
 			.deleteRange({ from, to })
-			.insertContentAt(from, linkText)
+			.insertContentAt(from, newText)
 			.run();
 
 		// エディターコンテンツが変更されたのでdirtyにする
