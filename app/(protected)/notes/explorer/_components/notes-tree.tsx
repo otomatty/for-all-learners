@@ -27,10 +27,6 @@ export default function NotesTree({
 					variant="outline"
 					size="sm"
 					className="w-full justify-start gap-2"
-					onClick={() => {
-						// TODO: 新規ノート作成ダイアログを開く
-						console.log("新規ノート作成");
-					}}
 				>
 					<Plus className="h-4 w-4" />
 					新しいノート

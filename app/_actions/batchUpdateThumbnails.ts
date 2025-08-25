@@ -51,10 +51,6 @@ export async function batchUpdateMissingThumbnails(
 	const startTime = Date.now();
 	const supabase = await createClient();
 
-	console.log(
-		`[batchUpdateThumbnails] 開始: dryRun=${dryRun}, userId=${userId || "all"}, limit=${limit}`,
-	);
-
 	// 1) サムネイル未設定のページを取得
 	let query = supabase
 		.from("pages")
@@ -74,7 +70,6 @@ export async function batchUpdateMissingThumbnails(
 	}
 
 	if (!pages || pages.length === 0) {
-		console.log("[batchUpdateThumbnails] 対象ページなし");
 		return {
 			totalProcessed: 0,
 			successCount: 0,
@@ -83,8 +78,6 @@ export async function batchUpdateMissingThumbnails(
 			details: [],
 		};
 	}
-
-	console.log(`[batchUpdateThumbnails] 対象ページ数: ${pages.length}`);
 
 	// 2) 各ページのサムネイル生成を試行
 	const results: BatchUpdateResult["details"] = [];
@@ -119,7 +112,6 @@ export async function batchUpdateMissingThumbnails(
 				});
 
 				successCount++;
-				console.log(`[batchUpdateThumbnails] ✓ ${page.title}: ${thumbnailUrl}`);
 			} else {
 				// 画像が見つからない場合
 				results.push({
@@ -128,8 +120,6 @@ export async function batchUpdateMissingThumbnails(
 					success: false,
 					error: "画像が見つかりません",
 				});
-
-				console.log(`[batchUpdateThumbnails] - ${page.title}: 画像なし`);
 			}
 		} catch (error) {
 			const errorMessage =
@@ -143,15 +133,10 @@ export async function batchUpdateMissingThumbnails(
 			});
 
 			errorCount++;
-			console.error(`[batchUpdateThumbnails] ✗ ${page.title}: ${errorMessage}`);
 		}
 	}
 
 	const processingTimeMs = Date.now() - startTime;
-
-	console.log(
-		`[batchUpdateThumbnails] 完了: 成功=${successCount}, 失敗=${errorCount}, 時間=${processingTimeMs}ms`,
-	);
 
 	return {
 		totalProcessed: pages.length,

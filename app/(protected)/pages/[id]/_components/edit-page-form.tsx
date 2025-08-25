@@ -119,15 +119,8 @@ export default function EditPageForm({
 				);
 
 				if (result.thumbnailSet && result.thumbnailUrl) {
-					console.log(
-						`[EditPageForm] サムネイル自動設定完了: ${result.thumbnailUrl}`,
-					);
 					// 必要に応じてページを再読み込みまたは状態を更新
-					// ここでは控えめにログのみ出力
 				} else if (result.error) {
-					console.warn(
-						`[EditPageForm] サムネイル自動設定エラー: ${result.error}`,
-					);
 				}
 			} catch (error) {
 				console.error("サムネイル自動設定でエラーが発生:", error);

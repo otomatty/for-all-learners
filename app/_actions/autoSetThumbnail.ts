@@ -82,10 +82,6 @@ export async function autoSetThumbnailOnPageView(
 			};
 		}
 
-		console.log(
-			`[autoSetThumbnail] ページ ${pageId}: 自動サムネイル設定 = ${extractedThumbnail}`,
-		);
-
 		return {
 			thumbnailSet: true,
 			thumbnailUrl: extractedThumbnail,

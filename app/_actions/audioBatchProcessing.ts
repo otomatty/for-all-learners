@@ -60,8 +60,6 @@ export async function processAudioFilesBatch(
 	const startTime = Date.now();
 
 	try {
-		console.log(`[音声バッチ処理] ${audioFiles.length}ファイルの一括処理開始`);
-
 		// 事前クォータチェック
 		const quotaManager = getGeminiQuotaManager();
 		const estimatedRequests = Math.ceil(audioFiles.length / 3); // 3ファイルずつバッチ
@@ -79,7 +77,6 @@ export async function processAudioFilesBatch(
 		}
 
 		// 1. 全音声ファイルをSupabaseにアップロード
-		console.log("[音声バッチ処理] 1. 音声ファイルアップロード開始");
 		const supabase = await createClient();
 		const uploadPromises = audioFiles.map(async (audio) => {
 			try {
@@ -152,12 +149,7 @@ export async function processAudioFilesBatch(
 			};
 		}
 
-		console.log(
-			`[音声バッチ処理] 1. 完了: ${validUploads.length}/${audioFiles.length}ファイルアップロード成功`,
-		);
-
 		// 2. バッチ文字起こし処理
-		console.log("[音声バッチ処理] 2. バッチ文字起こし開始");
 		const transcriptionResults: Array<{
 			audioId: string;
 			audioName: string;
@@ -176,10 +168,6 @@ export async function processAudioFilesBatch(
 			const batchNumber = Math.floor(i / batchSize) + 1;
 			const totalBatches = Math.ceil(validUploads.length / batchSize);
 
-			console.log(
-				`[音声バッチ処理] バッチ ${batchNumber}/${totalBatches}: ${batch.length}ファイル処理中...`,
-			);
-
 			try {
 				const batchResult = await executeWithQuotaCheck(
 					() => processBatchAudioTranscription(batch),
@@ -189,10 +177,6 @@ export async function processAudioFilesBatch(
 
 				transcriptionResults.push(...batchResult);
 				apiRequestsUsed++;
-
-				console.log(
-					`[音声バッチ処理] バッチ ${batchNumber} 完了: ${batchResult.filter((r) => r.success).length}/${batch.length}ファイル成功`,
-				);
 
 				// バッチ間の待機
 				if (i + batchSize < validUploads.length) {
@@ -214,7 +198,6 @@ export async function processAudioFilesBatch(
 		}
 
 		// 3. カード生成処理
-		console.log("[音声バッチ処理] 3. カード生成開始");
 		const finalResults = await Promise.all(
 			transcriptionResults.map(async (result) => {
 				if (!result.success || !result.transcript) {
@@ -263,10 +246,6 @@ export async function processAudioFilesBatch(
 		);
 		const successfulTranscriptions = finalResults.filter(
 			(result) => result.success,
-		);
-
-		console.log(
-			`[音声バッチ処理] 完了: ${successfulTranscriptions.length}/${audioFiles.length}ファイル成功、${totalCards}カード生成`,
 		);
 
 		return {

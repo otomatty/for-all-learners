@@ -44,7 +44,6 @@ export async function GET(
 		})
 		.select("id")
 		.single();
-	console.log("Debug [route/new page]: created page", { page, pageError });
 	if (pageError || !page) {
 		console.error("Page creation error:", pageError);
 		throw pageError;
@@ -54,7 +53,6 @@ export async function GET(
 	const { error: linkError } = await supabase
 		.from("note_page_links")
 		.insert({ note_id: note.id, page_id: page.id });
-	console.log("Debug [route/new page]: linkError", linkError);
 	if (linkError) {
 		console.error("Linking page to note error:", linkError);
 		throw linkError;

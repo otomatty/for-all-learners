@@ -38,38 +38,11 @@ export function useSmartThumbnailSync({
 }: UseSmartThumbnailSyncOptions) {
 	const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const lastContentRef = useRef<JSONContent | null>(null);
-	const isSyncingRef = useRef(false);
 
 	// サムネイル同期関数
 	const syncThumbnail = useCallback(
 		async (currentContent: JSONContent) => {
-			if (isSyncingRef.current) {
-				console.log(
-					`[SmartThumbnailSync] ページ ${pageId}: 同期中のためスキップ`,
-				);
-				return;
-			}
-
 			try {
-				isSyncingRef.current = true;
-
-				// 前回のコンテンツとの比較
-				const hasChanged = lastContentRef.current
-					? hasFirstImageChanged(lastContentRef.current, currentContent)
-					: true; // 初回は常に実行
-
-				if (!hasChanged) {
-					console.log(
-						`[SmartThumbnailSync] ページ ${pageId}: 先頭画像に変更なし`,
-					);
-					return;
-				}
-
-				// サムネイル更新実行
-				console.log(
-					`[SmartThumbnailSync] ページ ${pageId}: 先頭画像変更を検知、サムネイル同期実行`,
-				);
-
 				await updatePage({
 					id: pageId,
 					title,
@@ -85,8 +58,6 @@ export function useSmartThumbnailSync({
 					`[SmartThumbnailSync] ページ ${pageId}: 同期エラー`,
 					error,
 				);
-			} finally {
-				isSyncingRef.current = false;
 			}
 		},
 		[pageId, title],
@@ -149,6 +120,5 @@ export function useSmartThumbnailSync({
 
 	return {
 		manualSync,
-		isSyncing: isSyncingRef.current,
 	};
 }
