@@ -24,10 +24,10 @@ import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
-import ResponsiveToolbar from "./responsive-toolbar";
 import { PageHeader } from "./page-header";
 import PageLinksGrid from "./page-links-grid";
 import RelatedCardsGrid from "./related-cards-grid";
+import ResponsiveToolbar from "./responsive-toolbar";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
@@ -174,6 +174,14 @@ export default function EditPageForm({
 			if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "o") {
 				e.preventDefault();
 				editor.chain().focus().toggleOrderedList().run();
+			}
+			if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === "t") {
+				e.preventDefault();
+				editor
+					.chain()
+					.focus()
+					.insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+					.run();
 			}
 		},
 		[editor, wrapSelectionWithPageLink, handleDateShortcut],

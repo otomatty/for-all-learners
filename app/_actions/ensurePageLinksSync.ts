@@ -2,8 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
-import { updatePageLinks } from "./updatePageLinks";
 import type { JSONContent } from "@tiptap/core";
+import { updatePageLinks } from "./updatePageLinks";
 
 /**
  * ページリンクの確実な同期を保証する

@@ -3,12 +3,12 @@
  */
 
 import {
+	type MockedFunction,
 	beforeEach,
 	describe,
 	expect,
 	it,
 	vi,
-	type MockedFunction,
 } from "vitest";
 import { ClientOcr } from "../ocr-client";
 import type { OcrProcessingEvent } from "../ocr-client";

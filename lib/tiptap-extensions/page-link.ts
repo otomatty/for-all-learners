@@ -1,19 +1,19 @@
+import {
+	PageLinkPreviewCard,
+	PageLinkPreviewCardError,
+	PageLinkPreviewCardLoading,
+} from "@/components/page-link-preview-card";
+import { pagePreviewService } from "@/lib/services/page-preview-service";
 import { createClient } from "@/lib/supabase/client";
 import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
 import type { ResolvedPos } from "prosemirror-model";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
-import { toast } from "sonner";
-import tippy, { type Instance, type Props } from "tippy.js";
-import { pagePreviewService } from "@/lib/services/page-preview-service";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import {
-	PageLinkPreviewCard,
-	PageLinkPreviewCardLoading,
-	PageLinkPreviewCardError,
-} from "@/components/page-link-preview-card";
+import { toast } from "sonner";
+import tippy, { type Instance, type Props } from "tippy.js";
 
 // プラグインキーの作成
 const pageLinkPluginKey = new PluginKey("pageLinkPlugin");

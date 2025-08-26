@@ -10,9 +10,9 @@ import React, { useState, useRef } from "react";
 import { DeletePageDialog } from "./delete-page-dialog";
 import ToolbarButton from "./toolbar-button";
 import {
-	createToolbarMenuItems,
-	type ToolbarMenuItemsProps,
 	type ToolbarAction,
+	type ToolbarMenuItemsProps,
+	createToolbarMenuItems,
 } from "./toolbar-menu-items";
 
 interface FloatingToolbarProps extends ToolbarMenuItemsProps {}

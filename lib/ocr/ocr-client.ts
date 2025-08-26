@@ -259,18 +259,29 @@ export namespace ClientOcr {
 	function postProcessText(text: string): string {
 		if (!text) return "";
 
-		const processedText = text
+		let processedText = text
 			// 余分な空白を除去
 			.replace(/\s+/g, " ")
 			// 行頭・行末の空白を除去
 			.trim()
-			// 明らかな誤認識文字を修正（基本的なもののみ）
-			.replace(/[｜|]/g, "l") // 縦線の修正
+			// 全角数字を半角に
 			.replace(/[０-９]/g, (match) =>
 				String.fromCharCode(match.charCodeAt(0) - 0xfee0),
-			) // 全角数字を半角に
+			)
 			// 連続する同じ文字を制限（明らかな誤認識）
 			.replace(/(.)\1{5,}/g, "$1$1$1");
+
+		// OCRテーブル自動変換の適用
+		try {
+			const { autoConvertOcrToTable } = require("../utils/ocrTableProcessor");
+			processedText = autoConvertOcrToTable(processedText, {
+				debug: false,
+				autoAdjustColumns: true,
+			});
+		} catch (error) {
+			console.warn("[OCR] テーブル変換でエラー:", error);
+			// エラーが発生しても元のテキストを保持
+		}
 
 		// 制御文字を除去
 		return removeControlCharacters(processedText);

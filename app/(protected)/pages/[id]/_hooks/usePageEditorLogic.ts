@@ -3,6 +3,7 @@ import {
 	CustomBulletList,
 	CustomOrderedList,
 } from "@/lib/tiptap-extensions/custom-list";
+import { TableExtensions } from "@/lib/tiptap-extensions/custom-table";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
@@ -21,11 +22,12 @@ import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import CodeBlockPrism from "tiptap-extension-code-block-prism";
 
+import { ensurePageLinksSync } from "@/app/_actions/ensurePageLinksSync";
 import { updatePage } from "@/app/_actions/updatePage";
 import { updatePageLinks } from "@/app/_actions/updatePageLinks";
-import { ensurePageLinksSync } from "@/app/_actions/ensurePageLinksSync";
-import { extractLinkData } from "@/lib/utils/linkUtils";
 import { existencePluginKey } from "@/lib/tiptap-extensions/page-link";
+import { extractLinkData } from "@/lib/utils/linkUtils";
+import { transformMarkdownTables } from "@/lib/utils/transformMarkdownTables";
 import { useAutoSave } from "./useAutoSave";
 import { useGenerateContent } from "./useGenerateContent";
 import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
@@ -207,6 +209,8 @@ export function usePageEditorLogic({
 			CodeBlockWithCopy.configure({
 				defaultLanguage: "javascript",
 			}),
+			// Table extensions for Markdown table support
+			...TableExtensions,
 			// Code blocks highlighted via Prism
 			// Prism highlighting is applied on editor updates
 			Placeholder.configure({
@@ -227,8 +231,11 @@ export function usePageEditorLogic({
 			// Convert inline LaTeX syntax in sanitized document
 			const withLatex = transformDollarInDoc(sanitized);
 
+			// Convert Markdown tables to table nodes
+			const withTables = transformMarkdownTables(withLatex);
+
 			try {
-				editor.commands.setContent(withLatex);
+				editor.commands.setContent(withTables);
 			} catch (error) {
 				console.error("setContent 失敗:", error);
 

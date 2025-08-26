@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
 	Sheet,
 	SheetContent,
@@ -8,15 +9,14 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Menu, Volume2, Pause } from "lucide-react";
-import {
-	createToolbarMenuItems,
-	type ToolbarMenuItemsProps,
-	type ToolbarAction,
-} from "./toolbar-menu-items";
+import { Menu, Pause, Volume2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { DeletePageDialog } from "./delete-page-dialog";
+import {
+	type ToolbarAction,
+	type ToolbarMenuItemsProps,
+	createToolbarMenuItems,
+} from "./toolbar-menu-items";
 
 interface MobileFabToolbarProps extends ToolbarMenuItemsProps {}
 
