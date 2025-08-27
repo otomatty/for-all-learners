@@ -1,6 +1,7 @@
 "use server";
 
 import { getSupabaseClient } from "./getSupabaseClient";
+import { ensureUserPageInNote, getUserInfo } from "../user-page";
 
 /**
  * 共有リンクからノートに参加（共有）します。
@@ -46,5 +47,30 @@ export async function joinNoteByLink(token: string) {
 		.select("*")
 		.single();
 	if (error) throw error;
+
+	// ✅ 新規追加: ユーザーページ自動作成・紐付け
+	try {
+		const userInfo = await getUserInfo(user.id);
+
+		if (userInfo.userSlug) {
+			const userPageResult = await ensureUserPageInNote({
+				userId: user.id,
+				userSlug: userInfo.userSlug,
+				noteId: link.resource_id,
+				avatarUrl: userInfo.avatarUrl,
+				fullName: userInfo.fullName,
+			});
+
+			console.log("[joinNoteByLink] ユーザーページ処理完了:", userPageResult);
+		} else {
+			console.warn(
+				"[joinNoteByLink] user_slugが未設定のため、ユーザーページを作成できませんでした",
+			);
+		}
+	} catch (userPageError) {
+		// ユーザーページ作成エラーはログ出力のみ（ノート参加処理は成功させる）
+		console.error("[joinNoteByLink] ユーザーページ作成エラー:", userPageError);
+	}
+
 	return data;
 }

@@ -75,7 +75,7 @@ export function PageHeader({
 					}
 				}}
 				placeholder="ページタイトルを入力"
-				className="!text-4xl font-bold flex-1 resize-none whitespace-pre-wrap break-words border-0 bg-transparent focus-visible:outline-none focus-visible:ring-0"
+				className="!text-2xl sm:!text-3xl md:!text-4xl font-bold flex-1 resize-none whitespace-pre-wrap break-words border-0 bg-transparent focus-visible:outline-none focus-visible:ring-0"
 			/>
 			{cosenseProjectName && scrapboxPageListSyncedAt && (
 				<button

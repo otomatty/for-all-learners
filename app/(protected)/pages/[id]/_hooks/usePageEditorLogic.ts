@@ -28,6 +28,7 @@ import { updatePageLinks } from "@/app/_actions/updatePageLinks";
 import { existencePluginKey } from "@/lib/tiptap-extensions/page-link";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformMarkdownTables } from "@/lib/utils/transformMarkdownTables";
+import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import { useAutoSave } from "./useAutoSave";
 import { useGenerateContent } from "./useGenerateContent";
 import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
@@ -221,7 +222,7 @@ export function usePageEditorLogic({
 		editorProps: {
 			attributes: {
 				class:
-					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose lg:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
+					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose md:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
 			},
 		},
 		onCreate({ editor }) {
@@ -244,6 +245,9 @@ export function usePageEditorLogic({
 			}
 		},
 	});
+
+	// ユーザーアイコンレンダリングの追加
+	useUserIconRenderer(editor);
 
 	const savePage = useCallback(async () => {
 		if (!editor) return;

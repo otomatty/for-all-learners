@@ -1,6 +1,7 @@
 "use server";
 
 import { getSupabaseClient } from "./getSupabaseClient";
+import { ensureUserPageInNote, getUserInfo } from "../user-page";
 
 /**
  * 公開ノートのスラグからノートに参加（エディタ権限で共有）します。
@@ -44,5 +45,30 @@ export async function joinNotePublic(slug: string) {
 		.select("*")
 		.single();
 	if (error) throw error;
+
+	// ✅ 新規追加: ユーザーページ自動作成・紐付け
+	try {
+		const userInfo = await getUserInfo(user.id);
+
+		if (userInfo.userSlug) {
+			const userPageResult = await ensureUserPageInNote({
+				userId: user.id,
+				userSlug: userInfo.userSlug,
+				noteId: note.id,
+				avatarUrl: userInfo.avatarUrl,
+				fullName: userInfo.fullName,
+			});
+
+			console.log("[joinNotePublic] ユーザーページ処理完了:", userPageResult);
+		} else {
+			console.warn(
+				"[joinNotePublic] user_slugが未設定のため、ユーザーページを作成できませんでした",
+			);
+		}
+	} catch (userPageError) {
+		// ユーザーページ作成エラーはログ出力のみ（ノート参加処理は成功させる）
+		console.error("[joinNotePublic] ユーザーページ作成エラー:", userPageError);
+	}
+
 	return data;
 }

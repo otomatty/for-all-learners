@@ -18,6 +18,43 @@ import tippy, { type Instance, type Props } from "tippy.js";
 // プラグインキーの作成
 const pageLinkPluginKey = new PluginKey("pageLinkPlugin");
 
+// ブラケット内容の解析結果
+interface BracketContent {
+	slug: string;
+	isIcon: boolean;
+	type: "page" | "icon" | "external";
+}
+
+/**
+ * ブラケット内容を解析して種別を判定
+ */
+function parseBracketContent(content: string): BracketContent {
+	// .iconサフィックス検知
+	const iconMatch = content.match(/^(.+)\.icon$/);
+	if (iconMatch) {
+		return {
+			slug: iconMatch[1],
+			isIcon: true,
+			type: "icon",
+		};
+	}
+
+	// 外部リンク判定
+	if (/^https?:\/\//.test(content)) {
+		return {
+			slug: content,
+			isIcon: false,
+			type: "external",
+		};
+	}
+
+	return {
+		slug: content,
+		isIcon: false,
+		type: "page",
+	};
+}
+
 // ブラケット自動クローズ用のプラグイン
 const bracketPlugin = new Plugin({
 	props: {
@@ -123,46 +160,84 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 						decos.push(Decoration.inline(start, end, { nodeName: "span" }));
 						continue;
 					}
-					const title = match[1];
-					const isExternal = /^https?:\/\//.test(title);
-					const pageId = existMap.get(title);
-					const exists = isExternal || Boolean(pageId);
-					const cls = exists ? "text-blue-500" : "text-red-500";
-					// Build href for link
-					const hrefValue = isExternal
-						? title
-						: pageId
-							? `/pages/${pageId}`
-							: "#";
-					const decoAttrs = {
-						nodeName: "a",
-						href: hrefValue,
-						class: `${cls} underline cursor-pointer whitespace-normal break-all`,
-						...(isExternal
-							? { target: "_blank", rel: "noopener noreferrer" }
-							: {}),
-						// 未設定リンク（pageIdがない場合）にdata-page-title属性を設定
-						...(!exists && !isExternal ? { "data-page-title": title } : {}),
-						// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
-						...(pageId && !isExternal ? { "data-page-id": pageId } : {}),
-					};
-					if (start >= paraStart && end <= paraEnd) {
-						decos.push(Decoration.inline(start, end, decoAttrs));
-					} else {
-						decos.push(
-							Decoration.inline(start, start + 1, { style: "display: none" }),
-						);
-						decos.push(
-							Decoration.inline(end - 1, end, { style: "display: none" }),
-						);
-						const inactiveAttrs: Record<string, string> = {
-							...decoAttrs,
-							contentEditable: "false",
+
+					const bracketContent = parseBracketContent(match[1]);
+
+					if (bracketContent.isIcon) {
+						// アイコン表示の処理
+						const pageId = existMap.get(bracketContent.slug);
+						const exists = Boolean(pageId);
+
+						const decoAttrs = {
+							nodeName: "span",
+							class: "inline-flex items-center user-icon-wrapper",
+							"data-user-slug": bracketContent.slug,
+							"data-is-icon": "true",
+							"data-page-id": pageId || "",
+							"data-exists": exists.toString(),
+							style: "vertical-align: middle;",
 						};
-						if (!isExternal && !pageId) {
-							inactiveAttrs["data-page-title"] = title;
+
+						if (start >= paraStart && end <= paraEnd) {
+							decos.push(Decoration.inline(start, end, decoAttrs));
+						} else {
+							// 非アクティブ時も同様の処理
+							decos.push(
+								Decoration.inline(start, start + 1, { style: "display: none" }),
+							);
+							decos.push(
+								Decoration.inline(end - 1, end, { style: "display: none" }),
+							);
+							decos.push(
+								Decoration.inline(start + 1, end - 1, {
+									...decoAttrs,
+									contentEditable: "false",
+								}),
+							);
 						}
-						decos.push(Decoration.inline(start + 1, end - 1, inactiveAttrs));
+					} else {
+						// 既存のページリンク処理
+						const title = bracketContent.slug;
+						const isExternal = bracketContent.type === "external";
+						const pageId = existMap.get(title);
+						const exists = isExternal || Boolean(pageId);
+						const cls = exists ? "text-blue-500" : "text-red-500";
+						// Build href for link
+						const hrefValue = isExternal
+							? title
+							: pageId
+								? `/pages/${pageId}`
+								: "#";
+						const decoAttrs = {
+							nodeName: "a",
+							href: hrefValue,
+							class: `${cls} underline cursor-pointer whitespace-normal break-all`,
+							...(isExternal
+								? { target: "_blank", rel: "noopener noreferrer" }
+								: {}),
+							// 未設定リンク（pageIdがない場合）にdata-page-title属性を設定
+							...(!exists && !isExternal ? { "data-page-title": title } : {}),
+							// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
+							...(pageId && !isExternal ? { "data-page-id": pageId } : {}),
+						};
+						if (start >= paraStart && end <= paraEnd) {
+							decos.push(Decoration.inline(start, end, decoAttrs));
+						} else {
+							decos.push(
+								Decoration.inline(start, start + 1, { style: "display: none" }),
+							);
+							decos.push(
+								Decoration.inline(end - 1, end, { style: "display: none" }),
+							);
+							const inactiveAttrs: Record<string, string> = {
+								...decoAttrs,
+								contentEditable: "false",
+							};
+							if (!isExternal && !pageId) {
+								inactiveAttrs["data-page-title"] = title;
+							}
+							decos.push(Decoration.inline(start + 1, end - 1, inactiveAttrs));
+						}
 					}
 				}
 				// Decorate tag links (#text)
@@ -613,18 +688,71 @@ export const PageLink = Extension.create({
 
 						if (!bracketContent) return false;
 
+						const parsedContent = parseBracketContent(bracketContent);
+
+						if (parsedContent.isIcon) {
+							// アイコンクリック時の処理
+							console.log("🔗 PageLink: アイコンクリック検出", {
+								userSlug: parsedContent.slug,
+								noteSlug,
+							});
+
+							// ユーザーページに遷移
+							(async () => {
+								try {
+									const supabase = createClient();
+									const { data: account, error: accountError } = await supabase
+										.from("accounts")
+										.select("id")
+										.eq("user_slug", parsedContent.slug)
+										.single();
+
+									if (accountError || !account) {
+										toast.error(
+											`ユーザー "${parsedContent.slug}" が見つかりません`,
+										);
+										return;
+									}
+
+									const { data: page, error: pageError } = await supabase
+										.from("pages")
+										.select("id")
+										.eq("user_id", account.id)
+										.eq("title", parsedContent.slug)
+										.single();
+
+									if (pageError || !page) {
+										toast.error("ユーザーページが見つかりません");
+										return;
+									}
+
+									// ノートコンテキストに応じた遷移
+									if (noteSlug) {
+										window.location.href = `/notes/${encodeURIComponent(noteSlug)}/${page.id}`;
+									} else {
+										window.location.href = `/pages/${page.id}`;
+									}
+								} catch (error) {
+									console.error("アイコンクリック処理エラー:", error);
+									toast.error("ページ遷移に失敗しました");
+								}
+							})();
+
+							return true;
+						}
+
 						console.log("🔗 PageLink: ブラケットリンククリック検出", {
 							bracketContent,
 							noteSlug,
 						});
 
 						// Convert underscores to spaces for page title search and creation
-						const searchTitle = bracketContent.replace(/_/g, " ");
+						const searchTitle = parsedContent.slug.replace(/_/g, " ");
 
 						// 外部リンクかどうかをチェック
-						if (/^https?:\/\//.test(bracketContent)) {
+						if (parsedContent.type === "external") {
 							console.log("🔗 PageLink: 外部リンクとして処理");
-							window.open(bracketContent, "_blank");
+							window.open(parsedContent.slug, "_blank");
 							return true;
 						}
 

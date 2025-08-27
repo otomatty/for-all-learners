@@ -368,3 +368,34 @@ blockquote {
 	border-color: #6b7280; /* border-gray-500 */
 	font-style: italic; /* italic */
 }
+
+/* ユーザーアイコン表示用のスタイル */
+.user-icon-wrapper {
+	@apply inline-flex items-center;
+	vertical-align: middle;
+}
+
+.user-icon-wrapper::before {
+	content: '';
+	display: inline-block;
+	width: 1.5rem;
+	height: 1.5rem;
+	background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+	border-radius: 50%;
+	margin-right: 0.25rem;
+	flex-shrink: 0;
+}
+
+.user-icon-wrapper[data-exists="false"]::before {
+	background: #6b7280;
+}
+
+/* アイコンが読み込まれた後のスタイル調整 */
+.user-icon-wrapper.loaded::before {
+	display: none;
+}
+
+/* レンダリング済みのアイコンコンテナ */
+.user-icon-container {
+	vertical-align: middle;
+}

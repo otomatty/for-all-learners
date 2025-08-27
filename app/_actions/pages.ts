@@ -54,6 +54,7 @@ export async function createPage(
 	const { data, error } = await supabase
 		.from("pages")
 		.insert(pageWithThumbnail)
+		.select()
 		.single();
 	if (error) throw error;
 	return data;

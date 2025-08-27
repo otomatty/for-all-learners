@@ -5,12 +5,12 @@ export const CustomHeading = Heading.extend({
 	renderHTML({ node, HTMLAttributes }) {
 		const level = node.attrs.level;
 		const sizeClassMap: Record<number, string> = {
-			1: "text-4xl font-bold mt-6 mb-4",
-			2: "text-3xl font-bold mt-5 mb-3",
-			3: "text-2xl font-bold mt-4 mb-2",
-			4: "text-xl font-semibold mt-3 mb-1",
-			5: "text-lg font-semibold mt-2 mb-0",
-			6: "text-base font-semibold mt-1 mb-0",
+			1: "text-2xl sm:text-3xl md:text-4xl font-bold mt-6 mb-4",
+			2: "text-xl sm:text-2xl md:text-3xl font-bold mt-5 mb-3",
+			3: "text-lg sm:text-xl md:text-2xl font-bold mt-4 mb-2",
+			4: "text-base sm:text-lg md:text-xl font-semibold mt-3 mb-1",
+			5: "text-sm sm:text-base md:text-lg font-semibold mt-2 mb-0",
+			6: "text-xs sm:text-sm md:text-base font-semibold mt-1 mb-0",
 		};
 		const sizeClass = sizeClassMap[level] || "";
 		return [

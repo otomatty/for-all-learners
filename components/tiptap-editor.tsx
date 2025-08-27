@@ -6,6 +6,7 @@ import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
+import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -68,10 +69,13 @@ const TiptapEditor = ({
 		editorProps: {
 			attributes: {
 				class:
-					"prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mb-4 focus:outline-none border p-2 rounded-md min-h-[150px]",
+					"prose prose-sm sm:prose md:prose-lg mb-4 focus:outline-none border p-2 rounded-md min-h-[150px]",
 			},
 		},
 	});
+
+	// ユーザーアイコンレンダリングの追加
+	useUserIconRenderer(editor);
 
 	if (!editor) {
 		return null;
