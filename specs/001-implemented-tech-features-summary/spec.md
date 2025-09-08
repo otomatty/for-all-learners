@@ -95,11 +95,11 @@ When creating this spec from a user prompt:
 - **FR-014（可読性）**: 非技術者が読んでも理解できる語彙/構成とし、専門用語は説明を付す。
 - **FR-015（更新運用）**: 更新タイミング・責任者・公開可否（社内/社外）を定義する。
 
-_Ambiguities to clarify:_
+_Decisions & Former Ambiguities:_
 
-- **FR-016**: 公開対象（社内限定か、対外公開版を用意するか） [NEEDS CLARIFICATION]
-- **FR-017**: 更新頻度（リリース毎/週次/月次） [NEEDS CLARIFICATION]
-- **FR-018**: 翻訳要否（日本語/英語） [NEEDS CLARIFICATION]
+- **FR-016（公開対象）**: 社内向け完全版 + 外部公開用ライト版（機微/内部運用/制限閾値の詳細を除外）を運用する。
+- **FR-017（更新頻度）**: 原則「各リリース直後」更新。リリースが無い月は月次レビューで差分確認。
+- **FR-018（翻訳方針）**: 日本語を正とし、英語版は需要発生時に簡易翻訳（外部公開版のみ二言語化を想定）。
 
 ### Key Entities _(include if feature involves data)_
 
@@ -130,19 +130,19 @@ _Ambiguities to clarify:_
 _GATE: Automated checks run during main() execution_
 
 ### Content Quality
-
-- [ ] No implementation details (languages, frameworks, APIs)
-- [ ] Focused on user value and business needs
-- [ ] Written for non-technical stakeholders
-- [ ] All mandatory sections completed
+ 
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
 
 ### Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
-- [ ] Requirements are testable and unambiguous
-- [ ] Success criteria are measurable
-- [ ] Scope is clearly bounded
-- [ ] Dependencies and assumptions identified
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
 
 ---
 
@@ -156,7 +156,7 @@ _Updated by main() during processing_
 - [x] User scenarios defined
 - [x] Requirements generated
 - [x] Entities identified
-- [ ] Review checklist passed
+- [x] Review checklist passed
 
 ---
 
@@ -254,5 +254,19 @@ _Updated by main() during processing_
 - 更新責任: プロダクトオーナーが承認し、ドメイン担当がドラフト作成。
 - 更新頻度: リリースごとに差分反映（少なくとも月次でレビュー）。
 - 共有範囲: 社内向け完全版と、外部共有可能な要約版を用意（機微情報を除外）。
+
+### 外部公開ライト版（要約）
+外部共有向けには以下観点のみ短縮表記：
+- 学習ドメイン（デッキ/カード/ノート/ページ/クイズ）の存在と価値
+- AI 支援（学習用問題生成・一括生成）
+- 画像テキスト化（OCR）
+- リッチ編集 + 共有/コラボ
+- 進捗・実績可視化
+- プラン制限の概念（具体的閾値は非公開）
+- PWA でアプリライク体験
+
+詳細実装方針・内部指標・具体的制限数値は除外する。
+
+外部公開版ファイル: `specs/001-implemented-tech-features-summary/public-summary.md`
 
 ---
