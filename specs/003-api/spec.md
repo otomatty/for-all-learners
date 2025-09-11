@@ -7,105 +7,117 @@
 
 ## 概要
 
-F.A.L (For All Learners) アプリケーションのAPI設計とデータベース構造を包括的に文書化します。本仕様書は、システムアーキテクチャの理解、API設計の一貫性確保、データベース運用ガイドライン、パフォーマンス最適化、セキュリティベストプラクティスの共有を目的としています。
+F.A.L (For All Learners) アプリケーションの API 設計とデータベース構造を包括的に文書化します。本仕様書は、システムアーキテクチャの理解、API 設計の一貫性確保、データベース運用ガイドライン、パフォーマンス最適化、セキュリティベストプラクティスの共有を目的としています。
 
 ---
 
-## 1. API設計仕様
+## 1. API 設計仕様
 
 ### 1.1 API アーキテクチャ概要
 
 #### **フレームワーク**
+
 - Next.js 15 App Router
-- API Routes (`app/api/`) 
+- API Routes (`app/api/`)
 - Server Actions (`app/_actions/`)
 
 #### **認証・認可**
+
 - Supabase Auth による JWT トークン認証
 - Middleware による保護ルート制御
 - Row Level Security (RLS) による細粒度アクセス制御
 
 #### **データ処理パターン**
-- RESTful API設計原則
+
+- RESTful API 設計原則
 - 型安全性確保 (TypeScript + 自動生成データベース型)
 - エラーハンドリング統一パターン
 
 ### 1.2 API エンドポイント分類
 
 #### **Core Learning APIs**
+
 ```typescript
 // カードクイズ生成・実行
-POST /api/practice/generate        // クイズセッション生成
-POST /api/practice/log            // 学習結果記録
+POST / api / practice / generate; // クイズセッション生成
+POST / api / practice / log; // 学習結果記録
 
 // 検索・サジェスト
-GET  /api/search-suggestions      // 統合検索候補取得
+GET / api / search - suggestions; // 統合検索候補取得
 ```
 
 #### **Content Management APIs**
+
 ```typescript
 // ページ管理
-GET  /api/pages                   // ページ一覧取得
-GET  /api/notes/[slug]/pages      // ノート内ページ取得
+GET / api / pages; // ページ一覧取得
+GET / api / notes / [slug] / pages; // ノート内ページ取得
 
 // ファイル処理
-GET    /api/pdf-jobs              // PDFジョブ一覧
-POST   /api/pdf-jobs              // PDFアップロード処理
-PATCH  /api/pdf-jobs/[jobId]      // ジョブ状態更新
-DELETE /api/pdf-jobs/[jobId]      // ジョブ削除
-GET    /api/pdf-jobs/stats        // 処理統計取得
+GET / api / pdf - jobs; // PDFジョブ一覧
+POST / api / pdf - jobs; // PDFアップロード処理
+PATCH / api / pdf - jobs / [jobId]; // ジョブ状態更新
+DELETE / api / pdf - jobs / [jobId]; // ジョブ削除
+GET / api / pdf - jobs / stats; // 処理統計取得
 ```
 
 #### **External Integration APIs**
+
 ```typescript
 // CoSense連携
-GET /api/cosense/pages/[projectName]           // プロジェクトページ一覧
-GET /api/cosense/sync/list/[cosenseProjectId]  // 同期対象リスト
-GET /api/cosense/sync/page/[cosenseProjectId]/[title] // ページ同期実行
+GET / api / cosense / pages / [projectName]; // プロジェクトページ一覧
+GET / api / cosense / sync / list / [cosenseProjectId]; // 同期対象リスト
+GET / api / cosense / sync / page / [cosenseProjectId] / [title]; // ページ同期実行
 
-// Gyazo連携  
-GET  /api/gyazo/callback          // OAuth認証コールバック
-POST /api/gyazo/disconnect        // アカウント連携解除
+// Gyazo連携
+GET / api / gyazo / callback; // OAuth認証コールバック
+POST / api / gyazo / disconnect; // アカウント連携解除
 ```
 
 #### **System Management APIs**
+
 ```typescript
 // ユーザーアイコン
-GET /api/user-icon/[slug]         // ユーザーアイコン画像取得
+GET / api / user - icon / [slug]; // ユーザーアイコン画像取得
 
 // 開発・運用
-GET /api/commit-history           // リリース履歴取得
+GET / api / commit - history; // リリース履歴取得
 ```
 
 ### 1.3 Server Actions 設計
 
 #### **アカウント・認証**
+
 - `accounts.ts`: ユーザープロファイル管理
 - `auth.ts`: 認証フロー制御
 - `subscriptions.ts`: サブスクリプション管理
 - `user_settings.ts`: ユーザー設定管理
 
 #### **学習コンテンツ**
-- `decks.ts`: デッキCRUD操作
-- `cards.ts`: カードCRUD操作
-- `pages.ts`: ページCRUD操作
+
+- `decks.ts`: デッキ CRUD 操作
+- `cards.ts`: カード CRUD 操作
+- `pages.ts`: ページ CRUD 操作
 - `questions.ts`: 問題生成・管理
 - `learning_logs.ts`: 学習記録管理
 
 #### **AI・自動化**
+
 - `generateCards.ts`: AI カード生成
 - `generatePageInfo.ts`: ページ情報自動生成
 - `transcribe.ts`: 音声・画像文字起こし
-- `pdfOcr.ts`: PDF OCR処理
+- `pdfOcr.ts`: PDF OCR 処理
 
 #### **共有・連携**
-- `note-deck-links.ts`: ノート-デッキ関連付け
-- `cosense.ts`: CoSense API連携
-- `gyazo.ts`: Gyazo API連携
 
-### 1.4 API設計パターン
+- `note-deck-links.ts`: ノート-デッキ関連付け
+- `cosense.ts`: CoSense API 連携
+- `gyazo.ts`: Gyazo API 連携
+
+### 1.4 API 設計パターン
 
 #### **エラーハンドリング**
+
 ```typescript
 // 統一エラーレスポンス形式
 interface ErrorResponse {
@@ -115,13 +127,14 @@ interface ErrorResponse {
 }
 
 // 認証エラー: 401 Unauthorized
-// 認可エラー: 403 Forbidden  
+// 認可エラー: 403 Forbidden
 // リソース不存在: 404 Not Found
 // バリデーションエラー: 400 Bad Request
 // サーバーエラー: 500 Internal Server Error
 ```
 
 #### **レスポンス形式**
+
 ```typescript
 // 成功レスポンス
 interface SuccessResponse<T> {
@@ -146,15 +159,21 @@ interface ListResponse<T> extends SuccessResponse<T[]> {
 ```
 
 #### **認証パターン**
+
 ```typescript
 // クライアント側認証確認
 const supabase = createClient();
-const { data: { session } } = await supabase.auth.getSession();
+const {
+  data: { session },
+} = await supabase.auth.getSession();
 if (!session) throw new Error("Unauthorized");
 
 // サーバー側ユーザー取得
 const supabase = await createClient();
-const { data: { user }, error } = await supabase.auth.getUser();
+const {
+  data: { user },
+  error,
+} = await supabase.auth.getUser();
 if (error || !user) throw new Error("Authentication required");
 ```
 
@@ -165,21 +184,24 @@ if (error || !user) throw new Error("Authentication required");
 ### 2.1 データベースアーキテクチャ
 
 #### **プラットフォーム**
+
 - **Supabase (PostgreSQL 15+)**
 - 自動バックアップ・災害復旧
 - リアルタイムデータ同期
 - 拡張機能: pgcrypto (暗号化)、pg_trgm (全文検索)
 
 #### **スキーマ構成**
+
 - **public**: アプリケーションデータ
 - **auth**: Supabase Auth 管理テーブル (自動管理)
-- **extensions**: PostgreSQL拡張機能
+- **extensions**: PostgreSQL 拡張機能
 
 ### 2.2 テーブル設計
 
 #### **2.2.1 ユーザー・認証系**
 
 ##### accounts テーブル
+
 ```sql
 CREATE TABLE accounts (
   id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
@@ -195,6 +217,7 @@ CREATE TABLE accounts (
 ```
 
 ##### admin_users テーブル
+
 ```sql
 CREATE TABLE admin_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -211,6 +234,7 @@ CREATE TABLE admin_users (
 #### **2.2.2 学習コンテンツ系**
 
 ##### decks テーブル (フラッシュカードデッキ)
+
 ```sql
 CREATE TABLE decks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -224,6 +248,7 @@ CREATE TABLE decks (
 ```
 
 ##### cards テーブル (フラッシュカード)
+
 ```sql
 CREATE TABLE cards (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -252,6 +277,7 @@ CREATE INDEX idx_cards_next_review_at ON cards (next_review_at) WHERE next_revie
 ```
 
 ##### pages テーブル (学習ページ)
+
 ```sql
 CREATE TABLE pages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -278,6 +304,7 @@ CREATE TRIGGER trg_pages_updated_at
 ```
 
 ##### questions テーブル (問題バリエーション)
+
 ```sql
 CREATE TABLE questions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -292,6 +319,7 @@ CREATE TABLE questions (
 #### **2.2.3 学習記録・分析系**
 
 ##### learning_logs テーブル
+
 ```sql
 CREATE TABLE learning_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -312,6 +340,7 @@ CREATE TABLE learning_logs (
 ```
 
 ##### study_goals テーブル (学習目標)
+
 ```sql
 CREATE TABLE study_goals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -320,7 +349,7 @@ CREATE TABLE study_goals (
   description TEXT,
   deadline TIMESTAMP WITH TIME ZONE,
   progress_rate INTEGER NOT NULL DEFAULT 0 CHECK (progress_rate BETWEEN 0 AND 100),
-  status VARCHAR(20) NOT NULL DEFAULT 'not_started' 
+  status VARCHAR(20) NOT NULL DEFAULT 'not_started'
     CHECK (status IN ('not_started','in_progress','completed')),
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -331,6 +360,7 @@ CREATE TABLE study_goals (
 #### **2.2.4 共有・コラボレーション系**
 
 ##### deck_shares テーブル (デッキ共有)
+
 ```sql
 CREATE TABLE deck_shares (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -343,6 +373,7 @@ CREATE TABLE deck_shares (
 ```
 
 ##### page_shares テーブル (ページ共有)
+
 ```sql
 CREATE TABLE page_shares (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -355,6 +386,7 @@ CREATE TABLE page_shares (
 ```
 
 ##### share_links テーブル (公開リンク)
+
 ```sql
 CREATE TABLE share_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -370,6 +402,7 @@ CREATE TABLE share_links (
 #### **2.2.5 サブスクリプション・プラン系**
 
 ##### plans テーブル
+
 ```sql
 CREATE TABLE plans (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -384,6 +417,7 @@ CREATE TABLE plans (
 ```
 
 ##### subscriptions テーブル
+
 ```sql
 CREATE TABLE subscriptions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -402,6 +436,7 @@ CREATE TABLE subscriptions (
 #### **2.2.6 外部連携系**
 
 ##### user_gyazo_images テーブル
+
 ```sql
 CREATE TABLE user_gyazo_images (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -416,6 +451,7 @@ CREATE TABLE user_gyazo_images (
 ```
 
 ##### user_llm_api_keys テーブル (暗号化保存)
+
 ```sql
 CREATE TABLE user_llm_api_keys (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -430,6 +466,7 @@ CREATE TABLE user_llm_api_keys (
 ### 2.3 関連付けテーブル
 
 #### card_page_links テーブル (多対多関連)
+
 ```sql
 CREATE TABLE card_page_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -441,6 +478,7 @@ CREATE TABLE card_page_links (
 ```
 
 #### goal_deck_links テーブル (目標-デッキ関連)
+
 ```sql
 CREATE TABLE goal_deck_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -454,6 +492,7 @@ CREATE TABLE goal_deck_links (
 ### 2.4 インデックス戦略
 
 #### **パフォーマンスインデックス**
+
 ```sql
 -- ユーザー関連クエリ最適化
 CREATE INDEX idx_decks_user_id ON decks (user_id);
@@ -462,7 +501,7 @@ CREATE INDEX idx_pages_user_id ON pages (user_id);
 
 -- 学習記録分析用
 CREATE INDEX idx_learning_logs_user_id_answered_at ON learning_logs (user_id, answered_at);
-CREATE INDEX idx_cards_next_review ON cards (user_id, next_review_at) 
+CREATE INDEX idx_cards_next_review ON cards (user_id, next_review_at)
   WHERE next_review_at IS NOT NULL;
 
 -- 共有機能最適化
@@ -477,9 +516,10 @@ CREATE INDEX idx_cards_content_gin ON cards USING gin (
 ```
 
 #### **一意制約インデックス**
+
 ```sql
 -- CoSense連携の重複防止
-CREATE UNIQUE INDEX idx_pages_user_scrapbox ON pages (user_id, scrapbox_page_id) 
+CREATE UNIQUE INDEX idx_pages_user_scrapbox ON pages (user_id, scrapbox_page_id)
   WHERE scrapbox_page_id IS NOT NULL;
 
 -- 共有関係の重複防止
@@ -490,6 +530,7 @@ CREATE UNIQUE INDEX idx_page_shares_unique ON page_shares (page_id, shared_with_
 ### 2.5 データベース関数
 
 #### **暗号化関数**
+
 ```sql
 -- LLM APIキー暗号化
 CREATE OR REPLACE FUNCTION encrypt_user_llm_api_key(data TEXT, key TEXT)
@@ -508,6 +549,7 @@ $$;
 ```
 
 #### **一括取得関数**
+
 ```sql
 -- CoSense 同期用高速取得
 CREATE OR REPLACE FUNCTION get_pages_by_ids(ids TEXT[], uid UUID)
@@ -522,6 +564,7 @@ $$ LANGUAGE plpgsql STABLE;
 ```
 
 #### **統合検索関数**
+
 ```sql
 CREATE FUNCTION search_suggestions(p_query TEXT)
 RETURNS TABLE (
@@ -537,9 +580,9 @@ RETURNS TABLE (
   WHERE c.front_content::text ILIKE '%' || p_query || '%'
      OR c.back_content::text ILIKE '%' || p_query || '%'
   LIMIT 5
-  
+
   UNION ALL
-  
+
   -- ページ検索
   SELECT 'page' as type, p.id, p.title as suggestion,
          LEFT(p.content_tiptap->>'text', 100) as excerpt
@@ -557,6 +600,7 @@ $$;
 ### 3.1 Row Level Security (RLS)
 
 #### **基本ポリシーパターン**
+
 ```sql
 -- 基本的な所有者ポリシー
 CREATE POLICY "Users can manage own resources" ON table_name
@@ -565,9 +609,9 @@ CREATE POLICY "Users can manage own resources" ON table_name
 -- 共有リソースポリシー
 CREATE POLICY "Users can access shared decks" ON decks
   FOR SELECT USING (
-    user_id = auth.uid() OR 
+    user_id = auth.uid() OR
     id IN (
-      SELECT deck_id FROM deck_shares 
+      SELECT deck_id FROM deck_shares
       WHERE shared_with_user_id = auth.uid()
     )
   );
@@ -576,22 +620,25 @@ CREATE POLICY "Users can access shared decks" ON decks
 ### 3.2 データ暗号化
 
 #### **機密データ暗号化**
-- LLM APIキー: `pgcrypto` による対称暗号化
+
+- LLM API キー: `pgcrypto` による対称暗号化
 - 暗号化キー: 環境変数で管理 (`ENCRYPTION_KEY`)
 - 暗号化処理: 専用関数による自動化
 
 ### 3.3 パフォーマンス最適化
 
 #### **クエリ最適化戦略**
+
 - 適切なインデックス設計
 - 部分インデックス活用 (条件付きインデックス)
 - JSONB 演算子最適化
 - 接続プーリング (Supabase 自動管理)
 
 #### **大量データ処理**
+
 - ページネーション実装
 - 遅延ローディング
-- バックグラウンド処理 (PDF OCR、AI生成など)
+- バックグラウンド処理 (PDF OCR、AI 生成など)
 
 ---
 
@@ -600,12 +647,14 @@ CREATE POLICY "Users can access shared decks" ON decks
 ### 4.1 ヘルスチェック
 
 #### **データベース監視項目**
+
 - 接続数・プール使用率
 - クエリパフォーマンス
 - ストレージ使用量
 - レプリケーション遅延
 
-#### **API監視項目**
+#### **API 監視項目**
+
 - レスポンス時間
 - エラー率 (4xx, 5xx)
 - スループット (RPS)
@@ -614,11 +663,13 @@ CREATE POLICY "Users can access shared decks" ON decks
 ### 4.2 バックアップ・災害復旧
 
 #### **バックアップ戦略**
+
 - 自動日次バックアップ (Supabase)
 - Point-in-Time Recovery (PITR)
 - 地理的冗長化
 
 #### **復旧手順**
+
 1. サービス停止通知
 2. 最新バックアップからの復旧
 3. データ整合性確認
@@ -638,9 +689,10 @@ bun run gen:types
 # types/database.types.ts
 ```
 
-### 5.2 新規API開発パターン
+### 5.2 新規 API 開発パターン
 
 #### **API Route テンプレート**
+
 ```typescript
 // app/api/example/route.ts
 import { NextRequest, NextResponse } from "next/server";
@@ -649,8 +701,11 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -674,6 +729,7 @@ export async function GET(request: NextRequest) {
 ```
 
 #### **Server Action テンプレート**
+
 ```typescript
 // app/_actions/example.ts
 "use server";
@@ -684,8 +740,10 @@ export async function createExample(
   data: Database["public"]["Tables"]["table_name"]["Insert"]
 ): Promise<Database["public"]["Tables"]["table_name"]["Row"]> {
   const supabase = await createClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error("Authentication required");
 
   const { data: result, error } = await supabase
@@ -702,16 +760,18 @@ export async function createExample(
 ### 5.3 データベース マイグレーション
 
 #### **新規テーブル追加手順**
-1. `database/migrations/` にSQLファイル作成
+
+1. `database/migrations/` に SQL ファイル作成
 2. Supabase ダッシュボードで実行
 3. 型定義を再生成 (`bun run gen:types`)
 4. RLS ポリシー設定
 5. 必要に応じてインデックス追加
 
 #### **カラム追加パターン**
+
 ```sql
 -- 新規カラム追加
-ALTER TABLE table_name 
+ALTER TABLE table_name
 ADD COLUMN new_column TEXT DEFAULT 'default_value';
 
 -- インデックス追加 (必要に応じて)
@@ -727,35 +787,40 @@ CREATE POLICY "updated_policy_name" ON table_name
 
 ## ✅ 品質チェックリスト
 
-### **API設計品質**
+### **API 設計品質**
+
 - [x] 全エンドポイントで認証・認可確認済み
 - [x] 統一エラーハンドリング実装済み
 - [x] TypeScript 型安全性確保済み
-- [x] レート制限考慮済み (Supabase標準)
-- [x] CORS設定適切 (Next.js自動処理)
+- [x] レート制限考慮済み (Supabase 標準)
+- [x] CORS 設定適切 (Next.js 自動処理)
 
 ### **データベース品質**
-- [x] 全テーブルにRLSポリシー設定済み
-- [x] 外部キー制約・CHECK制約設定済み
+
+- [x] 全テーブルに RLS ポリシー設定済み
+- [x] 外部キー制約・CHECK 制約設定済み
 - [x] 適切なインデックス戦略実装済み
 - [x] 機密データ暗号化済み
 - [x] バックアップ・復旧戦略確立済み
 
 ### **セキュリティ品質**
-- [x] JWT認証実装済み
+
+- [x] JWT 認証実装済み
 - [x] 細粒度アクセス制御 (RLS) 実装済み
-- [x] SQLインジェクション対策済み (パラメータ化クエリ)
+- [x] SQL インジェクション対策済み (パラメータ化クエリ)
 - [x] 機密情報暗号化済み
 - [x] 認証バイパス対策済み
 
 ### **パフォーマンス品質**
+
 - [x] クエリ最適化済み
 - [x] 適切なインデックス設計済み
-- [x] 接続プール最適化済み (Supabase管理)
+- [x] 接続プール最適化済み (Supabase 管理)
 - [x] 大量データ処理対策済み
 - [x] レスポンス時間監視体制確立済み
 
 ### **運用品質**
+
 - [x] 監視・アラート設定済み
 - [x] ログ設計済み
 - [x] 災害復旧手順確立済み
@@ -765,6 +830,7 @@ CREATE POLICY "updated_policy_name" ON table_name
 ---
 
 **ドキュメント管理**
+
 - **作成者**: GitHub Copilot
 - **レビュー状態**: Ready for Use
 - **更新履歴**: 初回作成 (2024-12-27)
@@ -772,50 +838,59 @@ CREATE POLICY "updated_policy_name" ON table_name
 
 ---
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### Primary User Story
+
 [Describe the main user journey in plain language]
 
 ### Acceptance Scenarios
+
 1. **Given** [initial state], **When** [action], **Then** [expected outcome]
 2. **Given** [initial state], **When** [action], **Then** [expected outcome]
 
 ### Edge Cases
+
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
+
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
-*Example of marking unclear requirements:*
+_Example of marking unclear requirements:_
+
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
+
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
 ---
 
 ## Review & Acceptance Checklist
-*GATE: Automated checks run during main() execution*
+
+_GATE: Automated checks run during main() execution_
 
 ### Content Quality
+
 - [ ] No implementation details (languages, frameworks, APIs)
 - [ ] Focused on user value and business needs
 - [ ] Written for non-technical stakeholders
 - [ ] All mandatory sections completed
 
 ### Requirement Completeness
+
 - [ ] No [NEEDS CLARIFICATION] markers remain
-- [ ] Requirements are testable and unambiguous  
+- [ ] Requirements are testable and unambiguous
 - [ ] Success criteria are measurable
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified
@@ -823,7 +898,8 @@ CREATE POLICY "updated_policy_name" ON table_name
 ---
 
 ## Execution Status
-*Updated by main() during processing*
+
+_Updated by main() during processing_
 
 - [ ] User description parsed
 - [ ] Key concepts extracted
