@@ -220,24 +220,30 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 							// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
 							...(pageId && !isExternal ? { "data-page-id": pageId } : {}),
 						};
-						if (start >= paraStart && end <= paraEnd) {
-							decos.push(Decoration.inline(start, end, decoAttrs));
-						} else {
-							decos.push(
-								Decoration.inline(start, start + 1, { style: "display: none" }),
-							);
-							decos.push(
-								Decoration.inline(end - 1, end, { style: "display: none" }),
-							);
-							const inactiveAttrs: Record<string, string> = {
-								...decoAttrs,
-								contentEditable: "false",
-							};
+						const isActive = start >= paraStart && end <= paraEnd;
+
+						// 常にブラケットを非表示にするデコレーションを適用
+						decos.push(
+							Decoration.inline(start, start + 1, { style: "display: none" }),
+						);
+						decos.push(
+							Decoration.inline(end - 1, end, { style: "display: none" }),
+						);
+
+						// リンク内容のデコレーション属性を準備
+						const linkContentAttrs: Record<string, string | boolean> = {
+							...decoAttrs,
+						};
+
+						if (!isActive) {
+							linkContentAttrs.contentEditable = "false";
 							if (!isExternal && !pageId) {
-								inactiveAttrs["data-page-title"] = title;
+								linkContentAttrs["data-page-title"] = title;
 							}
-							decos.push(Decoration.inline(start + 1, end - 1, inactiveAttrs));
 						}
+
+						// リンク内容にデコレーションを適用
+						decos.push(Decoration.inline(start + 1, end - 1, linkContentAttrs));
 					}
 				}
 				// Decorate tag links (#text)
