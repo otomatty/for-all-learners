@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { createUserContent } from "@google/genai";
@@ -86,6 +86,7 @@ export async function processVersionCommitStaging(
 コミット一覧:
 ${commitListText}`;
 	const contents = createUserContent([systemPrompt]);
+	const geminiClient = getGeminiClient();
 	const response = await geminiClient.models.generateContent({
 		model: "gemini-2.5-flash",
 		contents,

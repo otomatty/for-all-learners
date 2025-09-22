@@ -1,15 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
-
-const supabaseAdmin = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
-);
 
 /**
  * GET /api/pdf-jobs/[jobId] - 特定のPDFジョブ詳細取得
@@ -19,6 +10,7 @@ export async function GET(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -39,9 +31,10 @@ export async function GET(
 			);
 		}
 
-		const { data: job, error } = await supabase
+		const { data: job, error } = await (supabase as any)
 			.from("pdf_processing_jobs")
-			.select(`
+			.select(
+				`
         id,
         status,
         priority,
@@ -71,7 +64,8 @@ export async function GET(
           description,
           user_id
         )
-      `)
+      `,
+			)
 			.eq("id", jobId)
 			.eq("user_id", user.id)
 			.single();
@@ -138,6 +132,7 @@ export async function PATCH(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -160,7 +155,7 @@ export async function PATCH(
 		}
 
 		// 現在のジョブ状態を確認
-		const { data: currentJob, error: fetchError } = await supabase
+		const { data: currentJob, error: fetchError } = await (supabase as any)
 			.from("pdf_processing_jobs")
 			.select("id, status, user_id")
 			.eq("id", jobId)
@@ -174,6 +169,7 @@ export async function PATCH(
 			);
 		}
 
+		const supabaseAdmin = createAdminClient();
 		// アクションに応じた処理
 		switch (action) {
 			case "cancel": {
@@ -195,7 +191,7 @@ export async function PATCH(
 				}
 
 				// キャンセル実行
-				const { error: cancelError } = await supabaseAdmin
+				const { error: cancelError } = await (supabaseAdmin as any)
 					.from("pdf_processing_jobs")
 					.update({
 						status: "cancelled",
@@ -234,16 +230,18 @@ export async function PATCH(
 				}
 
 				// 元のジョブ情報を取得して新しいジョブを作成
-				const { data: originalJob, error: originalError } = await supabase
+				const { data: originalJob, error: originalError } = await (supabase as any)
 					.from("pdf_processing_jobs")
-					.select(`
+					.select(
+						`
             pdf_file_url,
             original_filename,
             file_size_bytes,
             processing_options,
             deck_id,
             user_id
-          `)
+          `,
+					)
 					.eq("id", jobId)
 					.single();
 
@@ -264,7 +262,7 @@ export async function PATCH(
 				);
 
 				// 新しいジョブ作成
-				const { data: newJob, error: newJobError } = await supabaseAdmin
+				const { data: newJob, error: newJobError } = await (supabaseAdmin as any)
 					.from("pdf_processing_jobs")
 					.insert({
 						user_id: originalJob.user_id,
@@ -324,6 +322,7 @@ export async function DELETE(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -345,7 +344,7 @@ export async function DELETE(
 		}
 
 		// アクティブなジョブは削除不可
-		const { data: job, error: fetchError } = await supabase
+		const { data: job, error: fetchError } = await (supabase as any)
 			.from("pdf_processing_jobs")
 			.select("id, status")
 			.eq("id", jobId)
@@ -371,7 +370,7 @@ export async function DELETE(
 		}
 
 		// ジョブ削除
-		const { error: deleteError } = await supabase
+		const { error: deleteError } = await (supabase as any)
 			.from("pdf_processing_jobs")
 			.delete()
 			.eq("id", jobId)

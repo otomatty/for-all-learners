@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createPartFromUri, createUserContent } from "@google/genai";
 
 /**
@@ -93,6 +93,7 @@ export async function processPdfBatchOcr(
 		// 1. 全画像をGemini Files APIにアップロード
 		const uploadPromises = imagePages.map(async ({ pageNumber, imageBlob }) => {
 			const uploadStart = Date.now();
+			const geminiClient = getGeminiClient();
 			const { uri, mimeType } = await geminiClient.files.upload({
 				file: imageBlob,
 				config: { mimeType: imageBlob.type || "image/png" },
@@ -145,6 +146,7 @@ export async function processPdfBatchOcr(
 
 		// 4. Geminiで一括OCR処理
 		const ocrStart = Date.now();
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,
@@ -249,6 +251,7 @@ export async function processDualPdfBatchOcr(
 		const questionUploadPromises = questionPages.map(
 			async ({ pageNumber, imageBlob }) => {
 				const uploadStart = Date.now();
+				const geminiClient = getGeminiClient();
 				const { uri, mimeType } = await geminiClient.files.upload({
 					file: imageBlob,
 					config: { mimeType: imageBlob.type || "image/png" },
@@ -263,6 +266,7 @@ export async function processDualPdfBatchOcr(
 		const answerUploadPromises = answerPages.map(
 			async ({ pageNumber, imageBlob }) => {
 				const uploadStart = Date.now();
+				const geminiClient = getGeminiClient();
 				const { uri, mimeType } = await geminiClient.files.upload({
 					file: imageBlob,
 					config: { mimeType: imageBlob.type || "image/png" },
@@ -345,6 +349,7 @@ export async function processDualPdfBatchOcr(
 
 		// 4. Geminiで高品質OCR処理
 		const ocrStart = Date.now();
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,

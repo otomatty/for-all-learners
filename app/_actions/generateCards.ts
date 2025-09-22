@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
 
 export interface GeneratedCard {
@@ -24,6 +24,7 @@ export async function generateCardsFromTranscript(
 	const contents = createUserContent([systemPrompt, transcript]);
 
 	// Call Gemini API
+	const geminiClient = getGeminiClient();
 	const response = await geminiClient.models.generateContent({
 		model: "gemini-2.5-flash",
 		contents,

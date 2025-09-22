@@ -1,7 +1,7 @@
 "use server";
 
 import { getPromptTemplate } from "@/app/_actions/promptService";
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
 
 /**
@@ -20,6 +20,7 @@ export async function generatePageInfo(title: string): Promise<string> {
 	const contents = createUserContent([promptTemplate, title]);
 
 	// Gemini APIを呼び出し
+	const geminiClient = getGeminiClient();
 	const response = await geminiClient.models.generateContent({
 		model: "gemini-2.5-flash",
 		contents,

@@ -1,3 +1,4 @@
+/*
 import { getDefaultNote } from "@/app/_actions/notes";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
@@ -54,3 +55,4 @@ export async function GET(req: NextRequest) {
 		new URL(`/pages/${encodeURIComponent(page.id)}`, req.url),
 	);
 }
+*/

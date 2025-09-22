@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
 
 interface GenerateTitleResponse {
@@ -17,6 +17,7 @@ export async function generateTitleFromTranscript(
 	const systemPrompt =
 		"この文章を5文字〜20文字程度の日本語タイトルに要約してください。";
 	const contents = createUserContent([systemPrompt, transcript]);
+	const geminiClient = getGeminiClient();
 	const response = await geminiClient.models.generateContent({
 		model: "gemini-2.5-flash",
 		contents,

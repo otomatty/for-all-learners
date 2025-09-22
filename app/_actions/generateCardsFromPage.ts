@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 import { createUserContent } from "@google/genai";
@@ -132,6 +132,7 @@ export async function generateRawCardsFromPageContent(
 
 	let generatedRawCards: GeneratedRawCard[];
 	try {
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash", // モデル名は適宜調整してください
 			contents,

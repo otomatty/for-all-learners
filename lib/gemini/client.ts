@@ -1,11 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Validate that the API key is set
-if (!process.env.GEMINI_API_KEY) {
-	throw new Error("Missing GEMINI_API_KEY environment variable");
-}
+let geminiClient: GoogleGenAI | null = null;
 
-// Export a singleton Gemini client
-export const geminiClient = new GoogleGenAI({
-	apiKey: process.env.GEMINI_API_KEY,
-});
+export function getGeminiClient(): GoogleGenAI {
+	if (geminiClient) {
+		return geminiClient;
+	}
+
+	const apiKey = process.env.GEMINI_API_KEY;
+	if (!apiKey) {
+		throw new Error("Missing GEMINI_API_KEY environment variable");
+	}
+
+	geminiClient = new GoogleGenAI({ apiKey });
+	return geminiClient;
+}

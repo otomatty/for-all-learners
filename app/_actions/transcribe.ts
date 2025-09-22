@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createPartFromUri, createUserContent } from "@google/genai";
 
 // Define types for Gemini response to avoid using any
@@ -32,6 +32,7 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 		type: res.headers.get("content-type") ?? "audio/wav",
 	});
 	// Upload using global Blob; destructure to get mimeType as string
+	const geminiClient = getGeminiClient();
 	const { uri, mimeType } = await geminiClient.files.upload({
 		file: blob,
 		config: { mimeType: blob.type },

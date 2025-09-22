@@ -208,18 +208,23 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 							: pageId
 								? `/pages/${pageId}`
 								: "#";
-						const decoAttrs = {
+						const decoAttrs: Record<string, string> = {
 							nodeName: "a",
 							href: hrefValue,
 							class: `${cls} underline cursor-pointer whitespace-normal break-all`,
-							...(isExternal
-								? { target: "_blank", rel: "noopener noreferrer" }
-								: {}),
-							// 未設定リンク（pageIdがない場合）にdata-page-title属性を設定
-							...(!exists && !isExternal ? { "data-page-title": title } : {}),
-							// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
-							...(pageId && !isExternal ? { "data-page-id": pageId } : {}),
 						};
+						if (isExternal) {
+							decoAttrs.target = "_blank";
+							decoAttrs.rel = "noopener noreferrer";
+						}
+						// 未設定リンク（pageIdがない場合）にdata-page-title属性を設定
+						if (!exists && !isExternal) {
+							decoAttrs["data-page-title"] = title;
+						}
+						// 設定済みリンク（pageIdがある場合）にdata-page-id属性を設定
+						if (pageId && !isExternal) {
+							decoAttrs["data-page-id"] = pageId;
+						}
 						const isActive = start >= paraStart && end <= paraEnd;
 
 						// 常にブラケットを非表示にするデコレーションを適用
@@ -231,9 +236,7 @@ const existencePlugin = new Plugin<Map<string, string | null>>({
 						);
 
 						// リンク内容のデコレーション属性を準備
-						const linkContentAttrs: Record<string, string | boolean> = {
-							...decoAttrs,
-						};
+						const linkContentAttrs: Record<string, string> = { ...decoAttrs };
 
 						if (!isActive) {
 							linkContentAttrs.contentEditable = "false";

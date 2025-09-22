@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
@@ -224,6 +224,7 @@ async function processBatchWithRetry(
 				type: res.headers.get("content-type") ?? "image/png",
 			});
 
+			const geminiClient = getGeminiClient();
 			const { uri, mimeType } = await geminiClient.files.upload({
 				file: blob,
 				config: { mimeType: blob.type },
@@ -277,6 +278,7 @@ async function processBatchWithRetry(
 
 	// リトライ付きでOCR実行
 	const response = await callGeminiWithRetry(async () => {
+		const geminiClient = getGeminiClient();
 		return await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,
@@ -370,6 +372,7 @@ async function processPagesIndividually(
 			]);
 
 			const response = await callGeminiWithRetry(async () => {
+				const geminiClient = getGeminiClient();
 				return await geminiClient.models.generateContent({
 					model: "gemini-2.5-flash",
 					contents,

@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
 
 /**
@@ -72,6 +72,7 @@ export async function analyzePdfContent(
 
 		const contents = createUserContent([systemPrompt, sampleText]);
 
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,

@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import {
 	type PdfProblem,
@@ -227,6 +227,7 @@ export async function extractProblemsFromAllPages(
 
 		const contents = createUserContent([systemPrompt, allText]);
 
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,
@@ -383,6 +384,7 @@ ${problem.problemText}
 
 		const contents = createUserContent([systemPrompt, ""]);
 
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,

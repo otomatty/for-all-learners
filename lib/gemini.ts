@@ -1,4 +1,4 @@
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 
 export type QuestionType = "flashcard" | "multiple_choice" | "cloze";
 
@@ -93,6 +93,7 @@ Back: ${back}`;
 	}
 
 	// Use Google GenAI SDK client to generate content
+	const geminiClient = getGeminiClient();
 	const apiResponse = await geminiClient.models.generateContent({
 		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 		contents: prompt,
@@ -198,6 +199,7 @@ Use valid JSON array only.\n`;
 	const prompt = `${header}${contentText}`;
 
 	// Call Gemini once for all cards
+	const geminiClient = getGeminiClient();
 	const apiResponse = await geminiClient.models.generateContent({
 		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 		contents: prompt,

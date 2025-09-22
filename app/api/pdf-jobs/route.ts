@@ -1,17 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
-
-// Regular client（ユーザー認証用）
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
 
 /**
  * GET /api/pdf-jobs - ユーザーのPDFジョブ一覧取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		// ユーザー認証確認
 		const {
 			data: { user },
@@ -38,9 +33,10 @@ export async function GET(request: NextRequest) {
 		const deckId = searchParams.get("deck_id");
 
 		// クエリ構築
-		let query = supabase
+		let query = (supabase as any)
 			.from("pdf_processing_jobs")
-			.select(`
+			.select(
+				`
         id,
         status,
         progress_percentage,
@@ -63,7 +59,8 @@ export async function GET(request: NextRequest) {
           title,
           description
         )
-      `)
+      `,
+			)
 			.eq("user_id", user.id)
 			.order("created_at", { ascending: false })
 			.range(offset, offset + limit - 1);
@@ -94,7 +91,7 @@ export async function GET(request: NextRequest) {
 		}
 
 		// レスポンス形式を整える
-		const formattedJobs = jobs.map((job) => ({
+		const formattedJobs = jobs.map((job: any) => ({
 			id: job.id,
 			status: job.status,
 			progress_percentage: job.progress_percentage,
@@ -140,6 +137,7 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -153,7 +151,7 @@ export async function DELETE(request: NextRequest) {
 
 		const { jobIds, olderThanDays } = await request.json();
 
-		let deleteQuery = supabase
+		let deleteQuery = (supabase as any)
 			.from("pdf_processing_jobs")
 			.delete()
 			.eq("user_id", user.id)

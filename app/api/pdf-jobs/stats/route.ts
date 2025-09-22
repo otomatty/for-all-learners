@@ -1,16 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
 
 /**
  * GET /api/pdf-jobs/stats - ユーザーのPDF処理統計取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -31,7 +27,7 @@ export async function GET(request: NextRequest) {
 		startDate.setDate(startDate.getDate() - periodDays);
 
 		// 基本統計を取得
-		const { data: basicStats, error: basicError } = await supabase
+		const { data: basicStats, error: basicError } = await (supabase as any)
 			.from("pdf_processing_jobs")
 			.select(
 				"status, created_at, actual_duration_seconds, generated_cards, file_size_bytes",
@@ -48,7 +44,7 @@ export async function GET(request: NextRequest) {
 		}
 
 		// 全期間の統計も取得
-		const { data: allTimeStats, error: allTimeError } = await supabase
+		const { data: allTimeStats, error: allTimeError } = await (supabase as any)
 			.from("pdf_processing_jobs")
 			.select(
 				"status, actual_duration_seconds, generated_cards, file_size_bytes",

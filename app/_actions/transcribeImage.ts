@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { executeWithQuotaCheck } from "@/lib/utils/geminiQuotaManager";
 import { createPartFromUri, createUserContent } from "@google/genai";
 
@@ -152,6 +152,7 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 		});
 
 		// Gemini Files API にアップロード
+		const geminiClient = getGeminiClient();
 		const { uri, mimeType } = await geminiClient.files.upload({
 			file: blob,
 			config: { mimeType: blob.type },
@@ -169,6 +170,7 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 		const responseRaw = await executeWithQuotaCheck(
 			() =>
 				callGeminiWithRetry(async () => {
+					const geminiClient = getGeminiClient();
 					return await geminiClient.models.generateContent({
 						model: "gemini-2.5-flash",
 						contents,

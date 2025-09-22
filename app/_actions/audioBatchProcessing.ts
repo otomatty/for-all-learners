@@ -1,6 +1,6 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
+import { getGeminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import {
 	executeWithQuotaCheck,
@@ -310,6 +310,7 @@ async function processBatchAudioTranscription(
 				}
 
 				const audioBlob = await response.blob();
+				const geminiClient = getGeminiClient();
 				const { uri, mimeType } = await geminiClient.files.upload({
 					file: audioBlob,
 					config: { mimeType: audioBlob.type },
@@ -368,6 +369,7 @@ async function processBatchAudioTranscription(
 		const contents = createUserContent([systemPrompt, ...audioParts]);
 
 		// Gemini API呼び出し
+		const geminiClient = getGeminiClient();
 		const response = await geminiClient.models.generateContent({
 			model: "gemini-2.5-flash",
 			contents,
