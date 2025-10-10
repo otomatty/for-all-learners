@@ -238,26 +238,27 @@ export function usePageEditorLogic({
       // Temporary migration: convert bracket syntax in existing content into PageLinkMark if not already marked
       const migrateBracketsToMarks = (doc: JSONContent): JSONContent => {
         const clone = structuredClone(doc) as JSONContent;
-        const walk = (node: JSONContent): JSONContent => {
+        const walk = (node: JSONContent): JSONContent[] => {
           if (node.type === "text" && node.text) {
             // Skip if already has pageLinkMark
-            const hasMark = (node as any).marks?.some(
-              (m: any) => m.type === "pageLinkMark"
+            const textNode = node as JSONTextNode;
+            const hasMark = textNode.marks?.some(
+              (mark) => mark.type === "pageLinkMark"
             );
-            if (hasMark) return node;
+            if (hasMark) return [node];
             // Find patterns like [Title]
             const pattern = /\[([^\[\]]+)\]/g;
-            let match: RegExpExecArray | null;
             let lastIndex = 0;
             const pieces: JSONContent[] = [];
-            while ((match = pattern.exec(node.text!))) {
+            let match = pattern.exec(textNode.text);
+            while (match !== null) {
               const title = match[1];
               const start = match.index;
               const end = start + match[0].length;
               if (start > lastIndex) {
                 pieces.push({
                   type: "text",
-                  text: node.text!.slice(lastIndex, start),
+                  text: textNode.text.slice(lastIndex, start),
                 });
               }
               const inner = title;
@@ -283,19 +284,23 @@ export function usePageEditorLogic({
                 ],
               });
               lastIndex = end;
+              match = pattern.exec(textNode.text);
             }
-            if (pieces.length === 0) return node;
-            if (lastIndex < node.text.length) {
-              pieces.push({ type: "text", text: node.text.slice(lastIndex) });
+            if (pieces.length === 0) return [node];
+            if (lastIndex < textNode.text.length) {
+              pieces.push({
+                type: "text",
+                text: textNode.text.slice(lastIndex),
+              });
             }
-            return { type: "paragraph", content: pieces } as JSONContent; // text node replaced by fragment
+            return pieces;
           }
           if (Array.isArray(node.content)) {
-            return { ...node, content: node.content.map(walk) };
+            return [{ ...node, content: node.content.flatMap(walk) }];
           }
-          return node;
+          return [node];
         };
-        return { ...clone, content: (clone.content ?? []).map(walk) };
+        return { ...clone, content: (clone.content ?? []).flatMap(walk) };
       };
 
       const withMarks = migrateBracketsToMarks(sanitized);
@@ -421,8 +426,15 @@ export function usePageEditorLogic({
       editor
         .chain()
         .focus()
-        .command(({ commands }: any) => {
-          return commands.insertUnifiedLink({
+        .command(({ commands }) => {
+          // Type assertion for custom command
+          const insertUnifiedLink = (commands as Record<string, unknown>)
+            .insertUnifiedLink as (options: {
+            variant: string;
+            raw: string;
+            text: string;
+          }) => boolean;
+          return insertUnifiedLink({
             variant: "bracket",
             raw: selectedText,
             text: selectedText,
