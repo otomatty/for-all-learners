@@ -1,22 +1,21 @@
-import {
-  PageLinkPreviewCard,
-  PageLinkPreviewCardError,
-  PageLinkPreviewCardLoading,
-} from "@/components/page-link-preview-card";
-import { pagePreviewService } from "@/lib/services/page-preview-service";
+import { pageLinkPreviewMarkPlugin } from "./page-link-preview-mark-plugin";
 import { createClient } from "@/lib/supabase/client";
 import { searchPages } from "@/lib/utils/searchPages";
 import { Extension } from "@tiptap/core";
-import type { ResolvedPos } from "prosemirror-model";
+import { PageLinkMark } from "@/lib/tiptap-extensions/page-link-mark"; // 即時 Mark 化用に参照
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
-import { Decoration, DecorationSet } from "prosemirror-view";
-import React from "react";
+// TODO(Removal Phase): Decoration ベース実装 (bracket + inline Decoration) を
+//   1) PageLinkMark の InputRule & コマンドに一本化
+//   2) Tag / Icon 用は専用 Mark or Node extension へ分離
+//   3) 完了後: de
 import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
-import tippy, { type Instance, type Props } from "tippy.js";
+import tippy, { type Instance, type Props } from "tippy.js"; // TODO: suggestion UI 代替実装後に削除検討
 
 // プラグインキーの作成
+// NOTE: 外部で `existencePluginKey` という名前で参照していた互換性保持のためエイリアスエクスポートを追加
 const pageLinkPluginKey = new PluginKey("pageLinkPlugin");
+export const existencePluginKey = pageLinkPluginKey; // backward compatibility
 
 // ブラケット内容の解析結果
 interface BracketContent {
@@ -114,178 +113,6 @@ const bracketPlugin = new Plugin({
         return true;
       }
       return false;
-    },
-  },
-});
-
-// Key stores mapping from page title to page ID (null if not exists)
-export const existencePluginKey = new PluginKey<Map<string, string | null>>(
-  "existencePlugin"
-);
-
-// リンク先存在チェック用のプラグイン
-const existencePlugin = new Plugin<Map<string, string | null>>({
-  key: existencePluginKey,
-  state: {
-    init: () => {
-      // 初期状態では空のMapを返すが、すぐにuseLinkExistenceCheckerが更新する
-      return new Map<string, string | null>();
-    },
-    apply(tr, value) {
-      const meta = tr.getMeta(existencePluginKey) as
-        | Map<string, string | null>
-        | undefined;
-      return meta ?? value;
-    },
-  },
-  props: {
-    decorations(state) {
-      // Retrieve map of title to page ID
-      const existMap = existencePluginKey.getState(state) as Map<
-        string,
-        string | null
-      >;
-      const decos: Decoration[] = [];
-      // Determine the active paragraph range based on the caret position
-      const { $from } = state.selection;
-      // Safely get paragraph boundaries with bounds checking
-      let paraStart: number;
-      let paraEnd: number;
-      try {
-        // Check if depth 1 exists and has valid boundaries
-        if ($from.depth >= 1) {
-          paraStart = $from.start(1);
-          paraEnd = $from.end(1);
-        } else {
-          // Fallback to document boundaries
-          paraStart = 0;
-          paraEnd = state.doc.content.size;
-        }
-      } catch (error) {
-        console.warn("Failed to resolve paragraph boundaries:", error);
-        // Fallback to safe boundaries
-        paraStart = Math.max(0, $from.pos - 100);
-        paraEnd = Math.min(state.doc.content.size, $from.pos + 100);
-      }
-      // Iterate through text nodes and add decorations
-      state.doc.descendants((node, pos) => {
-        if (!node.isText) return;
-        // Safely resolve position and determine if inside code block or inline code
-        let $pos: ResolvedPos;
-        try {
-          $pos = state.doc.resolve(pos);
-        } catch (error) {
-          console.warn("Failed to resolve position in descendants:", error);
-          return; // Skip this node if position cannot be resolved
-        }
-        const isCodeContext =
-          $pos.parent.type.name === "codeBlock" ||
-          node.marks.some((mark) => mark.type.name === "code");
-        const text = node.text ?? "";
-        // Decorate bracket links
-        const bracketRegex = /\[([^\[\]]+)\]/g;
-        for (const match of text.matchAll(bracketRegex)) {
-          const start = pos + (match.index ?? 0);
-          const end = start + match[0].length;
-          // In code contexts, render as plain span
-          if (isCodeContext) {
-            decos.push(Decoration.inline(start, end, { nodeName: "span" }));
-            continue;
-          }
-
-          const bracketContent = parseBracketContent(match[1]);
-
-          if (bracketContent.isIcon) {
-            // アイコン表示の処理
-            const pageId = existMap.get(bracketContent.slug);
-            const exists = Boolean(pageId);
-
-            const decoAttrs = {
-              nodeName: "span",
-              class: "inline-flex items-center user-icon-wrapper",
-              "data-user-slug": bracketContent.slug,
-              "data-is-icon": "true",
-              "data-page-id": pageId || "",
-              "data-exists": exists.toString(),
-              style: "vertical-align: middle;",
-            };
-
-            if (start >= paraStart && end <= paraEnd) {
-              decos.push(Decoration.inline(start, end, decoAttrs));
-            } else {
-              // 非アクティブ時も同様の処理
-              decos.push(
-                Decoration.inline(start, start + 1, { style: "display: none" })
-              );
-              decos.push(
-                Decoration.inline(end - 1, end, { style: "display: none" })
-              );
-              decos.push(
-                Decoration.inline(start + 1, end - 1, {
-                  ...decoAttrs,
-                  contentEditable: "false",
-                })
-              );
-            }
-          } else {
-            // 既存のページリンク処理
-            const title = bracketContent.slug;
-            const isExternal = bracketContent.type === "external";
-            const pageId = existMap.get(title);
-            const exists = isExternal || Boolean(pageId);
-            const cls = exists ? "text-blue-500" : "text-red-500";
-            // Build href for link
-            const hrefValue = isExternal
-              ? title
-              : pageId
-              ? `/pages/${pageId}`
-              : "#";
-            const isActive = start >= paraStart && end <= paraEnd;
-
-            // ブラケットの描画を抑制
-            decos.push(
-              Decoration.inline(start, start + 1, { style: "display: none" })
-            );
-            decos.push(
-              Decoration.inline(end - 1, end, { style: "display: none" })
-            );
-
-            // 安全な文字列属性のみを構築
-            const linkContentAttrs = buildPageLinkAttrs({
-              href: hrefValue,
-              className: `${cls} underline cursor-pointer whitespace-normal break-all`,
-              isExternal,
-              pageId: pageId ?? null,
-              title,
-              lock: !isActive,
-            });
-            decos.push(Decoration.inline(start + 1, end - 1, linkContentAttrs));
-          }
-        }
-        // Decorate tag links (#text)
-        const tagRegex = /#([^\s\[\]]+)/g;
-        for (const match of text.matchAll(tagRegex)) {
-          const index = match.index ?? 0;
-          const start = pos + index;
-          const end = start + match[0].length;
-          const title = match[1];
-          const pageId = existMap.get(title);
-          const exists = Boolean(pageId);
-          const cls = exists ? "text-blue-500" : "text-red-500";
-          // Build anchor attributes
-          const decoAttrs: Record<string, string> = {
-            nodeName: "a",
-            href: exists ? `/pages/${pageId}` : "#",
-            class: `${cls} underline cursor-pointer whitespace-normal break-all`,
-          };
-          // If no page exists, do not allow navigation
-          if (!exists) {
-            decoAttrs["data-no-page"] = "true";
-          }
-          decos.push(Decoration.inline(start, end, decoAttrs));
-        }
-      });
-      return DecorationSet.create(state.doc, decos);
     },
   },
 });
@@ -388,17 +215,7 @@ const suggestionPlugin = new Plugin<SuggestionState>({
               // click to select
               div.addEventListener("mousedown", (e) => {
                 e.preventDefault();
-                view.dispatch(
-                  view.state.tr
-                    .insertText(`[${item.title}]`, from, to)
-                    .setMeta(suggestionPluginKey, {
-                      suggesting: false,
-                      range: null,
-                      items: [],
-                      activeIndex: 0,
-                      query: "",
-                    })
-                );
+                applySuggestionItem(view, item, { from, to });
                 tip?.hide();
               });
               div.className = `suggestion-item${
@@ -459,17 +276,7 @@ const suggestionPlugin = new Plugin<SuggestionState>({
         const item = sugg.items[sugg.activeIndex];
         if (!item) return false;
         const { from, to } = sugg.range;
-        view.dispatch(
-          view.state.tr
-            .insertText(`[${item.title}]`, from, to)
-            .setMeta(suggestionPluginKey, {
-              suggesting: false,
-              range: null,
-              items: [],
-              activeIndex: 0,
-              query: "",
-            })
-        );
+        applySuggestionItem(view, item, { from, to });
         return true;
       }
       return false;
@@ -477,173 +284,112 @@ const suggestionPlugin = new Plugin<SuggestionState>({
   },
 });
 
-// ページプレビュー用のプラグイン
-const previewPluginKey = new PluginKey("pagePreviewPlugin");
+// --- Suggestion 選択時に即 PageLinkMark を作る補助関数 ---
+function applySuggestionItem(
+  view: any,
+  item: { id: string; title: string },
+  range: { from: number; to: number }
+) {
+  const { from, to } = range;
+  const title = item.title;
+  const isExternal = /^https?:\/\//.test(title);
 
-// グローバルな状態管理
-let hidePreviewTimeout: NodeJS.Timeout | null = null;
+  // 角括弧を除去してプレーンテキスト化
+  const tr = view.state.tr.insertText(title, from, to);
 
-const previewPlugin = new Plugin({
-  key: previewPluginKey,
-  state: {
-    init: () => ({
-      tip: null as Instance<Props> | null,
-      currentPageId: null as string | null,
-    }),
-    apply(tr, state) {
-      return state;
-    },
-  },
-  props: {
-    handleDOMEvents: {
-      mouseover(view, event) {
-        const target = event.target as HTMLElement;
-        if (target.tagName === "A" && target.hasAttribute("data-page-id")) {
-          const pageId = target.getAttribute("data-page-id");
-          if (pageId) {
-            // 非表示タイムアウトをクリア（re-hover時）
-            if (hidePreviewTimeout) {
-              clearTimeout(hidePreviewTimeout);
-              hidePreviewTimeout = null;
-            }
+  // 一意ID生成 (Mark 実装と揃える)
+  const plId = `${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 
-            // 既存のホバータイムアウトをクリア
-            const targetEl = target as HTMLElement & {
-              _hoverTimeout?: NodeJS.Timeout;
-            };
-            if (targetEl._hoverTimeout) {
-              clearTimeout(targetEl._hoverTimeout);
-            }
+  const attrs: any = {
+    href: isExternal ? title : "#",
+    pageTitle: isExternal ? undefined : title,
+    external: isExternal || undefined,
+    plId,
+    exists: isExternal ? true : undefined,
+    state: isExternal ? "exists" : "pending",
+  };
 
-            // 500ms後にプレビュー表示
-            targetEl._hoverTimeout = setTimeout(() => {
-              showPreview(pageId, target);
-            }, 500);
-          }
-        }
-        return false;
-      },
-      mouseout(view, event) {
-        const target = event.target as HTMLElement;
-        if (target.tagName === "A" && target.hasAttribute("data-page-id")) {
-          // 表示タイムアウトをクリア
-          const targetEl = target as HTMLElement & {
-            _hoverTimeout?: NodeJS.Timeout;
-          };
-          if (targetEl._hoverTimeout) {
-            clearTimeout(targetEl._hoverTimeout);
-            targetEl._hoverTimeout = undefined;
-          }
-
-          // 200ms後にプレビューを非表示（マウスが戻ってくる可能性を考慮）
-          if (hidePreviewTimeout) {
-            clearTimeout(hidePreviewTimeout);
-          }
-          hidePreviewTimeout = setTimeout(() => {
-            hidePreview();
-            hidePreviewTimeout = null;
-          }, 200);
-        }
-        return false;
-      },
-    },
-  },
-});
-
-// プレビュー表示用のグローバル関数
-let globalTip: Instance<Props> | null = null;
-let globalReactRoot: ReturnType<typeof createRoot> | null = null;
-let globalContainer: HTMLElement | null = null;
-let currentPageId: string | null = null;
-
-function showPreview(pageId: string, referenceElement: HTMLElement) {
-  // 同じページの場合は何もしない
-  if (currentPageId === pageId && globalTip) {
-    return;
+  // Mark Type 取得 (PageLinkMark が editor にロードされている前提)
+  const markType = view.state.schema.marks[PageLinkMark.name];
+  if (markType) {
+    tr.addMark(from, from + title.length, markType.create(attrs));
   }
 
-  currentPageId = pageId;
+  tr.setMeta(suggestionPluginKey, {
+    suggesting: false,
+    range: null,
+    items: [],
+    activeIndex: 0,
+    query: "",
+  });
 
-  // コンテナを再利用または作成
-  if (!globalContainer) {
-    globalContainer = document.createElement("div");
-    globalContainer.className = "preview-container";
-    globalReactRoot = createRoot(globalContainer);
-  }
+  view.dispatch(tr);
 
-  // 統一されたコンポーネントで初期表示（ローディング状態）
-  if (globalReactRoot) {
-    globalReactRoot.render(
-      React.createElement(PageLinkPreviewCard, {
-        preview: null,
-        isLoading: true,
-        error: undefined,
+  // 非同期解決（外部リンク以外）
+  if (!isExternal) {
+    // searchPages と更新ロジックを簡易再実装（重複→後で共通化 TODO）
+    searchPages(title)
+      .then((results) => {
+        const exact = results.find((r) => r.title === title);
+        if (!exact) {
+          // missing 更新
+          updateMarkState(view, plId, title, {
+            exists: false,
+            state: "missing",
+            href: "#",
+          });
+          return;
+        }
+        updateMarkState(view, plId, title, {
+          exists: true,
+          state: "exists",
+          href: `/pages/${exact.id}`,
+          pageId: exact.id,
+        });
       })
-    );
+      .catch(() => {});
   }
-
-  // tippy.jsインスタンスを再利用または作成
-  if (!globalTip) {
-    globalTip = tippy(referenceElement, {
-      trigger: "manual",
-      interactive: false,
-      placement: "top-start",
-      arrow: true,
-      theme: "light",
-      maxWidth: 320,
-      content: globalContainer,
-      animation: false, // アニメーション無効化
-      duration: 0, // 即座に表示
-    });
-  } else {
-    // 既存のtippyインスタンスの参照要素を更新
-    globalTip.setProps({
-      getReferenceClientRect: () => referenceElement.getBoundingClientRect(),
-    });
-  }
-
-  globalTip.show();
-
-  // データを取得してプレビューを更新
-  pagePreviewService
-    .getPreview(pageId)
-    .then((preview) => {
-      // ページIDが変わっていないかチェック
-      if (currentPageId === pageId && globalReactRoot) {
-        // 同じコンポーネントのpropsだけ更新
-        globalReactRoot.render(
-          React.createElement(PageLinkPreviewCard, {
-            preview,
-            isLoading: false,
-            error: undefined,
-          })
-        );
-      }
-    })
-    .catch((error) => {
-      // ページIDが変わっていないかチェック
-      if (currentPageId === pageId && globalReactRoot) {
-        const errorMessage =
-          error instanceof Error ? error.message : "読み込みに失敗しました";
-        // 同じコンポーネントでエラー状態に更新
-        globalReactRoot.render(
-          React.createElement(PageLinkPreviewCard, {
-            preview: null,
-            isLoading: false,
-            error: errorMessage,
-          })
-        );
-      }
-    });
 }
 
-function hidePreview() {
-  if (globalTip) {
-    globalTip.hide();
-    // DOM要素は再利用のため破棄しない
-  }
-  currentPageId = null;
-  // ReactルートとコンテナはreasonableTimeまで保持
+function updateMarkState(
+  view: any,
+  plId: string,
+  title: string,
+  update: { exists: boolean; state: string; href: string; pageId?: string }
+) {
+  const { state } = view;
+  const markType = state.schema.marks[PageLinkMark.name];
+  if (!markType) return;
+  const { tr } = state;
+  state.doc.descendants((node: any, pos: number) => {
+    if (!node.isText) return false;
+    const len = node.text?.length || 0;
+    node.marks.forEach((m: any) => {
+      if (
+        m.type === markType &&
+        m.attrs.plId === plId &&
+        m.attrs.pageTitle === title &&
+        m.attrs.state === "pending"
+      ) {
+        tr.removeMark(pos, pos + len, markType);
+        tr.addMark(
+          pos,
+          pos + len,
+          markType.create({
+            href: update.href,
+            pageId: update.pageId,
+            pageTitle: title,
+            plId,
+            exists: update.exists,
+            state: update.state,
+          })
+        );
+      }
+    });
+  });
+  if (tr.steps.length) view.dispatch(tr);
 }
 
 // ブラケットリンク用のExtension
@@ -656,11 +402,11 @@ export const PageLink = Extension.create({
   },
   addProseMirrorPlugins() {
     const { noteSlug } = this.options;
-    return [
-      bracketPlugin,
-      existencePlugin,
-      suggestionPlugin,
-      previewPlugin,
+    const plugins = [
+      bracketPlugin as Plugin,
+      suggestionPlugin as Plugin,
+      // Mark版プレビューのみ採用 (legacy previewPlugin は削除済み)
+      pageLinkPreviewMarkPlugin as Plugin,
       new Plugin({
         key: pageLinkPluginKey,
         props: {
@@ -1004,6 +750,7 @@ export const PageLink = Extension.create({
           },
         },
       }),
-    ];
+    ].filter(Boolean) as Plugin[];
+    return plugins;
   },
 });
