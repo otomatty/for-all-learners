@@ -75,12 +75,8 @@ export function EditPageBubbleMenu({
         return;
       }
 
-      // Check if the selection has a unifiedLink mark
-      const hasUnifiedLinkMark = editor.state.doc.rangeHasMark(
-        from,
-        to,
-        editor.schema.marks.unifiedLink
-      );
+      // Check if the selection has a unifiedLink mark using TipTap's isActive method
+      const hasUnifiedLinkMark = editor.isActive("unifiedLink");
       setIsLinkSelected(hasUnifiedLinkMark);
     };
 

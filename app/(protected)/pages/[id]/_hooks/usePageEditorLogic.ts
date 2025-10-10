@@ -410,14 +410,10 @@ export function usePageEditorLogic({
 
     const selectedText = editor.state.doc.textBetween(from, to, "");
 
-    // Check if the selection already has a UnifiedLinkMark
-    const marks = editor.state.doc.rangeHasMark(
-      from,
-      to,
-      editor.schema.marks.unifiedLink
-    );
+    // Check if the selection already has a UnifiedLinkMark using TipTap's isActive method
+    const hasUnifiedLinkMark = editor.isActive("unifiedLink");
 
-    if (marks) {
+    if (hasUnifiedLinkMark) {
       // If already has UnifiedLinkMark, remove it
       editor.chain().focus().unsetMark("unifiedLink").run();
     } else {
