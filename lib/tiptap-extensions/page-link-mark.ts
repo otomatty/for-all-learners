@@ -36,13 +36,17 @@ export const PageLinkMark = Mark.create<PageLinkMarkOptions>({
    * 
    * By default, Tiptap's 'strong' mark has a priority of 100 (see: https://github.com/ueberdosis/tiptap/blob/main/packages/extension-strong/src/strong.ts).
    * Setting this mark's priority to 1000 ensures it is rendered before 'strong', so that the resulting HTML is <a><strong>...</strong></a>
-   * rather than <strong><a>...</a></strong>. This is important for correct styling and link behavior.
+   * rather than <strong><a>...</a></strong>.
+   * 
+   * This structure (<a><strong>...</strong></a>) is important for accessibility and styling predictability,
+   * as it ensures the link wraps the emphasized text, making the entire emphasized region clickable and styled as a link.
+   * If the order were reversed, only the text inside the <a> would be linked, and styling or screen readers might not behave as expected.
    * 
    * If you want this mark to wrap other marks (such as 'strong'), its priority must be higher than those marks.
    * If the priority is set lower than 'strong', the order will be reversed.
    * 
    * Chosen value: 1000 (well above 'strong' and other common marks, to avoid accidental reordering).
-   * Impact: Ensures page links always wrap strong/emphasis marks, preserving expected link semantics and styles.
+   * Impact: Ensures page links always wrap strong/emphasis marks, preserving expected link semantics, accessibility, and styles.
    */
   priority: 1000,
   inclusive: false,
