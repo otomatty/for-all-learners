@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { pagePreviewService } from "@/lib/services/page-preview-service";
 import { PageLinkPreviewCard } from "@/components/page-link-preview-card";
 
-// Mark ベースの PageLink プレビュー専用プラグイン
+// PageLink preview plugin based on Mark
 export const pageLinkPreviewMarkPluginKey = new PluginKey(
   "pageLinkPreviewMark"
 );
