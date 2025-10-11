@@ -7,10 +7,10 @@ import {
   Mark,
   mergeAttributes,
   type CommandProps,
-  type Command,
+  type Editor,
 } from "@tiptap/core";
 import { InputRule } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { searchPages } from "../utils/searchPages";
 import {
   normalizeTitleToKey,
@@ -33,8 +33,14 @@ import {
 import { navigateToPage, handleMissingLinkClick } from "../unilink/resolver";
 
 export interface UnifiedLinkMarkOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, string>;
   autoReconciler?: AutoReconciler | null; // P3追加: AutoReconcilerインスタンス
+  noteSlug?: string | null; // P4追加: ノートとの関連付け
+  userId?: string | null; // P4追加: ユーザーID
+  onShowCreatePageDialog?: (
+    title: string,
+    onConfirm: () => Promise<void>
+  ) => void; // P4追加: ページ作成ダイアログコールバック
 }
 
 export interface UnifiedLinkAttributes {
@@ -55,10 +61,10 @@ export interface UnifiedLinkAttributes {
 let globalAutoReconciler: AutoReconciler | null = null;
 
 // 解決キュー（非同期処理用）
-let resolverQueue: Array<{
+const resolverQueue: Array<{
   key: string;
   markId: string;
-  editor: any;
+  editor: Editor;
 }> = [];
 
 let isResolverRunning = false;
@@ -93,9 +99,7 @@ async function processResolverQueue() {
 
         // 検索実行（リトライ機能付き）
         const results = await searchPagesWithRetry(key);
-        const exact = results.find(
-          (r: any) => normalizeTitleToKey(r.title) === key
-        );
+        const exact = results.find((r) => normalizeTitleToKey(r.title) === key);
 
         if (exact) {
           setCachedPageId(key, exact.id);
@@ -120,8 +124,8 @@ async function processResolverQueue() {
         console.warn(`Failed to resolve key "${key}":`, error);
         // エラー状態に更新
         updateMarkState(editor, markId, {
-          state: "error" as any,
-        });
+          state: "error",
+        } as Partial<UnifiedLinkAttributes>);
         markUnifiedError(markId, String(error));
       }
     }
@@ -133,11 +137,16 @@ async function processResolverQueue() {
   isResolverRunning = false;
 }
 
+interface SearchResult {
+  id: string;
+  title: string;
+}
+
 // リトライ機能付きsearchPages
 async function searchPagesWithRetry(
   key: string,
   maxRetries = 2
-): Promise<any[]> {
+): Promise<SearchResult[]> {
   let lastError: Error | null = null;
 
   for (let i = 0; i <= maxRetries; i++) {
@@ -147,9 +156,7 @@ async function searchPagesWithRetry(
       lastError = error as Error;
       if (i < maxRetries) {
         // 指数バックオフ: 100ms, 200ms, 400ms...
-        await new Promise((resolve) =>
-          setTimeout(resolve, 100 * Math.pow(2, i))
-        );
+        await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** i));
       }
     }
   }
@@ -158,7 +165,7 @@ async function searchPagesWithRetry(
 }
 
 function updateMarkState(
-  editor: any,
+  editor: Editor,
   markId: string,
   updates: Partial<UnifiedLinkAttributes>
 ) {
@@ -173,10 +180,10 @@ function updateMarkState(
     const markType = state.schema.marks.unilink;
     let changed = false;
 
-    state.doc.descendants((node: any, pos: number) => {
-      if (!node.isText) return;
+    state.doc.descendants((node, pos: number) => {
+      if (!node.isText || !node.text) return;
 
-      node.marks.forEach((mark: any) => {
+      for (const mark of node.marks) {
         if (mark.type === markType && mark.attrs.markId === markId) {
           const newAttrs = { ...mark.attrs, ...updates };
 
@@ -189,7 +196,7 @@ function updateMarkState(
           tr.addMark(pos, pos + node.text.length, markType.create(newAttrs));
           changed = true;
         }
-      });
+      }
     });
 
     if (changed) {
@@ -217,6 +224,9 @@ export const UnifiedLinkMark = Mark.create<UnifiedLinkMarkOptions>({
         class: "unilink underline cursor-pointer",
       },
       autoReconciler: null, // P3追加: デフォルトはnull
+      noteSlug: null, // P4追加: デフォルトはnull
+      userId: null, // P4追加: デフォルトはnull
+      onShowCreatePageDialog: undefined, // P4追加: デフォルトは未定義
     };
   },
 
@@ -321,83 +331,80 @@ export const UnifiedLinkMark = Mark.create<UnifiedLinkMarkOptions>({
   },
 
   addCommands() {
-    const insertUnifiedLink: any =
-      (attrs: Partial<UnifiedLinkAttributes>) =>
-      ({ state, dispatch }: CommandProps) => {
-        const { selection } = state;
-        const { from, to } = selection;
+    return {
+      insertUnifiedLink:
+        (attrs: Partial<UnifiedLinkAttributes>) =>
+        ({ state, dispatch }) => {
+          const { selection } = state;
+          const { from, to } = selection;
 
-        const markId = generateMarkId();
-        const key = normalizeTitleToKey(attrs.raw || "");
+          const markId = generateMarkId();
+          const key = normalizeTitleToKey(attrs.raw || "");
 
-        const fullAttrs: UnifiedLinkAttributes = {
-          variant: attrs.variant || "bracket",
-          raw: attrs.raw || "",
-          text: attrs.text || attrs.raw || "",
-          key,
-          pageId: null,
-          href: "#",
-          state: "pending",
-          exists: false,
-          markId,
-          ...attrs,
-        };
-
-        if (dispatch) {
-          const tr = state.tr.addMark(from, to, this.type.create(fullAttrs));
-          dispatch(tr);
-
-          // 解決キューに追加
-          resolverQueue.push({
+          const fullAttrs: UnifiedLinkAttributes = {
+            variant: attrs.variant || "bracket",
+            raw: attrs.raw || "",
+            text: attrs.text || attrs.raw || "",
             key,
+            pageId: null,
+            href: "#",
+            state: "pending",
+            exists: false,
             markId,
-            editor: this.editor,
-          });
+            ...attrs,
+          };
 
-          // 非同期で解決開始
-          queueMicrotask(() => processResolverQueue());
-        }
+          if (dispatch) {
+            const tr = state.tr.addMark(from, to, this.type.create(fullAttrs));
+            dispatch(tr);
 
-        return true;
-      };
+            // 解決キューに追加
+            resolverQueue.push({
+              key,
+              markId,
+              editor: this.editor,
+            });
 
-    const refreshUnifiedLinks: any =
-      () =>
-      ({ state, dispatch }: CommandProps) => {
-        const markType = this.type;
-        const toRefresh: Array<{ key: string; markId: string }> = [];
+            // 非同期で解決開始
+            queueMicrotask(() => processResolverQueue());
+          }
 
-        state.doc.descendants((node: any) => {
-          if (!node.isText) return;
+          return true;
+        },
 
-          node.marks.forEach((mark: any) => {
-            if (mark.type === markType && mark.attrs.state !== "exists") {
-              toRefresh.push({
-                key: mark.attrs.key,
-                markId: mark.attrs.markId,
-              });
+      refreshUnifiedLinks:
+        () =>
+        ({ state, dispatch }) => {
+          const markType = this.type;
+          const toRefresh: Array<{ key: string; markId: string }> = [];
+
+          state.doc.descendants((node) => {
+            if (!node.isText) return;
+
+            for (const mark of node.marks) {
+              if (mark.type === markType && mark.attrs.state !== "exists") {
+                toRefresh.push({
+                  key: mark.attrs.key,
+                  markId: mark.attrs.markId,
+                });
+              }
             }
           });
-        });
 
-        // キューに追加
-        toRefresh.forEach(({ key, markId }) => {
-          resolverQueue.push({
-            key,
-            markId,
-            editor: this.editor,
-          });
-        });
+          // キューに追加
+          for (const { key, markId } of toRefresh) {
+            resolverQueue.push({
+              key,
+              markId,
+              editor: this.editor,
+            });
+          }
 
-        queueMicrotask(() => processResolverQueue());
+          queueMicrotask(() => processResolverQueue());
 
-        return true;
-      };
-
-    return {
-      insertUnifiedLink,
-      refreshUnifiedLinks,
-    } as Partial<Record<string, Command>>;
+          return true;
+        },
+    };
   },
 
   addInputRules() {
@@ -529,6 +536,38 @@ export const UnifiedLinkMark = Mark.create<UnifiedLinkMarkOptions>({
 
   addProseMirrorPlugins() {
     return [
+      // Auto-close bracket plugin
+      new Plugin({
+        key: new PluginKey("unifiedLinkAutoBracket"),
+        props: {
+          handleTextInput(view, from, to, text) {
+            if (text !== "[") {
+              return false;
+            }
+
+            const { state, dispatch } = view;
+            const $pos = state.doc.resolve(from);
+
+            // Auto-close only at end of paragraph without trailing text
+            if ($pos.parent.type.name === "paragraph") {
+              const paraEnd = $pos.end($pos.depth);
+              const after = state.doc.textBetween(to, paraEnd);
+
+              if (/^\s*$/.test(after)) {
+                // No trailing text, auto-close
+                const tr = state.tr.insertText("[]", from, to);
+                // Set cursor inside brackets
+                tr.setSelection(TextSelection.create(tr.doc, from + 1));
+                dispatch(tr);
+                return true;
+              }
+            }
+
+            return false;
+          },
+        },
+      }),
+      // Click handler plugin
       new Plugin({
         key: new PluginKey("unifiedLinkClickHandler"),
         props: {
@@ -562,8 +601,13 @@ export const UnifiedLinkMark = Mark.create<UnifiedLinkMarkOptions>({
               attrs.markId
             ) {
               // missing状態からのページ作成フロー
-              // TODO: userIdの取得方法を検討
-              handleMissingLinkClick(this.editor, attrs.markId, attrs.text);
+              handleMissingLinkClick(
+                this.editor,
+                attrs.markId,
+                attrs.text,
+                this.options.userId || undefined,
+                this.options.onShowCreatePageDialog
+              );
             } else if (attrs.state === "pending") {
               // pending状態では何もしない
               console.log("[UnifiedLinkMark] Link is still resolving...");

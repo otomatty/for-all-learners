@@ -30,13 +30,15 @@ function getBroadcastChannel(): UnilinkBroadcastChannel {
  * @param markId 対象マークのID
  * @param title 作成するページのタイトル
  * @param userId ユーザーID（将来の権限チェック用）
+ * @param noteSlug ノートslug（オプション、note_pagesテーブル関連付け用）
  * @returns 作成されたページID、失敗時はnull
  */
 export async function createPageFromMark(
   editor: Editor,
   markId: string,
   title: string,
-  userId?: string
+  userId?: string,
+  noteSlug?: string
 ): Promise<string | null> {
   try {
     console.log(`[UnifiedResolver] Creating page: "${title}"`);
@@ -68,6 +70,11 @@ export async function createPageFromMark(
       is_public: false, // デフォルトは非公開
     });
 
+    // TODO: noteSlug が提供されている場合、note_pages テーブルに関連付け
+    // if (noteSlug && newPage?.id) {
+    //   await associatePageWithNote(newPage.id, noteSlug);
+    // }
+
     if (newPage?.id) {
       console.log(`[UnifiedResolver] Page created with ID: ${newPage.id}`);
 
@@ -84,9 +91,9 @@ export async function createPageFromMark(
 
       toast.success(`ページ「${title}」を作成しました`);
       return newPage.id;
-    } else {
-      throw new Error("Page creation returned no ID");
     }
+
+    throw new Error("Page creation returned no ID");
   } catch (error) {
     console.error("Page creation failed:", error);
     toast.error(`ページ「${title}」の作成に失敗しました`);
@@ -113,25 +120,25 @@ async function updateMarkToExists(
     const markType = state.schema.marks.unilink;
     let changed = false;
 
-    state.doc.descendants((node: any, pos: number) => {
-      if (!node.isText) return;
+    state.doc.descendants((node, pos: number) => {
+      if (!node.isText || !node.text) return;
 
-      node.marks.forEach((mark: any) => {
+      for (const mark of node.marks) {
         if (mark.type === markType && mark.attrs.markId === markId) {
-          const newAttrs: UnifiedLinkAttributes = {
+          const newAttrs = {
             ...mark.attrs,
             state: "exists",
             exists: true,
             pageId,
             href: `/pages/${pageId}`,
             created: true, // 新規作成フラグ
-          };
+          } as UnifiedLinkAttributes;
 
           tr.removeMark(pos, pos + node.text.length, markType);
           tr.addMark(pos, pos + node.text.length, markType.create(newAttrs));
           changed = true;
         }
-      });
+      }
     });
 
     if (changed && dispatch) {
@@ -161,25 +168,38 @@ export function navigateToPage(pageId: string): void {
 
 /**
  * missing状態のリンククリック時の処理
+ * ダイアログ表示はコールバックで委譲し、resolver層ではロジックのみ提供
  * @param editor TipTapエディタインスタンス
  * @param markId 対象マークのID
  * @param title ページタイトル
  * @param userId ユーザーID
+ * @param onShowDialog ダイアログ表示コールバック（オプション）
  */
 export async function handleMissingLinkClick(
   editor: Editor,
   markId: string,
   title: string,
-  userId?: string
+  userId?: string,
+  onShowDialog?: (title: string, onConfirm: () => Promise<void>) => void
 ): Promise<void> {
-  const confirmed = confirm(
-    `「${title}」というページは存在しません。新しく作成しますか？`
-  );
-
-  if (confirmed) {
+  const createAndNavigate = async () => {
     const pageId = await createPageFromMark(editor, markId, title, userId);
     if (pageId) {
       navigateToPage(pageId);
+    }
+  };
+
+  // カスタムダイアログが提供されている場合はそれを使用
+  if (onShowDialog) {
+    onShowDialog(title, createAndNavigate);
+  } else {
+    // フォールバック: ブラウザのconfirmダイアログ
+    const confirmed = confirm(
+      `「${title}」というページは存在しません。新しく作成しますか？`
+    );
+
+    if (confirmed) {
+      await createAndNavigate();
     }
   }
 }
