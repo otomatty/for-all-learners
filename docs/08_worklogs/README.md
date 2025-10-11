@@ -7,12 +7,28 @@
 ```
 08_worklogs/
 ├── 2025_10/
-│   ├── 20251010_feature-implementation.md
-│   ├── 20251011_bug-fix.md
+│   ├── 20251010/
+│   │   ├── 20251010_feature-implementation.md
+│   │   ├── 20251010_bug-fix.md
+│   │   └── ...
+│   ├── 20251011/
+│   │   ├── 20251011_unified-link-mark-phase2-implementation.md
+│   │   ├── 20251011_test-status-report.md
+│   │   └── ...
 │   └── ...
 └── 2025_11/
+    ├── 20251101/
+    │   └── ...
     └── ...
 ```
+
+### 構造の説明
+
+1. **月別ディレクトリ** (`YYYY_MM/`): 年月でグループ化
+2. **日別ディレクトリ** (`YYYYMMDD/`): 各日の作業をまとめる
+3. **作業ログファイル** (`YYYYMMDD_作業内容.md`): 具体的な作業記録
+
+この構造により、日付ごとに複数の作業ログを整理できます。
 
 ## 作業ログの目的
 
@@ -35,9 +51,28 @@
 
 ## 命名規則
 
+### ディレクトリ命名
+- 月別: `YYYY_MM/` (例: `2025_10/`)
+- 日別: `YYYYMMDD/` (例: `20251011/`)
+
+### ファイル命名
 `YYYYMMDD_作業内容の簡潔な説明.md`
 
 例:
+- `2025_10/20251010/20251010_user-auth-implementation.md`
+- `2025_10/20251011/20251011_unified-link-mark-phase2-implementation.md`
+- `2025_10/20251011/20251011_test-status-report.md`
 
-- `20251010_user-auth-implementation.md`
-- `20251011_performance-optimization.md`
+### 複数の作業ログ
+1日に複数の作業を行った場合は、同じ日付ディレクトリ内に複数のファイルを作成します。
+
+例（2025年10月11日の作業）:
+```
+2025_10/20251011/
+├── 20251011_unified-link-mark-phase2-implementation.md
+├── 20251011_unified-link-mark-test-implementation.md
+├── 20251011_test-status-report.md
+├── 20251011_mock-refactoring-report.md
+├── 20251011_maintainable-test-refactoring.md
+└── 20251011_branch-creation-summary.md
+```
