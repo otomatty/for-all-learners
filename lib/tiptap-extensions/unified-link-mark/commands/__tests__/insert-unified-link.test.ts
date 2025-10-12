@@ -1,5 +1,13 @@
 /**
- * insert-unified-link.ts のユニットテスト
+ import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
+import { Editor } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { UnifiedLinkMark } from "../../index";
+import { findMarksByState, updateMarkState } from "../../state-manager";
+
+// Setup jsdom environment for this test
+setupJSDOMEnvironment();ified-link.ts のユニットテスト
  * insertUnifiedLink コマンドのテスト
  */
 

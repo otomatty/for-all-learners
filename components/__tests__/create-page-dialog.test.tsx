@@ -5,6 +5,7 @@
  * @vitest-environment jsdom
  */
 
+import React from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CreatePageDialog } from "../create-page-dialog";
@@ -14,18 +15,12 @@ import { CreatePageDialog } from "../create-page-dialog";
  *
  * 保守性のため、すべてのモックを一箇所で管理します。
  * React コンポーネントのテストでは、DOM環境が必要です。
+ * JSDOM環境は vitest.setup.ts で設定されています。
  */
 
-// Import modules that need mocking
-import * as pagesModule from "@/app/_actions/pages";
-
-// Mock function declarations - grouped by functionality
-const mocks = {
-  // Page creation
-  createPage: vi.fn(),
-
-  // Toast notifications
-  toast: {
+// Use vi.hoisted to declare mocks that will be used in vi.mock factories
+const { mockToast, mockCreatePage } = vi.hoisted(() => ({
+  mockToast: {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
@@ -36,13 +31,24 @@ const mocks = {
     message: vi.fn(),
     dismiss: vi.fn(),
   },
+  mockCreatePage: vi.fn(),
+}));
+
+// Mock sonner toast library
+vi.mock("sonner", () => ({
+  toast: mockToast,
+}));
+
+// Mock pages actions
+vi.mock("@/app/_actions/pages", () => ({
+  createPage: mockCreatePage,
+}));
+
+// Create mocks object for easy access in tests
+const mocks = {
+  createPage: mockCreatePage,
+  toast: mockToast,
 };
-
-// Apply mocks to actual modules
-vi.spyOn(pagesModule, "createPage").mockImplementation(mocks.createPage);
-
-// Export toast mock for use in tests
-const toast = mocks.toast;
 
 describe("CreatePageDialog", () => {
   const mockOnPageCreated = vi.fn();
@@ -143,7 +149,7 @@ describe("CreatePageDialog", () => {
       expect(descInput.value).toBe("This is a test description");
     });
 
-    it("should toggle public switch", () => {
+    it("should toggle public switch", async () => {
       render(
         <CreatePageDialog
           open={true}
@@ -154,11 +160,15 @@ describe("CreatePageDialog", () => {
         />
       );
 
-      const publicSwitch = screen.getByRole("switch") as HTMLInputElement;
-      expect(publicSwitch.checked).toBe(false);
+      // Radix UI Switch has role="switch" and aria-checked attribute
+      const publicSwitch = screen.getByRole("switch");
+      expect(publicSwitch).toHaveAttribute("aria-checked", "false");
 
       fireEvent.click(publicSwitch);
-      expect(publicSwitch.checked).toBe(true);
+
+      await waitFor(() => {
+        expect(publicSwitch).toHaveAttribute("aria-checked", "true");
+      });
     });
   });
 
@@ -199,7 +209,7 @@ describe("CreatePageDialog", () => {
 
       expect(mockOnPageCreated).toHaveBeenCalledWith("page-123");
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
-      expect(toast.success).toHaveBeenCalledWith(
+      expect(mocks.toast.success).toHaveBeenCalledWith(
         "ページ「Test Page」を作成しました"
       );
     });
@@ -294,7 +304,9 @@ describe("CreatePageDialog", () => {
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("タイトルを入力してください");
+        expect(mocks.toast.error).toHaveBeenCalledWith(
+          "タイトルを入力してください"
+        );
       });
 
       expect(mocks.createPage).not.toHaveBeenCalled();
@@ -316,7 +328,7 @@ describe("CreatePageDialog", () => {
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
+        expect(mocks.toast.error).toHaveBeenCalledWith(
           "ユーザーIDが取得できませんでした"
         );
       });
@@ -346,7 +358,7 @@ describe("CreatePageDialog", () => {
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
+        expect(mocks.toast.error).toHaveBeenCalledWith(
           "ページの作成に失敗しました: Database error"
         );
       });
@@ -384,7 +396,7 @@ describe("CreatePageDialog", () => {
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
+        expect(mocks.toast.error).toHaveBeenCalledWith(
           expect.stringContaining("ページの作成に失敗しました")
         );
       });

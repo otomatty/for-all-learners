@@ -7,12 +7,14 @@ import { describe, it, expect } from "vitest";
 import { PluginKey } from "prosemirror-state";
 import type { Editor } from "@tiptap/core";
 import { createSuggestionPlugin } from "../suggestion-plugin";
+import {
+  createMinimalMockEditor,
+  createMockOptions,
+} from "@/lib/__tests__/helpers";
 
 describe("createSuggestionPlugin", () => {
-  const mockEditor = {} as Editor;
-  const mockOptions = {
-    HTMLAttributes: {},
-  };
+  const mockEditor = createMinimalMockEditor();
+  const mockOptions = createMockOptions();
 
   describe("Plugin creation", () => {
     it("should create a plugin instance", () => {

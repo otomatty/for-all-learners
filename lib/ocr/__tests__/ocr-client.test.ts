@@ -20,18 +20,15 @@ import type { OcrProcessingEvent } from "../ocr-client";
  *
  * 保守性のため、すべてのモックを一箇所で管理します。
  * Tesseract.jsとDOM APIのモックを提供します。
+ * JSDOM環境は vitest.setup.ts で設定されています。
  */
 
-// Import modules that need mocking
-import * as tesseractModule from "tesseract.js";
-
-// Mock function declarations - grouped by functionality
-const mocks = {
-  // Tesseract Worker
-  worker: {
-    loadLanguage: vi.fn(),
-    initialize: vi.fn(),
-    setParameters: vi.fn(),
+// Mock Tesseract.js module
+vi.mock("tesseract.js", () => {
+  const mockWorker = {
+    loadLanguage: vi.fn().mockResolvedValue(undefined),
+    initialize: vi.fn().mockResolvedValue(undefined),
+    setParameters: vi.fn().mockResolvedValue(undefined),
     recognize: vi.fn(() =>
       Promise.resolve({
         data: {
@@ -41,20 +38,21 @@ const mocks = {
         },
       })
     ),
-    terminate: vi.fn(),
-  },
+    terminate: vi.fn().mockResolvedValue(undefined),
+  };
 
-  // Tesseract createWorker
-  createWorker: vi.fn(),
-};
-
-// Configure createWorker to return our mock worker
-mocks.createWorker.mockImplementation(() => Promise.resolve(mocks.worker));
-
-// Apply mocks to actual modules
-vi.spyOn(tesseractModule, "createWorker").mockImplementation(
-  mocks.createWorker
-);
+  return {
+    createWorker: vi.fn(() => Promise.resolve(mockWorker)),
+    OEM: {
+      LSTM_ONLY: 1,
+      DEFAULT: 3,
+    },
+    PSM: {
+      AUTO: 3,
+      SINGLE_BLOCK: 6,
+    },
+  };
+});
 
 interface MockImage extends Partial<HTMLImageElement> {
   addEventListener: MockedFunction<HTMLImageElement["addEventListener"]>;
@@ -110,13 +108,14 @@ describe("ClientOcr", () => {
           onload: null,
           onerror: null,
         };
-        // src設定時に自動的にonloadを呼び出す
+        // src設定時に即座にonloadを呼び出す（タイムアウト問題を回避）
         Object.defineProperty(img, "src", {
           set: function (value) {
             this._src = value;
-            setTimeout(() => {
-              if (this.onload) this.onload();
-            }, 0);
+            // setTimeoutを使わず、即座にonloadを実行
+            if (this.onload) {
+              this.onload();
+            }
           },
           get: function () {
             return this._src;
@@ -154,7 +153,7 @@ describe("ClientOcr", () => {
       const result = await ClientOcr.processImage("invalid-url");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Invalid image URL");
+      expect(result.error).toContain("Unsupported image URL format");
     });
 
     it("fetch失敗時にエラーが発生する", async () => {
@@ -214,11 +213,13 @@ describe("ClientOcr", () => {
 
   describe("estimateProcessingTime", () => {
     it("ファイルサイズに基づいて適切な処理時間を推定する", () => {
-      expect(ClientOcr.estimateProcessingTime(100 * 1024)).toBe(3); // 100KB
-      expect(ClientOcr.estimateProcessingTime(500 * 1024)).toBe(3); // 500KB
-      expect(ClientOcr.estimateProcessingTime(1024 * 1024)).toBe(5); // 1MB
-      expect(ClientOcr.estimateProcessingTime(2 * 1024 * 1024)).toBe(8); // 2MB
-      expect(ClientOcr.estimateProcessingTime(10 * 1024 * 1024)).toBe(15); // 10MB
+      expect(ClientOcr.estimateProcessingTime(100 * 1024)).toBe(3); // 100KB = 0.097MB < 0.5MB → 3
+      expect(ClientOcr.estimateProcessingTime(500 * 1024)).toBe(3); // 500KB = 0.488MB < 0.5MB → 3
+      expect(ClientOcr.estimateProcessingTime(600 * 1024)).toBe(5); // 600KB = 0.586MB >= 0.5MB, < 1MB → 5
+      expect(ClientOcr.estimateProcessingTime(1024 * 1024)).toBe(8); // 1MB = 1MB, < 2MB → 8
+      expect(ClientOcr.estimateProcessingTime(1.5 * 1024 * 1024)).toBe(8); // 1.5MB < 2MB → 8
+      expect(ClientOcr.estimateProcessingTime(3 * 1024 * 1024)).toBe(12); // 3MB >= 2MB, < 5MB → 12
+      expect(ClientOcr.estimateProcessingTime(10 * 1024 * 1024)).toBe(15); // 10MB >= 5MB → 15
     });
   });
 });

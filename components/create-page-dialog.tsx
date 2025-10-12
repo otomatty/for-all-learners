@@ -1,12 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useState, useEffect } from "react";
 import { createPage } from "@/app/_actions/pages";
 import { toast } from "sonner";
 import type { Editor } from "@tiptap/core";

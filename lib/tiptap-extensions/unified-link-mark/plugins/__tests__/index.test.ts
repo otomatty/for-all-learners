@@ -8,23 +8,19 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import type { Editor } from "@tiptap/core";
 import type { UnifiedLinkMarkOptions } from "../../types";
 import { createPlugins } from "../index";
+import {
+  createMinimalMockEditor,
+  createMockOptions,
+} from "@/lib/__tests__/helpers";
 
 describe("createPlugins", () => {
   let mockEditor: Editor;
   let mockOptions: UnifiedLinkMarkOptions;
 
   beforeEach(() => {
-    // Create mock editor
-    mockEditor = {} as Editor;
-
-    // Create mock options
-    mockOptions = {
-      HTMLAttributes: {},
-      autoReconciler: null,
-      noteSlug: null,
-      userId: "test-user-id",
-      onShowCreatePageDialog: () => {},
-    };
+    // Use helper functions to create mocks
+    mockEditor = createMinimalMockEditor();
+    mockOptions = createMockOptions();
   });
 
   describe("Function behavior", () => {

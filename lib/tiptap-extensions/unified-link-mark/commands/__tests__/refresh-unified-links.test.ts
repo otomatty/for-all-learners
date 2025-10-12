@@ -4,16 +4,14 @@
  */
 
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { JSDOM } from "jsdom";
+import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { UnifiedLinkMark } from "../../index";
 import { findMarksByState, updateMarkState } from "../../state-manager";
 
 // Setup jsdom environment for this test
-const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
-global.document = dom.window.document as unknown as Document;
-global.window = dom.window as unknown as Window & typeof globalThis;
+setupJSDOMEnvironment();
 
 describe("refreshUnifiedLinks Command", () => {
   let editor: Editor;

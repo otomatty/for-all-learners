@@ -4,13 +4,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { JSDOM } from "jsdom";
+import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { unifiedLinkAttributes } from "../attributes";
 import type { UnifiedLinkAttributes } from "../types";
 
 // Setup jsdom environment for this test
-const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
-global.document = dom.window.document;
+setupJSDOMEnvironment();
 
 describe("UnifiedLinkMark Attributes", () => {
   describe("attribute definitions", () => {
