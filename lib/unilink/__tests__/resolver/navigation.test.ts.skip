@@ -1,0 +1,272 @@
+/**
+ * Navigation Module Test Suite
+ * Tests for page navigation utilities with context awareness
+ *
+ * @fileoverview Tests for lib/unilink/resolver/navigation.ts
+ * @vitest-environment jsdom
+ */
+
+import { describe, expect, it, beforeEach, vi, afterEach } from "vitest";
+import * as sonner from "sonner";
+
+// Mock toast functions
+const mockToastError = vi
+  .spyOn(sonner.toast, "error")
+  .mockImplementation(() => "1");
+const mockToastSuccess = vi
+  .spyOn(sonner.toast, "success")
+  .mockImplementation(() => "1");
+
+describe("Navigation Module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("navigateToPage", () => {
+    it("should navigate to page with correct URL", async () => {
+      // Setup: Mock window.location
+      const originalLocation = window.location;
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { href: "" },
+      });
+
+      const { navigateToPage } = await import("../../resolver/navigation");
+
+      navigateToPage("test-page-id");
+
+      expect(window.location.href).toBe("/pages/test-page-id");
+
+      // Cleanup
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: originalLocation,
+      });
+    });
+
+    it("should handle navigation errors gracefully", async () => {
+      const { navigateToPage } = await import("../../resolver/navigation");
+
+      // Mock window.location to throw error
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: {
+          get href() {
+            throw new Error("Navigation error");
+          },
+          set href(_value: string) {
+            throw new Error("Navigation error");
+          },
+        },
+      });
+
+      navigateToPage("test-page-id");
+
+      expect(mockToastError).toHaveBeenCalledWith("ページの表示に失敗しました");
+
+      // Restore location
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { href: "" },
+      });
+    });
+
+    it("should handle non-browser environment", async () => {
+      const { navigateToPage } = await import("../../resolver/navigation");
+
+      // Temporarily remove window
+      const originalWindow = globalThis.window;
+      Object.defineProperty(globalThis, "window", {
+        writable: true,
+        value: undefined,
+      });
+
+      expect(() => navigateToPage("test-page-id")).not.toThrow();
+
+      // Restore window
+      Object.defineProperty(globalThis, "window", {
+        writable: true,
+        value: originalWindow,
+      });
+    });
+  });
+
+  describe("navigateToPageWithContext", () => {
+    it("should navigate to page without noteSlug", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id");
+
+      expect(window.location.href).toBe("/pages/test-page-id");
+    });
+
+    it("should navigate to page with noteSlug", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", "my-note");
+
+      expect(window.location.href).toBe("/notes/my-note/test-page-id");
+    });
+
+    it("should add newPage query parameter when isNewPage is true", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", null, true);
+
+      expect(window.location.href).toBe("/pages/test-page-id?newPage=true");
+    });
+
+    it("should combine noteSlug and newPage query parameter", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", "my-note", true);
+
+      expect(window.location.href).toBe(
+        "/notes/my-note/test-page-id?newPage=true"
+      );
+    });
+
+    it("should encode noteSlug with special characters", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", "my note with spaces");
+
+      expect(window.location.href).toBe(
+        "/notes/my%20note%20with%20spaces/test-page-id"
+      );
+    });
+
+    it("should handle Japanese characters in noteSlug", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", "日本語ノート");
+
+      expect(window.location.href).toContain("/notes/");
+      expect(window.location.href).toContain("/test-page-id");
+    });
+
+    it("should handle empty noteSlug as null", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      navigateToPageWithContext("test-page-id", "");
+
+      // Empty string is falsy, so should navigate to /pages/
+      expect(window.location.href).toBe("/pages/test-page-id");
+    });
+
+    it("should show error toast on navigation failure", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      // Mock window.location to throw error
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: {
+          get href() {
+            throw new Error("Navigation error");
+          },
+          set href(_value: string) {
+            throw new Error("Navigation error");
+          },
+        },
+      });
+
+      navigateToPageWithContext("test-page-id");
+
+      expect(mockToastError).toHaveBeenCalledWith("ページの表示に失敗しました");
+
+      // Restore location
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { href: "" },
+      });
+    });
+
+    it("should log error on navigation failure", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      // Mock window.location to throw error
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: {
+          set href(_value: string) {
+            throw new Error("Navigation error");
+          },
+        },
+      });
+
+      navigateToPageWithContext("test-page-id");
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[UnifiedResolver] Navigation failed:",
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
+
+      // Restore location
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { href: "" },
+      });
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle very long pageId", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      const longId = "a".repeat(500);
+      navigateToPageWithContext(longId);
+
+      expect(window.location.href).toBe(`/pages/${longId}`);
+    });
+
+    it("should handle very long noteSlug", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      const longSlug = `note-${"a".repeat(500)}`;
+      navigateToPageWithContext("page-id", longSlug);
+
+      expect(window.location.href).toContain("/notes/");
+      expect(window.location.href).toContain("/page-id");
+    });
+
+    it("should handle special characters in pageId", async () => {
+      const { navigateToPageWithContext } = await import(
+        "../../resolver/navigation"
+      );
+
+      // PageId might contain UUID with hyphens
+      const specialId = "123e4567-e89b-12d3-a456-426614174000";
+      navigateToPageWithContext(specialId);
+
+      expect(window.location.href).toBe(`/pages/${specialId}`);
+    });
+  });
+});
