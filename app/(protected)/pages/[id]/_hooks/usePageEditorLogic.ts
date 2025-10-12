@@ -9,7 +9,6 @@ import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import { PageLink } from "@/lib/tiptap-extensions/page-link"; // legacy (Decoration based)
 import { PageLinkMark } from "@/lib/tiptap-extensions/page-link-mark"; // new Mark-based implementation
-import { TagLink } from "@/lib/tiptap-extensions/tag-link";
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -210,7 +209,6 @@ export function usePageEditorLogic({
       CustomOrderedList,
       GyazoImage,
       PageLink.configure({ noteSlug }), // TODO: remove after full migration to PageLinkMark
-      TagLink,
       LatexInlineNode,
       Highlight,
       CodeBlockWithCopy.configure({

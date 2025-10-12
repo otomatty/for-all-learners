@@ -1,0 +1,43 @@
+/**
+ * UnifiedLinkMark configuration constants
+ * Default values and configuration for the UnifiedLinkMark extension
+ */
+
+import type { UnifiedLinkMarkOptions } from "./types";
+
+/**
+ * Default HTML attributes for the mark
+ */
+export const DEFAULT_HTML_ATTRIBUTES = {
+  class: "unilink underline cursor-pointer",
+};
+
+/**
+ * Default mark options
+ */
+export const DEFAULT_OPTIONS: UnifiedLinkMarkOptions = {
+  HTMLAttributes: DEFAULT_HTML_ATTRIBUTES,
+  autoReconciler: null,
+  noteSlug: null,
+  userId: null,
+  onShowCreatePageDialog: undefined,
+};
+
+/**
+ * Resolver configuration
+ */
+export const RESOLVER_CONFIG = {
+  batchSize: 10,
+  batchDelay: 50,
+  maxRetries: 2,
+  retryDelayBase: 100, // Base delay for exponential backoff
+} as const;
+
+/**
+ * Regular expression patterns
+ */
+export const PATTERNS = {
+  bracket: /\[([^\[\]]+)\]$/,
+  tag: /\B#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF\uAC00-\uD7AF]{1,50})$/,
+  externalUrl: /^https?:\/\//,
+} as const;

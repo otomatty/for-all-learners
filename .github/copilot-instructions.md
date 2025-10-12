@@ -172,23 +172,62 @@ docs/
    - 企画段階 → `01_planning/`
    - 要件定義 → `02_requirements/features/`
    - 設計 → `03_design/` (architecture/database/api/features/specifications)
-   - 実装計画 → `04_implementation/plans/`
+   - 実装計画 → `04_implementation/plans/{機能名}/`
    - 調査 → `07_research/YYYY_MM/`
-   - 作業ログ → `08_worklogs/YYYY_MM/`
+   - 作業ログ → `08_worklogs/YYYY_MM/YYYYMMDD/`
    - 改善提案 → `09_improvements/`
 
-2. **テンプレートを使用**
+2. **機能別ディレクトリの作成**
+
+   複数のドキュメントが同じ機能に関連する場合、機能別ディレクトリを作成:
+
+   **対象カテゴリ**:
+
+   - `04_implementation/plans/` - 実装計画
+   - `08_worklogs/YYYY_MM/YYYYMMDD/` - 日別作業ログ
+
+   **作成ルール**:
+
+   - 機能名でディレクトリを作成（例: `unified-link-mark/`, `pdf-processing/`）
+   - ディレクトリ内のファイルは `YYYYMMDD_{番号}_{内容}.md` 形式
+   - README.md を作成してディレクトリの概要を記載
+
+   **例**:
+
+   ```
+   04_implementation/plans/
+   ├── README.md
+   └── unified-link-mark/
+       ├── 20250925_01_implementation-plan.md
+       ├── 20250929_02_p2-implementation-plan.md
+       └── 20251011_03_migration-plan.md
+   ```
+
+3. **テンプレートを使用**
 
    - 要件定義: `docs/templates/requirement-template.md`
    - 設計書: `docs/templates/design-template.md`
    - 作業ログ: `docs/templates/worklog-template.md`
    - 調査レポート: `docs/templates/research-template.md`
 
-3. **ファイル命名規則**
-   - 日付を含む場合: `YYYYMMDD_説明.md` (例: `20251010_user-auth-implementation.md`)
-   - 機能名: `機能名-タイプ.md` (例: `pdf-processing-design.md`)
+4. **ファイル命名規則**
+
+   **基本形式**:
+
+   - 日付を含む場合: `YYYYMMDD_{2桁番号}_{説明}.md`
+   - 例: `20251012_01_unit-tests-complete.md`, `20251012_02_implementation-status.md`
+   - 番号は作業順序を表す（01, 02, 03, ...）
+   - 2 桁ゼロパディングで統一（将来の拡張性のため）
+
+   **機能名のみの場合**:
+
+   - 形式: `機能名-タイプ.md` (例: `pdf-processing-design.md`)
    - スネークケースまたはケバブケースを使用
+
+   **共通ルール**:
+
    - 日本語ファイル名は避ける（検索性・互換性のため）
+   - 作業の時系列が明確になり、ドキュメント間の関連性が把握しやすい
 
 #### ドキュメントに含めるべき内容
 
@@ -208,6 +247,12 @@ docs/
 - **作業中**: 発見した問題、学び、変更内容を記録
 - **作業終了時**: 次回の作業予定、残タスクを明記
 
+**ファイル命名規則**:
+
+- 1 日 1 作業: `YYYYMMDD_説明.md`
+- 1 日複数作業: `YYYYMMDD_{2桁番号}_{説明}.md` (例: `20251012_01_unit-tests.md`, `20251012_02_refactoring.md`)
+- 番号は作業順序を示す（01, 02, 03, ...）
+
 **記載すべき内容**:
 
 - 実施した作業の詳細
@@ -216,6 +261,22 @@ docs/
 - 学んだこと・気づき
 - テスト結果
 - 次回の作業予定
+
+#### 実装計画の記録
+
+実装計画は `04_implementation/plans/{機能名}/` に記録:
+
+- **機能別ディレクトリを作成**: 複数のドキュメントがある場合は必須
+- **README.md を配置**: ディレクトリの概要、ファイル一覧、実装の経緯を記載
+- **時系列で番号付け**: `YYYYMMDD_{2桁番号}_{内容}.md` 形式で管理
+- **関連ドキュメントへのリンク**: 設計書、作業ログへの参照を明記
+
+**ファイル命名例**:
+
+- `20250925_01_implementation-plan.md` - 初期実装計画
+- `20250929_02_p2-implementation-plan.md` - Phase 2 計画
+- `20251011_07_migration-plan.md` - 移行計画
+- `20251011_08_refactoring-plan.md` - リファクタリング計画
 
 #### 調査・研究の記録
 
@@ -275,5 +336,7 @@ docs/
 
 - **目的別**: README.md の「目的別」セクションを参照
 - **時系列**: worklogs/ や research/ の月別ディレクトリを確認
+- **機能別**: plans/ や worklogs/ 内の機能別ディレクトリを確認
+- **日付・番号順**: ファイル名の `YYYYMMDD_{番号}_` でソート・検索
 - **機能名**: grep や VS Code の検索機能を活用
 - **関連ドキュメント**: 各ドキュメントの「関連ドキュメント」セクションを辿る
