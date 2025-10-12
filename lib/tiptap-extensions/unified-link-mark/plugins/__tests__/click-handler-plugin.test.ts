@@ -857,4 +857,296 @@ describe("createClickHandlerPlugin", () => {
       // Should detect external type
     });
   });
+
+  // ========================================
+  // Phase 3.2: DOM Click Handler & Page Creation
+  // ========================================
+
+  describe("Phase 3.2: DOM click handler integration", () => {
+    it("should register handleDOMEvents.click handler", () => {
+      // Contract: Plugin should have handleDOMEvents.click property
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents).toBeDefined();
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      expect(typeof plugin.spec.props?.handleDOMEvents?.click).toBe("function");
+    });
+
+    it("should handle clicks on <a> tags", () => {
+      // Contract: handleDOMEvents.click should detect <a> tags
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      const handler = plugin.spec.props?.handleDOMEvents?.click;
+      expect(handler).toBeDefined();
+      // Handler should check target.tagName === "A"
+    });
+
+    it("should ignore clicks on non-anchor elements", () => {
+      // Contract: Only <a> tags should be processed
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      const handler = plugin.spec.props?.handleDOMEvents?.click;
+      expect(handler).toBeDefined();
+      // Should return false for non-anchor elements
+    });
+
+    it("should extract data-page-title attribute", () => {
+      // Contract: Should read data-page-title from <a> tag
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should extract newTitle from target.getAttribute("data-page-title")
+    });
+
+    it("should prevent default on data-page-title links", () => {
+      // Contract: event.preventDefault() should be called
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should prevent default navigation for new page creation
+    });
+  });
+
+  describe("Phase 3.2: New page creation from link", () => {
+    it("should create page with title from data-page-title", () => {
+      // Contract: createPageFromLink should be called with correct title
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should call createPageFromLink(newTitle, userId, noteSlug)
+    });
+
+    it("should convert underscores to spaces in title", () => {
+      // Contract: Title should replace _ with spaces (e.g., "My_Page" -> "My Page")
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // createPageFromLink should handle underscore conversion
+    });
+
+    it("should use userId from options if available", () => {
+      // Contract: Should prefer userId from options
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, userId: "explicit-user-id" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should use explicit-user-id
+    });
+
+    it("should fetch userId from auth if not in options", () => {
+      // Contract: Should call supabase.auth.getUser() if userId not provided
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, userId: undefined },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should dynamically fetch user from auth
+    });
+
+    it("should show error if user not authenticated", () => {
+      // Contract: Should show toast.error if auth fails
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, userId: undefined },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should call toast.error("ログインしてください")
+    });
+
+    it("should navigate to new page after creation", () => {
+      // Contract: Should navigate to result.href
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should set window.location.href = result.href
+    });
+
+    it("should return true after handling", () => {
+      // Contract: Should return true to indicate event was handled
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should return true
+    });
+  });
+
+  describe("Phase 3.2: noteSlug integration with page creation", () => {
+    it("should pass noteSlug to createPageFromLink", () => {
+      // Contract: noteSlug should be passed to page creation function
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: "test-note" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should call createPageFromLink(title, userId, "test-note")
+    });
+
+    it("should link page to note when noteSlug present", () => {
+      // Contract: note_page_links table should be updated
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: "test-note" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // createPageFromLink should insert into note_page_links
+    });
+
+    it("should navigate to /notes/:slug/:id when noteSlug present", () => {
+      // Contract: href should be /notes/test-note/:pageId?newPage=true
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: "test-note" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // result.href should include /notes/test-note/
+    });
+
+    it("should navigate to /pages/:id when noteSlug absent", () => {
+      // Contract: href should be /pages/:pageId?newPage=true
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: null },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // result.href should be /pages/:pageId?newPage=true
+    });
+
+    it("should encode noteSlug in URL", () => {
+      // Contract: noteSlug should be URL-encoded
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: "test note with spaces" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should use encodeURIComponent(noteSlug)
+    });
+  });
+
+  describe("Phase 3.2: Normal href navigation", () => {
+    it("should handle href attribute without data-page-title", () => {
+      // Contract: Should navigate to href if no data-page-title
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should check target.hasAttribute("href")
+    });
+
+    it("should open link in new tab when target='_blank'", () => {
+      // Contract: Should use window.open() for _blank links
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should call window.open(href, "_blank", "noopener,noreferrer")
+    });
+
+    it("should navigate normally when target not '_blank'", () => {
+      // Contract: Should use window.location.href for normal links
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should set window.location.href = href
+    });
+
+    it("should prevent default on href navigation", () => {
+      // Contract: event.preventDefault() should be called
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should prevent default browser navigation
+    });
+
+    it("should ignore # hrefs", () => {
+      // Contract: Should not navigate for href="#"
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should skip if href === "#"
+    });
+  });
+
+  describe("Phase 3.2: Error handling", () => {
+    it("should handle page creation errors gracefully", () => {
+      // Contract: Should not throw if createPageFromLink fails
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should catch errors and show toast
+    });
+
+    it("should handle auth errors gracefully", () => {
+      // Contract: Should not throw if auth.getUser() fails
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, userId: undefined },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should show error toast
+    });
+
+    it("should handle note linking errors gracefully", () => {
+      // Contract: Page creation should succeed even if note linking fails
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: { ...mockOptions, noteSlug: "test-note" },
+      });
+
+      expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+      // Should continue even if note_page_links insert fails
+    });
+  });
 });

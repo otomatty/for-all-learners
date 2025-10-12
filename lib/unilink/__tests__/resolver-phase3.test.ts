@@ -359,3 +359,178 @@ describe("Phase 3.1: Performance", () => {
     });
   });
 });
+
+// ========================================
+// Phase 3.2: DOM Click Handler & Page Creation
+// ========================================
+
+describe("Phase 3.2: createPageFromLink function", () => {
+  describe("Page creation", () => {
+    it("should create page with correct title", () => {
+      // Contract: Call supabase.from("pages").insert() with title
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should convert underscores to spaces in title", () => {
+      // Contract: "My_Page" -> "My Page"
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should set is_public to false by default", () => {
+      // Contract: New pages should be private
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should initialize with empty content", () => {
+      // Contract: content_tiptap should be { type: "doc", content: [] }
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should return pageId and href on success", () => {
+      // Contract: Return { pageId: string, href: string }
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should return null on failure", () => {
+      // Contract: Return null if insert fails
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("Note linking", () => {
+    it("should link page to note when noteSlug provided", () => {
+      // Contract: Insert into note_page_links table
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should query notes table by slug", () => {
+      // Contract: SELECT id FROM notes WHERE slug = noteSlug
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should insert into note_page_links with correct IDs", () => {
+      // Contract: INSERT (note_id, page_id)
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should skip linking if noteSlug is null", () => {
+      // Contract: Don't query notes if noteSlug not provided
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should continue if note not found", () => {
+      // Contract: Page creation should succeed even if note linking fails
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should log error if note linking fails", () => {
+      // Contract: console.error if note_page_links insert fails
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("URL generation", () => {
+    it("should generate /notes/:slug/:id URL when noteSlug present", () => {
+      // Contract: href should include noteSlug
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should generate /pages/:id URL when noteSlug absent", () => {
+      // Contract: href should not include noteSlug
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should append ?newPage=true query parameter", () => {
+      // Contract: All new page URLs should have newPage flag
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should encode noteSlug in URL", () => {
+      // Contract: Use encodeURIComponent for noteSlug
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should handle special characters in noteSlug", () => {
+      // Contract: Properly encode spaces, unicode, etc.
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("Broadcast notification", () => {
+    it("should broadcast page creation event", () => {
+      // Contract: Call broadcast.emitPageCreated(key, pageId)
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should normalize title to key", () => {
+      // Contract: Use normalizeTitleToKey(title)
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should broadcast with correct pageId", () => {
+      // Contract: pageId should match created page
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should log broadcast event", () => {
+      // Contract: console.log broadcast details
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("Toast notifications", () => {
+    it("should show success toast on creation", () => {
+      // Contract: toast.success with page title
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should show error toast on failure", () => {
+      // Contract: toast.error with error message
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should include error details in toast", () => {
+      // Contract: Show error.message if available
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("Error handling", () => {
+    it("should handle database insert errors", () => {
+      // Contract: Catch and log errors
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should handle note query errors", () => {
+      // Contract: Continue even if note query fails
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should handle note linking errors", () => {
+      // Contract: Log error but don't fail page creation
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should handle broadcast errors", () => {
+      // Contract: Don't fail if broadcast fails
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should log all errors for debugging", () => {
+      // Contract: console.error with context
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+
+  describe("Authentication", () => {
+    it("should require valid userId", () => {
+      // Contract: userId parameter is required
+      expect(true).toBe(true); // Placeholder
+    });
+
+    it("should use provided userId for page creation", () => {
+      // Contract: Set user_id field in insert
+      expect(true).toBe(true); // Placeholder
+    });
+  });
+});

@@ -13,6 +13,7 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import type { ResolvedPos } from "prosemirror-model";
 import type { Mark } from "prosemirror-model";
 import type { Editor } from "@tiptap/core";
+import { toast } from "sonner";
 import type { UnifiedLinkAttributes, UnifiedLinkMarkOptions } from "../types";
 import {
   navigateToPage,
@@ -112,6 +113,77 @@ async function handleBracketClick(
 }
 
 /**
+ * Phase 3.2: Handle DOM click events on anchor tags
+ * Handles data-page-title attribute for new page creation
+ */
+async function handleAnchorClick(
+  target: HTMLAnchorElement,
+  event: MouseEvent,
+  context: { editor: Editor; options: UnifiedLinkMarkOptions }
+): Promise<boolean> {
+  // Handle data-page-title attribute (new page creation)
+  const newTitle = target.getAttribute("data-page-title");
+  if (newTitle) {
+    event.preventDefault();
+
+    // Get userId from options or fetch from auth
+    let userId = context.options.userId;
+
+    if (!userId) {
+      // Dynamic import to avoid circular dependency
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        toast.error("ログインしてください");
+        return true;
+      }
+
+      userId = user.id;
+    }
+
+    // Import createPageFromLink dynamically
+    const { createPageFromLink } = await import("../../../unilink/resolver");
+
+    // Create page and navigate
+    const result = await createPageFromLink(
+      newTitle,
+      userId,
+      context.options.noteSlug
+    );
+
+    if (result) {
+      window.location.href = result.href;
+    }
+
+    return true;
+  }
+
+  // Handle normal href navigation
+  if (target.hasAttribute("href")) {
+    const href = target.getAttribute("href");
+    if (href && href !== "#") {
+      event.preventDefault();
+
+      if (target.target === "_blank") {
+        window.open(href, "_blank", "noopener,noreferrer");
+      } else {
+        window.location.href = href;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Create the click handler plugin
  * @param context - Plugin context
  * @returns ProseMirror Plugin
@@ -196,6 +268,19 @@ export function createClickHandlerPlugin(context: {
         }
 
         return false;
+      },
+      // Phase 3.2: DOM click handler for anchor tags
+      handleDOMEvents: {
+        click: (view, event) => {
+          const target = event.target as HTMLElement;
+
+          if (target.tagName === "A") {
+            handleAnchorClick(target as HTMLAnchorElement, event, context);
+            return true;
+          }
+
+          return false;
+        },
       },
     },
   });
