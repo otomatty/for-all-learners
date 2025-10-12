@@ -27,7 +27,7 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
       }
 
       const raw = match[1];
-      const text = raw; // Tag doesn't display #
+      const text = `#${raw}`; // Tag displays with # prefix
       const key = normalizeTitleToKey(raw);
       const markId = generateMarkId();
 

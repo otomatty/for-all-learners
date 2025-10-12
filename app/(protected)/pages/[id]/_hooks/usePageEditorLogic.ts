@@ -7,7 +7,6 @@ import { TableExtensions } from "@/lib/tiptap-extensions/custom-table";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
-import { PageLinkMark } from "@/lib/tiptap-extensions/page-link-mark"; // new Mark-based implementation
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -197,10 +196,8 @@ export function usePageEditorLogic({
         orderedList: false,
         codeBlock: false,
       }),
-      // Unified Link Mark comes first to handle both [Title] and #tag syntax
+      // Unified Link Mark handles both [Title] and #tag syntax
       UnifiedLinkMark,
-      // New Mark implementation comes before legacy PageLink to ensure mark rendering precedence
-      PageLinkMark,
       CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
       CustomBulletList,
       CustomOrderedList,
@@ -229,15 +226,15 @@ export function usePageEditorLogic({
       // Sanitize initial document to remove empty text nodes
       const sanitized = sanitizeContent(initialDoc);
 
-      // Temporary migration: convert bracket syntax in existing content into PageLinkMark if not already marked
+      // Temporary migration: convert bracket syntax in existing content into UnifiedLinkMark if not already marked
       const migrateBracketsToMarks = (doc: JSONContent): JSONContent => {
         const clone = structuredClone(doc) as JSONContent;
         const walk = (node: JSONContent): JSONContent[] => {
           if (node.type === "text" && node.text) {
-            // Skip if already has pageLinkMark
+            // Skip if already has unilink mark
             const textNode = node as JSONTextNode;
             const hasMark = textNode.marks?.some(
-              (mark) => mark.type === "pageLinkMark"
+              (mark) => mark.type === "unilink"
             );
             if (hasMark) return [node];
             // Find patterns like [Title]
@@ -257,20 +254,17 @@ export function usePageEditorLogic({
               }
               const inner = title;
               const isExternal = /^https?:\/\//.test(inner);
-              const plId = `${Date.now().toString(36)}-${Math.random()
-                .toString(36)
-                .slice(2, 8)}`;
               pieces.push({
                 type: "text",
                 text: inner,
                 marks: [
                   {
-                    type: "pageLinkMark",
+                    type: "unilink",
                     attrs: {
                       href: isExternal ? inner : "#",
-                      pageTitle: isExternal ? undefined : inner,
+                      text: inner,
+                      variant: "bracket",
                       external: isExternal || undefined,
-                      plId,
                       exists: isExternal ? true : undefined,
                       state: isExternal ? "exists" : "pending",
                     },

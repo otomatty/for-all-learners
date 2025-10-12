@@ -33,14 +33,15 @@ describe("createTagInputRule", () => {
   describe("Pattern matching", () => {
     it("should match tag notation correctly", () => {
       const testCases = [
-        { input: "#tag", shouldMatch: true, expected: "tag" },
-        { input: "#タグ", shouldMatch: true, expected: "タグ" },
-        { input: "#tag123", shouldMatch: true, expected: "tag123" },
-        { input: "#テスト", shouldMatch: true, expected: "テスト" },
-        { input: "#中文", shouldMatch: true, expected: "中文" },
+        { input: " #tag", shouldMatch: true, expected: "tag" }, // Requires space or line start
+        { input: " #タグ", shouldMatch: true, expected: "タグ" },
+        { input: " #tag123", shouldMatch: true, expected: "tag123" },
+        { input: " #テスト", shouldMatch: true, expected: "テスト" },
+        { input: " #中文", shouldMatch: true, expected: "中文" },
         { input: "# space", shouldMatch: false }, // space after hash
         { input: "notag", shouldMatch: false },
         { input: "#", shouldMatch: false },
+        { input: "no#tag", shouldMatch: false }, // No space before #
       ];
 
       for (const { input, shouldMatch, expected } of testCases) {
@@ -72,16 +73,16 @@ describe("createTagInputRule", () => {
       const validPatterns = [
         "Hello #world",
         "This is #test",
-        "#simple",
+        " #simple", // Needs space before
         "Multiple #tags and #phrases",
-        "#ひらがな",
-        "#カタカナ",
-        "#漢字",
-        "#测试", // Chinese characters
-        "#tag1",
-        "#tag123",
-        "#a",
-        "#Z",
+        " #ひらがな",
+        " #カタカナ",
+        " #漢字",
+        " #测试", // Chinese characters
+        " #tag1",
+        " #tag123",
+        " #a",
+        " #Z",
       ];
 
       for (const pattern of validPatterns) {
@@ -117,12 +118,12 @@ describe("createTagInputRule", () => {
   describe("Character support", () => {
     it("should support alphanumeric characters", () => {
       const alphanumeric = [
-        "#abc",
-        "#ABC",
-        "#123",
-        "#abc123",
-        "#ABC123",
-        "#a1b2c3",
+        " #abc",
+        " #ABC",
+        " #123",
+        " #abc123",
+        " #ABC123",
+        " #a1b2c3",
       ];
 
       for (const tag of alphanumeric) {
@@ -133,11 +134,11 @@ describe("createTagInputRule", () => {
 
     it("should support Japanese characters", () => {
       const japanese = [
-        "#ひらがな",
-        "#カタカナ",
-        "#漢字",
-        "#混合文字列",
-        "#ひらカナ漢字123",
+        " #ひらがな",
+        " #カタカナ",
+        " #漢字",
+        " #混合文字列",
+        " #ひらカナ漢字123",
       ];
 
       for (const tag of japanese) {
@@ -148,10 +149,10 @@ describe("createTagInputRule", () => {
 
     it("should support CJK characters", () => {
       const supportedCjk = [
-        "#中文",
-        "#測試",
-        "#한글", // Korean characters now supported
-        "#테스트", // Korean characters now supported
+        " #中文",
+        " #測試",
+        " #한글", // Korean characters now supported
+        " #테스트", // Korean characters now supported
       ];
 
       for (const tag of supportedCjk) {
@@ -162,12 +163,12 @@ describe("createTagInputRule", () => {
 
     it("should support Korean characters", () => {
       const korean = [
-        "#한글",
-        "#테스트",
-        "#한국어",
-        "#안녕하세요",
-        "#가나다라마바사",
-        "#혼합문자123", // Mixed Korean and numbers
+        " #한글",
+        " #테스트",
+        " #한국어",
+        " #안녕하세요",
+        " #가나다라마바사",
+        " #혼합문자123", // Mixed Korean and numbers
       ];
 
       for (const tag of korean) {
@@ -178,10 +179,10 @@ describe("createTagInputRule", () => {
 
     it("should support mixed CJK characters", () => {
       const mixedCjk = [
-        "#中한日", // Chinese + Korean + Japanese
-        "#日本語한국어", // Japanese + Korean
-        "#중국漢字", // Korean + Chinese
-        "#混合언어123", // Mixed languages with numbers
+        " #中한日", // Chinese + Korean + Japanese
+        " #日本語한국어", // Japanese + Korean
+        " #중국漢字", // Korean + Chinese
+        " #混合언어123", // Mixed languages with numbers
       ];
 
       for (const tag of mixedCjk) {
@@ -195,9 +196,9 @@ describe("createTagInputRule", () => {
     it("should match tags within length limit", () => {
       // 50文字以内のタグ
       const validLengthTags = [
-        "#a", // 1文字
-        `#${"a".repeat(50)}`, // 50文字
-        "#日本語タグ", // マルチバイト文字
+        " #a", // 1文字
+        ` #${"a".repeat(50)}`, // 50文字
+        " #日本語タグ", // マルチバイト文字
       ];
 
       for (const tag of validLengthTags) {
@@ -209,8 +210,8 @@ describe("createTagInputRule", () => {
     it("should not match tags exceeding length limit", () => {
       // 51文字以上のタグ
       const invalidLengthTags = [
-        `#${"a".repeat(51)}`, // 51文字
-        `#${"a".repeat(100)}`, // 100文字
+        ` #${"a".repeat(51)}`, // 51文字
+        ` #${"a".repeat(100)}`, // 100文字
       ];
 
       for (const tag of invalidLengthTags) {
@@ -246,24 +247,26 @@ describe("createTagInputRule", () => {
   });
 
   describe("Configuration", () => {
-    it("should use correct regex pattern", () => {
-      // Test the pattern directly
-      expect(PATTERNS.tag.source).toBe(
-        "\\B#([a-zA-Z0-9\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3400-\\u4DBF\\uAC00-\\uD7AF]{1,50})$"
+    it("should use correct regex pattern with unicode flag", () => {
+      // Test the pattern directly - updated for new regex with lookahead
+      expect(PATTERNS.tag.source).toContain(
+        "#([a-zA-Z0-9\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3400-\\u4DBF\\uAC00-\\uD7AF]{1,50})"
       );
+      expect(PATTERNS.tag.unicode).toBe(true); // Now uses unicode flag
       expect(PATTERNS.tag.global).toBe(false);
       expect(PATTERNS.tag.multiline).toBe(false);
     });
 
     it("should handle pattern edge cases", () => {
       const edgeCases = [
-        { text: "#a", shouldMatch: true, expected: "a" },
-        { text: "#1", shouldMatch: true, expected: "1" },
-        { text: "#あ", shouldMatch: true, expected: "あ" },
-        { text: "#ア", shouldMatch: true, expected: "ア" },
-        { text: "#中", shouldMatch: true, expected: "中" },
-        { text: "#ㄱ", shouldMatch: false }, // Korean Jamo not included
-        { text: "#！", shouldMatch: false }, // Special characters not allowed
+        { text: " #a", shouldMatch: true, expected: "a" },
+        { text: " #1", shouldMatch: true, expected: "1" },
+        { text: " #あ", shouldMatch: true, expected: "あ" },
+        { text: " #ア", shouldMatch: true, expected: "ア" },
+        { text: " #中", shouldMatch: true, expected: "中" },
+        { text: " #ㄱ", shouldMatch: false }, // Korean Jamo not included
+        { text: " #！", shouldMatch: false }, // Special characters not allowed
+        { text: "no#tag", shouldMatch: false }, // No space before #
       ];
 
       for (const { text, shouldMatch, expected } of edgeCases) {
@@ -301,10 +304,10 @@ describe("createTagInputRule", () => {
     it("should not cause catastrophic backtracking", () => {
       // Test patterns that could cause ReDoS
       const potentialProblematicInputs = [
-        `#${"a".repeat(1000)}`, // Very long string
-        `#${"あ".repeat(500)}`, // Long Japanese string
-        "####################", // Multiple hashes
-        `#${"!".repeat(100)}`, // Invalid characters
+        ` #${"a".repeat(1000)}`, // Very long string
+        ` #${"あ".repeat(500)}`, // Long Japanese string
+        " ####################", // Multiple hashes
+        ` #${"!".repeat(100)}`, // Invalid characters
       ];
 
       for (const input of potentialProblematicInputs) {

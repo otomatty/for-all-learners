@@ -38,6 +38,9 @@ export const RESOLVER_CONFIG = {
  */
 export const PATTERNS = {
   bracket: /\[([^\[\]]+)\]$/,
-  tag: /\B#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF\uAC00-\uD7AF]{1,50})$/,
+  // Tag pattern: detects #tag in text (not just at line end)
+  // Matches: start of line or whitespace, followed by #, then tag characters
+  // Lookahead ensures tag ends at whitespace, punctuation, or end of text
+  tag: /(?:^|\s)#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF\uAC00-\uD7AF]{1,50})(?=\s|$|[^\p{Letter}\p{Number}])/u,
   externalUrl: /^https?:\/\//,
 } as const;
