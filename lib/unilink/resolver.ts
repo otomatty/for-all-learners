@@ -222,3 +222,163 @@ export async function batchResolveMarks(
     console.log(`[UnifiedResolver] Processing mark: ${markId}`);
   }
 }
+
+// ========================================
+// Phase 3.1: Icon Link & External Link Support
+// ========================================
+
+/**
+ * .icon記法のユーザーリンクを解決する
+ * [username.icon] → ユーザーページに遷移
+ *
+ * @param userSlug ユーザーslug (e.g., "username" from "username.icon")
+ * @param noteSlug ノートslug（オプション、ノートコンテキストでの表示用）
+ * @returns ページIDとhref、見つからない場合はnull
+ */
+export async function resolveIconLink(
+  userSlug: string,
+  noteSlug?: string | null
+): Promise<{ pageId: string; href: string } | null> {
+  try {
+    console.log(`[UnifiedResolver] Resolving icon link: ${userSlug}`);
+
+    // Dynamic import to avoid circular dependency
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+
+    // 1. accounts テーブルから user_slug で検索
+    const { data: account, error: accountError } = await supabase
+      .from("accounts")
+      .select("id")
+      .eq("user_slug", userSlug)
+      .single();
+
+    if (accountError || !account) {
+      console.warn(`[UnifiedResolver] User not found: ${userSlug}`);
+      toast.error(`ユーザー "${userSlug}" が見つかりません`);
+      return null;
+    }
+
+    // 2. pages テーブルからユーザーページを取得
+    const { data: page, error: pageError } = await supabase
+      .from("pages")
+      .select("id")
+      .eq("user_id", account.id)
+      .eq("title", userSlug)
+      .single();
+
+    if (pageError || !page) {
+      console.warn(`[UnifiedResolver] User page not found for: ${userSlug}`);
+      toast.error("ユーザーページが見つかりません");
+      return null;
+    }
+
+    // 3. noteSlug に応じた URL を生成
+    const href = noteSlug
+      ? `/notes/${encodeURIComponent(noteSlug)}/${page.id}`
+      : `/pages/${page.id}`;
+
+    console.log(`[UnifiedResolver] Icon link resolved: ${href}`);
+    return { pageId: page.id, href };
+  } catch (error) {
+    console.error("[UnifiedResolver] Icon link resolution failed:", error);
+    toast.error("ページ遷移に失敗しました");
+    return null;
+  }
+}
+
+/**
+ * ブラケット内容を解析してリンク種別を判定
+ * Phase 3.1: .icon サフィックスと外部リンクの検出
+ *
+ * @param content ブラケット内のテキスト (e.g., "Page Title", "username.icon", "https://...")
+ * @returns リンク種別の情報
+ */
+export function parseBracketContent(content: string): {
+  type: "page" | "icon" | "external";
+  slug: string;
+  isIcon: boolean;
+  userSlug?: string;
+} {
+  // .icon サフィックス検知
+  const iconMatch = content.match(/^(.+)\.icon$/);
+  if (iconMatch) {
+    return {
+      type: "icon",
+      slug: iconMatch[1],
+      isIcon: true,
+      userSlug: iconMatch[1],
+    };
+  }
+
+  // 外部リンク判定 (https:// or http://)
+  if (/^https?:\/\//i.test(content)) {
+    return {
+      type: "external",
+      slug: content,
+      isIcon: false,
+    };
+  }
+
+  // 通常のページリンク
+  return {
+    type: "page",
+    slug: content,
+    isIcon: false,
+  };
+}
+
+/**
+ * 外部リンクかどうかを判定
+ *
+ * @param text テキスト
+ * @returns 外部リンクの場合true
+ */
+export function isExternalLink(text: string): boolean {
+  return /^https?:\/\//i.test(text);
+}
+
+/**
+ * 外部リンクを新規タブで開く
+ *
+ * @param url 外部URL
+ */
+export function openExternalLink(url: string): void {
+  try {
+    if (typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  } catch (error) {
+    console.error("[UnifiedResolver] Failed to open external link:", error);
+    toast.error("リンクを開けませんでした");
+  }
+}
+
+/**
+ * ナビゲーション処理（noteSlug対応版）
+ * Phase 3.1: noteSlug を考慮した統一的なナビゲーション
+ *
+ * @param pageId ページID
+ * @param noteSlug ノートslug（オプション）
+ * @param isNewPage 新規作成ページかどうか
+ */
+export function navigateToPageWithContext(
+  pageId: string,
+  noteSlug?: string | null,
+  isNewPage = false
+): void {
+  try {
+    if (typeof window !== "undefined") {
+      const queryParam = isNewPage ? "?newPage=true" : "";
+
+      const href = noteSlug
+        ? `/notes/${encodeURIComponent(noteSlug)}/${pageId}${queryParam}`
+        : `/pages/${pageId}${queryParam}`;
+
+      window.location.href = href;
+    }
+  } catch (error) {
+    console.error("[UnifiedResolver] Navigation failed:", error);
+    toast.error("ページの表示に失敗しました");
+  }
+}

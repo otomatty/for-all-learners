@@ -7,6 +7,15 @@ import type { Editor } from "@tiptap/core";
 import type { AutoReconciler } from "../../unilink";
 
 /**
+ * Link type classification
+ * - page: Regular page link [Title]
+ * - tag: Tag link #tag
+ * - icon: User icon link [username.icon]
+ * - external: External URL [https://...]
+ */
+export type LinkType = "page" | "tag" | "icon" | "external";
+
+/**
  * Mark options interface
  */
 export interface UnifiedLinkMarkOptions {
@@ -22,6 +31,7 @@ export interface UnifiedLinkMarkOptions {
 
 /**
  * Mark attributes interface
+ * Extended in Phase 3.1 to support icon links and external links
  */
 export interface UnifiedLinkAttributes {
   variant: "bracket" | "tag";
@@ -35,6 +45,10 @@ export interface UnifiedLinkAttributes {
   created?: boolean;
   meta?: object;
   markId: string;
+
+  // Phase 3.1: New fields for link type classification
+  linkType?: LinkType; // Link type (optional for backward compatibility)
+  userSlug?: string; // User slug for .icon links (e.g., "username" from "username.icon")
 }
 
 /**

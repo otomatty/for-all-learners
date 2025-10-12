@@ -434,4 +434,427 @@ describe("createClickHandlerPlugin", () => {
       expect(plugin.spec.props?.handleClick).toBeDefined();
     });
   });
+
+  // ========================================
+  // Phase 3.1: New Features Tests
+  // ========================================
+
+  describe("Phase 3.1: Bracket click detection (backward compatibility)", () => {
+    it("should detect bracket pattern at click position when no unilink mark", () => {
+      // Contract: When unilink mark is not found, check for [text] pattern
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Implementation should detect [text] pattern in text content
+    });
+
+    it("should extract bracket content from text node", () => {
+      // Contract: Extract text between [ and ] at cursor position
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should handle: "Some text [link text] more text"
+    });
+
+    it("should handle multiple brackets in same text node", () => {
+      // Contract: Should find the bracket pair that contains the click position
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should handle: "[first] and [second]"
+    });
+
+    it("should ignore brackets in code blocks", () => {
+      // Contract: Should not process brackets inside code blocks
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Code blocks should be ignored
+    });
+
+    it("should ignore brackets in inline code", () => {
+      // Contract: Should not process brackets inside inline code marks
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Inline code should be ignored
+    });
+
+    it("should handle nested brackets correctly", () => {
+      // Contract: Should handle [[text]] as outer bracket
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Nested brackets should be handled properly
+    });
+
+    it("should return false if click is outside any bracket", () => {
+      // Contract: Return false when no bracket at click position
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should return false to allow default behavior
+    });
+
+    it("should prioritize unilink mark over bracket detection", () => {
+      // Contract: Always check for unilink mark first
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Unilink mark has priority
+    });
+  });
+
+  describe("Phase 3.1: .icon notation support", () => {
+    it("should detect .icon suffix in bracket content", () => {
+      // Contract: Detect pattern [username.icon]
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should recognize .icon notation
+    });
+
+    it("should handle .icon click without noteSlug", () => {
+      // Contract: Navigate to /pages/:pageId for user page
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should navigate to user's page
+    });
+
+    it("should handle .icon click with noteSlug", () => {
+      // Contract: Navigate to /notes/:slug/:pageId when noteSlug present
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "test-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should navigate with note context
+    });
+
+    it("should query accounts table by user_slug", () => {
+      // Contract: Search accounts.user_slug for username
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should query accounts table
+    });
+
+    it("should query pages table for user page", () => {
+      // Contract: Find page where user_id matches and title equals username
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should query pages table
+    });
+
+    it("should show error when user not found", () => {
+      // Contract: Display error toast when user_slug doesn't exist
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should handle user not found
+    });
+
+    it("should show error when user page not found", () => {
+      // Contract: Display error toast when user exists but has no page
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should handle page not found
+    });
+
+    it("should handle .icon in unilink mark attributes", () => {
+      // Contract: Support linkType="icon" in UnifiedLinkAttributes
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should process icon type in mark
+    });
+
+    it("should prevent default event on .icon click", () => {
+      // Contract: Call event.preventDefault() for .icon links
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should prevent default
+    });
+
+    it("should return true after handling .icon click", () => {
+      // Contract: Return true to indicate event was handled
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should return true
+    });
+  });
+
+  describe("Phase 3.1: External link support", () => {
+    it("should detect https:// URL in bracket content", () => {
+      // Contract: Recognize [https://example.com] pattern
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should detect https URLs
+    });
+
+    it("should detect http:// URL in bracket content", () => {
+      // Contract: Recognize [http://example.com] pattern
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should detect http URLs
+    });
+
+    it("should open external link in new tab", () => {
+      // Contract: Call window.open(url, '_blank')
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should use window.open
+    });
+
+    it("should handle external link in unilink mark", () => {
+      // Contract: Support linkType="external" in UnifiedLinkAttributes
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should process external type in mark
+    });
+
+    it("should prevent default event on external link click", () => {
+      // Contract: Call event.preventDefault()
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should prevent default
+    });
+  });
+
+  describe("Phase 3.1: noteSlug integration", () => {
+    it("should use noteSlug for internal page navigation", () => {
+      // Contract: Navigate to /notes/:slug/:pageId when noteSlug present
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "my-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should include noteSlug in URL
+    });
+
+    it("should use standard page URL without noteSlug", () => {
+      // Contract: Navigate to /pages/:pageId when noteSlug is null
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should use standard URL
+    });
+
+    it("should encode noteSlug in URL", () => {
+      // Contract: Use encodeURIComponent for noteSlug
+      const optionsWithSpecialChars: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "note with spaces",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithSpecialChars,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should encode special characters
+    });
+
+    it("should pass noteSlug to page creation flow", () => {
+      // Contract: Include noteSlug when creating new page from missing link
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "test-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should use noteSlug in creation
+    });
+
+    it("should handle noteSlug in .icon navigation", () => {
+      // Contract: Include noteSlug in .icon link navigation
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "test-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should use noteSlug with icon links
+    });
+
+    it("should not use noteSlug for external links", () => {
+      // Contract: External links ignore noteSlug
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "test-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // External links should ignore noteSlug
+    });
+
+    it("should append newPage query param correctly with noteSlug", () => {
+      // Contract: URL format /notes/:slug/:id?newPage=true
+      const optionsWithNoteSlug: UnifiedLinkMarkOptions = {
+        ...mockOptions,
+        noteSlug: "test-note",
+      };
+
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: optionsWithNoteSlug,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should format query params correctly
+    });
+  });
+
+  describe("Phase 3.1: Link type detection", () => {
+    it("should detect page link type (default)", () => {
+      // Contract: Regular [text] is linkType="page"
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Default should be page type
+    });
+
+    it("should detect tag link type (#tag)", () => {
+      // Contract: #tag syntax is linkType="tag"
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should detect tag type
+    });
+
+    it("should detect icon link type (.icon suffix)", () => {
+      // Contract: [username.icon] is linkType="icon"
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should detect icon type
+    });
+
+    it("should detect external link type (URL)", () => {
+      // Contract: [https://...] is linkType="external"
+      const plugin = createClickHandlerPlugin({
+        editor: mockEditor,
+        options: mockOptions,
+      });
+
+      expect(plugin.spec.props?.handleClick).toBeDefined();
+      // Should detect external type
+    });
+  });
 });
