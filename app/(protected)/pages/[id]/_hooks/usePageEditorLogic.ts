@@ -7,7 +7,6 @@ import { TableExtensions } from "@/lib/tiptap-extensions/custom-table";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
-import { PageLink } from "@/lib/tiptap-extensions/page-link"; // legacy (Decoration based)
 import { PageLinkMark } from "@/lib/tiptap-extensions/page-link-mark"; // new Mark-based implementation
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import type { Database } from "@/types/database.types";
@@ -26,13 +25,11 @@ import CodeBlockPrism from "tiptap-extension-code-block-prism";
 import { ensurePageLinksSync } from "@/app/_actions/ensurePageLinksSync";
 import { updatePage } from "@/app/_actions/updatePage";
 import { updatePageLinks } from "@/app/_actions/updatePageLinks";
-import { existencePluginKey } from "@/lib/tiptap-extensions/page-link";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformMarkdownTables } from "@/lib/utils/transformMarkdownTables";
 import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import { useAutoSave } from "./useAutoSave";
 import { useGenerateContent } from "./useGenerateContent";
-import { useLinkExistenceChecker } from "./useLinkExistenceChecker";
 import { useSmartThumbnailSync } from "./useSmartThumbnailSync";
 import { useSplitPage } from "./useSplitPage";
 
@@ -208,7 +205,6 @@ export function usePageEditorLogic({
       CustomBulletList,
       CustomOrderedList,
       GyazoImage,
-      PageLink.configure({ noteSlug }), // TODO: remove after full migration to PageLinkMark
       LatexInlineNode,
       Highlight,
       CodeBlockWithCopy.configure({
@@ -370,19 +366,6 @@ export function usePageEditorLogic({
       // 2. リンク同期（確実に完了を待つ）
       const { outgoingIds } = extractLinkData(content);
       await updatePageLinks({ pageId: page.id, outgoingIds });
-
-      // 3. existence mapを強制更新
-      try {
-        const result = await ensurePageLinksSync(page.id);
-        const existMap = new Map<string, string | null>(
-          Object.entries(result.existMap)
-        );
-        const tr = editor.state.tr.setMeta(existencePluginKey, existMap);
-        editor.view.dispatch(tr);
-      } catch (syncError) {
-        console.warn("リンク存在確認の更新に失敗:", syncError);
-        // 重要ではないのでエラーは表示しない
-      }
     } catch (err) {
       console.error("SavePage error:", err);
       toast.error("保存に失敗しました");
@@ -466,9 +449,6 @@ export function usePageEditorLogic({
 
   // Autosave hook
   useAutoSave(editor, savePage, isDirty);
-
-  // Link existence check hook
-  useLinkExistenceChecker(editor, supabase);
 
   // Smart thumbnail sync hook
   const { manualSync: manualThumbnailSync } = useSmartThumbnailSync({

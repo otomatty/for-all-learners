@@ -30,12 +30,96 @@ export function renderHTML(
 
 /**
  * Parse HTML to mark
+ * Supports both new UnifiedLinkMark format and legacy PageLinkMark format
  * @returns HTML parsing specification
  */
 export function parseHTML() {
   return [
+    // ① New format: UnifiedLinkMark (data-variant required)
     {
       tag: "a[data-variant]",
+      // Attributes are used as-is
+    },
+
+    // ② Legacy format: PageLinkMark (data-page-id) - auto-convert
+    {
+      tag: "a[data-page-id]:not([data-variant])",
+      getAttrs: (node: HTMLElement | string) => {
+        if (typeof node === "string") return false;
+        if (
+          typeof window !== "undefined" &&
+          !(node instanceof window.HTMLElement)
+        )
+          return false;
+        if (typeof window === "undefined" && typeof node !== "object")
+          return false;
+
+        // Convert PageLinkMark → UnifiedLinkMark
+        const pageId = node.getAttribute("data-page-id");
+        const state = node.getAttribute("data-state") || "pending";
+        const exists = node.getAttribute("data-exists") === "true";
+        const href = node.getAttribute("href") || "#";
+        const external = node.getAttribute("data-external") === "true";
+
+        // Skip external links (future support)
+        if (external) {
+          console.warn(
+            "[UnifiedLinkMark] External link migration not yet supported:",
+            node
+          );
+          return false;
+        }
+
+        // Generate UnifiedLinkMark format attributes
+        return {
+          variant: "bracket",
+          pageId,
+          state,
+          exists,
+          href,
+          key: "", // resolver will resolve later
+          raw: node.textContent || "",
+          text: node.textContent || "",
+          markId: `migrated-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 8)}`,
+          created: false,
+        };
+      },
+    },
+
+    // ③ Legacy format: PageLinkMark (data-page-title) - uncreated pages
+    {
+      tag: "a[data-page-title]:not([data-variant])",
+      getAttrs: (node: HTMLElement | string) => {
+        if (typeof node === "string") return false;
+        if (
+          typeof window !== "undefined" &&
+          !(node instanceof window.HTMLElement)
+        )
+          return false;
+        if (typeof window === "undefined" && typeof node !== "object")
+          return false;
+
+        const pageTitle = node.getAttribute("data-page-title");
+        const state = node.getAttribute("data-state") || "missing";
+
+        // Generate UnifiedLinkMark format attributes
+        return {
+          variant: "bracket",
+          pageId: null,
+          state,
+          exists: false,
+          href: "#",
+          key: pageTitle?.toLowerCase() || "",
+          raw: pageTitle || "",
+          text: pageTitle || "",
+          markId: `migrated-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 8)}`,
+          created: false,
+        };
+      },
     },
   ];
 }
