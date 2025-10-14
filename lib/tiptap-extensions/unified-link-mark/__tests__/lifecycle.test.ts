@@ -6,119 +6,119 @@
  * ここでは関数の基本的な動作のみをテストします。
  */
 
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import {
-  onCreateHandler,
-  onDestroyHandler,
-  getAutoReconciler,
+	getAutoReconciler,
+	onCreateHandler,
+	onDestroyHandler,
 } from "../lifecycle";
 
 // Setup jsdom environment for this test
 setupJSDOMEnvironment();
 
 describe("UnifiedLinkMark Lifecycle", () => {
-  let editor: Editor;
+	let editor: Editor;
 
-  beforeEach(() => {
-    // Clean up any existing AutoReconciler
-    onDestroyHandler();
+	beforeEach(() => {
+		// Clean up any existing AutoReconciler
+		onDestroyHandler();
 
-    // Create a minimal editor for testing
-    editor = new Editor({
-      extensions: [StarterKit],
-      content: "",
-    });
-  });
+		// Create a minimal editor for testing
+		editor = new Editor({
+			extensions: [StarterKit],
+			content: "",
+		});
+	});
 
-  afterEach(() => {
-    if (editor) {
-      editor.destroy();
-    }
-    // Clean up AutoReconciler after each test
-    onDestroyHandler();
-  });
+	afterEach(() => {
+		if (editor) {
+			editor.destroy();
+		}
+		// Clean up AutoReconciler after each test
+		onDestroyHandler();
+	});
 
-  describe("getAutoReconciler", () => {
-    it("should return null before initialization", () => {
-      const autoReconciler = getAutoReconciler();
-      expect(autoReconciler).toBeNull();
-    });
-  });
+	describe("getAutoReconciler", () => {
+		it("should return null before initialization", () => {
+			const autoReconciler = getAutoReconciler();
+			expect(autoReconciler).toBeNull();
+		});
+	});
 
-  describe("onCreateHandler", () => {
-    it("should accept an editor instance without throwing", () => {
-      expect(() => {
-        onCreateHandler(editor);
-      }).not.toThrow();
-    });
+	describe("onCreateHandler", () => {
+		it("should accept an editor instance without throwing", () => {
+			expect(() => {
+				onCreateHandler(editor);
+			}).not.toThrow();
+		});
 
-    it("should handle null editor gracefully", () => {
-      expect(() => {
-        onCreateHandler(null as unknown as Editor);
-      }).not.toThrow();
-    });
+		it("should handle null editor gracefully", () => {
+			expect(() => {
+				onCreateHandler(null as unknown as Editor);
+			}).not.toThrow();
+		});
 
-    it("should handle undefined editor gracefully", () => {
-      expect(() => {
-        onCreateHandler(undefined as unknown as Editor);
-      }).not.toThrow();
-    });
-  });
+		it("should handle undefined editor gracefully", () => {
+			expect(() => {
+				onCreateHandler(undefined as unknown as Editor);
+			}).not.toThrow();
+		});
+	});
 
-  describe("onDestroyHandler", () => {
-    it("should not throw when called without initialization", () => {
-      expect(() => {
-        onDestroyHandler();
-      }).not.toThrow();
-    });
+	describe("onDestroyHandler", () => {
+		it("should not throw when called without initialization", () => {
+			expect(() => {
+				onDestroyHandler();
+			}).not.toThrow();
+		});
 
-    it("should handle multiple destroy calls gracefully", () => {
-      onCreateHandler(editor);
+		it("should handle multiple destroy calls gracefully", () => {
+			onCreateHandler(editor);
 
-      // Call destroy multiple times
-      expect(() => {
-        onDestroyHandler();
-        onDestroyHandler();
-        onDestroyHandler();
-      }).not.toThrow();
-    });
+			// Call destroy multiple times
+			expect(() => {
+				onDestroyHandler();
+				onDestroyHandler();
+				onDestroyHandler();
+			}).not.toThrow();
+		});
 
-    it("should reset AutoReconciler to null after destroy", () => {
-      onCreateHandler(editor);
-      onDestroyHandler();
+		it("should reset AutoReconciler to null after destroy", () => {
+			onCreateHandler(editor);
+			onDestroyHandler();
 
-      const autoReconciler = getAutoReconciler();
-      expect(autoReconciler).toBeNull();
-    });
-  });
+			const autoReconciler = getAutoReconciler();
+			expect(autoReconciler).toBeNull();
+		});
+	});
 
-  describe("lifecycle sequence", () => {
-    it("should handle create-destroy-create sequence", () => {
-      // First initialization
-      onCreateHandler(editor);
-      onDestroyHandler();
+	describe("lifecycle sequence", () => {
+		it("should handle create-destroy-create sequence", () => {
+			// First initialization
+			onCreateHandler(editor);
+			onDestroyHandler();
 
-      // Second initialization (should work without errors)
-      expect(() => {
-        onCreateHandler(editor);
-        onDestroyHandler();
-      }).not.toThrow();
-    });
+			// Second initialization (should work without errors)
+			expect(() => {
+				onCreateHandler(editor);
+				onDestroyHandler();
+			}).not.toThrow();
+		});
 
-    it("should maintain consistent state through lifecycle", () => {
-      // Initially null
-      expect(getAutoReconciler()).toBeNull();
+		it("should maintain consistent state through lifecycle", () => {
+			// Initially null
+			expect(getAutoReconciler()).toBeNull();
 
-      // After create
-      onCreateHandler(editor);
-      // Note: AutoReconciler may not be created immediately due to async initialization
+			// After create
+			onCreateHandler(editor);
+			// Note: AutoReconciler may not be created immediately due to async initialization
 
-      // After destroy
-      onDestroyHandler();
-      expect(getAutoReconciler()).toBeNull();
-    });
-  });
+			// After destroy
+			onDestroyHandler();
+			expect(getAutoReconciler()).toBeNull();
+		});
+	});
 });

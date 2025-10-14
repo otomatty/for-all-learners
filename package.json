@@ -87,6 +87,8 @@
     "next-theme": "^0.1.5",
     "next-themes": "^0.4.6",
     "pdfjs-dist": "^5.4.54",
+    "pino": "^10.0.0",
+    "pino-pretty": "^13.1.2",
     "postcss": "^8.5.3",
     "prismjs": "^1.30.0",
     "react": "^19.0.0",
@@ -109,7 +111,7 @@
     "vitest": "^3.2.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.2.5",
     "@tailwindcss/postcss": "^4.1.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

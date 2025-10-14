@@ -286,56 +286,14 @@
   height: auto;
 }
 
-/* Bracket suggestion tooltip styles */
-.bracket-suggestion-list {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  max-height: 200px;
-  overflow-y: auto;
-  font-family: inherit;
-}
-.bracket-suggestion-list .suggestion-item {
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: background-color 0.2s ease;
-}
-.bracket-suggestion-list .suggestion-item.active,
-.bracket-suggestion-list .suggestion-item:hover {
-  background-color: #0070f3;
-  color: #fff;
-}
-
-/* Tag suggestion tooltip styles */
+/* Unified Link Suggestion Tooltip Styles */
+/* Base styles for both bracket and tag suggestions */
+.bracket-suggestion-list,
 .tag-suggestion-list {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  max-height: 200px;
-  overflow-y: auto;
+  min-width: 200px;
+  max-width: 400px;
   font-family: inherit;
-}
-.tag-suggestion-list .suggestion-item {
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: background-color 0.2s ease;
-}
-.tag-suggestion-list .suggestion-item.active,
-.tag-suggestion-list .suggestion-item:hover {
-  background-color: #0070f3;
-  color: #fff;
+  z-index: 9999;
 }
 /* globals.css の末尾に追加（置き換え） */
 /* 空セル */
@@ -428,15 +386,18 @@ a.page-link-mark[data-state="pending"]::before {
 }
 
 /* pending: 解決待ち。薄い色 + 点線下線 */
+/* resolving: pending と同じスタイル（互換性のため） */
 
-.ProseMirror a[data-state="pending"] {
+.ProseMirror a[data-state="pending"],
+.ProseMirror a[data-state="resolving"] {
   color: #64748b; /* slate-500 */
   text-decoration-line: underline;
   text-decoration-style: dotted;
   text-decoration-color: rgba(148, 163, 184, 0.7); /* slate-400 70% */
   cursor: progress;
 }
-.dark .ProseMirror a[data-state="pending"] {
+.dark .ProseMirror a[data-state="pending"],
+.dark .ProseMirror a[data-state="resolving"] {
   color: #94a3b8; /* slate-400 */
   text-decoration-color: rgba(100, 116, 139, 0.7); /* slate-500 70% */
 }

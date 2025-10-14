@@ -3,12 +3,13 @@
  * Handles all page creation logic for UnifiedLinkMark
  */
 
-import { createPage } from "@/app/_actions/pages";
-import { toast } from "sonner";
 import type { Editor } from "@tiptap/core";
-import { updateMarkToExists } from "./mark-operations";
-import { notifyPageCreated } from "./broadcast";
+import { toast } from "sonner";
+import { createPage } from "@/app/_actions/pages";
+import logger from "@/lib/logger";
 import { normalizeTitleToKey } from "../utils";
+import { notifyPageCreated } from "./broadcast";
+import { updateMarkToExists } from "./mark-operations";
 
 /**
  * Create a page from a missing mark
@@ -25,12 +26,9 @@ export async function createPageFromMark(
   editor: Editor,
   markId: string,
   title: string,
-  userId?: string,
-  noteSlug?: string
+  userId?: string
 ): Promise<string | null> {
   try {
-    console.log(`[UnifiedResolver] Creating page: "${title}"`);
-
     // User ID is required but we need to consider how to obtain it from current context
     // Temporarily throw error if userId is not available from editor context
     if (!userId) {
@@ -64,10 +62,8 @@ export async function createPageFromMark(
     // }
 
     if (newPage?.id) {
-      console.log(`[UnifiedResolver] Page created with ID: ${newPage.id}`);
-
       // Update mark to exists state
-      await updateMarkToExists(editor, markId, newPage.id, title);
+      await updateMarkToExists(editor, markId, newPage.id);
 
       // P3: Notify other tabs via BroadcastChannel
       const key = normalizeTitleToKey(title);
@@ -79,7 +75,7 @@ export async function createPageFromMark(
 
     throw new Error("Page creation returned no ID");
   } catch (error) {
-    console.error("Page creation failed:", error);
+    logger.error({ markId, title, userId, error }, "Page creation failed");
     toast.error(`ページ「${title}」の作成に失敗しました`);
     return null;
   }
@@ -100,8 +96,6 @@ export async function createPageFromLink(
   noteSlug?: string | null
 ): Promise<{ pageId: string; href: string } | null> {
   try {
-    console.log(`[UnifiedResolver] Creating page from link: "${title}"`);
-
     // Convert underscores to spaces for page title
     const titleWithSpaces = title.replace(/_/g, " ");
 
@@ -122,14 +116,13 @@ export async function createPageFromLink(
       .single();
 
     if (insertError || !newPage) {
-      console.error("Page creation failed:", insertError);
+      logger.error(
+        { title: titleWithSpaces, userId, error: insertError },
+        "Page creation failed"
+      );
       toast.error("ページ作成に失敗しました");
       return null;
     }
-
-    console.log(
-      `[UnifiedResolver] Page created from link with ID: ${newPage.id}`
-    );
 
     // 2. If noteSlug exists, associate with note_page_links
     if (noteSlug) {
@@ -145,12 +138,11 @@ export async function createPageFromLink(
           .insert({ note_id: note.id, page_id: newPage.id });
 
         if (linkError) {
-          console.error("Failed to link page to note:", linkError);
-          // Even on error, page creation succeeded so continue
-        } else {
-          console.log(
-            `[UnifiedResolver] Page linked to note: noteId=${note.id}, pageId=${newPage.id}`
+          logger.error(
+            { noteId: note.id, pageId: newPage.id, error: linkError },
+            "Failed to link page to note"
           );
+          // Even on error, page creation succeeded so continue
         }
       }
     }
@@ -168,7 +160,10 @@ export async function createPageFromLink(
 
     return { pageId: newPage.id, href };
   } catch (error) {
-    console.error("[UnifiedResolver] Page creation from link failed:", error);
+    logger.error(
+      { title, userId, noteSlug, error },
+      "[UnifiedResolver] Page creation from link failed"
+    );
     toast.error(
       `ページ作成中にエラーが発生しました: ${
         error instanceof Error ? error.message : String(error)

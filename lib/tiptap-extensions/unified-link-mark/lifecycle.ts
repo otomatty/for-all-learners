@@ -5,21 +5,33 @@
 
 import type { Editor } from "@tiptap/core";
 import { AutoReconciler } from "../../unilink";
+import { enqueueResolve } from "./resolver-queue";
+import type { ResolverQueueItem } from "./types";
 
 // Global AutoReconciler instance (managed per editor)
 let globalAutoReconciler: AutoReconciler | null = null;
 
 /**
  * Handler for editor creation
- * Initializes the AutoReconciler
+ * Initializes the AutoReconciler and sets up storage
  * @param editor - The Tiptap editor instance
  */
 export function onCreateHandler(editor: Editor): void {
-  if (editor && !globalAutoReconciler) {
-    console.log("[UnifiedLinkMark] Initializing AutoReconciler...");
-    globalAutoReconciler = new AutoReconciler(editor);
-    globalAutoReconciler.initialize();
-  }
+	// Initialize storage for resolverQueue (Mark extensions don't support addStorage)
+	if (!editor.storage.unilink) {
+		editor.storage.unilink = {};
+	}
+
+	editor.storage.unilink.resolverQueue = {
+		add: (item: ResolverQueueItem) => {
+			enqueueResolve(item);
+		},
+	};
+
+	if (editor && !globalAutoReconciler) {
+		globalAutoReconciler = new AutoReconciler(editor);
+		globalAutoReconciler.initialize();
+	}
 }
 
 /**
@@ -27,11 +39,10 @@ export function onCreateHandler(editor: Editor): void {
  * Cleans up the AutoReconciler
  */
 export function onDestroyHandler(): void {
-  if (globalAutoReconciler) {
-    console.log("[UnifiedLinkMark] Destroying AutoReconciler...");
-    globalAutoReconciler.destroy();
-    globalAutoReconciler = null;
-  }
+	if (globalAutoReconciler) {
+		globalAutoReconciler.destroy();
+		globalAutoReconciler = null;
+	}
 }
 
 /**
@@ -39,5 +50,5 @@ export function onDestroyHandler(): void {
  * @returns The AutoReconciler instance or null
  */
 export function getAutoReconciler(): AutoReconciler | null {
-  return globalAutoReconciler;
+	return globalAutoReconciler;
 }

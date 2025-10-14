@@ -2,98 +2,139 @@
  * ReconcileQueue - 同一キーの連続イベントを100msデバウンスして1回処理
  */
 
+import logger from "../logger";
+
 interface QueuedEvent {
-  key: string;
-  pageId?: string;
-  timestamp: number;
+	key: string;
+	pageId?: string;
+	timestamp: number;
 }
 
-type ReconcileHandler = (key: string, pageId?: string) => void;
+type ReconcileHandler = (key: string, pageId?: string) => Promise<void>;
 
-export class ReconcileQueue {
-  private queue = new Map<string, QueuedEvent>();
-  private timeouts = new Map<string, NodeJS.Timeout>();
-  private handler: ReconcileHandler;
-  private debounceMs: number;
-
-  constructor(handler: ReconcileHandler, debounceMs = 100) {
-    this.handler = handler;
-    this.debounceMs = debounceMs;
-  }
-
-  /**
-   * キーの処理をキューに追加（重複は最新で上書き）
-   */
-  enqueue(key: string, pageId?: string): void {
-    // 既存のタイマーをクリア
-    const existingTimeout = this.timeouts.get(key);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-
-    // 新しいイベントで上書き
-    this.queue.set(key, {
-      key,
-      pageId,
-      timestamp: Date.now(),
-    });
-
-    // デバウンスタイマー設定
-    const timeout = setTimeout(() => {
-      this.processKey(key);
-    }, this.debounceMs);
-
-    this.timeouts.set(key, timeout);
-  }
-
-  private processKey(key: string): void {
-    const event = this.queue.get(key);
-    if (!event) return;
-
-    // キューとタイマーから削除
-    this.queue.delete(key);
-    this.timeouts.delete(key);
-
-    // ハンドラ実行
-    try {
-      this.handler(event.key, event.pageId);
-    } catch (error) {
-      console.warn(`ReconcileQueue handler failed for key "${key}":`, error);
-    }
-  }
-
-  /**
-   * 全ての待機中処理をクリア
-   */
-  clear(): void {
-    this.timeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-    this.queue.clear();
-    this.timeouts.clear();
-  }
-
-  /**
-   * デバッグ用: 現在のキュー状態
-   */
-  getQueueSize(): number {
-    return this.queue.size;
-  }
+interface ReconcileQueueState {
+	queue: Map<string, QueuedEvent>;
+	timeouts: Map<string, NodeJS.Timeout>;
+	handler: ReconcileHandler;
+	debounceMs: number;
 }
 
 /**
- * 飛行中の重複リクエスト抑制
+ * Create a reconcile queue with debouncing
+ */
+export const createReconcileQueue = (
+	handler: ReconcileHandler,
+	debounceMs = 100,
+) => {
+	const state: ReconcileQueueState = {
+		queue: new Map(),
+		timeouts: new Map(),
+		handler,
+		debounceMs,
+	};
+
+	/**
+	 * Process a single key from the queue
+	 */
+	const processKey = async (key: string): Promise<void> => {
+		const event = state.queue.get(key);
+		if (!event) return;
+
+		// Remove from queue and timeouts
+		state.queue.delete(key);
+		state.timeouts.delete(key);
+
+		// Execute handler
+		try {
+			await state.handler(event.key, event.pageId);
+			logger.debug(
+				{ key, pageId: event.pageId },
+				"[ReconcileQueue] Processed key",
+			);
+		} catch (error) {
+			logger.warn(
+				{ key, error },
+				`[ReconcileQueue] Handler failed for key "${key}"`,
+			);
+		}
+	};
+
+	/**
+	 * Add key to queue (debounced)
+	 */
+	const enqueue = (key: string, pageId?: string): void => {
+		// Clear existing timeout
+		const existingTimeout = state.timeouts.get(key);
+		if (existingTimeout) {
+			clearTimeout(existingTimeout);
+		}
+
+		// Update queue with new event (overwrites existing)
+		state.queue.set(key, {
+			key,
+			pageId,
+			timestamp: Date.now(),
+		});
+
+		// Set new debounce timer
+		const timeout = setTimeout(() => {
+			processKey(key);
+		}, state.debounceMs);
+
+		state.timeouts.set(key, timeout);
+
+		logger.debug(
+			{ key, pageId, queueSize: state.queue.size },
+			"[ReconcileQueue] Enqueued",
+		);
+	};
+
+	/**
+	 * Clear all pending operations
+	 */
+	const clear = (): void => {
+		const queueSize = state.queue.size;
+
+		state.timeouts.forEach((timeout) => {
+			clearTimeout(timeout);
+		});
+		state.queue.clear();
+		state.timeouts.clear();
+
+		logger.debug({ clearedItems: queueSize }, "[ReconcileQueue] Cleared");
+	};
+
+	/**
+	 * Get current queue size for debugging
+	 */
+	const getQueueSize = (): number => {
+		return state.queue.size;
+	};
+
+	return {
+		enqueue,
+		clear,
+		getQueueSize,
+	};
+};
+
+export type ReconcileQueue = ReturnType<typeof createReconcileQueue>;
+
+/**
+ * Track in-flight requests to prevent duplicates
  */
 const inflightKeys = new Set<string>();
 
-export function isKeyInflight(key: string): boolean {
-  return inflightKeys.has(key);
-}
+export const isKeyInflight = (key: string): boolean => {
+	return inflightKeys.has(key);
+};
 
-export function setKeyInflight(key: string): void {
-  inflightKeys.add(key);
-}
+export const setKeyInflight = (key: string): void => {
+	inflightKeys.add(key);
+	logger.debug({ key }, "[ReconcileQueue] Key set as in-flight");
+};
 
-export function clearKeyInflight(key: string): void {
-  inflightKeys.delete(key);
-}
+export const clearKeyInflight = (key: string): void => {
+	inflightKeys.delete(key);
+	logger.debug({ key }, "[ReconcileQueue] Key cleared from in-flight");
+};

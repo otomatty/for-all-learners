@@ -3,6 +3,8 @@
  */
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import logger from "../logger";
+import { addPageToCache } from "./page-cache-preloader";
 import { normalizeTitleToKey } from "./utils";
 
 export interface RealtimePageEvent {
@@ -21,18 +23,74 @@ export interface RealtimePageEvent {
 
 export type RealtimePageHandler = (key: string, pageId: string) => void;
 
-export class UnilinkRealtimeListener {
-  private channel: RealtimeChannel | null = null;
-  private handlers = new Set<RealtimePageHandler>();
+interface RealtimeListenerState {
+  channel: RealtimeChannel | null;
+  handlers: Set<RealtimePageHandler>;
+}
+
+/**
+ * Create a Supabase Realtime listener for page events
+ */
+export const createUnilinkRealtimeListener = () => {
+  const state: RealtimeListenerState = {
+    channel: null,
+    handlers: new Set(),
+  };
 
   /**
-   * Supabase Realtime チャンネルを設定
+   * Handle page insert event from Realtime
    */
-  setupChannel(supabaseChannel: RealtimeChannel): void {
-    this.channel = supabaseChannel;
+  // biome-ignore lint/suspicious/noExplicitAny: Supabase payload type
+  const handlePageInsert = (payload: any): void => {
+    try {
+      const newRecord = payload.new;
+      if (!newRecord?.title || !newRecord?.id) {
+        logger.debug(
+          { payload },
+          "[RealtimeListener] Invalid page insert payload"
+        );
+        return;
+      }
 
-    // pages テーブルの INSERT イベントを購読
-    this.channel
+      const key = normalizeTitleToKey(newRecord.title);
+      const pageId = newRecord.id;
+
+      logger.info(
+        { key, pageId, title: newRecord.title },
+        "[RealtimeListener] Page created"
+      );
+
+      // Add to cache immediately for cross-page link resolution
+      // This allows other pages to immediately resolve links to this new page
+      addPageToCache(pageId, newRecord.title);
+
+      // Notify all handlers (they can call refreshUnifiedLinks to update their links)
+      state.handlers.forEach((handler) => {
+        try {
+          handler(key, pageId);
+        } catch (error) {
+          logger.warn(
+            { key, pageId, error },
+            "[RealtimeListener] Handler error"
+          );
+        }
+      });
+    } catch (error) {
+      logger.error(
+        { error, payload },
+        "[RealtimeListener] Failed to handle page insert"
+      );
+    }
+  };
+
+  /**
+   * Setup Supabase Realtime channel
+   */
+  const setupChannel = (supabaseChannel: RealtimeChannel): void => {
+    state.channel = supabaseChannel;
+
+    // Subscribe to pages table INSERT events
+    state.channel
       .on(
         "postgres_changes",
         {
@@ -40,53 +98,52 @@ export class UnilinkRealtimeListener {
           schema: "public",
           table: "pages",
         },
-        this.handlePageInsert.bind(this)
+        handlePageInsert
       )
       .subscribe();
-  }
+
+    logger.info("[RealtimeListener] Channel setup complete");
+  };
 
   /**
-   * ページ作成イベントのハンドラを登録
+   * Register page creation handler
+   * @returns Unsubscribe function
    */
-  onPageCreated(handler: RealtimePageHandler): () => void {
-    this.handlers.add(handler);
+  const onPageCreated = (handler: RealtimePageHandler): (() => void) => {
+    state.handlers.add(handler);
+    logger.debug(
+      { handlerCount: state.handlers.size },
+      "[RealtimeListener] Handler registered"
+    );
 
     return () => {
-      this.handlers.delete(handler);
+      state.handlers.delete(handler);
+      logger.debug(
+        { handlerCount: state.handlers.size },
+        "[RealtimeListener] Handler unregistered"
+      );
     };
-  }
-
-  private handlePageInsert(payload: any): void {
-    try {
-      const newRecord = payload.new;
-      if (!newRecord?.title || !newRecord?.id) {
-        return;
-      }
-
-      const key = normalizeTitleToKey(newRecord.title);
-      const pageId = newRecord.id;
-
-      // 全ハンドラに通知
-      this.handlers.forEach((handler) => {
-        try {
-          handler(key, pageId);
-        } catch (error) {
-          console.warn("Realtime handler error:", error);
-        }
-      });
-    } catch (error) {
-      console.warn("Failed to handle Realtime page insert:", error);
-    }
-  }
+  };
 
   /**
-   * チャンネルを閉じてリソースを解放
+   * Close channel and cleanup resources
    */
-  close(): void {
-    if (this.channel) {
-      this.channel.unsubscribe();
-      this.channel = null;
+  const close = (): void => {
+    if (state.channel) {
+      state.channel.unsubscribe();
+      state.channel = null;
+      logger.info("[RealtimeListener] Channel closed");
     }
-    this.handlers.clear();
-  }
-}
+    state.handlers.clear();
+  };
+
+  return {
+    setupChannel,
+    onPageCreated,
+    close,
+  };
+};
+
+export type UnilinkRealtimeListener = ReturnType<
+  typeof createUnilinkRealtimeListener
+>;

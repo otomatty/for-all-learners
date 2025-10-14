@@ -14,21 +14,19 @@ import type { JSONContent } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import CodeBlockPrism from "tiptap-extension-code-block-prism";
 
-import { ensurePageLinksSync } from "@/app/_actions/ensurePageLinksSync";
-import { updatePage } from "@/app/_actions/updatePage";
-import { updatePageLinks } from "@/app/_actions/updatePageLinks";
-import { extractLinkData } from "@/lib/utils/linkUtils";
-import { transformMarkdownTables } from "@/lib/utils/transformMarkdownTables";
 import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import { useAutoSave } from "./useAutoSave";
+import { useEditorInitializer } from "./useEditorInitializer";
 import { useGenerateContent } from "./useGenerateContent";
+import { useLinkSync } from "./useLinkSync";
+import { usePageSaver } from "./usePageSaver";
 import { useSmartThumbnailSync } from "./useSmartThumbnailSync";
 import { useSplitPage } from "./useSplitPage";
 
@@ -44,112 +42,6 @@ interface UsePageEditorLogicProps {
   noteSlug?: string;
 }
 
-// Define a text node type to strip legacy link marks
-interface JSONTextNode extends JSONContent {
-  type: "text";
-  text: string;
-  marks?: Array<{ type: string; [key: string]: unknown }>;
-}
-
-/**
- * Remove empty text nodes from a JSONContent document.
- */
-function sanitizeContent(doc: JSONContent): JSONContent {
-  const clone = structuredClone(doc) as JSONContent;
-  const recurse = (node: JSONContent): JSONContent => {
-    const newNode = { ...node } as JSONContent;
-    // Legacy link and pageLink marks を除去
-    if (newNode.type === "text") {
-      const textNode = newNode as JSONTextNode;
-      if (Array.isArray(textNode.marks)) {
-        const filtered = textNode.marks.filter(
-          (mark: { type: string }) =>
-            mark.type !== "link" && mark.type !== "pageLink"
-        );
-        if (filtered.length > 0) {
-          textNode.marks = filtered;
-        } else {
-          const { marks, ...rest } = textNode;
-          return rest as JSONContent;
-        }
-      }
-    }
-    if (Array.isArray(newNode.content)) {
-      newNode.content = newNode.content.map(recurse);
-      if (newNode.type === "paragraph") {
-        // Filter out empty or whitespace-only text nodes
-        newNode.content = newNode.content.filter((child: JSONContent) => {
-          if (child.type === "text" && typeof child.text === "string") {
-            return child.text.trim() !== "";
-          }
-          return true;
-        });
-        if (newNode.content.length === 0) {
-          // Remove empty content property without using delete
-          const { content, ...rest } = newNode;
-          return rest as JSONContent;
-        }
-      }
-    }
-    return newNode;
-  };
-  clone.content = (clone.content ?? []).map(recurse);
-  return clone;
-}
-
-/**
- * Convert inline LaTeX syntax ($...$) in text nodes to latexInlineNode nodes.
- */
-function transformDollarInDoc(doc: JSONContent): JSONContent {
-  const clone = structuredClone(doc) as JSONContent;
-  const regex = /\$([^$]+)\$/g;
-
-  function transformNode(node: JSONContent): JSONContent[] {
-    // Text node: split by $...$
-    if (node.type === "text") {
-      const textNode = node as JSONTextNode;
-      const { text, marks } = textNode;
-      const nodes: JSONContent[] = [];
-      let lastIndex = 0;
-      let match = regex.exec(text);
-      while (match !== null) {
-        const [full, content] = match;
-        const index = match.index;
-        if (index > lastIndex) {
-          nodes.push({
-            type: "text",
-            text: text.slice(lastIndex, index),
-            marks,
-          });
-        }
-        nodes.push({
-          type: "latexInlineNode",
-          attrs: { content },
-        } as JSONContent);
-        lastIndex = index + full.length;
-        match = regex.exec(text);
-      }
-      if (lastIndex < text.length) {
-        nodes.push({ type: "text", text: text.slice(lastIndex), marks });
-      }
-      return nodes.length > 0 ? nodes : [node];
-    }
-    // Recursively transform children
-    if ("content" in node && Array.isArray(node.content)) {
-      const transformedChildren = node.content.flatMap((child) =>
-        transformNode(child as JSONContent)
-      );
-      return [{ ...node, content: transformedChildren }];
-    }
-    return [node];
-  }
-
-  clone.content =
-    clone.content?.flatMap((child) => transformNode(child as JSONContent)) ??
-    [];
-  return clone;
-}
-
 // Create a Prism-based code block extension with a React NodeView
 const CodeBlockWithCopy = CodeBlockPrism.extend({
   addNodeView() {
@@ -161,29 +53,11 @@ export function usePageEditorLogic({
   page,
   initialContent,
   title,
-  supabase,
   setIsLoading,
   setIsGenerating,
   isDirty,
   setIsDirty,
-  noteSlug,
 }: UsePageEditorLogicProps) {
-  // Track saving state to block navigation
-  const isSavingRef = useRef(false);
-
-  // Prevent page unload/navigation while saving
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isSavingRef.current) {
-        e.preventDefault();
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
   const initialDoc: JSONContent = initialContent ??
     (page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
@@ -222,154 +96,23 @@ export function usePageEditorLogic({
           "focus:outline-none !border-none ring-0 prose prose-sm sm:prose md:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
       },
     },
-    onCreate({ editor }) {
-      // Sanitize initial document to remove empty text nodes
-      const sanitized = sanitizeContent(initialDoc);
-
-      // Temporary migration: convert bracket syntax in existing content into UnifiedLinkMark if not already marked
-      const migrateBracketsToMarks = (doc: JSONContent): JSONContent => {
-        const clone = structuredClone(doc) as JSONContent;
-        const walk = (node: JSONContent): JSONContent[] => {
-          if (node.type === "text" && node.text) {
-            // Skip if already has unilink mark
-            const textNode = node as JSONTextNode;
-            const hasMark = textNode.marks?.some(
-              (mark) => mark.type === "unilink"
-            );
-            if (hasMark) return [node];
-            // Find patterns like [Title]
-            const pattern = /\[([^\[\]]+)\]/g;
-            let lastIndex = 0;
-            const pieces: JSONContent[] = [];
-            let match = pattern.exec(textNode.text);
-            while (match !== null) {
-              const title = match[1];
-              const start = match.index;
-              const end = start + match[0].length;
-              if (start > lastIndex) {
-                pieces.push({
-                  type: "text",
-                  text: textNode.text.slice(lastIndex, start),
-                });
-              }
-              const inner = title;
-              const isExternal = /^https?:\/\//.test(inner);
-              pieces.push({
-                type: "text",
-                text: inner,
-                marks: [
-                  {
-                    type: "unilink",
-                    attrs: {
-                      href: isExternal ? inner : "#",
-                      text: inner,
-                      variant: "bracket",
-                      external: isExternal || undefined,
-                      exists: isExternal ? true : undefined,
-                      state: isExternal ? "exists" : "pending",
-                    },
-                  },
-                ],
-              });
-              lastIndex = end;
-              match = pattern.exec(textNode.text);
-            }
-            if (pieces.length === 0) return [node];
-            if (lastIndex < textNode.text.length) {
-              pieces.push({
-                type: "text",
-                text: textNode.text.slice(lastIndex),
-              });
-            }
-            return pieces;
-          }
-          if (Array.isArray(node.content)) {
-            return [{ ...node, content: node.content.flatMap(walk) }];
-          }
-          return [node];
-        };
-        return { ...clone, content: (clone.content ?? []).flatMap(walk) };
-      };
-
-      const withMarks = migrateBracketsToMarks(sanitized);
-
-      // Convert inline LaTeX syntax in sanitized document
-      const withLatex = transformDollarInDoc(withMarks);
-
-      // Convert Markdown tables to table nodes
-      const withTables = transformMarkdownTables(withLatex);
-
-      try {
-        editor.commands.setContent(withTables);
-      } catch (error) {
-        console.error("setContent 失敗:", error);
-
-        // フォールバック: 空のドキュメントを設定
-        editor.commands.setContent({ type: "doc", content: [] });
-      }
-    },
   });
 
-  // ユーザーアイコンレンダリングの追加
+  // Initialize editor content with transformation pipeline
+  useEditorInitializer({
+    editor,
+    initialDoc,
+    userId: page.user_id,
+  });
+
+  // Render user icons in editor
   useUserIconRenderer(editor);
 
-  const savePage = useCallback(async () => {
-    if (!editor) return;
-    setIsLoading(true);
-    isSavingRef.current = true;
-    try {
-      // Get editor content and remove H1
-      let content = editor.getJSON() as JSONContent;
-      // Remove heading level 1 nodes by converting them to paragraphs
-      const removeHeading1 = (doc: JSONContent): JSONContent => {
-        const recurse = (node: JSONContent): JSONContent => {
-          if (node.type === "heading") {
-            // Access attrs with proper type
-            const attrs = (node as JSONContent & { attrs?: { level: number } })
-              .attrs;
-            const level = attrs?.level;
-            if (!level || level === 1) {
-              return {
-                type: "paragraph",
-                content: node.content,
-              } as JSONContent;
-            }
-          }
-          if (Array.isArray(node.content)) {
-            return {
-              ...node,
-              content: node.content.map(recurse),
-            };
-          }
-          return node;
-        };
-        return {
-          ...doc,
-          content: doc.content?.map(recurse),
-        } as JSONContent;
-      };
-      content = removeHeading1(content);
-
-      // 1. ページ保存
-      await updatePage({
-        id: page.id,
-        title,
-        content: JSON.stringify(content),
-      });
-
-      // 2. リンク同期（確実に完了を待つ）
-      const { outgoingIds } = extractLinkData(content);
-      await updatePageLinks({ pageId: page.id, outgoingIds });
-    } catch (err) {
-      console.error("SavePage error:", err);
-      toast.error("保存に失敗しました");
-    } finally {
-      setIsLoading(false);
-      isSavingRef.current = false;
-      // 保存完了後はdirtyをリセット
-      setIsDirty(false);
-    }
-  }, [editor, title, page.id, setIsLoading, setIsDirty]);
+  // Page saver hook - handles save logic, navigation blocking, and H1 removal
+  const { savePage } = usePageSaver(editor, page.id, title, {
+    setIsLoading,
+    setIsDirty,
+  });
 
   // Content generation hook
   const handleGenerateContent = useGenerateContent(
@@ -454,59 +197,14 @@ export function usePageEditorLogic({
     debounceMs: 2000, // 2秒のデバウンス（autosaveと同じタイミング）
   });
 
-  // Client-side link synchronization hook
-  const linkSyncTimeout = useRef<NodeJS.Timeout | null>(null);
-  const hasInitialLinkSync = useRef<boolean>(false);
+  // Link synchronization hook (handles both editor updates and save-time sync)
+  useLinkSync(editor, page.id, {
+    debounceMs: 500,
+    debug: false,
+  });
 
-  useEffect(() => {
-    if (!editor) return;
-
-    const syncLinks = async (immediate = false) => {
-      try {
-        const json = editor.getJSON() as JSONContent;
-        const { outgoingIds } = extractLinkData(json);
-        await updatePageLinks({ pageId: page.id, outgoingIds });
-
-        if (!hasInitialLinkSync.current) {
-          hasInitialLinkSync.current = true;
-        }
-      } catch (err) {
-        console.error("リンク同期エラー:", err);
-      }
-    };
-
-    const debouncedSyncLinks = (immediate = false) => {
-      // 初回またはimmediateフラグがtrueの場合は即座に実行
-      const delay = immediate || !hasInitialLinkSync.current ? 0 : 500;
-
-      if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
-      linkSyncTimeout.current = setTimeout(() => syncLinks(immediate), delay);
-    };
-
-    const updateHandler = () => debouncedSyncLinks(false);
-
-    editor.on("update", updateHandler);
-
-    // Initial sync - 即座に実行
-    debouncedSyncLinks(true);
-
-    return () => {
-      editor.off("update", updateHandler);
-      if (linkSyncTimeout.current) clearTimeout(linkSyncTimeout.current);
-    };
-  }, [editor, page.id]);
-
-  useEffect(() => {
-    if (editor && initialContent) {
-      // Sanitize initialContent on effect to ensure no invalid nodes
-      const sanitized = sanitizeContent(initialContent);
-      try {
-        editor.commands.setContent(sanitized);
-      } catch (error) {
-        console.error("initialContent 設定エラー:", error);
-      }
-    }
-  }, [editor, initialContent]);
+  // Note: initialContent is already set by useEditorInitializer
+  // The previous useEffect that re-set initialContent was redundant and has been removed
 
   return {
     editor,

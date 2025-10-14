@@ -3,27 +3,28 @@
  * Manages page resolution processing with batching and retry logic
  */
 
-import type { ResolverQueueItem, SearchResult } from "./types";
-import { searchPages } from "../../utils/searchPages";
+import logger from "../../logger";
 import {
-  normalizeTitleToKey,
-  getCachedPageId,
-  setCachedPageId,
-} from "../../unilink";
-import { RESOLVER_CONFIG } from "./config";
-import { updateMarkState } from "./state-manager";
-import {
+  markMissing,
   markPending,
   markResolved,
-  markMissing,
 } from "../../metrics/pageLinkMetrics";
 import {
+  getCachedPageId,
+  normalizeTitleToKey,
+  setCachedPageId,
+} from "../../unilink";
+import {
+  markUnifiedCacheHit,
+  markUnifiedError,
+  markUnifiedMissing,
   markUnifiedPending,
   markUnifiedResolved,
-  markUnifiedMissing,
-  markUnifiedError,
-  markUnifiedCacheHit,
 } from "../../unilink/metrics";
+import { searchPages } from "../../utils/searchPages";
+import { RESOLVER_CONFIG } from "./config";
+import { updateMarkState } from "./state-manager";
+import type { ResolverQueueItem, SearchResult } from "./types";
 
 /**
  * Resolver queue singleton class
@@ -34,10 +35,20 @@ class ResolverQueue {
   private isRunning = false;
 
   /**
-   * Add an item to the queue
+   * Add an item to the queue and trigger processing
    */
   add(item: ResolverQueueItem): void {
+    logger.debug(
+      { key: item.key, markId: item.markId, variant: item.variant },
+      "[ResolverQueue] Adding item to queue"
+    );
     this.queue.push(item);
+
+    // Automatically start processing if not already running
+    if (!this.isRunning) {
+      logger.debug("[ResolverQueue] Starting queue processing");
+      void this.process();
+    }
   }
 
   /**
@@ -61,10 +72,54 @@ class ResolverQueue {
   }
 
   /**
-   * Process a single queue item
+   * Process a single queue item with timeout
    */
   private async processItem(item: ResolverQueueItem): Promise<void> {
-    const { key, markId, editor, variant = "bracket" } = item;
+    const { markId, editor } = item;
+    // Create timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(
+          new Error(
+            `Resolution timeout after ${RESOLVER_CONFIG.resolutionTimeout}ms`
+          )
+        );
+      }, RESOLVER_CONFIG.resolutionTimeout);
+    });
+
+    try {
+      // Race between resolution and timeout
+      await Promise.race([this.resolveItem(item), timeoutPromise]);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("timeout")) {
+        logger.warn({ markId }, "Resolution timeout - marking as MISSING");
+        updateMarkState(editor, markId, {
+          state: "missing",
+          exists: false,
+          href: "#",
+        });
+        markMissing(markId);
+        markUnifiedMissing(markId);
+      } else {
+        logger.error({ error, markId }, "Resolution error");
+        updateMarkState(editor, markId, {
+          state: "error",
+        });
+        markUnifiedError(markId, String(error));
+      }
+    }
+  }
+
+  /**
+   * Resolve a single item (core logic)
+   */
+  private async resolveItem(item: ResolverQueueItem): Promise<void> {
+    const { key, raw, markId, editor, variant = "bracket" } = item;
+
+    logger.debug(
+      { key, raw, markId, variant },
+      "[ResolverQueue] Starting resolution"
+    );
 
     try {
       // Metrics: mark as pending
@@ -73,6 +128,7 @@ class ResolverQueue {
 
       // Check cache first
       const cachedPageId = getCachedPageId(key);
+
       if (cachedPageId) {
         updateMarkState(editor, markId, {
           state: "exists",
@@ -86,11 +142,44 @@ class ResolverQueue {
         return;
       }
 
-      // Execute search with retry
-      const results = await searchPagesWithRetry(key);
-      const exact = results.find((r) => normalizeTitleToKey(r.title) === key);
+      // First, try searching with the original text (raw)
+      let results = await searchPagesWithRetry(raw);
+
+      // If no results, try with normalized key
+      if (results.length === 0 && raw !== key) {
+        results = await searchPagesWithRetry(key);
+      }
+
+      if (results.length === 0) {
+        logger.debug(
+          { key, raw, markId },
+          "[ResolverQueue] No pages found - marking as MISSING"
+        );
+        updateMarkState(editor, markId, {
+          state: "missing",
+          exists: false,
+          href: "#",
+        });
+        markMissing(markId);
+        markUnifiedMissing(markId);
+        return;
+      }
+
+      // Try to find exact match (case-insensitive comparison)
+      const exact = results.find((r) => {
+        const normalizedTitle = normalizeTitleToKey(r.title);
+        // Match against both key and raw
+        return (
+          normalizedTitle === key ||
+          normalizedTitle === normalizeTitleToKey(raw)
+        );
+      });
 
       if (exact) {
+        logger.debug(
+          { key, raw, markId, pageId: exact.id, title: exact.title },
+          "[ResolverQueue] Exact match found - marking as EXISTS"
+        );
         setCachedPageId(key, exact.id);
         updateMarkState(editor, markId, {
           state: "exists",
@@ -101,6 +190,10 @@ class ResolverQueue {
         markResolved(markId);
         markUnifiedResolved(markId);
       } else {
+        logger.debug(
+          { key, raw, markId, resultsCount: results.length },
+          "[ResolverQueue] No exact match found - marking as MISSING"
+        );
         updateMarkState(editor, markId, {
           state: "missing",
           exists: false,
@@ -110,11 +203,12 @@ class ResolverQueue {
         markUnifiedMissing(markId);
       }
     } catch (error) {
-      console.warn(`Failed to resolve key "${key}":`, error);
+      logger.error({ error, key }, "Resolution error");
       updateMarkState(editor, markId, {
         state: "error",
       });
       markUnifiedError(markId, String(error));
+      throw error; // Re-throw for processItem to handle
     }
   }
 
@@ -135,7 +229,9 @@ const resolverQueue = new ResolverQueue();
  */
 export function enqueueResolve(item: ResolverQueueItem): void {
   resolverQueue.add(item);
-  queueMicrotask(() => resolverQueue.process());
+  queueMicrotask(() => {
+    resolverQueue.process();
+  });
 }
 
 /**

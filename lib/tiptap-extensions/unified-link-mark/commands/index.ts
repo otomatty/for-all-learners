@@ -14,8 +14,8 @@ import { createRefreshUnifiedLinksCommand } from "./refresh-unified-links";
  * @returns Commands object
  */
 export function createCommands(context: { editor: Editor; type: MarkType }) {
-  return {
-    insertUnifiedLink: createInsertUnifiedLinkCommand(context),
-    refreshUnifiedLinks: createRefreshUnifiedLinksCommand(context),
-  };
+	return {
+		insertUnifiedLink: createInsertUnifiedLinkCommand(context),
+		refreshUnifiedLinks: createRefreshUnifiedLinksCommand(context),
+	};
 }

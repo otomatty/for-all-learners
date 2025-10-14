@@ -3,38 +3,39 @@
  * P2実装: 既存のPageLinkMarkメトリクスとの統合
  */
 
+import logger from "../logger";
 import {
-  markPending as basePending,
-  markResolved as baseResolved,
-  markMissing as baseMissing,
-  getMetricsSummary as baseGetMetricsSummary,
+	getMetricsSummary as baseGetMetricsSummary,
+	markMissing as baseMissing,
+	markPending as basePending,
+	markResolved as baseResolved,
 } from "../metrics/pageLinkMetrics";
 
 // UnifiedLinkMark専用のメトリクス拡張
 interface UnifiedLinkMetrics {
-  totalCreated: number;
-  totalResolved: number;
-  totalMissing: number;
-  totalErrors: number;
-  averageResolutionTime: number;
-  cacheHitRate: number;
-  variantBreakdown: {
-    bracket: number;
-    tag: number;
-  };
+	totalCreated: number;
+	totalResolved: number;
+	totalMissing: number;
+	totalErrors: number;
+	averageResolutionTime: number;
+	cacheHitRate: number;
+	variantBreakdown: {
+		bracket: number;
+		tag: number;
+	};
 }
 
 // 内部統計データ
 let unifiedStats = {
-  created: 0,
-  resolved: 0,
-  missing: 0,
-  errors: 0,
-  bracketCount: 0,
-  tagCount: 0,
-  cacheHits: 0,
-  totalRequests: 0,
-  totalResolutionTime: 0,
+	created: 0,
+	resolved: 0,
+	missing: 0,
+	errors: 0,
+	bracketCount: 0,
+	tagCount: 0,
+	cacheHits: 0,
+	totalRequests: 0,
+	totalResolutionTime: 0,
 };
 
 const startTimes = new Map<string, number>();
@@ -46,28 +47,26 @@ const startTimes = new Map<string, number>();
  * @param variant マークの種類
  */
 export function markUnifiedPending(
-  markId: string,
-  title: string,
-  variant: "bracket" | "tag" = "bracket"
+	markId: string,
+	title: string,
+	variant: "bracket" | "tag" = "bracket",
 ): void {
-  // 基本メトリクスに記録
-  basePending(markId, title);
+	// 基本メトリクスに記録
+	basePending(markId, title);
 
-  // UnifiedLinkMark専用統計
-  unifiedStats.created++;
-  unifiedStats.totalRequests++;
+	// UnifiedLinkMark専用統計
+	unifiedStats.created++;
+	unifiedStats.totalRequests++;
 
-  if (variant === "bracket") {
-    unifiedStats.bracketCount++;
-  } else {
-    unifiedStats.tagCount++;
-  }
+	if (variant === "bracket") {
+		unifiedStats.bracketCount++;
+	} else {
+		unifiedStats.tagCount++;
+	}
 
-  startTimes.set(markId, performance.now());
+	startTimes.set(markId, performance.now());
 
-  console.debug(
-    `[UnifiedMetrics] pending start markId=${markId} title="${title}" variant=${variant}`
-  );
+	logger.debug({ markId, title, variant }, "[UnifiedMetrics] pending start");
 }
 
 /**
@@ -75,20 +74,20 @@ export function markUnifiedPending(
  * @param markId マークID
  */
 export function markUnifiedResolved(markId: string): void {
-  // 基本メトリクスに記録
-  baseResolved(markId);
+	// 基本メトリクスに記録
+	baseResolved(markId);
 
-  // UnifiedLinkMark専用統計
-  unifiedStats.resolved++;
+	// UnifiedLinkMark専用統計
+	unifiedStats.resolved++;
 
-  const startTime = startTimes.get(markId);
-  if (startTime) {
-    const duration = performance.now() - startTime;
-    unifiedStats.totalResolutionTime += duration;
-    startTimes.delete(markId);
-  }
+	const startTime = startTimes.get(markId);
+	if (startTime) {
+		const duration = performance.now() - startTime;
+		unifiedStats.totalResolutionTime += duration;
+		startTimes.delete(markId);
+	}
 
-  console.debug(`[UnifiedMetrics] resolved markId=${markId}`);
+	logger.debug({ markId }, "[UnifiedMetrics] resolved");
 }
 
 /**
@@ -96,20 +95,20 @@ export function markUnifiedResolved(markId: string): void {
  * @param markId マークID
  */
 export function markUnifiedMissing(markId: string): void {
-  // 基本メトリクスに記録
-  baseMissing(markId);
+	// 基本メトリクスに記録
+	baseMissing(markId);
 
-  // UnifiedLinkMark専用統計
-  unifiedStats.missing++;
+	// UnifiedLinkMark専用統計
+	unifiedStats.missing++;
 
-  const startTime = startTimes.get(markId);
-  if (startTime) {
-    const duration = performance.now() - startTime;
-    unifiedStats.totalResolutionTime += duration;
-    startTimes.delete(markId);
-  }
+	const startTime = startTimes.get(markId);
+	if (startTime) {
+		const duration = performance.now() - startTime;
+		unifiedStats.totalResolutionTime += duration;
+		startTimes.delete(markId);
+	}
 
-  console.debug(`[UnifiedMetrics] missing markId=${markId}`);
+	logger.debug({ markId }, "[UnifiedMetrics] missing");
 }
 
 /**
@@ -118,12 +117,12 @@ export function markUnifiedMissing(markId: string): void {
  * @param error エラー内容
  */
 export function markUnifiedError(markId: string, error?: string): void {
-  // UnifiedLinkMark専用統計
-  unifiedStats.errors++;
+	// UnifiedLinkMark専用統計
+	unifiedStats.errors++;
 
-  startTimes.delete(markId); // エラー時は時間計測を停止
+	startTimes.delete(markId); // エラー時は時間計測を停止
 
-  console.debug(`[UnifiedMetrics] error markId=${markId} error=${error}`);
+	logger.debug({ markId, error }, "[UnifiedMetrics] error");
 }
 
 /**
@@ -132,9 +131,9 @@ export function markUnifiedError(markId: string, error?: string): void {
  * @param key キー
  */
 export function markUnifiedCacheHit(markId: string, key: string): void {
-  unifiedStats.cacheHits++;
+	unifiedStats.cacheHits++;
 
-  console.debug(`[UnifiedMetrics] cache hit markId=${markId} key=${key}`);
+	logger.debug({ markId, key }, "[UnifiedMetrics] cache hit");
 }
 
 /**
@@ -144,14 +143,12 @@ export function markUnifiedCacheHit(markId: string, key: string): void {
  * @param title ページタイトル
  */
 export function markUnifiedPageCreated(
-  markId: string,
-  pageId: string,
-  title: string
+	markId: string,
+	pageId: string,
+	title: string,
 ): void {
-  // 将来のページ作成専用メトリクス拡張用
-  console.debug(
-    `[UnifiedMetrics] page created markId=${markId} pageId=${pageId} title="${title}"`
-  );
+	// 将来のページ作成専用メトリクス拡張用
+	logger.debug({ markId, pageId, title }, "[UnifiedMetrics] page created");
 }
 
 /**
@@ -159,29 +156,29 @@ export function markUnifiedPageCreated(
  * @returns UnifiedLinkMarkの統計情報
  */
 export function getUnifiedMetricsSummary(): UnifiedLinkMetrics {
-  const averageResolutionTime =
-    unifiedStats.resolved + unifiedStats.missing > 0
-      ? unifiedStats.totalResolutionTime /
-        (unifiedStats.resolved + unifiedStats.missing)
-      : 0;
+	const averageResolutionTime =
+		unifiedStats.resolved + unifiedStats.missing > 0
+			? unifiedStats.totalResolutionTime /
+				(unifiedStats.resolved + unifiedStats.missing)
+			: 0;
 
-  const cacheHitRate =
-    unifiedStats.totalRequests > 0
-      ? unifiedStats.cacheHits / unifiedStats.totalRequests
-      : 0;
+	const cacheHitRate =
+		unifiedStats.totalRequests > 0
+			? unifiedStats.cacheHits / unifiedStats.totalRequests
+			: 0;
 
-  return {
-    totalCreated: unifiedStats.created,
-    totalResolved: unifiedStats.resolved,
-    totalMissing: unifiedStats.missing,
-    totalErrors: unifiedStats.errors,
-    averageResolutionTime,
-    cacheHitRate,
-    variantBreakdown: {
-      bracket: unifiedStats.bracketCount,
-      tag: unifiedStats.tagCount,
-    },
-  };
+	return {
+		totalCreated: unifiedStats.created,
+		totalResolved: unifiedStats.resolved,
+		totalMissing: unifiedStats.missing,
+		totalErrors: unifiedStats.errors,
+		averageResolutionTime,
+		cacheHitRate,
+		variantBreakdown: {
+			bracket: unifiedStats.bracketCount,
+			tag: unifiedStats.tagCount,
+		},
+	};
 }
 
 /**
@@ -189,51 +186,51 @@ export function getUnifiedMetricsSummary(): UnifiedLinkMetrics {
  * @returns 統合されたメトリクス情報
  */
 export function getCombinedMetricsSummary() {
-  const baseMetrics = baseGetMetricsSummary();
-  const unifiedMetrics = getUnifiedMetricsSummary();
+	const baseMetrics = baseGetMetricsSummary();
+	const unifiedMetrics = getUnifiedMetricsSummary();
 
-  const baseTotalProcessed =
-    baseMetrics.resolvedCount + baseMetrics.missingCount;
-  const unifiedTotalProcessed =
-    unifiedMetrics.totalResolved + unifiedMetrics.totalMissing;
+	const baseTotalProcessed =
+		baseMetrics.resolvedCount + baseMetrics.missingCount;
+	const unifiedTotalProcessed =
+		unifiedMetrics.totalResolved + unifiedMetrics.totalMissing;
 
-  return {
-    base: baseMetrics,
-    unified: unifiedMetrics,
-    combined: {
-      totalProcessed: baseTotalProcessed + unifiedTotalProcessed,
-      successRate:
-        (baseMetrics.resolvedCount + unifiedMetrics.totalResolved) /
-        Math.max(1, baseTotalProcessed + unifiedTotalProcessed),
-    },
-  };
+	return {
+		base: baseMetrics,
+		unified: unifiedMetrics,
+		combined: {
+			totalProcessed: baseTotalProcessed + unifiedTotalProcessed,
+			successRate:
+				(baseMetrics.resolvedCount + unifiedMetrics.totalResolved) /
+				Math.max(1, baseTotalProcessed + unifiedTotalProcessed),
+		},
+	};
 }
 
 /**
  * メトリクス統計をリセット
  */
 export function resetUnifiedMetrics(): void {
-  unifiedStats = {
-    created: 0,
-    resolved: 0,
-    missing: 0,
-    errors: 0,
-    bracketCount: 0,
-    tagCount: 0,
-    cacheHits: 0,
-    totalRequests: 0,
-    totalResolutionTime: 0,
-  };
+	unifiedStats = {
+		created: 0,
+		resolved: 0,
+		missing: 0,
+		errors: 0,
+		bracketCount: 0,
+		tagCount: 0,
+		cacheHits: 0,
+		totalRequests: 0,
+		totalResolutionTime: 0,
+	};
 
-  startTimes.clear();
+	startTimes.clear();
 
-  console.debug("[UnifiedMetrics] metrics reset");
+	logger.debug("[UnifiedMetrics] metrics reset");
 }
 
 /**
  * デバッグ用：現在の統計情報をコンソール出力
  */
 export function logUnifiedMetrics(): void {
-  const summary = getUnifiedMetricsSummary();
-  console.log("[UnifiedMetrics] Current statistics:", summary);
+	const summary = getUnifiedMetricsSummary();
+	logger.info({ summary }, "[UnifiedMetrics] Current statistics");
 }

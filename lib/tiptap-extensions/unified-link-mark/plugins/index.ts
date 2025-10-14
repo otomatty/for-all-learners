@@ -6,6 +6,7 @@
 import type { Editor } from "@tiptap/core";
 import type { UnifiedLinkMarkOptions } from "../types";
 import { createAutoBracketPlugin } from "./auto-bracket-plugin";
+import { createBracketCursorPlugin } from "./bracket-cursor-plugin";
 import { createClickHandlerPlugin } from "./click-handler-plugin";
 import { createSuggestionPlugin } from "./suggestion-plugin";
 
@@ -20,6 +21,7 @@ export function createPlugins(context: {
 }) {
   return [
     createAutoBracketPlugin(),
+    createBracketCursorPlugin(context.editor),
     createClickHandlerPlugin(context),
     createSuggestionPlugin(context),
   ];

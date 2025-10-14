@@ -19,14 +19,14 @@ export type LinkType = "page" | "tag" | "icon" | "external";
  * Mark options interface
  */
 export interface UnifiedLinkMarkOptions {
-  HTMLAttributes: Record<string, string>;
-  autoReconciler?: AutoReconciler | null;
-  noteSlug?: string | null;
-  userId?: string | null;
-  onShowCreatePageDialog?: (
-    title: string,
-    onConfirm: () => Promise<void>
-  ) => void;
+	HTMLAttributes: Record<string, string>;
+	autoReconciler?: AutoReconciler | null;
+	noteSlug?: string | null;
+	userId?: string | null;
+	onShowCreatePageDialog?: (
+		title: string,
+		onConfirm: () => Promise<void>,
+	) => void;
 }
 
 /**
@@ -34,38 +34,39 @@ export interface UnifiedLinkMarkOptions {
  * Extended in Phase 3.1 to support icon links and external links
  */
 export interface UnifiedLinkAttributes {
-  variant: "bracket" | "tag";
-  raw: string;
-  text: string;
-  key: string;
-  pageId?: string | null;
-  href: string;
-  state: "pending" | "exists" | "missing" | "error";
-  exists: boolean;
-  created?: boolean;
-  meta?: object;
-  markId: string;
+	variant: "bracket" | "tag";
+	raw: string;
+	text: string;
+	key: string;
+	pageId?: string | null;
+	href: string;
+	state: "pending" | "exists" | "missing" | "error";
+	exists: boolean;
+	created?: boolean;
+	meta?: object;
+	markId: string;
 
-  // Phase 3.1: New fields for link type classification
-  linkType?: LinkType; // Link type (optional for backward compatibility)
-  userSlug?: string; // User slug for .icon links (e.g., "username" from "username.icon")
+	// Phase 3.1: New fields for link type classification
+	linkType?: LinkType; // Link type (optional for backward compatibility)
+	userSlug?: string; // User slug for .icon links (e.g., "username" from "username.icon")
 }
 
 /**
  * Search result interface
  */
 export interface SearchResult {
-  id: string;
-  title: string;
-  similarity?: number;
+	id: string;
+	title: string;
+	similarity?: number;
 }
 
 /**
  * Resolver queue item interface
  */
 export interface ResolverQueueItem {
-  key: string;
-  markId: string;
-  editor: Editor;
-  variant?: "bracket" | "tag";
+	key: string;
+	raw: string; // Original text before normalization
+	markId: string;
+	editor: Editor;
+	variant?: "bracket" | "tag";
 }

@@ -4,6 +4,7 @@
  */
 
 import type { Editor } from "@tiptap/core";
+import logger from "@/lib/logger";
 import type { UnifiedLinkAttributes } from "../../tiptap-extensions/unified-link-mark";
 
 /**
@@ -13,13 +14,11 @@ import type { UnifiedLinkAttributes } from "../../tiptap-extensions/unified-link
  * @param editor TipTap editor instance
  * @param markId Target mark ID
  * @param pageId Created page ID
- * @param title Page title
  */
 export async function updateMarkToExists(
   editor: Editor,
   markId: string,
-  pageId: string,
-  title: string
+  pageId: string
 ): Promise<void> {
   try {
     const { state, dispatch } = editor.view;
@@ -50,10 +49,12 @@ export async function updateMarkToExists(
 
     if (changed && dispatch) {
       dispatch(tr);
-      console.log(`[UnifiedResolver] Mark updated to exists state: ${markId}`);
     }
   } catch (error) {
-    console.error("Failed to update mark to exists state:", error);
+    logger.error(
+      { markId, pageId, error },
+      "Failed to update mark to exists state"
+    );
   }
 }
 
@@ -62,19 +63,22 @@ export async function updateMarkToExists(
  * Future feature for efficient bulk processing
  * Currently a placeholder for individual processing
  *
- * @param editor TipTap editor instance
+ * @param _editor TipTap editor instance (reserved for future implementation)
  * @param markIds Array of mark IDs to resolve
  */
 export async function batchResolveMarks(
-  editor: Editor,
+  _editor: Editor,
   markIds: string[]
 ): Promise<void> {
-  console.log(`[UnifiedResolver] Batch resolving ${markIds.length} marks`);
+  logger.info(
+    { markCount: markIds.length },
+    "[UnifiedResolver] Batch resolving marks"
+  );
 
   // TODO: Implement efficient batch resolution
   // Current implementation is a placeholder for individual processing
   for (const markId of markIds) {
     // Add individual resolution logic here
-    console.log(`[UnifiedResolver] Processing mark: ${markId}`);
+    logger.debug({ markId }, "[UnifiedResolver] Processing mark");
   }
 }

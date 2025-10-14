@@ -31,13 +31,16 @@ export const RESOLVER_CONFIG = {
   batchDelay: 50,
   maxRetries: 2,
   retryDelayBase: 100, // Base delay for exponential backoff
+  resolutionTimeout: 5000, // 5 seconds timeout for resolution
 } as const;
 
 /**
  * Regular expression patterns
  */
 export const PATTERNS = {
-  bracket: /\[([^\[\]]+)\]$/,
+  // Bracket pattern: matches [text] followed by space, punctuation, or end of line
+  // This allows InputRule to trigger on space/enter after closing bracket
+  bracket: /\[([^[\]]+)\](?=\s|$|[.,!?;:])/,
   // Tag pattern: detects #tag in text (not just at line end)
   // Matches: start of line or whitespace, followed by #, then tag characters
   // Lookahead ensures tag ends at whitespace, punctuation, or end of text

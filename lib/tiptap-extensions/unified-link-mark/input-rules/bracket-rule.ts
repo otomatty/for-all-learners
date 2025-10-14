@@ -3,13 +3,14 @@
  * Handles [Title] notation for creating unified links
  */
 
-import { InputRule } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import type { UnifiedLinkAttributes } from "../types";
-import { PATTERNS } from "../config";
+import { InputRule } from "@tiptap/core";
+import logger from "../../../logger";
 import { normalizeTitleToKey } from "../../../unilink";
-import { generateMarkId } from "../state-manager";
+import { PATTERNS } from "../config";
 import { enqueueResolve } from "../resolver-queue";
+import { generateMarkId } from "../state-manager";
+import type { UnifiedLinkAttributes } from "../types";
 import { isInCodeContext } from "./utils";
 
 /**
@@ -69,12 +70,22 @@ export function createBracketInputRule(context: {
 
       // Enqueue for resolution if not external
       if (!isExternal) {
+        logger.debug(
+          { key, raw, markId, variant: "bracket" },
+          "[BracketInputRule] Enqueueing resolve for bracket link"
+        );
         enqueueResolve({
           key,
+          raw, // Pass original text for flexible search
           markId,
           editor: context.editor,
           variant: "bracket",
         });
+      } else {
+        logger.debug(
+          { raw, markId },
+          "[BracketInputRule] External link detected, skipping resolution"
+        );
       }
     },
   });
