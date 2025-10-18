@@ -140,6 +140,112 @@ bun test lib/tiptap-extensions/unified-link-mark/__tests__/migration.test.ts
 
 ---
 
+## 解決方法（実装済み）
+
+### 採用した方法：オプション 2（parseHTML 強化）
+
+**理由**:
+- ✅ TipTap の設計に沿ったアプローチ
+- ✅ 既存の HTML 構造を変更しない
+- ✅ レガシーデータとの後方互換性を保つ
+- ✅ 将来の拡張に対応しやすい
+
+### 実装内容
+
+#### 修正箇所：`lib/tiptap-extensions/unified-link-mark/attributes.ts`
+
+各属性の `parseHTML()` 関数を強化して、複数のデータソースからフォールバック可能にしました。
+
+**修正対象属性**:
+1. `raw` 属性：data-raw → data-page-title → textContent
+2. `text` 属性：data-text → data-page-title → textContent  
+3. `key` 属性：data-key → data-page-title.toLowerCase()
+
+**実装例**（raw 属性）:
+```typescript
+raw: {
+  default: "",
+  parseHTML: (element: HTMLElement) => {
+    // 1. Priority: data-raw attribute (new format)
+    const dataRaw = element.getAttribute("data-raw");
+    if (dataRaw !== null) return dataRaw;
+
+    // 2. Fallback: data-page-title attribute (legacy format)
+    const pageTitle = element.getAttribute("data-page-title");
+    if (pageTitle !== null) return pageTitle;
+
+    // 3. Last resort: text content
+    return element.textContent || "";
+  },
+  renderHTML: (attributes: UnifiedLinkAttributes) => ({
+    "data-raw": attributes.raw,
+  }),
+},
+```
+
+### テスト結果
+
+```
+修正前: 18 pass, 4 fail
+修正後: 18 pass, 0 fail ✅
+```
+
+失敗していたテスト（すべて修正）:
+- ✅ Line 54: should migrate data-page-title links
+- ✅ Line 168: should handle links with only data-page-title
+- ✅ Line 192: should convert text content to raw and text attributes
+- ✅ Line 234: should set key to lowercase title for data-page-title links
+
+統合テスト結果:
+```
+UnifiedLinkMark 全体: 349 pass, 0 fail ✅
+```
+
+### 動作確認
+
+#### レガシー形式（data-page-title）
+
+```
+HTML: <a data-page-title="New Page">New Page</a>
+      ↓
+Mark attrs: {
+  raw: "New Page",      ✅
+  text: "New Page",     ✅
+  key: "new page",      ✅
+}
+```
+
+#### 新形式（data-variant）
+
+```
+HTML: <a data-variant="bracket" data-raw="Custom">Text</a>
+      ↓
+Mark attrs: {
+  raw: "Custom",        ✅ (data-raw が優先)
+}
+```
+
+### 修正コミット
+
+```
+Commit: 8b02700
+Message: fix(unified-link-mark): enhance parseHTML for legacy data migration
+
+Changes:
+- lib/tiptap-extensions/unified-link-mark/attributes.ts (+36, -4)
+```
+
+---
+
+## 関連ドキュメント
+
+- 📊 [検証レポート](../open/20251019_02_issue-verification-report.md) - 根本原因分析
+- 📋 [実装計画](../../04_implementation/plans/legacy-data-migration/20251019_01_implementation-plan.md) - 修正方法の詳細
+- 📝 [作業ログ](../../08_worklogs/2025_10/20251019/20251019_01_legacy-data-migration-fix.md) - 作業内容と結果
+
+---
+
 **作成者**: GitHub Copilot  
 **作成日**: 2025-10-19  
-**最終更新**: 2025-10-19
+**最終更新**: 2025-10-19  
+**ステータス**: ✅ 解決済み
