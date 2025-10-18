@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useEffect, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
 	deleteUserLlmSettings,
 	getUserLlmSettings,
@@ -10,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import type { Database } from "@/types/database.types";
-import React, { useState, useEffect, useTransition, useMemo } from "react";
-import { toast } from "sonner";
 
 // LLM settings row type
 type LlmSettingsRow = Database["public"]["Tables"]["user_llm_settings"]["Row"];

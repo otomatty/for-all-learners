@@ -3,9 +3,9 @@
 import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";
+import type { Viewport } from "next";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { Providers } from "@/components/providers";
-import type { Viewport } from "next";
 import "tiptap-extension-code-block-shiki";
 
 const inter = Inter({ subsets: ["latin"] });

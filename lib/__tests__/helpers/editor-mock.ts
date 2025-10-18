@@ -12,24 +12,24 @@
  * ```
  */
 
-import { vi } from "vitest";
 import type { Editor } from "@tiptap/core";
-import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
+import { vi } from "vitest";
 
 /**
  * Configuration options for creating mock Editor instances
  */
 export interface MockEditorOptions {
-  /** Mock ProseMirror document */
-  doc?: ProseMirrorNode;
-  /** Selection range */
-  selection?: { from: number; to: number };
-  /** User ID for the editor context */
-  userId?: string;
-  /** Additional commands to mock */
-  commands?: Record<string, unknown>;
+	/** Mock ProseMirror document */
+	doc?: ProseMirrorNode;
+	/** Selection range */
+	selection?: { from: number; to: number };
+	/** User ID for the editor context */
+	userId?: string;
+	/** Additional commands to mock */
+	commands?: Record<string, unknown>;
 }
 
 /**
@@ -42,18 +42,18 @@ export interface MockEditorOptions {
  * expect(doc.type.name).toBe('doc');
  */
 export function createEmptyDoc(): ProseMirrorNode {
-  return {
-    type: { name: "doc" },
-    content: {
-      size: 0,
-      childCount: 0,
-      forEach: vi.fn(),
-      descendants: vi.fn(),
-    },
-    nodeSize: 2,
-    childCount: 0,
-    textContent: "",
-  } as unknown as ProseMirrorNode;
+	return {
+		type: { name: "doc" },
+		content: {
+			size: 0,
+			childCount: 0,
+			forEach: vi.fn(),
+			descendants: vi.fn(),
+		},
+		nodeSize: 2,
+		childCount: 0,
+		textContent: "",
+	} as unknown as ProseMirrorNode;
 }
 
 /**
@@ -67,22 +67,22 @@ export function createEmptyDoc(): ProseMirrorNode {
  * expect(doc.textContent).toBe('Hello World');
  */
 export function createDocWithText(text: string): ProseMirrorNode {
-  return {
-    type: { name: "doc" },
-    textContent: text,
-    content: {
-      size: text.length,
-      childCount: 1,
-      forEach: vi.fn(),
-      descendants: vi.fn((callback) => {
-        // Simulate a text node in the document
-        callback({ text, type: { name: "text" } }, 0, null, 0);
-        return true;
-      }),
-    },
-    nodeSize: text.length + 2,
-    childCount: 1,
-  } as unknown as ProseMirrorNode;
+	return {
+		type: { name: "doc" },
+		textContent: text,
+		content: {
+			size: text.length,
+			childCount: 1,
+			forEach: vi.fn(),
+			descendants: vi.fn((callback) => {
+				// Simulate a text node in the document
+				callback({ text, type: { name: "text" } }, 0, null, 0);
+				return true;
+			}),
+		},
+		nodeSize: text.length + 2,
+		childCount: 1,
+	} as unknown as ProseMirrorNode;
 }
 
 /**
@@ -118,75 +118,75 @@ export function createDocWithText(text: string): ProseMirrorNode {
  * });
  */
 export function createMockEditor(options: MockEditorOptions = {}): Editor {
-  const mockDoc = options.doc ?? createEmptyDoc();
-  const from = options.selection?.from ?? 0;
-  const to = options.selection?.to ?? 0;
+	const mockDoc = options.doc ?? createEmptyDoc();
+	const from = options.selection?.from ?? 0;
+	const to = options.selection?.to ?? 0;
 
-  const mockState = {
-    doc: mockDoc,
-    selection: {
-      from,
-      to,
-      $from: { pos: from },
-      $to: { pos: to },
-      empty: from === to,
-    },
-    tr: {} as Transaction,
-  } as unknown as EditorState;
+	const mockState = {
+		doc: mockDoc,
+		selection: {
+			from,
+			to,
+			$from: { pos: from },
+			$to: { pos: to },
+			empty: from === to,
+		},
+		tr: {} as Transaction,
+	} as unknown as EditorState;
 
-  const mockView = {
-    state: mockState,
-    dispatch: vi.fn(),
-    dom: document.createElement("div"),
-  } as unknown as EditorView;
+	const mockView = {
+		state: mockState,
+		dispatch: vi.fn(),
+		dom: document.createElement("div"),
+	} as unknown as EditorView;
 
-  // Create chainable command mock
-  interface ChainableMock {
-    focus: ReturnType<typeof vi.fn>;
-    setMark: ReturnType<typeof vi.fn>;
-    unsetMark: ReturnType<typeof vi.fn>;
-    insertContent: ReturnType<typeof vi.fn>;
-    setTextSelection: ReturnType<typeof vi.fn>;
-    deleteSelection: ReturnType<typeof vi.fn>;
-    run: ReturnType<typeof vi.fn>;
-  }
+	// Create chainable command mock
+	interface ChainableMock {
+		focus: ReturnType<typeof vi.fn>;
+		setMark: ReturnType<typeof vi.fn>;
+		unsetMark: ReturnType<typeof vi.fn>;
+		insertContent: ReturnType<typeof vi.fn>;
+		setTextSelection: ReturnType<typeof vi.fn>;
+		deleteSelection: ReturnType<typeof vi.fn>;
+		run: ReturnType<typeof vi.fn>;
+	}
 
-  const createChainableMock = (): ChainableMock => {
-    const chainMock: ChainableMock = {
-      focus: vi.fn(() => chainMock),
-      setMark: vi.fn(() => chainMock),
-      unsetMark: vi.fn(() => chainMock),
-      insertContent: vi.fn(() => chainMock),
-      setTextSelection: vi.fn(() => chainMock),
-      deleteSelection: vi.fn(() => chainMock),
-      run: vi.fn(() => true),
-    };
-    return chainMock;
-  };
+	const createChainableMock = (): ChainableMock => {
+		const chainMock: ChainableMock = {
+			focus: vi.fn(() => chainMock),
+			setMark: vi.fn(() => chainMock),
+			unsetMark: vi.fn(() => chainMock),
+			insertContent: vi.fn(() => chainMock),
+			setTextSelection: vi.fn(() => chainMock),
+			deleteSelection: vi.fn(() => chainMock),
+			run: vi.fn(() => true),
+		};
+		return chainMock;
+	};
 
-  return {
-    state: mockState,
-    view: mockView,
-    chain: vi.fn(() => createChainableMock()),
-    commands: {
-      insertUnifiedLink: vi.fn(() => true),
-      refreshUnifiedLinks: vi.fn(() => true),
-      setMark: vi.fn(() => true),
-      unsetMark: vi.fn(() => true),
-      focus: vi.fn(() => true),
-      ...options.commands,
-    },
-    isActive: vi.fn(() => false),
-    can: vi.fn(() => ({ run: vi.fn(() => true) })),
-    getAttributes: vi.fn(() => ({})),
-    isEditable: true,
-    isFocused: false,
-    isEmpty: mockDoc.childCount === 0,
-    destroy: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn(),
-    emit: vi.fn(),
-  } as unknown as Editor;
+	return {
+		state: mockState,
+		view: mockView,
+		chain: vi.fn(() => createChainableMock()),
+		commands: {
+			insertUnifiedLink: vi.fn(() => true),
+			refreshUnifiedLinks: vi.fn(() => true),
+			setMark: vi.fn(() => true),
+			unsetMark: vi.fn(() => true),
+			focus: vi.fn(() => true),
+			...options.commands,
+		},
+		isActive: vi.fn(() => false),
+		can: vi.fn(() => ({ run: vi.fn(() => true) })),
+		getAttributes: vi.fn(() => ({})),
+		isEditable: true,
+		isFocused: false,
+		isEmpty: mockDoc.childCount === 0,
+		destroy: vi.fn(),
+		on: vi.fn(),
+		off: vi.fn(),
+		emit: vi.fn(),
+	} as unknown as Editor;
 }
 
 /**
@@ -203,7 +203,7 @@ export function createMockEditor(options: MockEditorOptions = {}): Editor {
  * // Only use when editor methods are not called
  */
 export function createMinimalMockEditor(): Editor {
-  return {} as Editor;
+	return {} as Editor;
 }
 
 /**
@@ -221,7 +221,7 @@ export function createMinimalMockEditor(): Editor {
  * });
  */
 export function createMockEditorWithDoc(docContent: ProseMirrorNode): Editor {
-  return createMockEditor({
-    doc: docContent,
-  });
+	return createMockEditor({
+		doc: docContent,
+	});
 }

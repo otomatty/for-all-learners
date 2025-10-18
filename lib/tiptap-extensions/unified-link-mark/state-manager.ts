@@ -14,63 +14,63 @@ import type { UnifiedLinkAttributes } from "./types";
  * @param updates - Partial attributes to update
  */
 export function updateMarkState(
-  editor: Editor,
-  markId: string,
-  updates: Partial<UnifiedLinkAttributes>
+	editor: Editor,
+	markId: string,
+	updates: Partial<UnifiedLinkAttributes>,
 ): void {
-  logger.debug({ markId, updates }, "[StateManager] updateMarkState called");
+	logger.debug({ markId, updates }, "[StateManager] updateMarkState called");
 
-  try {
-    const { state, dispatch } = editor.view;
-    if (!state || !dispatch) {
-      logger.warn("Editor state or dispatch not available");
-      return;
-    }
+	try {
+		const { state, dispatch } = editor.view;
+		if (!state || !dispatch) {
+			logger.warn("Editor state or dispatch not available");
+			return;
+		}
 
-    const { tr } = state;
-    const markType = state.schema.marks.unilink;
-    if (!markType) {
-      logger.warn("unilink mark type not found in schema");
-      return;
-    }
+		const { tr } = state;
+		const markType = state.schema.marks.unilink;
+		if (!markType) {
+			logger.warn("unilink mark type not found in schema");
+			return;
+		}
 
-    let changed = false;
-    let foundMarks = 0;
+		let changed = false;
+		let foundMarks = 0;
 
-    state.doc.descendants((node, pos: number) => {
-      if (!node.isText || !node.text) return;
+		state.doc.descendants((node, pos: number) => {
+			if (!node.isText || !node.text) return;
 
-      for (const mark of node.marks) {
-        if (mark.type === markType && mark.attrs.markId === markId) {
-          foundMarks++;
-          const newAttrs = { ...mark.attrs, ...updates };
+			for (const mark of node.marks) {
+				if (mark.type === markType && mark.attrs.markId === markId) {
+					foundMarks++;
+					const newAttrs = { ...mark.attrs, ...updates };
 
-          // Sync exists flag with state
-          if (updates.state) {
-            newAttrs.exists = updates.state === "exists";
-          }
-          tr.removeMark(pos, pos + node.text.length, markType);
-          tr.addMark(pos, pos + node.text.length, markType.create(newAttrs));
-          changed = true;
-        }
-      }
-    });
+					// Sync exists flag with state
+					if (updates.state) {
+						newAttrs.exists = updates.state === "exists";
+					}
+					tr.removeMark(pos, pos + node.text.length, markType);
+					tr.addMark(pos, pos + node.text.length, markType.create(newAttrs));
+					changed = true;
+				}
+			}
+		});
 
-    if (changed) {
-      logger.debug(
-        { markId, foundMarks, updates },
-        "[StateManager] Dispatching state update"
-      );
-      dispatch(tr);
-    } else {
-      logger.warn(
-        { markId, foundMarks },
-        "[StateManager] No marks found to update"
-      );
-    }
-  } catch (error) {
-    logger.error({ error }, "Failed to update mark state");
-  }
+		if (changed) {
+			logger.debug(
+				{ markId, foundMarks, updates },
+				"[StateManager] Dispatching state update",
+			);
+			dispatch(tr);
+		} else {
+			logger.warn(
+				{ markId, foundMarks },
+				"[StateManager] No marks found to update",
+			);
+		}
+	} catch (error) {
+		logger.error({ error }, "Failed to update mark state");
+	}
 }
 
 /**
@@ -78,9 +78,9 @@ export function updateMarkState(
  * @returns A unique mark identifier
  */
 export function generateMarkId(): string {
-  return `unilink-${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+	return `unilink-${Date.now().toString(36)}-${Math.random()
+		.toString(36)
+		.slice(2, 8)}`;
 }
 
 /**
@@ -90,32 +90,32 @@ export function generateMarkId(): string {
  * @returns Array of marks with the specified state
  */
 export function findMarksByState(
-  editor: Editor,
-  state: UnifiedLinkAttributes["state"]
+	editor: Editor,
+	state: UnifiedLinkAttributes["state"],
 ): Array<{ markId: string; key: string; variant?: "bracket" | "tag" }> {
-  const marks: Array<{
-    markId: string;
-    key: string;
-    variant?: "bracket" | "tag";
-  }> = [];
-  const { doc } = editor.state;
-  const markType = editor.schema.marks.unilink;
+	const marks: Array<{
+		markId: string;
+		key: string;
+		variant?: "bracket" | "tag";
+	}> = [];
+	const { doc } = editor.state;
+	const markType = editor.schema.marks.unilink;
 
-  if (!markType) return marks;
+	if (!markType) return marks;
 
-  doc.descendants((node) => {
-    if (!node.isText) return;
+	doc.descendants((node) => {
+		if (!node.isText) return;
 
-    for (const mark of node.marks) {
-      if (mark.type === markType && mark.attrs.state === state) {
-        marks.push({
-          markId: mark.attrs.markId,
-          key: mark.attrs.key,
-          variant: mark.attrs.variant,
-        });
-      }
-    }
-  });
+		for (const mark of node.marks) {
+			if (mark.type === markType && mark.attrs.state === state) {
+				marks.push({
+					markId: mark.attrs.markId,
+					key: mark.attrs.key,
+					variant: mark.attrs.variant,
+				});
+			}
+		}
+	});
 
-  return marks;
+	return marks;
 }

@@ -1,4 +1,7 @@
 "use client";
+import { BookOpen, Clock, Users } from "lucide-react";
+import Link from "next/link";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -8,9 +11,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Clock, Users } from "lucide-react";
-import Link from "next/link";
-import React from "react";
 import type { NoteSummary } from "./notes-list";
 
 interface RecommendedPublicNotesProps {

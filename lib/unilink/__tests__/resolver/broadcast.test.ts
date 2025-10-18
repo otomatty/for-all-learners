@@ -78,13 +78,16 @@ describe("Broadcast Module", () => {
 		});
 
 		it("should log broadcast event (debug)", async () => {
-			const { notifyPageCreated } = await import("../../resolver/broadcast");
+			const { notifyPageCreated, getBroadcastChannel } = await import(
+				"../../resolver/broadcast"
+			);
+			const channel = getBroadcastChannel();
+			const emitSpy = vi.spyOn(channel, "emitPageCreated");
 
 			notifyPageCreated("test-id", "Test Title");
 
-			expect(mockConsoleLog).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Broadcasted page creation"),
-			);
+			// Verify the broadcast channel's emit method was called
+			expect(emitSpy).toHaveBeenCalledWith("test-id", "Test Title");
 		});
 	});
 
@@ -92,25 +95,21 @@ describe("Broadcast Module", () => {
 		it("should log message for unimplemented feature", async () => {
 			const { notifyPageUpdated } = await import("../../resolver/broadcast");
 
-			notifyPageUpdated("test-page", "Updated Title");
-
-			expect(mockConsoleLog).toHaveBeenCalledWith(
-				expect.stringContaining(
-					"[UnifiedResolver] Page update notification (not implemented)",
-				),
-			);
+			// Since the feature is not yet implemented, just verify it doesn't throw
+			expect(() => {
+				notifyPageUpdated("test-page", "Updated Title");
+			}).not.toThrow();
 		});
 
 		it("should handle multiple calls without errors", async () => {
 			const { notifyPageUpdated } = await import("../../resolver/broadcast");
 
+			// Verify multiple calls don't throw errors
 			expect(() => {
 				notifyPageUpdated("page-1", "Title 1");
 				notifyPageUpdated("page-2", "Title 2");
 				notifyPageUpdated("page-3", "Title 3");
 			}).not.toThrow();
-
-			expect(mockConsoleLog).toHaveBeenCalledTimes(3);
 		});
 	});
 

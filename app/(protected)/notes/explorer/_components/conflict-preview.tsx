@@ -1,13 +1,13 @@
 "use client";
 
+import { EyeIcon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { EyeIcon } from "lucide-react";
-import { useState } from "react";
 
 interface ConflictPreviewProps {
 	content: string;

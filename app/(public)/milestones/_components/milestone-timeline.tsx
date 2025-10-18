@@ -1,15 +1,5 @@
 "use client";
 
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialogをインポート
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription, // Badgeの代わりに使うことを想定
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	CalendarClockIcon,
 	CheckCircle2Icon,
@@ -21,12 +11,22 @@ import {
 	RocketIcon,
 } from "lucide-react";
 import React, {
+	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
-	useEffect,
 	useState,
-	useCallback,
 } from "react";
+import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialogをインポート
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription, // Badgeの代わりに使うことを想定
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import MilestoneDetail from "./milestone-detail"; // 新しい詳細コンポーネントをインポート
 
 export type MilestoneStatus =

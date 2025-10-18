@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/core";
+
 // Define MarkJSON for tiptap marks
 type MarkJSON = { type: string; attrs?: Record<string, unknown> };
 

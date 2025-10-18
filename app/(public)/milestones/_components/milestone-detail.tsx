@@ -1,11 +1,11 @@
 "use client";
 
+import { CalendarClockIcon } from "lucide-react"; // XIconなどはResponsiveDialog側で持つため削除
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CalendarClockIcon } from "lucide-react"; // XIconなどはResponsiveDialog側で持つため削除
-import React, { useState, useEffect } from "react";
-import { type MilestoneEntry, getStatusAttributes } from "./milestone-timeline"; // 親コンポーネントから型と関数をインポート
+import { getStatusAttributes, type MilestoneEntry } from "./milestone-timeline"; // 親コンポーネントから型と関数をインポート
 
 interface MilestoneDetailProps {
 	milestone: MilestoneEntry;

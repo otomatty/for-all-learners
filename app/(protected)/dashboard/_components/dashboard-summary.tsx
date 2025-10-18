@@ -1,5 +1,8 @@
 "use client";
 
+import { BookOpen, BrainCircuit, Clock } from "lucide-react";
+import type React from "react";
+import { Cell, Pie, PieChart } from "recharts";
 import {
 	Card,
 	CardContent,
@@ -15,9 +18,6 @@ import {
 	ChartTooltipContent,
 } from "@/components/ui/chart";
 import type { Stats } from "@/types/dashboard"; // ensure Stats type is defined
-import { BookOpen, BrainCircuit, Clock } from "lucide-react";
-import type React from "react";
-import { Cell, Pie, PieChart } from "recharts";
 
 interface DashboardSummaryProps {
 	stats: Stats;

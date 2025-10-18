@@ -1,7 +1,7 @@
-import { type QuizParams, getQuizQuestions } from "@/app/_actions/quiz";
-import { Container } from "@/components/container";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
+import { Container } from "@/components/container";
 import QuizSession from "./_components/quiz-session";
 
 export default async function SessionPage() {

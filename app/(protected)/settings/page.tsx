@@ -1,8 +1,8 @@
+import React from "react";
 import { getUserCosenseProjects } from "@/app/_actions/cosense";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
-import React from "react";
 import UserSettingsForm from "./_components/user-settings-form";
 
 export default async function SettingsPage() {

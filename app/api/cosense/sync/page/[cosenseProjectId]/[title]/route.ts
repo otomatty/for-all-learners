@@ -1,8 +1,8 @@
+import type { JSONContent } from "@tiptap/core";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { parseCosenseLines } from "@/lib/utils/cosenseParser";
-import type { JSONContent } from "@tiptap/core";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 export async function GET(
 	req: NextRequest,

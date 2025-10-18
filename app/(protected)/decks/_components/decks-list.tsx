@@ -1,3 +1,6 @@
+import { formatDistanceToNow } from "date-fns";
+import { ja } from "date-fns/locale";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -7,9 +10,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
-import { formatDistanceToNow } from "date-fns";
-import { ja } from "date-fns/locale";
-import Link from "next/link";
 
 interface DecksListProps {
 	decks: Database["public"]["Tables"]["decks"]["Row"][];

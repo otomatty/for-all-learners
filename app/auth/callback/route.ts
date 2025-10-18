@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
 import { createAccount, getAccountById } from "@/app/_actions/accounts";
 import { createDefaultNote } from "@/app/_actions/notes";
 import { initializeUserPromptTemplates } from "@/app/_actions/promptTemplate";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);

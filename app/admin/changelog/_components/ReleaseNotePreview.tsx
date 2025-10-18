@@ -1,9 +1,9 @@
 "use client";
 
 import {
+	closestCenter,
 	DndContext,
 	type DragEndEvent,
-	closestCenter,
 	type useSensors,
 } from "@dnd-kit/core";
 import {

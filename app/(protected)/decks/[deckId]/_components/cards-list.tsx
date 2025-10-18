@@ -1,5 +1,9 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/core";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
 import { Button } from "@/components/ui/button";
 import {
@@ -17,10 +21,6 @@ import {
 import { useTextSelection } from "@/hooks/use-text-selection";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import type { JSONContent } from "@tiptap/core";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { CardItem } from "./card-item"; // CardItem をインポート
 import { RichContent } from "./rich-content";
 

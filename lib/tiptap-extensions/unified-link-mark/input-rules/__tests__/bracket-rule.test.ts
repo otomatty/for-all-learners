@@ -145,7 +145,10 @@ describe("createBracketInputRule", () => {
 	describe("Configuration", () => {
 		it("should use correct regex pattern", () => {
 			// Test the pattern directly
-			expect(PATTERNS.bracket.source).toBe("\\[([^\\[\\]]+)\\]$");
+			// Pattern: /\[([^[\]]+)\](?=\s|$|[.,!?;:])/
+			// Lookahead allows triggering on space, end of line, or punctuation
+			expect(PATTERNS.bracket.source).toContain("[^[\\]]+");
+			expect(PATTERNS.bracket.source).toContain("?=");
 			expect(PATTERNS.bracket.global).toBe(false);
 			expect(PATTERNS.bracket.multiline).toBe(false);
 		});

@@ -1,6 +1,20 @@
 "use client";
 
 import {
+	AlertCircle,
+	Check,
+	ChevronDown,
+	ChevronUp,
+	LinkIcon,
+} from "lucide-react";
+import React, {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+import {
 	AlertDialog,
 	AlertDialogAction,
 	AlertDialogCancel,
@@ -13,20 +27,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	AlertCircle,
-	Check,
-	ChevronDown,
-	ChevronUp,
-	LinkIcon,
-} from "lucide-react";
-import React, {
-	type ReactNode,
-	useState,
-	useRef,
-	useEffect,
-	useCallback,
-} from "react";
 
 export type ServiceStatus = "connected" | "disconnected" | "error";
 

@@ -1,8 +1,8 @@
 "use server";
 
+import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
-import type { JSONContent } from "@tiptap/core";
 import { updatePageLinks } from "./updatePageLinks";
 
 /**
@@ -32,8 +32,8 @@ export async function ensurePageLinksSync(pageId: string) {
 
 		// 存在確認用のページタイトルマップを取得
 		const fullText = JSON.stringify(page.content_tiptap);
-		const bracketMatches = Array.from(fullText.matchAll(/\[([^\[\]]+)\]/g));
-		const tagMatches = Array.from(fullText.matchAll(/#([^\s\[\]]+)/g));
+		const bracketMatches = Array.from(fullText.matchAll(/\[([^[\]]+)\]/g));
+		const tagMatches = Array.from(fullText.matchAll(/#([^\s[\]]+)/g));
 		const titles = Array.from(
 			new Set([
 				...bracketMatches.map((m) => m[1]),

@@ -1,8 +1,8 @@
 "use client";
 
-import { UserIcon } from "@/components/ui/user-icon";
-import { createRoot } from "react-dom/client";
 import React from "react";
+import { createRoot } from "react-dom/client";
+import { UserIcon } from "@/components/ui/user-icon";
 
 /**
  * DOM上のuser-icon-wrapperを実際のUserIconコンポーネントに置き換え

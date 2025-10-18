@@ -1,11 +1,11 @@
+import { redirect } from "next/navigation";
+import type React from "react";
 import { isAdmin } from "@/app/_actions/admin";
 import { getCurrentUser } from "@/app/_actions/auth";
 import { getUserPlan } from "@/app/_actions/subscriptions";
 import { getHelpVideoAudioSetting } from "@/app/_actions/user_settings";
 import { AppFooter } from "@/components/app-footer";
 import { AuthHeader } from "@/components/auth-header";
-import { redirect } from "next/navigation";
-import type React from "react";
 import pkg from "../../package.json";
 import { navItems } from "./navItems";
 

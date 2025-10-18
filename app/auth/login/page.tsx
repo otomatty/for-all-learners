@@ -1,12 +1,12 @@
+import { Mail } from "lucide-react";
+import Image from "next/image";
+import { redirect } from "next/navigation";
 import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UnauthHeader } from "@/components/unauth-header";
 import { createClient } from "@/lib/supabase/server";
-import { Mail } from "lucide-react";
-import Image from "next/image";
-import { redirect } from "next/navigation";
 import pkg from "../../../package.json";
 
 const version = pkg.version;

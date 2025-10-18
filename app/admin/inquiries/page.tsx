@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"; // shadcn/ui の Skeleton を利用
 import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton"; // shadcn/ui の Skeleton を利用
 import { InquiriesTableContainer } from "./_components/InquiriesTableContainer";
 
 export const metadata = {

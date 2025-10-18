@@ -1,9 +1,9 @@
 "use client";
 
+import { Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import type { ProcessingStatusDisplayProps } from "@/types/pdf-card-generator";
-import { Clock } from "lucide-react";
 
 export function PdfProcessingStatus({
 	status,

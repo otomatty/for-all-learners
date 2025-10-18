@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface DraggedPagePreviewProps {
 	pages: { id: string; title: string }[];

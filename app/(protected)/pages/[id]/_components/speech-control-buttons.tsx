@@ -1,11 +1,11 @@
 "use client";
 
+import { Pause, Play, RotateCcw } from "lucide-react";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Pause, Play, RotateCcw } from "lucide-react";
 
 interface SpeechControlButtonsProps {
 	onReadAloud: () => void;

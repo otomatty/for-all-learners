@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
 	Copy,
 	CreditCard,
@@ -9,7 +10,6 @@ import {
 	Trash2,
 	Volume2,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 export interface ToolbarAction {
 	id: string;

@@ -1,18 +1,6 @@
 "use client";
 
 import {
-	batchMovePages,
-	checkBatchConflicts,
-	deletePagesPermanently,
-	moveToTrash,
-} from "@/app/_actions/notes";
-import { Button } from "@/components/ui/button";
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import {
 	DndContext,
 	type DragEndEvent,
 	type DragOverEvent,
@@ -26,6 +14,18 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+	batchMovePages,
+	checkBatchConflicts,
+	deletePagesPermanently,
+	moveToTrash,
+} from "@/app/_actions/notes";
+import { Button } from "@/components/ui/button";
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import type { NoteSummary } from "../../_components/notes-list";
 import type { ConflictInfo, ConflictResolution } from "../types";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";

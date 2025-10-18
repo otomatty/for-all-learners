@@ -1,3 +1,5 @@
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
 	Tooltip,
@@ -5,8 +7,6 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
-import Image from "next/image";
 
 interface CosenseSyncBadgeProps {
 	/** Optional className for custom styling */

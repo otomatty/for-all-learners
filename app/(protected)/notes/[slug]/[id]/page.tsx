@@ -1,12 +1,11 @@
+import type { JSONContent } from "@tiptap/core";
+import { notFound, redirect } from "next/navigation";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
-
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
-import type { JSONContent } from "@tiptap/core";
 
 import EditPageForm from "../../../pages/[id]/_components/edit-page-form";
 

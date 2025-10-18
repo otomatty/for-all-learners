@@ -1,8 +1,8 @@
-import { SectionHeader } from "@/components/SectionHeader";
-import { Container } from "@/components/container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, BookOpen, Brain, Layers, Share2, Zap } from "lucide-react";
 import Image from "next/image";
+import { Container } from "@/components/container";
+import { SectionHeader } from "@/components/SectionHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FeatureSection() {
 	return (

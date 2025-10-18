@@ -23,62 +23,62 @@ import { updateMarkToExists } from "./mark-operations";
  * @returns Created page ID, or null on failure
  */
 export async function createPageFromMark(
-  editor: Editor,
-  markId: string,
-  title: string,
-  userId?: string
+	editor: Editor,
+	markId: string,
+	title: string,
+	userId?: string,
 ): Promise<string | null> {
-  try {
-    // User ID is required but we need to consider how to obtain it from current context
-    // Temporarily throw error if userId is not available from editor context
-    if (!userId) {
-      throw new Error("User ID is required for page creation");
-    }
+	try {
+		// User ID is required but we need to consider how to obtain it from current context
+		// Temporarily throw error if userId is not available from editor context
+		if (!userId) {
+			throw new Error("User ID is required for page creation");
+		}
 
-    // Create page via Server Action
-    const newPage = await createPage({
-      title,
-      content_tiptap: {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: `# ${title}\n\n新しいページです。`,
-              },
-            ],
-          },
-        ],
-      },
-      user_id: userId,
-      is_public: false, // Default to private
-    });
+		// Create page via Server Action
+		const newPage = await createPage({
+			title,
+			content_tiptap: {
+				type: "doc",
+				content: [
+					{
+						type: "paragraph",
+						content: [
+							{
+								type: "text",
+								text: `# ${title}\n\n新しいページです。`,
+							},
+						],
+					},
+				],
+			},
+			user_id: userId,
+			is_public: false, // Default to private
+		});
 
-    // TODO: If noteSlug is provided, associate with note_pages table
-    // if (noteSlug && newPage?.id) {
-    //   await associatePageWithNote(newPage.id, noteSlug);
-    // }
+		// TODO: If noteSlug is provided, associate with note_pages table
+		// if (noteSlug && newPage?.id) {
+		//   await associatePageWithNote(newPage.id, noteSlug);
+		// }
 
-    if (newPage?.id) {
-      // Update mark to exists state
-      await updateMarkToExists(editor, markId, newPage.id);
+		if (newPage?.id) {
+			// Update mark to exists state
+			await updateMarkToExists(editor, markId, newPage.id);
 
-      // P3: Notify other tabs via BroadcastChannel
-      const key = normalizeTitleToKey(title);
-      notifyPageCreated(key, newPage.id);
+			// P3: Notify other tabs via BroadcastChannel
+			const key = normalizeTitleToKey(title);
+			notifyPageCreated(key, newPage.id);
 
-      toast.success(`ページ「${title}」を作成しました`);
-      return newPage.id;
-    }
+			toast.success(`ページ「${title}」を作成しました`);
+			return newPage.id;
+		}
 
-    throw new Error("Page creation returned no ID");
-  } catch (error) {
-    logger.error({ markId, title, userId, error }, "Page creation failed");
-    toast.error(`ページ「${title}」の作成に失敗しました`);
-    return null;
-  }
+		throw new Error("Page creation returned no ID");
+	} catch (error) {
+		logger.error({ markId, title, userId, error }, "Page creation failed");
+		toast.error(`ページ「${title}」の作成に失敗しました`);
+		return null;
+	}
 }
 
 /**
@@ -91,84 +91,84 @@ export async function createPageFromMark(
  * @returns Created page ID and href, or null on failure
  */
 export async function createPageFromLink(
-  title: string,
-  userId: string,
-  noteSlug?: string | null
+	title: string,
+	userId: string,
+	noteSlug?: string | null,
 ): Promise<{ pageId: string; href: string } | null> {
-  try {
-    // Convert underscores to spaces for page title
-    const titleWithSpaces = title.replace(/_/g, " ");
+	try {
+		// Convert underscores to spaces for page title
+		const titleWithSpaces = title.replace(/_/g, " ");
 
-    // Dynamic import to avoid circular dependency
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
+		// Dynamic import to avoid circular dependency
+		const { createClient } = await import("@/lib/supabase/client");
+		const supabase = createClient();
 
-    // 1. Create page
-    const { data: newPage, error: insertError } = await supabase
-      .from("pages")
-      .insert({
-        user_id: userId,
-        title: titleWithSpaces,
-        content_tiptap: { type: "doc", content: [] },
-        is_public: false,
-      })
-      .select("id")
-      .single();
+		// 1. Create page
+		const { data: newPage, error: insertError } = await supabase
+			.from("pages")
+			.insert({
+				user_id: userId,
+				title: titleWithSpaces,
+				content_tiptap: { type: "doc", content: [] },
+				is_public: false,
+			})
+			.select("id")
+			.single();
 
-    if (insertError || !newPage) {
-      logger.error(
-        { title: titleWithSpaces, userId, error: insertError },
-        "Page creation failed"
-      );
-      toast.error("ページ作成に失敗しました");
-      return null;
-    }
+		if (insertError || !newPage) {
+			logger.error(
+				{ title: titleWithSpaces, userId, error: insertError },
+				"Page creation failed",
+			);
+			toast.error("ページ作成に失敗しました");
+			return null;
+		}
 
-    // 2. If noteSlug exists, associate with note_page_links
-    if (noteSlug) {
-      const { data: note, error: noteError } = await supabase
-        .from("notes")
-        .select("id")
-        .eq("slug", noteSlug)
-        .single();
+		// 2. If noteSlug exists, associate with note_page_links
+		if (noteSlug) {
+			const { data: note, error: noteError } = await supabase
+				.from("notes")
+				.select("id")
+				.eq("slug", noteSlug)
+				.single();
 
-      if (!noteError && note) {
-        const { error: linkError } = await supabase
-          .from("note_page_links")
-          .insert({ note_id: note.id, page_id: newPage.id });
+			if (!noteError && note) {
+				const { error: linkError } = await supabase
+					.from("note_page_links")
+					.insert({ note_id: note.id, page_id: newPage.id });
 
-        if (linkError) {
-          logger.error(
-            { noteId: note.id, pageId: newPage.id, error: linkError },
-            "Failed to link page to note"
-          );
-          // Even on error, page creation succeeded so continue
-        }
-      }
-    }
+				if (linkError) {
+					logger.error(
+						{ noteId: note.id, pageId: newPage.id, error: linkError },
+						"Failed to link page to note",
+					);
+					// Even on error, page creation succeeded so continue
+				}
+			}
+		}
 
-    // 3. Generate URL
-    const href = noteSlug
-      ? `/notes/${encodeURIComponent(noteSlug)}/${newPage.id}?newPage=true`
-      : `/pages/${newPage.id}?newPage=true`;
+		// 3. Generate URL
+		const href = noteSlug
+			? `/notes/${encodeURIComponent(noteSlug)}/${newPage.id}?newPage=true`
+			: `/pages/${newPage.id}?newPage=true`;
 
-    // 4. Notify other tabs via BroadcastChannel
-    const key = normalizeTitleToKey(titleWithSpaces);
-    notifyPageCreated(key, newPage.id);
+		// 4. Notify other tabs via BroadcastChannel
+		const key = normalizeTitleToKey(titleWithSpaces);
+		notifyPageCreated(key, newPage.id);
 
-    toast.success(`ページ「${titleWithSpaces}」を作成しました`);
+		toast.success(`ページ「${titleWithSpaces}」を作成しました`);
 
-    return { pageId: newPage.id, href };
-  } catch (error) {
-    logger.error(
-      { title, userId, noteSlug, error },
-      "[UnifiedResolver] Page creation from link failed"
-    );
-    toast.error(
-      `ページ作成中にエラーが発生しました: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-    return null;
-  }
+		return { pageId: newPage.id, href };
+	} catch (error) {
+		logger.error(
+			{ title, userId, noteSlug, error },
+			"[UnifiedResolver] Page creation from link failed",
+		);
+		toast.error(
+			`ページ作成中にエラーが発生しました: ${
+				error instanceof Error ? error.message : String(error)
+			}`,
+		);
+		return null;
+	}
 }

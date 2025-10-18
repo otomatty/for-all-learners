@@ -12,250 +12,251 @@
 @import "prismjs/themes/prism-tomorrow.css";
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+	.text-balance {
+		text-wrap: balance;
+	}
 
-  .hidden-scrollbar {
-    -ms-overflow-style: none; /* IE, Edge 対応 */
-    scrollbar-width: none; /* Firefox 対応 */
-  }
-  .hidden-scrollbar::-webkit-scrollbar {
-    /* Chrome, Safari 対応 */
-    display: none;
-  }
+	.hidden-scrollbar {
+		-ms-overflow-style: none; /* IE, Edge 対応 */
+		scrollbar-width: none; /* Firefox 対応 */
+	}
+	.hidden-scrollbar::-webkit-scrollbar {
+		/* Chrome, Safari 対応 */
+		display: none;
+	}
 
-  /* ページプレビューカード - チラつき防止 */
-  .page-preview-card {
-    min-height: 120px;
-    width: 320px;
-    padding: 12px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-      0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transition: none; /* アニメーション無効化 */
-    position: relative;
-  }
+	/* ページプレビューカード - チラつき防止 */
+	.page-preview-card {
+		min-height: 120px;
+		width: 320px;
+		padding: 12px;
+		background: white;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		box-shadow:
+			0 10px 15px -3px rgba(0, 0, 0, 0.1),
+			0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		transition: none; /* アニメーション無効化 */
+		position: relative;
+	}
 
-  .preview-content-fade {
-    opacity: 1;
-    transition: opacity 200ms ease-in-out;
-  }
+	.preview-content-fade {
+		opacity: 1;
+		transition: opacity 200ms ease-in-out;
+	}
 
-  .preview-content-fade.loading {
-    opacity: 0.8;
-  }
+	.preview-content-fade.loading {
+		opacity: 0.8;
+	}
 
-  .preview-content-fade.loaded {
-    opacity: 1;
-  }
+	.preview-content-fade.loaded {
+		opacity: 1;
+	}
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 0 0% 3.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 0 0% 3.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 0 0% 3.9%;
+		--primary: 0 0% 9%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 0 0% 96.1%;
+		--secondary-foreground: 0 0% 9%;
+		--muted: 0 0% 96.1%;
+		--muted-foreground: 0 0% 45.1%;
+		--accent: 0 0% 96.1%;
+		--accent-foreground: 0 0% 9%;
+		--destructive: 0 84.2% 60.2%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 0 0% 89.8%;
+		--input: 0 0% 89.8%;
+		--ring: 0 0% 3.9%;
+		--chart-1: 12 76% 61%;
+		--chart-2: 173 58% 39%;
+		--chart-3: 197 37% 24%;
+		--chart-4: 43 74% 66%;
+		--chart-5: 27 87% 67%;
+		--radius: 0.5rem;
+		--sidebar-background: 0 0% 98%;
+		--sidebar-foreground: 240 5.3% 26.1%;
+		--sidebar-primary: 240 5.9% 10%;
+		--sidebar-primary-foreground: 0 0% 98%;
+		--sidebar-accent: 240 4.8% 95.9%;
+		--sidebar-accent-foreground: 240 5.9% 10%;
+		--sidebar-border: 220 13% 91%;
+		--sidebar-ring: 217.2 91.2% 59.8%;
+	}
+	.dark {
+		--background: 0 0% 3.9%;
+		--foreground: 0 0% 98%;
+		--card: 0 0% 3.9%;
+		--card-foreground: 0 0% 98%;
+		--popover: 0 0% 3.9%;
+		--popover-foreground: 0 0% 98%;
+		--primary: 0 0% 98%;
+		--primary-foreground: 0 0% 9%;
+		--secondary: 0 0% 14.9%;
+		--secondary-foreground: 0 0% 98%;
+		--muted: 0 0% 14.9%;
+		--muted-foreground: 0 0% 63.9%;
+		--accent: 0 0% 14.9%;
+		--accent-foreground: 0 0% 98%;
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 0 0% 14.9%;
+		--input: 0 0% 14.9%;
+		--ring: 0 0% 83.1%;
+		--chart-1: 220 70% 50%;
+		--chart-2: 160 60% 45%;
+		--chart-3: 30 80% 55%;
+		--chart-4: 280 65% 60%;
+		--chart-5: 340 75% 55%;
+		--sidebar-background: 240 5.9% 10%;
+		--sidebar-foreground: 240 4.8% 95.9%;
+		--sidebar-primary: 224.3 76.3% 48%;
+		--sidebar-primary-foreground: 0 0% 100%;
+		--sidebar-accent: 240 3.7% 15.9%;
+		--sidebar-accent-foreground: 240 4.8% 95.9%;
+		--sidebar-border: 240 3.7% 15.9%;
+		--sidebar-ring: 217.2 91.2% 59.8%;
+	}
 
-  @layer base {
-    * {
-      @apply border-border outline-ring/50;
-    }
-    body {
-      @apply bg-background text-foreground;
-    }
-  }
+	@layer base {
+		* {
+			@apply border-border outline-ring/50;
+		}
+		body {
+			@apply bg-background text-foreground;
+		}
+	}
 
-  @theme inline {
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-  }
+	@theme inline {
+		--radius-sm: calc(var(--radius) - 4px);
+		--radius-md: calc(var(--radius) - 2px);
+		--radius-lg: var(--radius);
+		--radius-xl: calc(var(--radius) + 4px);
+		--color-background: var(--background);
+		--color-foreground: var(--foreground);
+		--color-card: var(--card);
+		--color-card-foreground: var(--card-foreground);
+		--color-popover: var(--popover);
+		--color-popover-foreground: var(--popover-foreground);
+		--color-primary: var(--primary);
+		--color-primary-foreground: var(--primary-foreground);
+		--color-secondary: var(--secondary);
+		--color-secondary-foreground: var(--secondary-foreground);
+		--color-muted: var(--muted);
+		--color-muted-foreground: var(--muted-foreground);
+		--color-accent: var(--accent);
+		--color-accent-foreground: var(--accent-foreground);
+		--color-destructive: var(--destructive);
+		--color-border: var(--border);
+		--color-input: var(--input);
+		--color-ring: var(--ring);
+		--color-chart-1: var(--chart-1);
+		--color-chart-2: var(--chart-2);
+		--color-chart-3: var(--chart-3);
+		--color-chart-4: var(--chart-4);
+		--color-chart-5: var(--chart-5);
+		--color-sidebar: var(--sidebar);
+		--color-sidebar-foreground: var(--sidebar-foreground);
+		--color-sidebar-primary: var(--sidebar-primary);
+		--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+		--color-sidebar-accent: var(--sidebar-accent);
+		--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+		--color-sidebar-border: var(--sidebar-border);
+		--color-sidebar-ring: var(--sidebar-ring);
+	}
 
-  :root {
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
+	:root {
+		--radius: 0.625rem;
+		--background: oklch(1 0 0);
+		--foreground: oklch(0.145 0 0);
+		--card: oklch(1 0 0);
+		--card-foreground: oklch(0.145 0 0);
+		--popover: oklch(1 0 0);
+		--popover-foreground: oklch(0.145 0 0);
+		--primary: oklch(0.205 0 0);
+		--primary-foreground: oklch(0.985 0 0);
+		--secondary: oklch(0.97 0 0);
+		--secondary-foreground: oklch(0.205 0 0);
+		--muted: oklch(0.97 0 0);
+		--muted-foreground: oklch(0.556 0 0);
+		--accent: oklch(0.97 0 0);
+		--accent-foreground: oklch(0.205 0 0);
+		--destructive: oklch(0.577 0.245 27.325);
+		--border: oklch(0.922 0 0);
+		--input: oklch(0.922 0 0);
+		--ring: oklch(0.708 0 0);
+		--chart-1: oklch(0.646 0.222 41.116);
+		--chart-2: oklch(0.6 0.118 184.704);
+		--chart-3: oklch(0.398 0.07 227.392);
+		--chart-4: oklch(0.828 0.189 84.429);
+		--chart-5: oklch(0.769 0.188 70.08);
+		--sidebar: oklch(0.985 0 0);
+		--sidebar-foreground: oklch(0.145 0 0);
+		--sidebar-primary: oklch(0.205 0 0);
+		--sidebar-primary-foreground: oklch(0.985 0 0);
+		--sidebar-accent: oklch(0.97 0 0);
+		--sidebar-accent-foreground: oklch(0.205 0 0);
+		--sidebar-border: oklch(0.922 0 0);
+		--sidebar-ring: oklch(0.708 0 0);
+	}
 
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-  }
+	.dark {
+		--background: oklch(0.145 0 0);
+		--foreground: oklch(0.985 0 0);
+		--card: oklch(0.205 0 0);
+		--card-foreground: oklch(0.985 0 0);
+		--popover: oklch(0.205 0 0);
+		--popover-foreground: oklch(0.985 0 0);
+		--primary: oklch(0.922 0 0);
+		--primary-foreground: oklch(0.205 0 0);
+		--secondary: oklch(0.269 0 0);
+		--secondary-foreground: oklch(0.985 0 0);
+		--muted: oklch(0.269 0 0);
+		--muted-foreground: oklch(0.708 0 0);
+		--accent: oklch(0.269 0 0);
+		--accent-foreground: oklch(0.985 0 0);
+		--destructive: oklch(0.704 0.191 22.216);
+		--border: oklch(1 0 0 / 10%);
+		--input: oklch(1 0 0 / 15%);
+		--ring: oklch(0.556 0 0);
+		--chart-1: oklch(0.488 0.243 264.376);
+		--chart-2: oklch(0.696 0.17 162.48);
+		--chart-3: oklch(0.769 0.188 70.08);
+		--chart-4: oklch(0.627 0.265 303.9);
+		--chart-5: oklch(0.645 0.246 16.439);
+		--sidebar: oklch(0.205 0 0);
+		--sidebar-foreground: oklch(0.985 0 0);
+		--sidebar-primary: oklch(0.488 0.243 264.376);
+		--sidebar-primary-foreground: oklch(0.985 0 0);
+		--sidebar-accent: oklch(0.269 0 0);
+		--sidebar-accent-foreground: oklch(0.985 0 0);
+		--sidebar-border: oklch(1 0 0 / 10%);
+		--sidebar-ring: oklch(0.556 0 0);
+	}
 }
 
 @layer components {
-  /* リンク色の分岐: hrefありは青、なしは赤 */
-  .rich-content a[href] {
-    @apply text-blue-500 underline cursor-pointer;
-  }
-  .rich-content a:not([href]) {
-    @apply text-red-500 underline cursor-pointer;
-  }
-  /* Treat paragraphs inside list items as inline to avoid extra block styling */
-  .prose li > p {
-    @apply inline m-0;
-  }
+	/* リンク色の分岐: hrefありは青、なしは赤 */
+	.rich-content a[href] {
+		@apply text-blue-500 underline cursor-pointer;
+	}
+	.rich-content a:not([href]) {
+		@apply text-red-500 underline cursor-pointer;
+	}
+	/* Treat paragraphs inside list items as inline to avoid extra block styling */
+	.prose li > p {
+		@apply inline m-0;
+	}
 
-  /* コードブロック用スタイル */
-  /* .prose pre {
+	/* コードブロック用スタイル */
+	/* .prose pre {
 		@apply bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-auto;
 	}
 	.prose pre code {
@@ -265,124 +266,126 @@
 
 /* GyazoImage 用スタイル */
 .image {
-  max-width: 100%;
-  max-height: 300px;
-  display: inline-block;
-  vertical-align: bottom;
-  margin: 3px 0px;
-  cursor: pointer;
-  transition: box-shadow 0.2s ease-in-out;
-  border-radius: 0.5rem;
+	max-width: 100%;
+	max-height: 300px;
+	display: inline-block;
+	vertical-align: bottom;
+	margin: 3px 0px;
+	cursor: pointer;
+	transition: box-shadow 0.2s ease-in-out;
+	border-radius: 0.5rem;
 }
 .image:hover {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
 /* Full-width GyazoImage style */
 .image-full {
-  display: block;
-  width: 100%;
-  max-width: none;
-  height: auto;
+	display: block;
+	width: 100%;
+	max-width: none;
+	height: auto;
 }
 
 /* Unified Link Suggestion Tooltip Styles */
 /* Base styles for both bracket and tag suggestions */
 .bracket-suggestion-list,
 .tag-suggestion-list {
-  min-width: 200px;
-  max-width: 400px;
-  font-family: inherit;
-  z-index: 9999;
+	min-width: 200px;
+	max-width: 400px;
+	font-family: inherit;
+	z-index: 9999;
 }
 /* globals.css の末尾に追加（置き換え） */
 /* 空セル */
 .color-empty {
-  fill: var(--background);
+	fill: var(--background);
 }
 /* 濃淡つきセル */
 .color-scale-1 {
-  fill: var(--primary);
-  fill-opacity: 0.2;
+	fill: var(--primary);
+	fill-opacity: 0.2;
 }
 .color-scale-2 {
-  fill: var(--primary);
-  fill-opacity: 0.4;
+	fill: var(--primary);
+	fill-opacity: 0.4;
 }
 .color-scale-3 {
-  fill: var(--primary);
-  fill-opacity: 0.6;
+	fill: var(--primary);
+	fill-opacity: 0.6;
 }
 .color-scale-4 {
-  fill: var(--primary);
-  fill-opacity: 0.8;
+	fill: var(--primary);
+	fill-opacity: 0.8;
 }
 
 /* Custom Blockquote Styles */
 blockquote {
-  margin: 1rem 0; /* my-4 */
-  padding-left: 1rem; /* pl-4 */
-  border-left-width: 4px; /* border-l-4 */
-  border-color: #6b7280; /* border-gray-500 */
-  font-style: italic; /* italic */
+	margin: 1rem 0; /* my-4 */
+	padding-left: 1rem; /* pl-4 */
+	border-left-width: 4px; /* border-l-4 */
+	border-color: #6b7280; /* border-gray-500 */
+	font-style: italic; /* italic */
 }
 
 /* ユーザーアイコン表示用のスタイル */
 .user-icon-wrapper {
-  @apply inline-flex items-center;
-  vertical-align: middle;
+	@apply inline-flex items-center;
+	vertical-align: middle;
 }
 
 .user-icon-wrapper::before {
-  content: "";
-  display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  border-radius: 50%;
-  margin-right: 0.25rem;
-  flex-shrink: 0;
+	content: "";
+	display: inline-block;
+	width: 1.5rem;
+	height: 1.5rem;
+	background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+	border-radius: 50%;
+	margin-right: 0.25rem;
+	flex-shrink: 0;
 }
 
 .user-icon-wrapper[data-exists="false"]::before {
-  background: #6b7280;
+	background: #6b7280;
 }
 
 /* アイコンが読み込まれた後のスタイル調整 */
 .user-icon-wrapper.loaded::before {
-  display: none;
+	display: none;
 }
 
 /* レンダリング済みのアイコンコンテナ */
 .user-icon-container {
-  vertical-align: middle;
+	vertical-align: middle;
 }
 
 /* --- PageLinkMark state styles --- */
 /* 汎用: エディタ本文領域想定のラッパに .rich-content か ProseMirror root を利用 */
 .ProseMirror a[data-state] {
-  position: relative;
-  text-underline-offset: 2px;
-  transition: color 120ms ease, background-color 120ms ease,
-    box-shadow 120ms ease;
+	position: relative;
+	text-underline-offset: 2px;
+	transition:
+		color 120ms ease,
+		background-color 120ms ease,
+		box-shadow 120ms ease;
 }
 
 /* list 内で bullet との間隔が詰まり過ぎるのを抑制 */
 li > a.page-link-mark:first-child {
-  margin-left: 0.15em;
+	margin-left: 0.15em;
 }
 
 /* pending の簡易インジケータ (左余白に小さな点) */
 a.page-link-mark[data-state="pending"]::before {
-  content: "";
-  position: absolute;
-  left: -0.4em;
-  top: 0.55em;
-  width: 0.3em;
-  height: 0.3em;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.35;
+	content: "";
+	position: absolute;
+	left: -0.4em;
+	top: 0.55em;
+	width: 0.3em;
+	height: 0.3em;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.35;
 }
 
 /* pending: 解決待ち。薄い色 + 点線下線 */
@@ -390,68 +393,68 @@ a.page-link-mark[data-state="pending"]::before {
 
 .ProseMirror a[data-state="pending"],
 .ProseMirror a[data-state="resolving"] {
-  color: #64748b; /* slate-500 */
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: rgba(148, 163, 184, 0.7); /* slate-400 70% */
-  cursor: progress;
+	color: #64748b; /* slate-500 */
+	text-decoration-line: underline;
+	text-decoration-style: dotted;
+	text-decoration-color: rgba(148, 163, 184, 0.7); /* slate-400 70% */
+	cursor: progress;
 }
 .dark .ProseMirror a[data-state="pending"],
 .dark .ProseMirror a[data-state="resolving"] {
-  color: #94a3b8; /* slate-400 */
-  text-decoration-color: rgba(100, 116, 139, 0.7); /* slate-500 70% */
+	color: #94a3b8; /* slate-400 */
+	text-decoration-color: rgba(100, 116, 139, 0.7); /* slate-500 70% */
 }
 
 /* exists: 通常表示。既存定義: hrefあり=青を踏襲しつつ安定化 */
 .ProseMirror a[data-state="exists"] {
-  color: #2563eb; /* blue-600 */
+	color: #2563eb; /* blue-600 */
 }
 .dark .ProseMirror a[data-state="exists"] {
-  color: #60a5fa; /* blue-400 */
+	color: #60a5fa; /* blue-400 */
 }
 
 /* missing: 未解決（該当ページ無し）。赤基調 + 破線 + 背景の淡いトーン */
 .ProseMirror a[data-state="missing"] {
-  color: #dc2626; /* red-600 */
-  text-decoration-line: underline;
-  text-decoration-style: wavy;
-  text-decoration-color: rgba(248, 113, 113, 0.8); /* red-400 80% */
-  background: #fef2f2; /* red-50 */
-  border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(254, 202, 202, 0.6); /* red-200 */
+	color: #dc2626; /* red-600 */
+	text-decoration-line: underline;
+	text-decoration-style: wavy;
+	text-decoration-color: rgba(248, 113, 113, 0.8); /* red-400 80% */
+	background: #fef2f2; /* red-50 */
+	border-radius: 2px;
+	box-shadow: inset 0 0 0 1px rgba(254, 202, 202, 0.6); /* red-200 */
 }
 .dark .ProseMirror a[data-state="missing"] {
-  color: #f87171; /* red-400 */
-  background: rgba(76, 5, 5, 0.3); /* approximate red-950/30% */
-  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.6); /* red-700 */
+	color: #f87171; /* red-400 */
+	background: rgba(76, 5, 5, 0.3); /* approximate red-950/30% */
+	box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.6); /* red-700 */
 }
 
 /* Hover states */
 .ProseMirror a[data-state="exists"]:hover {
-  color: #1d4ed8; /* blue-700 */
+	color: #1d4ed8; /* blue-700 */
 }
 .dark .ProseMirror a[data-state="exists"]:hover {
-  color: #93c5fd; /* blue-300 */
+	color: #93c5fd; /* blue-300 */
 }
 .ProseMirror a[data-state="missing"]:hover {
-  background: #fee2e2; /* red-100 */
+	background: #fee2e2; /* red-100 */
 }
 .dark .ProseMirror a[data-state="missing"]:hover {
-  background: rgba(127, 29, 29, 0.4); /* red-900 40% */
+	background: rgba(127, 29, 29, 0.4); /* red-900 40% */
 }
 
 /* 追加UI用の ::after は後で必要になれば実装 */
 
 /* 外部リンク用 (external=true の場合、後で data-external="true" を付与予定) */
 .ProseMirror a[data-external="true"] {
-  padding-right: 0.35em;
+	padding-right: 0.35em;
 }
 .ProseMirror a[data-external="true"]::after {
-  content: "↗";
-  font-size: 0.7em;
-  margin-left: 0.15em;
-  opacity: 0.6;
-  display: inline-block;
-  transform: translateY(-1px);
+	content: "↗";
+	font-size: 0.7em;
+	margin-left: 0.15em;
+	opacity: 0.6;
+	display: inline-block;
+	transform: translateY(-1px);
 }
 /* --- End PageLinkMark state styles --- */

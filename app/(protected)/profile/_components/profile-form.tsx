@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useRef, useState } from "react";
+import { toast } from "sonner";
 import { updateAccount, uploadAvatar } from "@/app/_actions/accounts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,8 +16,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { Database } from "@/types/database.types";
-import React, { useState, useRef } from "react";
-import { toast } from "sonner";
 
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 

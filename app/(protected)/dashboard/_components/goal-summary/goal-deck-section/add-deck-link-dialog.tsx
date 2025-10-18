@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
+import React, { useCallback, useEffect, useState, useTransition } from "react";
 import { createDeckAction } from "@/app/_actions/decks";
 import type { Deck } from "@/app/_actions/goal-decks";
 import {
@@ -25,8 +27,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft } from "lucide-react";
-import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { DecksTableSkeleton } from "./decks-table-skeleton";
 
 interface AddDeckLinkDialogProps {

@@ -1,5 +1,17 @@
 "use client";
 
+import {
+	Crown,
+	Home,
+	LogOut,
+	Mail,
+	Settings,
+	Shield,
+	Target,
+	UserRound,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { logout } from "@/app/_actions/auth";
 import { getUserGoalLimits } from "@/app/_actions/study_goals";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,18 +28,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import {
-	Crown,
-	Home,
-	LogOut,
-	Mail,
-	Settings,
-	Shield,
-	Target,
-	UserRound,
-} from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 
 // Plan type
 type Plan = Database["public"]["Tables"]["plans"]["Row"];
@@ -39,7 +39,11 @@ export function UserNav({
 	isAdmin,
 	account,
 	plan,
-}: { isAdmin: boolean; account: Account; plan: Plan | null }) {
+}: {
+	isAdmin: boolean;
+	account: Account;
+	plan: Plan | null;
+}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [goalLimits, setGoalLimits] = useState<{

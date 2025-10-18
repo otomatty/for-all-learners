@@ -9,9 +9,9 @@
 
 "use server";
 
+import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
-import type { JSONContent } from "@tiptap/core";
 
 /**
  * バッチ更新結果の型定義

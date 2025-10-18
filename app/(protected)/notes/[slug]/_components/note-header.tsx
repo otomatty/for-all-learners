@@ -1,5 +1,7 @@
 "use client";
 
+import { BookOpen, Clock, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { ShareSettingsModal } from "@/components/ShareSettingsModal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,8 +12,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { BookOpen, Clock, Users } from "lucide-react";
-import React, { useState, useEffect } from "react";
 
 interface NoteHeaderProps {
 	id: string;

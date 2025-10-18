@@ -1,8 +1,8 @@
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import type { Editor } from "@tiptap/react";
 import { marked } from "marked";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 
 /**
  * Hook to generate page content based on title.

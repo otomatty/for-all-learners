@@ -1,8 +1,8 @@
+import { notFound, redirect } from "next/navigation";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import { notFound, redirect } from "next/navigation";
 import { GenerateCardsForm } from "./_components/generate-cards-form"; // 次に作成するクライアントコンポーネント
 
 type Page = Database["public"]["Tables"]["pages"]["Row"];

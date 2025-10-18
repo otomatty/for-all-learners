@@ -16,7 +16,12 @@ let globalAutoReconciler: AutoReconciler | null = null;
  * Initializes the AutoReconciler and sets up storage
  * @param editor - The Tiptap editor instance
  */
-export function onCreateHandler(editor: Editor): void {
+export function onCreateHandler(editor: Editor | null | undefined): void {
+	// Guard against null or undefined editor
+	if (!editor) {
+		return;
+	}
+
 	// Initialize storage for resolverQueue (Mark extensions don't support addStorage)
 	if (!editor.storage.unilink) {
 		editor.storage.unilink = {};
@@ -28,7 +33,7 @@ export function onCreateHandler(editor: Editor): void {
 		},
 	};
 
-	if (editor && !globalAutoReconciler) {
+	if (!globalAutoReconciler) {
 		globalAutoReconciler = new AutoReconciler(editor);
 		globalAutoReconciler.initialize();
 	}

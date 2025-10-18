@@ -1,8 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types"; // 生成されたDatabase型をインポート
-import { revalidatePath } from "next/cache";
 import type { MilestoneEntry } from "../(public)/milestones/_components/milestone-timeline";
 
 // Supabaseのmilestonesテーブルの行の型エイリアス

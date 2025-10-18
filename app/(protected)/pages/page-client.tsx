@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import { PagesListContainer } from "@/app/(protected)/pages/_components/pages-list-container";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React, { useState } from "react";
 
 interface PagesPageClientProps {
 	userId: string;

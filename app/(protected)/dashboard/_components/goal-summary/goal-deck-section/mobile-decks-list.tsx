@@ -1,5 +1,9 @@
 "use client";
 
+import { useAtomValue } from "jotai";
+import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import React, { useState } from "react";
 import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -13,10 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { userIdAtom } from "@/stores/user";
-import { useAtomValue } from "jotai";
-import { MoreHorizontal } from "lucide-react";
-import Link from "next/link";
-import React, { useState } from "react";
 
 interface Deck {
 	id: string;

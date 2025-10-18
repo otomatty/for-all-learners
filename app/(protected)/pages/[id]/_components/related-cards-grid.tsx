@@ -1,11 +1,12 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import type { JSONContent } from "@tiptap/react";
-import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
+
 interface RelatedCardsGridProps {
 	pageId: string;
 }

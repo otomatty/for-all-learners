@@ -1,4 +1,8 @@
 "use client";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { addStudyGoal, getUserGoalLimits } from "@/app/_actions/study_goals";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,10 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 
 interface GoalFormFields {
 	title: string;

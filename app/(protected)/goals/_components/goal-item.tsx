@@ -1,15 +1,5 @@
 "use client";
 
-import { completeStudyGoal } from "@/app/_actions/study_goals";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import {
@@ -24,6 +14,16 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { completeStudyGoal } from "@/app/_actions/study_goals";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DeleteGoalDialog } from "./delete-goal-dialog";
 import { EditGoalDialog } from "./edit-goal-dialog";
 import { GoalProgressBar } from "./goal-progress-bar";

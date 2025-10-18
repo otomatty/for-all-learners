@@ -74,7 +74,7 @@ Back: ${back}`;
 		case "cloze":
 			prompt = `${JSON_ONLY_PREFIX}Generate a cloze (fill-in-the-blank) question${difficultyPrompt} based on the following flashcard. The question should require understanding of the flashcard content, not just be guessable from context. Provide a JSON object with these keys:
 "text" (string, the cloze text with placeholders like {blank1}),
-"blanks" (array of strings, listing all blank placeholders like [\"{blank1}\", \"{blank2}\"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
+"blanks" (array of strings, listing all blank placeholders like ["{blank1}", "{blank2}"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
 "question" (string, a question that guides the user to fill the blanks),
 "answers" (array of strings for each blank),
 "options" (array of arrays of strings. Each inner array should contain 4 options for the corresponding blank, including the correct answer. Ensure options are relevant and plausible yet distinguishable from the correct answer. Shuffle the options for each blank.).
@@ -179,7 +179,7 @@ Use valid JSON array only.
 		case "cloze":
 			header = `${JSON_ONLY_PREFIX}Generate an array of ${pairs.length} cloze (fill-in-the-blank) questions${languagePrompt} based on the following flashcards. Each question should require understanding of the flashcard content, not just be guessable from context. Ensure each question is fully self-contained and avoids vague pronouns such as "this" or "such". Provide ONLY a JSON array of objects, each with keys:
 "text" (string, the cloze text with placeholders like {blank1}),
-"blanks" (array of strings, listing all blank placeholders like [\"{blank1}\", \"{blank2}\"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
+"blanks" (array of strings, listing all blank placeholders like ["{blank1}", "{blank2}"]. This field is mandatory. If there are no blanks, return an empty array \\\`[]\\\`. ),
 "question" (string, a question that guides the user to fill the blanks),
 "answers" (array of strings for each blank),
 "options" (array of arrays of strings. Each inner array should contain 4 options for the corresponding blank, including the correct answer. Ensure options are relevant and plausible yet distinguishable from the correct answer. Shuffle the options for each blank.).

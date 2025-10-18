@@ -1,7 +1,7 @@
 "use client";
 
-import type { Database } from "@/types/database.types";
 import type React from "react";
+import type { Database } from "@/types/database.types";
 import NotificationSettingsComponent from "./notification-settings";
 
 // ユーザー設定の型

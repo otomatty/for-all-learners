@@ -46,29 +46,26 @@ import { JSDOM } from "jsdom";
  * ```
  */
 export function setupJSDOMEnvironment(
-  options: {
-    html?: string;
-    setupRAF?: boolean;
-  } = {}
+	options: { html?: string; setupRAF?: boolean } = {},
 ): JSDOM {
-  const {
-    html = "<!DOCTYPE html><html><body></body></html>",
-    setupRAF = true,
-  } = options;
+	const {
+		html = "<!DOCTYPE html><html><body></body></html>",
+		setupRAF = true,
+	} = options;
 
-  const dom = new JSDOM(html);
+	const dom = new JSDOM(html);
 
-  // Assign to global for test access
-  global.document = dom.window.document as unknown as Document;
-  global.window = dom.window as unknown as Window & typeof globalThis;
+	// Assign to global for test access
+	global.document = dom.window.document as unknown as Document;
+	global.window = dom.window as unknown as Window & typeof globalThis;
 
-  // Setup requestAnimationFrame mock if requested
-  if (setupRAF) {
-    global.requestAnimationFrame = ((callback: FrameRequestCallback) => {
-      setTimeout(callback, 0);
-      return 0;
-    }) as typeof requestAnimationFrame;
-  }
+	// Setup requestAnimationFrame mock if requested
+	if (setupRAF) {
+		global.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+			setTimeout(callback, 0);
+			return 0;
+		}) as typeof requestAnimationFrame;
+	}
 
-  return dom;
+	return dom;
 }

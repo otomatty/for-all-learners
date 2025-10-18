@@ -1,7 +1,7 @@
-import type { Database } from "@/types/database.types";
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { Database } from "@/types/database.types";
 
 // Define public routes for unauthenticated users
 const PUBLIC_PATHS = [

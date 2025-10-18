@@ -156,19 +156,19 @@ describe("Unilink Utils", () => {
 			});
 
 			it("should normalize keys before caching", () => {
-				// Current implementation doesn't normalize keys internally
-				// Caller must normalize keys before caching
+				// Both setCachedPageId and getCachedPageId normalize keys internally
+				// This ensures consistent lookups regardless of input format
 				const normalizedKey = normalizeTitleToKey("Test  Multiple  Spaces");
 				setCachedPageId(normalizedKey, "id-normalized");
 
 				// Retrieve with same normalized key
 				const result = getCachedPageId(normalizedKey);
-
 				expect(result).toBe("id-normalized");
 
-				// Different non-normalized key won't find it
+				// Different non-normalized key should also find it
+				// because both keys normalize to the same value
 				const nonNormalized = getCachedPageId("Test  Multiple  Spaces");
-				expect(nonNormalized).toBeNull();
+				expect(nonNormalized).toBe("id-normalized");
 			});
 		});
 

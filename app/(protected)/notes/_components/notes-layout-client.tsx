@@ -1,15 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
+import { batchMovePages } from "@/app/_actions/notes/batchMovePages";
+import { checkBatchConflicts } from "@/app/_actions/notes/checkBatchConflicts";
 import { ConflictResolutionDialog } from "@/app/(protected)/notes/explorer/_components/conflict-resolution-dialog";
 import type {
 	ConflictInfo,
 	ConflictResolution,
 } from "@/app/(protected)/notes/explorer/types";
-import { batchMovePages } from "@/app/_actions/notes/batchMovePages";
-import { checkBatchConflicts } from "@/app/_actions/notes/checkBatchConflicts";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { useState } from "react";
-import { toast } from "sonner";
 import { NotesExplorerSidebar } from "./notes-sidebar";
 
 type Note = {

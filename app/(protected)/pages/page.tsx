@@ -1,8 +1,8 @@
+import { redirect } from "next/navigation";
 import { getPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import PagesPageClient from "./page-client";
 
 export default async function PagesPage() {

@@ -20,14 +20,14 @@ import type { AutoReconciler } from "@/lib/unilink/auto-reconciler";
  * Configuration options for creating mock UnifiedLinkMarkOptions
  */
 export interface MockOptionsConfig {
-  userId?: string | null;
-  noteSlug?: string | null;
-  autoReconciler?: AutoReconciler | null;
-  onShowCreatePageDialog?: (
-    title: string,
-    onConfirm: () => Promise<void>
-  ) => void;
-  HTMLAttributes?: Record<string, string>;
+	userId?: string | null;
+	noteSlug?: string | null;
+	autoReconciler?: AutoReconciler | null;
+	onShowCreatePageDialog?: (
+		title: string,
+		onConfirm: () => Promise<void>,
+	) => void;
+	HTMLAttributes?: Record<string, string>;
 }
 
 /**
@@ -58,15 +58,15 @@ export interface MockOptionsConfig {
  * const options = createMockOptions({ onShowCreatePageDialog });
  */
 export function createMockOptions(
-  config: MockOptionsConfig = {}
+	config: MockOptionsConfig = {},
 ): UnifiedLinkMarkOptions {
-  return {
-    HTMLAttributes: config.HTMLAttributes ?? {},
-    autoReconciler: config.autoReconciler ?? null,
-    noteSlug: config.noteSlug ?? null,
-    userId: config.userId ?? "test-user-id",
-    onShowCreatePageDialog: config.onShowCreatePageDialog ?? vi.fn(),
-  };
+	return {
+		HTMLAttributes: config.HTMLAttributes ?? {},
+		autoReconciler: config.autoReconciler ?? null,
+		noteSlug: config.noteSlug ?? null,
+		userId: config.userId ?? "test-user-id",
+		onShowCreatePageDialog: config.onShowCreatePageDialog ?? vi.fn(),
+	};
 }
 
 /**
@@ -79,7 +79,7 @@ export function createMockOptions(
  * expect(options.userId).toBeNull();
  */
 export function createMockOptionsAnonymous(): UnifiedLinkMarkOptions {
-  return createMockOptions({ userId: null });
+	return createMockOptions({ userId: null });
 }
 
 /**
@@ -100,24 +100,24 @@ export function createMockOptionsAnonymous(): UnifiedLinkMarkOptions {
  * @returns A mock AutoReconciler instance
  */
 function createMockAutoReconciler(): Partial<AutoReconciler> {
-  return {
-    initialize: vi.fn(),
-    destroy: vi.fn(),
-    // Add other methods as needed
-  };
+	return {
+		initialize: vi.fn(),
+		destroy: vi.fn(),
+		// Add other methods as needed
+	};
 }
 
 export function createMockOptionsFull(): UnifiedLinkMarkOptions {
-  return createMockOptions({
-    userId: "test-user-id",
-    noteSlug: "test-note",
-    autoReconciler: createMockAutoReconciler() as AutoReconciler,
-    onShowCreatePageDialog: vi.fn(),
-    HTMLAttributes: {
-      class: "unified-link",
-      "data-testid": "unified-link",
-    },
-  });
+	return createMockOptions({
+		userId: "test-user-id",
+		noteSlug: "test-note",
+		autoReconciler: createMockAutoReconciler() as AutoReconciler,
+		onShowCreatePageDialog: vi.fn(),
+		HTMLAttributes: {
+			class: "unified-link",
+			"data-testid": "unified-link",
+		},
+	});
 }
 
 /**
@@ -133,8 +133,8 @@ export function createMockOptionsFull(): UnifiedLinkMarkOptions {
  * expect(options.userId).toBe('user-123');
  */
 export function createMockOptionsForNote(
-  noteSlug: string,
-  userId = "test-user-id"
+	noteSlug: string,
+	userId = "test-user-id",
 ): UnifiedLinkMarkOptions {
-  return createMockOptions({ noteSlug, userId });
+	return createMockOptions({ noteSlug, userId });
 }

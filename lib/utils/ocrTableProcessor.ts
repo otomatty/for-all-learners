@@ -149,7 +149,7 @@ function detectTableLines(
 
 		if (hasSeparator) {
 			// 明らかなアライメント行（--- の組み合わせ）をスキップ
-			const isAlignmentRow = /^[\s\|\-\:]+$/.test(line);
+			const isAlignmentRow = /^[\s|\-:]+$/.test(line);
 			if (!isAlignmentRow) {
 				tableLines.push(line);
 			}
@@ -293,7 +293,7 @@ export function hasTableStructure(text: string): boolean {
 
 	for (const line of lines) {
 		const hasSeparator = separators.some((sep) => line.includes(sep));
-		const hasMultipleCells = line.split(/[\|\｜]/).length >= 3; // 最低2セル
+		const hasMultipleCells = line.split(/[|｜]/).length >= 3; // 最低2セル
 
 		if (hasSeparator && hasMultipleCells) {
 			tableLineCount++;

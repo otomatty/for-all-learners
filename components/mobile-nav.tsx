@@ -1,5 +1,8 @@
 "use client";
 
+import { Menu } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
 	Sheet,
@@ -12,9 +15,6 @@ import { UserNav } from "@/components/user-nav";
 import { useNavigation } from "@/hooks/use-navigation";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
-import { Menu } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { SearchBar } from "./search-bar";
 
 interface MobileNavProps {

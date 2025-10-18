@@ -1,10 +1,10 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { createPage } from "./pages";
-import { linkPageToNote } from "./notes/linkPageToNote";
-import type { Database } from "@/types/database.types";
 import type { JSONContent } from "@tiptap/core";
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
+import { linkPageToNote } from "./notes/linkPageToNote";
+import { createPage } from "./pages";
 
 /**
  * ユーザーページ作成・確認結果

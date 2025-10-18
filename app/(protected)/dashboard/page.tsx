@@ -1,4 +1,6 @@
 // actions
+
+import { redirect } from "next/navigation";
 import { getAccountById } from "@/app/_actions/accounts";
 import { getAllDueCountsByUser } from "@/app/_actions/cards";
 import { getDashboardStats } from "@/app/_actions/dashboardStats";
@@ -8,7 +10,6 @@ import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 import { Container } from "@/components/container";
 import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { GoalSummary } from "./_components/goal-summary";
 import { QuickActionTiles } from "./_components/quick-action-tiles";
 

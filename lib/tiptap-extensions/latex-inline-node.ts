@@ -1,4 +1,4 @@
-import { InputRule, Node, mergeAttributes } from "@tiptap/core";
+import { InputRule, mergeAttributes, Node } from "@tiptap/core";
 import katex from "katex";
 import { Fragment } from "prosemirror-model"; // Required for paste rule manipulation
 import { type EditorState, Plugin, type Transaction } from "prosemirror-state";

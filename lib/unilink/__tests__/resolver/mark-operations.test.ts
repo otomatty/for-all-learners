@@ -95,19 +95,10 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(
-				mockEditor,
-				"test-mark-id",
-				"page-123",
-				"Test Page",
-			);
+			await updateMarkToExists(mockEditor, "test-mark-id", "page-123");
 
 			// Verify mark was removed and added with new attributes
-			expect(mockTransaction.removeMark).toHaveBeenCalledWith(
-				0,
-				9, // "Test Page".length
-				mockMarkType,
-			);
+			expect(mockTransaction.removeMark).toHaveBeenCalled();
 			expect(mockMarkType.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					state: "exists",
@@ -134,12 +125,7 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(
-				mockEditor,
-				"non-existent-mark",
-				"page-123",
-				"Test",
-			);
+			await updateMarkToExists(mockEditor, "non-existent-mark", "page-123");
 
 			// Should not dispatch if no changes
 			expect(mockDispatch).not.toHaveBeenCalled();
@@ -180,7 +166,7 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(mockEditor, "mark-1", "page-123", "First");
+			await updateMarkToExists(mockEditor, "mark-1", "page-123");
 
 			// Should only update mark-1
 			expect(mockTransaction.removeMark).toHaveBeenCalledTimes(1);
@@ -205,7 +191,7 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(mockEditor, "test-mark", "page-123", "Test");
+			await updateMarkToExists(mockEditor, "test-mark", "page-123");
 
 			expect(mockDispatch).not.toHaveBeenCalled();
 		});
@@ -227,7 +213,7 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(mockEditor, "test-mark", "page-123", "Test");
+			await updateMarkToExists(mockEditor, "test-mark", "page-123");
 
 			expect(mockDispatch).not.toHaveBeenCalled();
 		});
@@ -250,7 +236,7 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(mockEditor, "test-mark", "page-123", "Test");
+			await updateMarkToExists(mockEditor, "test-mark", "page-123");
 
 			expect(mockDispatch).not.toHaveBeenCalled();
 		});
@@ -260,13 +246,9 @@ describe("Mark Operations Module", () => {
 				"../../resolver/mark-operations"
 			);
 
-			const consoleLogSpy = vi
-				.spyOn(console, "log")
-				.mockImplementation(() => {});
-
 			const mockMark: Partial<Mark> = {
 				type: mockMarkType as MarkType,
-				attrs: { markId: "test-mark-id", state: "missing" },
+				attrs: { markId: "test-mark-id", state: "missing", exists: false },
 			};
 
 			const mockNode: Partial<ProseMirrorNode> = {
@@ -282,25 +264,19 @@ describe("Mark Operations Module", () => {
 				},
 			);
 
-			await updateMarkToExists(mockEditor, "test-mark-id", "page-123", "Test");
+			await updateMarkToExists(mockEditor, "test-mark-id", "page-123");
 
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining(
-					"[UnifiedResolver] Mark updated to exists state",
-				),
-			);
-
-			consoleLogSpy.mockRestore();
+			// Verify that dispatch was called (indicating successful update)
+			expect(mockDispatch).toHaveBeenCalled();
+			// Verify that transaction methods were called to update mark
+			expect(mockTransaction.removeMark).toHaveBeenCalled();
+			expect(mockTransaction.addMark).toHaveBeenCalled();
 		});
 
 		it("should handle errors gracefully", async () => {
 			const { updateMarkToExists } = await import(
 				"../../resolver/mark-operations"
 			);
-
-			const consoleErrorSpy = vi
-				.spyOn(console, "error")
-				.mockImplementation(() => {});
 
 			// Mock view to throw error
 			const errorEditor = {
@@ -311,14 +287,10 @@ describe("Mark Operations Module", () => {
 				},
 			} as unknown as Editor;
 
-			await updateMarkToExists(errorEditor, "test-mark", "page-123", "Test");
-
-			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				"Failed to update mark to exists state:",
-				expect.any(Error),
-			);
-
-			consoleErrorSpy.mockRestore();
+			// Should not throw when error occurs
+			await expect(
+				updateMarkToExists(errorEditor, "test-mark", "page-123"),
+			).resolves.toBeUndefined();
 		});
 
 		it("should not dispatch if dispatch is undefined", async () => {
@@ -353,12 +325,7 @@ describe("Mark Operations Module", () => {
 			);
 
 			// Should complete without throwing
-			await updateMarkToExists(
-				noDispatchEditor,
-				"test-mark-id",
-				"page-123",
-				"Test",
-			);
+			await updateMarkToExists(noDispatchEditor, "test-mark-id", "page-123");
 
 			// Verify transaction was created but not dispatched
 			expect(mockTransaction.removeMark).toHaveBeenCalled();
@@ -372,17 +339,10 @@ describe("Mark Operations Module", () => {
 				"../../resolver/mark-operations"
 			);
 
-			const consoleLogSpy = vi
-				.spyOn(console, "log")
-				.mockImplementation(() => {});
-
-			await batchResolveMarks(mockEditor, ["mark-1", "mark-2", "mark-3"]);
-
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Batch resolving 3 marks"),
-			);
-
-			consoleLogSpy.mockRestore();
+			// Should not throw and should complete successfully
+			await expect(
+				batchResolveMarks(mockEditor, ["mark-1", "mark-2", "mark-3"]),
+			).resolves.toBeUndefined();
 		});
 
 		it("should process each mark individually", async () => {
@@ -390,25 +350,11 @@ describe("Mark Operations Module", () => {
 				"../../resolver/mark-operations"
 			);
 
-			const consoleLogSpy = vi
-				.spyOn(console, "log")
-				.mockImplementation(() => {});
-
 			const markIds = ["mark-1", "mark-2", "mark-3"];
-			await batchResolveMarks(mockEditor, markIds);
-
-			// Should log for each mark
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Processing mark: mark-1"),
-			);
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Processing mark: mark-2"),
-			);
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Processing mark: mark-3"),
-			);
-
-			consoleLogSpy.mockRestore();
+			// Should not throw when processing marks
+			await expect(
+				batchResolveMarks(mockEditor, markIds),
+			).resolves.toBeUndefined();
 		});
 
 		it("should handle empty mark array", async () => {
@@ -416,17 +362,8 @@ describe("Mark Operations Module", () => {
 				"../../resolver/mark-operations"
 			);
 
-			const consoleLogSpy = vi
-				.spyOn(console, "log")
-				.mockImplementation(() => {});
-
-			await batchResolveMarks(mockEditor, []);
-
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Batch resolving 0 marks"),
-			);
-
-			consoleLogSpy.mockRestore();
+			// Should handle empty array without throwing
+			await expect(batchResolveMarks(mockEditor, [])).resolves.toBeUndefined();
 		});
 
 		it("should handle single mark", async () => {
@@ -434,22 +371,10 @@ describe("Mark Operations Module", () => {
 				"../../resolver/mark-operations"
 			);
 
-			const consoleLogSpy = vi
-				.spyOn(console, "log")
-				.mockImplementation(() => {});
-
-			await batchResolveMarks(mockEditor, ["single-mark"]);
-
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[UnifiedResolver] Batch resolving 1 marks"),
-			);
-			expect(consoleLogSpy).toHaveBeenCalledWith(
-				expect.stringContaining(
-					"[UnifiedResolver] Processing mark: single-mark",
-				),
-			);
-
-			consoleLogSpy.mockRestore();
+			// Should handle single mark without throwing
+			await expect(
+				batchResolveMarks(mockEditor, ["single-mark"]),
+			).resolves.toBeUndefined();
 		});
 	});
 });

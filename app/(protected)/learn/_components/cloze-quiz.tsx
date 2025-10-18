@@ -1,11 +1,10 @@
 "use client";
 
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { ClozeQuestion } from "@/lib/gemini";
-import React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface ClozeQuizProps {

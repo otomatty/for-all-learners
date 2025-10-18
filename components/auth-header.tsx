@@ -1,5 +1,7 @@
 "use client";
 
+import { UsersIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { AdminNav } from "@/components/admin-nav";
 import AppNavDropdown from "@/components/app-nav-dropdown";
 import { MobileNav } from "@/components/mobile-nav";
@@ -18,8 +20,6 @@ import { useActiveUsers } from "@/hooks/use-active-users";
 import type { NavItem } from "@/lib/navigation/types";
 import { createClient } from "@/lib/supabase/client"; // Supabaseクライアントのパスを適宜修正してください
 import type { Database } from "@/types/database.types";
-import { UsersIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
 
 export interface AuthHeaderProps {
 	version?: string;

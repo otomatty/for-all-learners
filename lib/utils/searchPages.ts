@@ -6,21 +6,21 @@ import { createClient } from "@/lib/supabase/client";
  * @returns An array of objects with id and title of matching pages.
  */
 export async function searchPages(
-  query: string
+	query: string,
 ): Promise<Array<{ id: string; title: string }>> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("pages")
-    .select("id, title, updated_at")
-    .ilike("title", `%${query}%`)
-    .order("updated_at", { ascending: true })
-    .limit(5);
+	const supabase = createClient();
+	const { data, error } = await supabase
+		.from("pages")
+		.select("id, title, updated_at")
+		.ilike("title", `%${query}%`)
+		.order("updated_at", { ascending: true })
+		.limit(5);
 
-  if (error) {
-    return [];
-  }
+	if (error) {
+		return [];
+	}
 
-  const results = (data ?? []).map(({ id, title }) => ({ id, title }));
+	const results = (data ?? []).map(({ id, title }) => ({ id, title }));
 
-  return results;
+	return results;
 }

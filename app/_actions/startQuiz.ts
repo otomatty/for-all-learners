@@ -1,8 +1,8 @@
 "use server";
 
-import type { QuizParams } from "@/app/_actions/quiz";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { QuizParams } from "@/app/_actions/quiz";
 
 /**
  * フォームで受け取ったクイズ設定を HttpOnly Cookie に保存し、/learn にリダイレクトします

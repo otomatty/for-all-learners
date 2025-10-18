@@ -1,5 +1,8 @@
 "use client";
 
+import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FormattedInquiryListItem } from "@/app/_actions/inquiries"; // 型をインポート
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +13,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { ArrowUpDown } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { InquiryPriorityBadge } from "./InquiryPriorityBadge";
 import { InquiryStatusBadge } from "./InquiryStatusBadge";
 

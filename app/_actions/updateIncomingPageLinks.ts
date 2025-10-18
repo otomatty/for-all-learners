@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import type { JSONContent } from "@tiptap/core";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Update pageLink marks in incoming pages when the current page's title changes.

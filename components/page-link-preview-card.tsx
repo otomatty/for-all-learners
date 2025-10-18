@@ -1,11 +1,11 @@
 "use client";
 
-import type { PagePreview } from "@/lib/services/page-preview-service";
 import { formatDistanceToNow } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar, FileText, FolderOpen } from "lucide-react";
 import Image from "next/image";
 import { memo } from "react";
+import type { PagePreview } from "@/lib/services/page-preview-service";
 
 export interface PreviewCardProps {
 	preview: PagePreview | null;

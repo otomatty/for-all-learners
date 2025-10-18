@@ -1,7 +1,7 @@
+import { type NextRequest, NextResponse } from "next/server";
 import { getDefaultNote } from "@/app/_actions/notes";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import { type NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
 	// Initialize Supabase server client
 	const supabase = await createClient();

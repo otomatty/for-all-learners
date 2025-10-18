@@ -1,13 +1,13 @@
+import { Suspense } from "react";
+import type { GetAllInquiriesOptions } from "@/app/_actions/inquiries";
 import {
 	getAllInquiries,
 	getInquiryCategories,
 } from "@/app/_actions/inquiries";
-import type { GetAllInquiriesOptions } from "@/app/_actions/inquiries";
 import {
 	type ParsedAdminInquiriesSearchParams,
 	parseAdminInquiriesSearchParams,
 } from "@/lib/utils";
-import { Suspense } from "react";
 import { InquiriesTable } from "./InquiriesTable";
 import { InquiryFilters } from "./InquiryFilters";
 import { InquiryPagination } from "./InquiryPagination";

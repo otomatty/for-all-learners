@@ -3,7 +3,7 @@
  * OCR処理のWorker初期化・管理・リソース解放
  */
 
-import { OEM, PSM, type Worker, createWorker } from "tesseract.js";
+import { createWorker, OEM, PSM, type Worker } from "tesseract.js";
 
 export interface TesseractWorkerOptions {
 	language?: string;

@@ -1,7 +1,7 @@
 import {
+	generateBulkQuestions,
 	type QuestionData,
 	type QuestionType,
-	generateBulkQuestions,
 } from "@/lib/gemini";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";

@@ -5,10 +5,10 @@
 import type { JSONContent } from "@tiptap/core";
 import { describe, expect, it } from "vitest";
 import {
-	type SmartThumbnailUpdateParams,
 	decideThumbnailUpdate,
 	generateThumbnailUpdateLog,
 	hasFirstImageChanged,
+	type SmartThumbnailUpdateParams,
 } from "../smartThumbnailUpdater";
 
 describe("smartThumbnailUpdater", () => {

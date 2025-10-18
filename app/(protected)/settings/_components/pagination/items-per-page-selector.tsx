@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
 	Select,
 	SelectContent,
@@ -9,7 +10,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import React from "react";
 
 interface ItemsPerPageSelectorProps {
 	value: number;

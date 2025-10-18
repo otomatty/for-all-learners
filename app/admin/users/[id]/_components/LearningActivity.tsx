@@ -1,9 +1,9 @@
+import React from "react";
 import {
 	getLearningLogsByUser,
 	getRecentActivityByUser,
 	getReviewCardsByUser,
 } from "@/app/_actions/learning_logs";
-import React from "react";
 
 interface LearningActivityProps {
 	userId: string;

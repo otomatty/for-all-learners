@@ -1,5 +1,8 @@
 "use client";
 
+import { AlertCircle, HelpCircle } from "lucide-react";
+import React from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +14,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, HelpCircle } from "lucide-react";
-import React from "react";
-import { toast } from "sonner";
 
 export interface SyncOption {
 	id: string;

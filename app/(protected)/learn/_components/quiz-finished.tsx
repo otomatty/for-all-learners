@@ -1,5 +1,9 @@
 "use client";
 
+import confetti from "canvas-confetti";
+import { CircleCheck, CircleX } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect } from "react";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,10 +14,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import confetti from "canvas-confetti";
-import { CircleCheck, CircleX } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
 
 // Summary type for all practiced questions including time spent
 export interface AnswerSummary {
