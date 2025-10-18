@@ -12,6 +12,20 @@ import { generateMarkId } from "../state-manager";
 import type { UnifiedLinkAttributes } from "../types";
 import { isInCodeContext } from "./utils";
 
+// Debug flag
+const DEBUG_TAG_DUPLICATION = true;
+
+function debugLog(
+	context: string,
+	message: string,
+	data?: Record<string, unknown>,
+) {
+	if (!DEBUG_TAG_DUPLICATION) return;
+	const timestamp = new Date().toISOString().split("T")[1];
+	const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
+	console.log(`[${timestamp}] [TagRule] [${context}] ${message}${dataStr}`);
+}
+
 /**
  * Create the tag InputRule
  * @param context - InputRule context
@@ -21,8 +35,15 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 	return new InputRule({
 		find: PATTERNS.tag,
 		handler: ({ state, match, range, chain }) => {
+			debugLog("handler", "Tag InputRule triggered", {
+				match: match[0],
+				raw: match[1],
+				range,
+			});
+
 			// Suppress in code context
 			if (isInCodeContext(state)) {
+				debugLog("handler", "Skipping: in code context");
 				return null;
 			}
 
@@ -30,6 +51,12 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 			const text = `#${raw}`; // Tag displays with # prefix
 			const key = normalizeTitleToKey(raw);
 			const markId = generateMarkId();
+
+			debugLog("handler", "Processing tag", {
+				raw,
+				text,
+				key,
+			});
 
 			const attrs: UnifiedLinkAttributes = {
 				variant: "tag",
@@ -44,6 +71,12 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 			};
 
 			const { from, to } = range;
+
+			debugLog("handler", "Executing chain operations", {
+				from,
+				to,
+				deleteRange: `${from}-${to}`,
+			});
 
 			// Apply mark using chain API
 			chain()
@@ -61,6 +94,8 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 				})
 				.run();
 
+			debugLog("handler", "Chain operations completed");
+
 			// Enqueue for resolution
 			enqueueResolve({
 				key,
@@ -72,3 +107,4 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 		},
 	});
 }
+

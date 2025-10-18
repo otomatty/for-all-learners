@@ -5,6 +5,23 @@ import tippy, { type Instance, type Props } from "tippy.js";
 import { searchPages } from "@/lib/utils/searchPages";
 import type { UnifiedLinkMarkOptions } from "../types";
 
+// Debug flag - set to true to enable detailed logging
+const DEBUG_TAG_DUPLICATION = true;
+
+// Debug logging utility
+function debugLog(
+	context: string,
+	message: string,
+	data?: Record<string, unknown>,
+) {
+	if (!DEBUG_TAG_DUPLICATION) return;
+	const timestamp = new Date().toISOString().split("T")[1];
+	const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
+	console.log(
+		`[${timestamp}] [UnifiedLinkMark] [${context}] ${message}${dataStr}`,
+	);
+}
+
 // Suggestion state interface
 interface UnifiedLinkSuggestionState {
 	active: boolean;
@@ -427,9 +444,33 @@ export function createSuggestionPlugin(_context: {
 				if (event.key === "Tab" || event.key === "Enter") {
 					event.preventDefault();
 
+					debugLog("KeyHandler", `${event.key} key pressed`, {
+						active: state.active,
+						variant: state.variant,
+						query: state.query,
+						selectedIndex: state.selectedIndex,
+						range: state.range,
+					});
+
+					// Immediately clear suggestion state to prevent InputRule from triggering again
+					// This prevents duplicate processing when Enter/Tab creates a new line
+					debugLog("KeyHandler", "Clearing suggestion state immediately");
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							active: false,
+							range: null,
+							query: "",
+							results: [],
+							selectedIndex: -1,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+
 					// If no item is selected (selectedIndex === -1), use input text as-is
 					if (state.selectedIndex === -1) {
 						// Create link with input text
+						debugLog("KeyHandler", "Creating link with input text", {
+							query: state.query,
+						});
 						insertUnifiedLinkWithQuery(view, state);
 						return true;
 					}
@@ -441,6 +482,9 @@ export function createSuggestionPlugin(_context: {
 						return false;
 					}
 
+					debugLog("KeyHandler", "Creating link with selected item", {
+						title: selectedItem.title,
+					});
 					insertUnifiedLink(view, state, selectedItem);
 					return true;
 				}
@@ -457,6 +501,26 @@ export function createSuggestionPlugin(_context: {
 							selectedIndex: -1,
 						} satisfies UnifiedLinkSuggestionState),
 					);
+					return true;
+				}
+
+				// Handle Space key: create link with input text if tag pattern is active
+				if (event.key === " " && state.variant === "tag") {
+					event.preventDefault();
+
+					// Immediately clear suggestion state to prevent InputRule from triggering again
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							active: false,
+							range: null,
+							query: "",
+							results: [],
+							selectedIndex: -1,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+
+					// Create link with input text (includes the space)
+					insertUnifiedLinkWithSpaceKey(view, state);
 					return true;
 				}
 
@@ -524,10 +588,11 @@ function insertUnifiedLink(
 }
 
 /**
- * Insert unified link using input query text (when no suggestion is selected)
- * Used for " #MyTag" + Enter → creates link with "MyTag"
+ * Insert unified link using input query text when Space is pressed
+ * Used for " #MyTag" + Space → creates link for "MyTag" and continues with space
+ * The space is inserted after the link to allow normal text continuation
  */
-function insertUnifiedLinkWithQuery(
+function insertUnifiedLinkWithSpaceKey(
 	view: EditorView,
 	state: UnifiedLinkSuggestionState,
 ) {
@@ -541,6 +606,72 @@ function insertUnifiedLinkWithQuery(
 	const tr = view.state.tr;
 
 	if (variant === "tag") {
+		// For tag: delete # and tag text, insert with mark, then add space
+		tr.delete(from - 1, to);
+
+		const markType = view.state.schema.marks.unifiedLink;
+		if (markType) {
+			const key = rawQuery.toLowerCase();
+			const mark = markType.create({
+				variant: "tag",
+				raw: rawQuery,
+				text: `#${rawQuery}`,
+				key,
+				pageId: null,
+				href: "#",
+				state: "pending",
+				exists: false,
+				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			});
+
+			// Insert link text and add space after it
+			const insertPos = from - 1;
+			tr.insert(insertPos, view.state.schema.text(`#${rawQuery}`, [mark]));
+			tr.insert(insertPos + `#${rawQuery}`.length, view.state.schema.text(" "));
+		}
+	}
+
+	// Clear suggestion state
+	tr.setMeta(suggestionPluginKey, {
+		active: false,
+		range: null,
+		query: "",
+		results: [],
+		selectedIndex: -1,
+	} satisfies UnifiedLinkSuggestionState);
+
+	view.dispatch(tr);
+}
+/**
+ * Insert unified link using input query text (when no suggestion is selected)
+ * Used for " #MyTag" + Enter → creates link with "MyTag"
+ */
+function insertUnifiedLinkWithQuery(
+	view: EditorView,
+	state: UnifiedLinkSuggestionState,
+) {
+	if (!state.range) return;
+
+	const { from, to } = state.range;
+	const variant = state.variant || "bracket";
+	const rawQuery = state.query;
+
+	debugLog("insertUnifiedLinkWithQuery", "Starting insertion", {
+		from,
+		to,
+		variant,
+		rawQuery,
+		docContent: view.state.doc.textBetween(Math.max(0, from - 5), to + 5),
+	});
+
+	// Create transaction
+	const tr = view.state.tr;
+
+	if (variant === "tag") {
+		debugLog("insertUnifiedLinkWithQuery", "Deleting old content", {
+			deleteFrom: from - 1,
+			deleteTo: to,
+		});
 		// For tag: delete # and tag text, insert with mark
 		tr.delete(from - 1, to);
 
@@ -559,7 +690,12 @@ function insertUnifiedLinkWithQuery(
 				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
 			});
 
-			tr.insert(from - 1, view.state.schema.text(`#${rawQuery}`, [mark]));
+			const insertText = `#${rawQuery}`;
+			debugLog("insertUnifiedLinkWithQuery", "Inserting text with mark", {
+				insertPos: from - 1,
+				insertText,
+			});
+			tr.insert(from - 1, view.state.schema.text(insertText, [mark]));
 		}
 	}
 
@@ -572,5 +708,6 @@ function insertUnifiedLinkWithQuery(
 		selectedIndex: -1,
 	} satisfies UnifiedLinkSuggestionState);
 
+	debugLog("insertUnifiedLinkWithQuery", "Dispatching transaction");
 	view.dispatch(tr);
 }
