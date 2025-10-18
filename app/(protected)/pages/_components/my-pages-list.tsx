@@ -1,8 +1,8 @@
 "use client";
 
-import type { Database, Json } from "@/types/database.types";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import type { Database, Json } from "@/types/database.types";
 import { PagesList } from "./pages-list";
 
 interface MyPagesListProps {

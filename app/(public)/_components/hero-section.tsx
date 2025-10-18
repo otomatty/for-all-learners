@@ -1,9 +1,8 @@
-import { Container } from "@/components/container";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
 	return (

@@ -1,11 +1,13 @@
+import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { AudioCardGenerator } from "../_components/audio-card-generator";
 export default async function AudioPage({
 	params,
-}: { params: Promise<{ deckId: string }> }) {
+}: {
+	params: Promise<{ deckId: string }>;
+}) {
 	const { deckId } = await params;
 	const supabase = await createClient();
 	const {

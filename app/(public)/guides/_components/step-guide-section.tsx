@@ -1,5 +1,3 @@
-import { Container } from "@/components/container";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	BarChart,
 	BookOpen,
@@ -14,6 +12,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Container } from "@/components/container";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function StepGuideSection() {
 	return (

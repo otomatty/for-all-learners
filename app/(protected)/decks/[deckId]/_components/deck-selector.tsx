@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import React, { useCallback } from "react";
 import {
 	Select,
 	SelectContent,
@@ -8,8 +10,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
-import React, { useCallback } from "react";
 
 interface Deck {
 	id: string;

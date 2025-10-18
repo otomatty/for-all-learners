@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/client";
 import type { JSONContent } from "@tiptap/core";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * ページプレビュー情報

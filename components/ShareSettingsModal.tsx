@@ -1,5 +1,8 @@
 "use client";
 
+import { atom, useAtom } from "jotai";
+import { Copy, Globe, Link, Lock, Trash2, UserPlus } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import {
 	generateNoteShareLink,
 	getNoteShareLinks,
@@ -34,9 +37,6 @@ import {
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createClient } from "@/lib/supabase/client";
-import { atom, useAtom } from "jotai";
-import { Copy, Globe, Link, Lock, Trash2, UserPlus } from "lucide-react";
-import React, { useState, useEffect } from "react";
 
 // ウィザードの現在ステップを管理するAtom
 const currentStepAtom = atom(0);

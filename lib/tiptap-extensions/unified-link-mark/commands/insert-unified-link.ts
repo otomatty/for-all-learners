@@ -47,6 +47,7 @@ export function createInsertUnifiedLinkCommand(context: {
 				// Enqueue for resolution
 				enqueueResolve({
 					key,
+					raw: fullAttrs.raw,
 					markId,
 					editor: context.editor,
 					variant: fullAttrs.variant,

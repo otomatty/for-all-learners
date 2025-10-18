@@ -5,14 +5,17 @@
  * 自動検出・変換機能を追加したカスタム拡張機能
  */
 
-import { parseMarkdownTable } from "@/lib/utils/markdownTableParser";
-import { mergeAttributes } from "@tiptap/core";
-import { nodeInputRule, textblockTypeInputRule } from "@tiptap/core";
 import type { ChainedCommands } from "@tiptap/core";
+import {
+	mergeAttributes,
+	nodeInputRule,
+	textblockTypeInputRule,
+} from "@tiptap/core";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
+import { parseMarkdownTable } from "@/lib/utils/markdownTableParser";
 
 // テーブル関連の拡張機能をすべてエクスポート
 export { TableRow, TableHeader, TableCell };

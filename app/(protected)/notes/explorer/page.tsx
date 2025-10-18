@@ -1,6 +1,6 @@
+import React from "react";
 import { getNotesList } from "@/app/_actions/notes";
 import { Container } from "@/components/container";
-import React from "react";
 import NotesExplorer from "./_components/notes-explorer";
 
 export default async function NotesExplorerPage() {

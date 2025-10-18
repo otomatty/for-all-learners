@@ -1,11 +1,13 @@
+import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { ImageCardGenerator } from "../_components/image-card-generator";
 export default async function OcrPage({
 	params,
-}: { params: Promise<{ deckId: string }> }) {
+}: {
+	params: Promise<{ deckId: string }>;
+}) {
 	const { deckId } = await params;
 	const supabase = await createClient();
 	const {

@@ -1,10 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import React, { useCallback, useState, useTransition } from "react";
 // actions
 import type { Deck as ServerDeck } from "@/app/_actions/goal-decks";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
-import { useRouter } from "next/navigation";
-import React, { useState, useCallback, useTransition } from "react";
 import { AddDeckLinkDialog } from "./add-deck-link-dialog";
 import { AddStudySessionDialog } from "./add-study-session-dialog";
 // components

@@ -1,5 +1,20 @@
 "use client";
 
+import {
+	DndContext,
+	type DragEndEvent,
+	type DragStartEvent,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	SortableContext,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { ChevronRight, FolderOpen } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Sidebar,
@@ -13,19 +28,6 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import {
-	DndContext,
-	type DragEndEvent,
-	type DragStartEvent,
-} from "@dnd-kit/core";
-import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import {
-	SortableContext,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { ChevronRight, FolderOpen } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 type Note = {
 	id: string;

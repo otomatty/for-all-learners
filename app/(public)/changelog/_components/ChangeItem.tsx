@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import {
 	BugIcon,
 	ShieldCheckIcon,
@@ -6,6 +5,7 @@ import {
 	TrendingUpIcon,
 } from "lucide-react";
 import React from "react";
+import { Badge } from "@/components/ui/badge";
 import type { Change } from "../../../_actions/changelog";
 
 const getTypeAttributes = (type: Change["type"]) => {

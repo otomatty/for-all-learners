@@ -1,7 +1,13 @@
 "use client";
 
-import { type CreateNotePayload, createNote } from "@/app/_actions/notes";
-import { shareNote } from "@/app/_actions/notes";
+import { Check, Loader2, X } from "lucide-react";
+import React, { useEffect, useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import {
+	type CreateNotePayload,
+	createNote,
+	shareNote,
+} from "@/app/_actions/notes";
 import { validateSlug } from "@/app/_actions/slug";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,9 +39,6 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { Check, Loader2, X } from "lucide-react";
-import React, { useTransition, useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 
 interface CreateNoteFormProps {
 	onSuccess: () => void;

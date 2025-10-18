@@ -6,16 +6,16 @@ import "@tiptap/core";
 import type { UnifiedLinkAttributes } from "./lib/tiptap-extensions/unified-link-mark";
 
 declare module "@tiptap/core" {
-  interface Commands<ReturnType> {
-    unilink: {
-      /**
-       * Insert a unified link mark
-       */
-      insertUnifiedLink: (attrs: Partial<UnifiedLinkAttributes>) => ReturnType;
-      /**
-       * Refresh all unified links
-       */
-      refreshUnifiedLinks: () => ReturnType;
-    };
-  }
+	interface Commands<ReturnType> {
+		unilink: {
+			/**
+			 * Insert a unified link mark
+			 */
+			insertUnifiedLink: (attrs: Partial<UnifiedLinkAttributes>) => ReturnType;
+			/**
+			 * Refresh all unified links
+			 */
+			refreshUnifiedLinks: () => ReturnType;
+		};
+	}
 }

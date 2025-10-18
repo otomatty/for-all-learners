@@ -28,7 +28,7 @@ function parseStyledLine(
 	starLevelMap?: Map<number, number>,
 ): JSONContent {
 	const trimmed = text.trim();
-	const match = trimmed.match(/^\[([*\/\-]+)\s(.+?)\]$/);
+	const match = trimmed.match(/^\[([*/-]+)\s(.+?)\]$/);
 	if (match) {
 		const mods = match[1];
 		const contentText = match[2];
@@ -78,7 +78,7 @@ export function parseCosenseLines(lines: Array<{ text: string }>): JSONContent {
 	const starSet = new Set<number>();
 	for (const { text } of lines) {
 		const trimmed = text.trim();
-		const match = trimmed.match(/^\[([*\/\-]+)\s/);
+		const match = trimmed.match(/^\[([*/-]+)\s/);
 		if (match) {
 			const mods = match[1];
 			if (!mods.includes("/") && !mods.includes("-")) {
@@ -105,7 +105,7 @@ export function parseCosenseDescriptions(descriptions: string[]): JSONContent {
 	const starSet = new Set<number>();
 	for (const desc of descriptions) {
 		const trimmed = desc.trim();
-		const match = trimmed.match(/^\[([*\/\-]+)\s/);
+		const match = trimmed.match(/^\[([*/-]+)\s/);
 		if (match) {
 			const mods = match[1];
 			if (!mods.includes("/") && !mods.includes("-")) {

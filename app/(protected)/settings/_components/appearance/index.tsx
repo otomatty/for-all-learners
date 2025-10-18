@@ -1,7 +1,7 @@
 "use client";
 
-import type { Database } from "@/types/database.types";
 import type React from "react";
+import type { Database } from "@/types/database.types";
 import ModeToggle from "./mode-toggle";
 import ThemeSelector from "./theme-selector";
 

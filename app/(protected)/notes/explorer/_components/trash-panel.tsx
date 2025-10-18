@@ -1,17 +1,6 @@
 "use client";
 
 import {
-	type TrashItem,
-	deletePagesPermanently,
-	getTrashItems,
-	restoreFromTrash,
-} from "@/app/_actions/notes";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
 	AlertTriangleIcon,
 	CalendarIcon,
 	RefreshCwIcon,
@@ -21,6 +10,17 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+	deletePagesPermanently,
+	getTrashItems,
+	restoreFromTrash,
+	type TrashItem,
+} from "@/app/_actions/notes";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface TrashPanelProps {
 	selectedTrashIds: string[];

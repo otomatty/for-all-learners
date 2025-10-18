@@ -1,5 +1,8 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { updateUserSettings } from "@/app/_actions/user_settings";
 import {
 	AlertDialog,
@@ -14,9 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Database } from "@/types/database.types";
-import { usePathname, useRouter } from "next/navigation";
-import React, { useState, useTransition, useEffect, useMemo } from "react";
-import { toast } from "sonner";
 import AppearanceSettings from "./appearance";
 import ExternalServices from "./external-sync-settings";
 import type { CosenseProject } from "./external-sync-settings/cosense-sync-settings";

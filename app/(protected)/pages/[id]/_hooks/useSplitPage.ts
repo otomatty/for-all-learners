@@ -1,8 +1,8 @@
-import { splitPageSelection } from "@/app/_actions/splitPageSelection";
 import type { JSONContent } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { splitPageSelection } from "@/app/_actions/splitPageSelection";
 
 /**
  * Hook to split selected content into a new page and replace with link.

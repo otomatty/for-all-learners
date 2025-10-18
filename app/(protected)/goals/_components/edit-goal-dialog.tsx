@@ -1,5 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { updateStudyGoal } from "@/app/_actions/study_goals";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,11 +25,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 
 interface StudyGoal {
 	id: string;

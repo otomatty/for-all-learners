@@ -1,5 +1,5 @@
-import type { Database } from "@/types/database.types";
 import { useCallback, useEffect, useState } from "react";
+import type { Database } from "@/types/database.types";
 
 interface UsePageFormStateProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];

@@ -1,21 +1,11 @@
 "use client";
 
-import { updateGoalsPriority } from "@/app/_actions/study_goals";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
+	closestCenter,
 	DndContext,
 	type DragEndEvent,
 	KeyboardSensor,
 	PointerSensor,
-	closestCenter,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
@@ -26,6 +16,16 @@ import {
 } from "@dnd-kit/sortable";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { updateGoalsPriority } from "@/app/_actions/study_goals";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { GoalItem } from "./goal-item";
 import { SortableGoalItem } from "./sortable-goal-item";
 

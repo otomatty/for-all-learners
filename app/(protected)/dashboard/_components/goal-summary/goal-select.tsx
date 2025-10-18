@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+import { useState } from "react";
 import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 import {
 	Select,
@@ -8,8 +10,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type React from "react";
-import { useState } from "react";
 
 interface StudyGoal {
 	id: string;

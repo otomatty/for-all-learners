@@ -21,6 +21,7 @@ export function createRefreshUnifiedLinksCommand(context: {
 			const markType = context.type;
 			const toRefresh: Array<{
 				key: string;
+				raw: string;
 				markId: string;
 				variant?: "bracket" | "tag";
 			}> = [];
@@ -32,6 +33,7 @@ export function createRefreshUnifiedLinksCommand(context: {
 					if (mark.type === markType && mark.attrs.state !== "exists") {
 						toRefresh.push({
 							key: mark.attrs.key,
+							raw: mark.attrs.raw,
 							markId: mark.attrs.markId,
 							variant: mark.attrs.variant,
 						});
@@ -40,9 +42,10 @@ export function createRefreshUnifiedLinksCommand(context: {
 			});
 
 			// Enqueue all marks for refresh
-			for (const { key, markId, variant } of toRefresh) {
+			for (const { key, raw, markId, variant } of toRefresh) {
 				enqueueResolve({
 					key,
+					raw,
 					markId,
 					editor: context.editor,
 					variant,

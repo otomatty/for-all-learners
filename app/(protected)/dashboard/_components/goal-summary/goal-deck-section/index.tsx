@@ -1,8 +1,8 @@
+import React from "react";
 import { getGoalDecks } from "@/app/_actions/goal-decks";
 import { createClient } from "@/lib/supabase/server";
-import React from "react";
-import ClientGoalDecksSection from "./goal-decks-section-client";
 import type { Deck as ClientDeck } from "./goal-decks-section-client";
+import ClientGoalDecksSection from "./goal-decks-section-client";
 
 interface GoalDecksSectionProps {
 	/** 表示対象の学習目標ID */

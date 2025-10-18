@@ -1,5 +1,10 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/core";
+import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { createActionLog } from "@/app/_actions/actionLogs";
 import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
 import { createCards } from "@/app/_actions/cards";
@@ -18,11 +23,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import type { JSONContent } from "@tiptap/core";
-import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
 
 interface AudioCardGeneratorProps {
 	deckId: string;

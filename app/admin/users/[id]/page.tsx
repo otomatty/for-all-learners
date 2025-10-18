@@ -1,5 +1,5 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AudioRecordings from "./_components/AudioRecordings";
 import DecksAndCards from "./_components/DecksAndCards";
 import Goals from "./_components/Goals";

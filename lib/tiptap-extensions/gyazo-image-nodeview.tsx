@@ -1,3 +1,8 @@
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { Copy, FileText, Loader2 } from "lucide-react";
+import Image from "next/image";
+import type React from "react";
+import { useCallback, useMemo } from "react";
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -12,11 +17,6 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { useImageOcr } from "@/hooks/use-image-ocr";
-import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import { Copy, FileText, Loader2 } from "lucide-react";
-import Image from "next/image";
-import type React from "react";
-import { useCallback, useMemo } from "react";
 
 /**
  * A NodeView component that displays the Gyazo image normally,

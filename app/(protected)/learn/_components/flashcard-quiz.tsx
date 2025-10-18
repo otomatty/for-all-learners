@@ -1,10 +1,10 @@
 "use client";
 
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { FlashcardQuestion } from "@/lib/gemini";
-import React, { useState, useEffect, useRef, useCallback } from "react";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface FlashcardQuizProps {

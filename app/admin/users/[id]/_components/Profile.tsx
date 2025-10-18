@@ -1,5 +1,5 @@
-import { getAccountById } from "@/app/_actions/accounts";
 import React from "react";
+import { getAccountById } from "@/app/_actions/accounts";
 
 interface ProfileProps {
 	userId: string;

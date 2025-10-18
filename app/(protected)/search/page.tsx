@@ -1,9 +1,10 @@
-import { Container } from "@/components/container";
-import { BackLink } from "@/components/ui/back-link";
-import { createAdminClient } from "@/lib/supabase/adminClient";
 import parse from "html-react-parser";
 import Link from "next/link";
 import sanitizeHtml from "sanitize-html";
+import { Container } from "@/components/container";
+import { BackLink } from "@/components/ui/back-link";
+import { createAdminClient } from "@/lib/supabase/adminClient";
+
 /**
  * 検索結果項目の型定義
  */

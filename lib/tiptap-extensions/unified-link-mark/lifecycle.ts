@@ -17,26 +17,26 @@ let globalAutoReconciler: AutoReconciler | null = null;
  * @param editor - The Tiptap editor instance
  */
 export function onCreateHandler(editor: Editor | null | undefined): void {
-  // Guard against null or undefined editor
-  if (!editor) {
-    return;
-  }
+	// Guard against null or undefined editor
+	if (!editor) {
+		return;
+	}
 
-  // Initialize storage for resolverQueue (Mark extensions don't support addStorage)
-  if (!editor.storage.unilink) {
-    editor.storage.unilink = {};
-  }
+	// Initialize storage for resolverQueue (Mark extensions don't support addStorage)
+	if (!editor.storage.unilink) {
+		editor.storage.unilink = {};
+	}
 
-  editor.storage.unilink.resolverQueue = {
-    add: (item: ResolverQueueItem) => {
-      enqueueResolve(item);
-    },
-  };
+	editor.storage.unilink.resolverQueue = {
+		add: (item: ResolverQueueItem) => {
+			enqueueResolve(item);
+		},
+	};
 
-  if (!globalAutoReconciler) {
-    globalAutoReconciler = new AutoReconciler(editor);
-    globalAutoReconciler.initialize();
-  }
+	if (!globalAutoReconciler) {
+		globalAutoReconciler = new AutoReconciler(editor);
+		globalAutoReconciler.initialize();
+	}
 }
 
 /**
@@ -44,10 +44,10 @@ export function onCreateHandler(editor: Editor | null | undefined): void {
  * Cleans up the AutoReconciler
  */
 export function onDestroyHandler(): void {
-  if (globalAutoReconciler) {
-    globalAutoReconciler.destroy();
-    globalAutoReconciler = null;
-  }
+	if (globalAutoReconciler) {
+		globalAutoReconciler.destroy();
+		globalAutoReconciler = null;
+	}
 }
 
 /**
@@ -55,5 +55,5 @@ export function onDestroyHandler(): void {
  * @returns The AutoReconciler instance or null
  */
 export function getAutoReconciler(): AutoReconciler | null {
-  return globalAutoReconciler;
+	return globalAutoReconciler;
 }

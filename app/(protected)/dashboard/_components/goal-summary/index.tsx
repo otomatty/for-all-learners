@@ -1,6 +1,6 @@
+import type React from "react";
 import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 import { Card } from "@/components/ui/card";
-import type React from "react";
 import ServerGoalDecksSection from "./goal-deck-section";
 import GoalSummaryClient from "./goal-summary-client";
 

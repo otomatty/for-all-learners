@@ -1,7 +1,7 @@
 "use server";
 
-import { getSupabaseClient } from "./getSupabaseClient";
 import { ensureUserPageInNote, getUserInfo } from "../user-page";
+import { getSupabaseClient } from "./getSupabaseClient";
 
 /**
  * 共有リンクからノートに参加（共有）します。

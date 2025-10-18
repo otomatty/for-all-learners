@@ -1,5 +1,19 @@
 "use client";
 
+import {
+	Camera,
+	Copy,
+	FileText,
+	MoreHorizontal,
+	Pencil,
+	SquarePlus,
+	Trash2,
+	Volume2,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { toast } from "sonner";
 import { deleteDeck } from "@/app/_actions/decks";
 import { duplicateDeck } from "@/app/_actions/duplicateDeck";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -21,20 +35,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	Camera,
-	Copy,
-	FileText,
-	MoreHorizontal,
-	Pencil,
-	SquarePlus,
-	Trash2,
-	Volume2,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { toast } from "sonner";
 import { DeckForm } from "../../_components/deck-form";
 import { CardForm } from "../_components/card-form";
 

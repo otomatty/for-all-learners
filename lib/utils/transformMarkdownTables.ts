@@ -7,7 +7,7 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-import { type TableData, findMarkdownTables } from "./markdownTableParser";
+import { findMarkdownTables, type TableData } from "./markdownTableParser";
 
 // 型定義: textノード用の拡張インターフェース
 interface JSONTextNode extends JSONContent {

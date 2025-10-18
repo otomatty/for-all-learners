@@ -1,5 +1,7 @@
 "use client";
 
+import type * as React from "react";
+import { useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -18,8 +20,6 @@ import {
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Database } from "@/types/database.types";
-import type * as React from "react";
-import { useState } from "react";
 import { RichContent } from "./rich-content";
 
 interface CardDetailDialogProps {

@@ -1,18 +1,18 @@
 "use client";
 
+import { MoreVertical, Pause, Volume2 } from "lucide-react";
+import React, { useRef, useState } from "react";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreVertical, Pause, Volume2 } from "lucide-react";
-import React, { useState, useRef } from "react";
 import { DeletePageDialog } from "./delete-page-dialog";
 import ToolbarButton from "./toolbar-button";
 import {
+	createToolbarMenuItems,
 	type ToolbarAction,
 	type ToolbarMenuItemsProps,
-	createToolbarMenuItems,
 } from "./toolbar-menu-items";
 
 interface FloatingToolbarProps extends ToolbarMenuItemsProps {}

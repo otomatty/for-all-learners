@@ -16,13 +16,13 @@ import { createSuggestionPlugin } from "./suggestion-plugin";
  * @returns Array of ProseMirror plugins
  */
 export function createPlugins(context: {
-  editor: Editor;
-  options: UnifiedLinkMarkOptions;
+	editor: Editor;
+	options: UnifiedLinkMarkOptions;
 }) {
-  return [
-    createAutoBracketPlugin(),
-    createBracketCursorPlugin(context.editor),
-    createClickHandlerPlugin(context),
-    createSuggestionPlugin(context),
-  ];
+	return [
+		createAutoBracketPlugin(),
+		createBracketCursorPlugin(context.editor),
+		createClickHandlerPlugin(context),
+		createSuggestionPlugin(context),
+	];
 }

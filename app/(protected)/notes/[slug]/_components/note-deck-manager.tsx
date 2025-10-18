@@ -1,5 +1,9 @@
 "use client";
 
+import { ExternalLink, Plus, Search, X } from "lucide-react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
 	createNoteDeckLink,
 	removeNoteDeckLink,
@@ -26,10 +30,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { Database } from "@/types/database.types";
-import { ExternalLink, Plus, Search, X } from "lucide-react";
-import Link from "next/link";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
 

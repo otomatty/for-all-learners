@@ -1,5 +1,5 @@
-import { SectionHeader } from "@/components/SectionHeader";
 import { Container } from "@/components/container";
+import { SectionHeader } from "@/components/SectionHeader";
 import {
 	Accordion,
 	AccordionContent,

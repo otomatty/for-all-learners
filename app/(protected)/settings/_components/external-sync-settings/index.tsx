@@ -1,7 +1,7 @@
 "use client";
 
-import type { Database } from "@/types/database.types";
 import type React from "react";
+import type { Database } from "@/types/database.types";
 import CosenseSyncSettings, {
 	type CosenseProject,
 } from "./cosense-sync-settings";

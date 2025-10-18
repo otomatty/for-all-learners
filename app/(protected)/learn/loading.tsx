@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +11,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import { useEffect, useState } from "react";
 
 const TIPS = [
 	"単語帳は一度に10枚ずつ進めると定着率UP！",

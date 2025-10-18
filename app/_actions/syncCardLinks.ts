@@ -1,8 +1,9 @@
 "use server";
 
+import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import type { JSONContent } from "@tiptap/core";
+
 // Define a generic MarkJSON type for tiptap marks
 type MarkJSON = { type: string; attrs?: Record<string, unknown> };
 

@@ -43,29 +43,29 @@ const isBrowser = typeof window !== "undefined";
 
 // Logger configuration
 const logger = pino({
-  // Default to 'info' in production, but allow override via env var
-  level:
-    process.env.LOG_LEVEL ||
-    (process.env.NODE_ENV === "production" ? "info" : "debug"),
-  browser: {
-    // Browser-specific configuration
-    asObject: true,
-  },
-  // Only use transport in development and non-SSR environments
-  // SSR environments (Next.js server-side) have issues with worker threads
-  ...(process.env.NODE_ENV === "development" &&
-    !isBrowser &&
-    typeof process !== "undefined" &&
-    !process.env.NEXT_RUNTIME && {
-      transport: {
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          translateTime: "HH:MM:ss Z",
-          ignore: "pid,hostname",
-        },
-      },
-    }),
+	// Default to 'info' in production, but allow override via env var
+	level:
+		process.env.LOG_LEVEL ||
+		(process.env.NODE_ENV === "production" ? "info" : "debug"),
+	browser: {
+		// Browser-specific configuration
+		asObject: true,
+	},
+	// Only use transport in development and non-SSR environments
+	// SSR environments (Next.js server-side) have issues with worker threads
+	...(process.env.NODE_ENV === "development" &&
+		!isBrowser &&
+		typeof process !== "undefined" &&
+		!process.env.NEXT_RUNTIME && {
+			transport: {
+				target: "pino-pretty",
+				options: {
+					colorize: true,
+					translateTime: "HH:MM:ss Z",
+					ignore: "pid,hostname",
+				},
+			},
+		}),
 });
 
 export default logger;

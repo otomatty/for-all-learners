@@ -1,5 +1,9 @@
 "use client";
 
+import { Loader2, Save, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { createCards } from "@/app/_actions/cards";
 import type { GeneratedCard } from "@/app/_actions/generateCards";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
@@ -17,10 +21,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Save, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
 
 interface ImageCardGeneratorProps {
 	deckId: string;

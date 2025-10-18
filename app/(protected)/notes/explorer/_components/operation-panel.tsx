@@ -1,5 +1,6 @@
 "use client";
 
+import { Clipboard, Copy, Move, Search, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { Clipboard, Copy, Move, Search, Trash2, X } from "lucide-react";
 import type { NoteSummary } from "../../_components/notes-list";
 
 interface OperationPanelProps {

@@ -1,8 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { processPdfToCards, savePdfProcessingResult } from "./pdfProcessing";
 import type { EnhancedPdfCard, PdfProcessingResult } from "./pdfProcessing";
+import { processPdfToCards, savePdfProcessingResult } from "./pdfProcessing";
 
 export interface PdfUploadResult {
 	success: boolean;

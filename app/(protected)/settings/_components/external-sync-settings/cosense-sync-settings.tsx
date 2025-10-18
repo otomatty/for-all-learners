@@ -1,5 +1,9 @@
 "use client";
 
+import { RefreshCwIcon, TrashIcon } from "lucide-react";
+import Link from "next/link";
+import React, { useState } from "react";
+import { toast } from "sonner";
 import {
 	addUserCosenseProject,
 	removeUserCosenseProject,
@@ -24,10 +28,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { RefreshCwIcon, TrashIcon } from "lucide-react";
-import Link from "next/link";
-import React, { useState } from "react";
-import { toast } from "sonner";
 
 export interface CosenseProject {
 	id: string;

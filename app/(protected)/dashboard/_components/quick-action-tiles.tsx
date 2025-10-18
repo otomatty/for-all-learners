@@ -1,4 +1,9 @@
 "use client";
+import { FileText, Repeat, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,11 +14,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
-import { FileText, Repeat, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useState } from "react";
 import { DeckSelectionDialog } from "./deck-selection-dialog";
 
 // 型定義: 復習対象カード数を含むデッキ型

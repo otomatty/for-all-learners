@@ -1,13 +1,15 @@
+import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { PdfCardGenerator } from "../_components/pdf-card-generator";
 
 export default async function PdfGeneratorPage({
 	params,
-}: { params: Promise<{ deckId: string }> }) {
+}: {
+	params: Promise<{ deckId: string }>;
+}) {
 	const { deckId } = await params;
 	const supabase = await createClient();
 	const {

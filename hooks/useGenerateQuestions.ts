@@ -1,5 +1,5 @@
-import type { QuestionData, QuestionType } from "@/lib/gemini";
 import { useEffect, useState } from "react";
+import type { QuestionData, QuestionType } from "@/lib/gemini";
 
 /**
  * The response structure for a generated question.

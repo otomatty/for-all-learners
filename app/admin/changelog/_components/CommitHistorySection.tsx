@@ -1,11 +1,5 @@
 "use client";
 
-import { createChangelogEntry } from "@/app/_actions/changelog";
-import {
-	createVersionCommitStaging,
-	getVersionCommitStagingByVersion,
-	processVersionCommitStaging,
-} from "@/app/_actions/version";
 import {
 	type DragEndEvent,
 	PointerSensor,
@@ -14,6 +8,12 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import React, { useEffect, useState } from "react";
+import { createChangelogEntry } from "@/app/_actions/changelog";
+import {
+	createVersionCommitStaging,
+	getVersionCommitStagingByVersion,
+	processVersionCommitStaging,
+} from "@/app/_actions/version";
 
 import { CommitDetails } from "./CommitDetails";
 import { CommitVersionCard } from "./CommitVersionCard";

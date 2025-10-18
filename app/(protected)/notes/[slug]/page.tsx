@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import React from "react";
 import {
 	getAvailableDecksForNote,
 	getDecksLinkedToNote,
@@ -6,8 +8,6 @@ import { getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import React from "react";
 import { NoteDeckManager } from "./_components/note-deck-manager";
 import NoteHeader from "./_components/note-header";
 import NotePagesClient from "./page-client";

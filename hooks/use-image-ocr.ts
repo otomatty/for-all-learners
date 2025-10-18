@@ -3,9 +3,9 @@
  * ローディング状態、プログレス、エラーハンドリングを統合管理
  */
 
-import { processGyazoImageOcr } from "@/app/_actions/transcribeImage";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { processGyazoImageOcr } from "@/app/_actions/transcribeImage";
 
 // Server Action用の結果型
 export interface ServerOcrResult {

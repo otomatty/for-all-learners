@@ -1,12 +1,12 @@
 "use client";
 
+import { useDraggable } from "@dnd-kit/core";
+import { FileText, GripVertical, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
-import { useDraggable } from "@dnd-kit/core";
-import { FileText, GripVertical, MoreHorizontal } from "lucide-react";
-import Link from "next/link";
 
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 

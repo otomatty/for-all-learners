@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import React from "react";
+import { Button } from "@/components/ui/button";
 import type { ChangeLogEntry } from "../../../_actions/changelog";
 import { ChangeItem } from "./ChangeItem";
 export function ChangelogEntry({ entry }: { entry: ChangeLogEntry }) {

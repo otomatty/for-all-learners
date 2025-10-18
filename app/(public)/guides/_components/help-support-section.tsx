@@ -1,3 +1,4 @@
+import { BookOpen, Settings, Users } from "lucide-react";
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +8,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, Settings, Users } from "lucide-react";
 
 export default function HelpSupportSection() {
 	return (

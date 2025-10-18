@@ -1,7 +1,7 @@
 "use server";
-import type { Database } from "@/types/database.types";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Database } from "@/types/database.types";
 
 export async function createClient() {
 	const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -1,10 +1,10 @@
 "use client";
 
-import { syncDeckLinks } from "@/app/_actions/decks";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { syncDeckLinks } from "@/app/_actions/decks";
+import { Button } from "@/components/ui/button";
 
 interface SyncButtonProps {
 	deckId: string;

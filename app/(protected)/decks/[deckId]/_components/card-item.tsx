@@ -1,9 +1,9 @@
 "use client";
 
+import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/types/database.types";
-import type React from "react";
 import { CardContextMenu } from "./card-context-menu";
 import { RichContent } from "./rich-content";
 

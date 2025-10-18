@@ -1,5 +1,7 @@
 "use client";
 
+import { Calendar, FileText, Grid3X3, List, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { getNotePages } from "@/app/_actions/notes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +10,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
-import { Calendar, FileText, Grid3X3, List, Search } from "lucide-react";
-import { useEffect, useState } from "react";
 import DraggablePageItem from "./draggable-page-item";
 
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];

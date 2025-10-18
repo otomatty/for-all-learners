@@ -1,12 +1,12 @@
 "use client";
 
+import { Grid, List, Type } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { startQuizAction } from "@/app/_actions/startQuiz";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Grid, List, Type } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface QuizSettingsDialogProps {
 	deckId?: string;

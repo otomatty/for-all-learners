@@ -1,9 +1,9 @@
 "use server";
 
+import { createUserContent } from "@google/genai";
 import { geminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
-import { createUserContent } from "@google/genai";
 
 interface TiptapNode {
 	type: string;

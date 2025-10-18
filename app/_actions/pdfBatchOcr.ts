@@ -1,7 +1,7 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
 import { createPartFromUri, createUserContent } from "@google/genai";
+import { geminiClient } from "@/lib/gemini/client";
 
 /**
  * 正規表現を使ったフォールバックデータ抽出

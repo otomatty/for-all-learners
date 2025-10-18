@@ -1,15 +1,13 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/adminClient";
-import { createClient } from "@/lib/supabase/server";
-
 import { ActiveUsersCard } from "@/app/admin/_components/ActiveUsersCard";
 import { NewUsersCard } from "@/app/admin/_components/NewUsersCard";
 import { SupabaseStatusCard } from "@/app/admin/_components/SupabaseStatusCard";
 import { VercelStatusCard } from "@/app/admin/_components/VercelStatusCard";
-
-import { UsersTable } from "./_components/UsersTable";
+import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 import type { AccountWithAuth } from "./_components/UsersTable";
+import { UsersTable } from "./_components/UsersTable";
 
 export default async function UsersPage() {
 	const supabase = await createClient();

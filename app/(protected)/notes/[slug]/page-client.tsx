@@ -1,8 +1,9 @@
 "use client";
 
-import type { Database } from "@/types/database.types";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import type { Database } from "@/types/database.types";
+
 // Define page row type
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 
@@ -14,9 +15,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { PagesListSkeleton } from "./_components/pages-list-skeleton";
-
 import { PagesList } from "./_components/pages-list";
+import { PagesListSkeleton } from "./_components/pages-list-skeleton";
 
 interface NotePagesClientProps {
 	slug: string;

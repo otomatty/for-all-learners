@@ -1,6 +1,6 @@
-import { dateFormatters } from "@/lib/tiptap-extensions/formatDate";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useRef, useState } from "react";
+import { dateFormatters } from "@/lib/tiptap-extensions/formatDate";
 
 /**
  * Hook to cycle through date formats and insert today's date in the Tiptap editor on Ctrl+T / Cmd+T.

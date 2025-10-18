@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getAccountById } from "@/app/_actions/accounts";
 import {
 	getStudyGoalsByUser,
@@ -6,7 +7,6 @@ import {
 import { Container } from "@/components/container";
 import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { GoalsList } from "./_components/goals-list";
 
 export default async function GoalsPage() {

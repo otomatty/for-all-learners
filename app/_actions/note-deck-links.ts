@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import type {
@@ -7,7 +8,6 @@ import type {
 	NoteDeckLink,
 	NoteDeckLinkWithRelations,
 } from "@/types/note-deck-links";
-import { revalidatePath } from "next/cache";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
 type Note = Database["public"]["Tables"]["notes"]["Row"];

@@ -1,7 +1,7 @@
 "use server";
 
-import { geminiClient } from "@/lib/gemini/client";
 import { createUserContent } from "@google/genai";
+import { geminiClient } from "@/lib/gemini/client";
 
 /**
  * PDF内容分析結果の型

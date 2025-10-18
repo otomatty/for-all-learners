@@ -15,52 +15,51 @@
  * ```
  */
 
-// Re-export all helpers
-export { setupJSDOMEnvironment } from "./jsdom-setup";
-export * from "./editor-mock";
-export * from "./options-mock";
-export * from "./page-mock";
-
 // Export types for convenience
 export type { MockEditorOptions } from "./editor-mock";
+export * from "./editor-mock";
+// Re-export all helpers
+export { setupJSDOMEnvironment } from "./jsdom-setup";
 export type { MockOptionsConfig } from "./options-mock";
+export * from "./options-mock";
 export type { MockPageData, PageRow } from "./page-mock";
+export * from "./page-mock";
 
+import type { Editor } from "@tiptap/core";
 import { vi } from "vitest";
+import type { UnifiedLinkMarkOptions } from "@/lib/tiptap-extensions/unified-link-mark/types";
 import { createMockEditor } from "./editor-mock";
 import { createMockOptions } from "./options-mock";
-import type { Editor } from "@tiptap/core";
-import type { UnifiedLinkMarkOptions } from "@/lib/tiptap-extensions/unified-link-mark/types";
 
 /**
  * Common mock objects used across tests
  */
 export interface CommonMocks {
-  /** Mock function for creating a page */
-  createPage: ReturnType<typeof vi.fn>;
-  /** Mock toast notification functions */
-  toast: {
-    success: ReturnType<typeof vi.fn>;
-    error: ReturnType<typeof vi.fn>;
-    info: ReturnType<typeof vi.fn>;
-    warning: ReturnType<typeof vi.fn>;
-  };
-  /** Mock function for emitting page created events */
-  emitPageCreated: ReturnType<typeof vi.fn>;
+	/** Mock function for creating a page */
+	createPage: ReturnType<typeof vi.fn>;
+	/** Mock toast notification functions */
+	toast: {
+		success: ReturnType<typeof vi.fn>;
+		error: ReturnType<typeof vi.fn>;
+		info: ReturnType<typeof vi.fn>;
+		warning: ReturnType<typeof vi.fn>;
+	};
+	/** Mock function for emitting page created events */
+	emitPageCreated: ReturnType<typeof vi.fn>;
 }
 
 /**
  * Complete test environment with all common mocks
  */
 export interface TestEnvironment {
-  /** Mock Editor instance */
-  editor: Editor;
-  /** Mock UnifiedLinkMarkOptions */
-  options: UnifiedLinkMarkOptions;
-  /** Common mock functions */
-  mocks: CommonMocks;
-  /** Cleanup function to reset all mocks */
-  cleanup: () => void;
+	/** Mock Editor instance */
+	editor: Editor;
+	/** Mock UnifiedLinkMarkOptions */
+	options: UnifiedLinkMarkOptions;
+	/** Common mock functions */
+	mocks: CommonMocks;
+	/** Cleanup function to reset all mocks */
+	cleanup: () => void;
 }
 
 /**
@@ -103,36 +102,36 @@ export interface TestEnvironment {
  * ```
  */
 export function createTestEnvironment(config?: {
-  userId?: string;
-  noteSlug?: string;
+	userId?: string;
+	noteSlug?: string;
 }): TestEnvironment {
-  const editor = createMockEditor();
-  const options = createMockOptions({
-    userId: config?.userId,
-    noteSlug: config?.noteSlug,
-  });
+	const editor = createMockEditor();
+	const options = createMockOptions({
+		userId: config?.userId,
+		noteSlug: config?.noteSlug,
+	});
 
-  const mocks: CommonMocks = {
-    createPage: vi.fn(),
-    toast: {
-      success: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      warning: vi.fn(),
-    },
-    emitPageCreated: vi.fn(),
-  };
+	const mocks: CommonMocks = {
+		createPage: vi.fn(),
+		toast: {
+			success: vi.fn(),
+			error: vi.fn(),
+			info: vi.fn(),
+			warning: vi.fn(),
+		},
+		emitPageCreated: vi.fn(),
+	};
 
-  const cleanup = () => {
-    vi.clearAllMocks();
-  };
+	const cleanup = () => {
+		vi.clearAllMocks();
+	};
 
-  return {
-    editor,
-    options,
-    mocks,
-    cleanup,
-  };
+	return {
+		editor,
+		options,
+		mocks,
+		cleanup,
+	};
 }
 
 /**
@@ -149,7 +148,7 @@ export function createTestEnvironment(config?: {
  * ```
  */
 export function resetAllMocks(): void {
-  vi.clearAllMocks();
+	vi.clearAllMocks();
 }
 
 // Note: createMockFn is removed as vi.fn() can be used directly
