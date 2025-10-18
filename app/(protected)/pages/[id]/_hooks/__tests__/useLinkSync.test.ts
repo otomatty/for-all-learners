@@ -11,12 +11,17 @@
  * - Debounce behavior
  * - Duplicate request prevention
  * - Error handling
+ * @vitest-environment jsdom
  */
 
 import type { Editor } from "@tiptap/react";
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { useLinkSync } from "../useLinkSync";
+
+// Setup jsdom environment for this test file
+setupJSDOMEnvironment();
 
 describe("useLinkSync", () => {
   describe("Hook API", () => {

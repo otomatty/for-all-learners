@@ -175,7 +175,15 @@ export function useLinkSync(
    * Set up automatic sync on editor updates
    */
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || typeof editor.on !== "function") {
+      if (debug && editor) {
+        logger.debug(
+          { pageId },
+          "[useLinkSync] Editor missing required methods"
+        );
+      }
+      return;
+    }
 
     logger.debug({ pageId }, "[useLinkSync] Setting up editor update listener");
 
