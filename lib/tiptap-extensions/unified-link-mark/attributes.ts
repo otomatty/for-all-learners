@@ -19,22 +19,54 @@ export const unifiedLinkAttributes = {
 	},
 	raw: {
 		default: "",
-		parseHTML: (element: HTMLElement) => element.getAttribute("data-raw") || "",
+		parseHTML: (element: HTMLElement) => {
+			// 1. Priority: data-raw attribute (new format)
+			const dataRaw = element.getAttribute("data-raw");
+			if (dataRaw !== null) return dataRaw;
+
+			// 2. Fallback: data-page-title attribute (legacy format)
+			const pageTitle = element.getAttribute("data-page-title");
+			if (pageTitle !== null) return pageTitle;
+
+			// 3. Last resort: text content
+			return element.textContent || "";
+		},
 		renderHTML: (attributes: UnifiedLinkAttributes) => ({
 			"data-raw": attributes.raw,
 		}),
 	},
 	text: {
 		default: "",
-		parseHTML: (element: HTMLElement) =>
-			element.getAttribute("data-text") || "",
+		parseHTML: (element: HTMLElement) => {
+			// 1. Priority: data-text attribute (new format)
+			const dataText = element.getAttribute("data-text");
+			if (dataText !== null) return dataText;
+
+			// 2. Fallback: data-page-title attribute (legacy format)
+			const pageTitle = element.getAttribute("data-page-title");
+			if (pageTitle !== null) return pageTitle;
+
+			// 3. Last resort: text content
+			return element.textContent || "";
+		},
 		renderHTML: (attributes: UnifiedLinkAttributes) => ({
 			"data-text": attributes.text,
 		}),
 	},
 	key: {
 		default: "",
-		parseHTML: (element: HTMLElement) => element.getAttribute("data-key") || "",
+		parseHTML: (element: HTMLElement) => {
+			// 1. Priority: data-key attribute (new format)
+			const dataKey = element.getAttribute("data-key");
+			if (dataKey !== null) return dataKey;
+
+			// 2. Fallback: data-page-title attribute lowercase (legacy format)
+			const pageTitle = element.getAttribute("data-page-title");
+			if (pageTitle !== null) return pageTitle.toLowerCase();
+
+			// 3. No fallback for key - keep empty string
+			return "";
+		},
 		renderHTML: (attributes: UnifiedLinkAttributes) => ({
 			"data-key": attributes.key,
 		}),
