@@ -1,37 +1,39 @@
 # テスト失敗修正ロードマップ - Executive Summary
 
-**作成日**: 2025年10月18日  
-**対象**: 33個のテスト失敗の段階的修正計画
+**作成日**: 2025 年 10 月 18 日  
+**対象**: 33 個のテスト失敗の段階的修正計画
 
 ---
 
 ## 👥 概要 (Executive Summary)
 
-テストスイートの33個の失敗を5つのカテゴリに分け、段階的に修正していくロードマップです。
+テストスイートの 33 個の失敗を 5 つのカテゴリに分け、段階的に修正していくロードマップです。
 
 ### 修正フェーズの概要
 
-| フェーズ | 対象 | 失敗数 | 難度 | 時間 | 状態 |
-|---|---|---|---|---|---|
-| **Phase 1** | Critical + High | 5 | ⭐⭐ | 30分 | 🔴 未開始 |
-| **Phase 2** | Medium | 14 | ⭐⭐ | 50分 | 🔴 未開始 |
-| **Phase 3** | High 統合 | 16 | ⭐⭐⭐ | 90分+ | 🔴 未開始 |
+| フェーズ    | 対象            | 失敗数 | 難度   | 時間   | 状態      |
+| ----------- | --------------- | ------ | ------ | ------ | --------- |
+| **Phase 1** | Critical + High | 5      | ⭐⭐   | 30 分  | 🔴 未開始 |
+| **Phase 2** | Medium          | 14     | ⭐⭐   | 50 分  | 🔴 未開始 |
+| **Phase 3** | High 統合       | 16     | ⭐⭐⭐ | 90 分+ | 🔴 未開始 |
 
-**総修正時間**: 約3.5時間以上
+**総修正時間**: 約 3.5 時間以上
 
 ---
 
-## 📋 Phase 1: Critical 優先度 (本日対応 - 30分)
+## 📋 Phase 1: Critical 優先度 (本日対応 - 30 分)
 
 ### 1.1 キャッシュキー正規化修正
 
 **ファイル**: `lib/unilink/utils.ts`
 
 **変更内容**:
+
 ```typescript
 // 修正前
 export const setCachedPageId = (key: string, pageId: string): void => {
-  resolvedCache.set(key, {  // ❌ キーを正規化していない
+  resolvedCache.set(key, {
+    // ❌ キーを正規化していない
     pageId,
     timestamp: Date.now(),
   });
@@ -41,7 +43,7 @@ export const setCachedPageId = (key: string, pageId: string): void => {
 
 // 修正後
 export const setCachedPageId = (key: string, pageId: string): void => {
-  const normalizedKey = normalizeTitleToKey(key);  // ✅ 正規化
+  const normalizedKey = normalizeTitleToKey(key); // ✅ 正規化
   resolvedCache.set(normalizedKey, {
     pageId,
     timestamp: Date.now(),
@@ -52,9 +54,10 @@ export const setCachedPageId = (key: string, pageId: string): void => {
 ```
 
 **テスト**: `lib/unilink/__tests__/utils.test.ts`
+
 - ✅ `should normalize keys before caching`
 
-**推定時間**: 10分
+**推定時間**: 10 分
 
 ---
 
@@ -63,6 +66,7 @@ export const setCachedPageId = (key: string, pageId: string): void => {
 **ファイル**: `lib/tiptap-extensions/unified-link-mark/lifecycle.ts`
 
 **変更内容**:
+
 ```typescript
 // 修正前
 export const onCreateHandler = (editor: Editor): void => {
@@ -81,10 +85,11 @@ export const onCreateHandler = (editor: Editor | null | undefined): void => {
 ```
 
 **テスト**: `lib/tiptap-extensions/unified-link-mark/__tests__/lifecycle.test.ts`
+
 - ✅ `should handle null editor gracefully`
 - ✅ `should handle undefined editor gracefully`
 
-**推定時間**: 10分
+**推定時間**: 10 分
 
 ---
 
@@ -95,22 +100,23 @@ export const onCreateHandler = (editor: Editor | null | undefined): void => {
 - [ ] テスト実行: `bun test -- lib/unilink/__tests__/utils.test.ts` → 全 pass
 - [ ] テスト実行: `bun test -- lib/tiptap-extensions/unified-link-mark/__tests__/lifecycle.test.ts` → 全 pass
 
-**期待結果**: 3個失敗から0に削減
+**期待結果**: 3 個失敗から 0 に削減
 
 ---
 
-## 📋 Phase 2: Medium 優先度 (翌日対応 - 50分)
+## 📋 Phase 2: Medium 優先度 (翌日対応 - 50 分)
 
 ### 2.1 Logger と console のマッチング
 
 **ファイル**: 複数
+
 - `lib/unilink/__tests__/resolver/mark-operations.test.ts`
 - `lib/unilink/__tests__/resolver/broadcast.test.ts`
 - `lib/tiptap-extensions/unified-link-mark/__tests__/migration.test.ts`
 
 **問題**: テストが `console.log/error` を期待しているが、実装が `logger` を使用している
 
-**修正方針A: テスト側を logger 対応に修正**
+**修正方針 A: テスト側を logger 対応に修正**
 
 ```typescript
 // 修正前 (mark-operations.test.ts)
@@ -134,7 +140,8 @@ const loggerDebugSpy = vi.spyOn(logger, "debug");
 expect(loggerDebugSpy).toHaveBeenCalled();
 ```
 
-**対象テスト数**: 8個
+**対象テスト数**: 8 個
+
 - `should log success message on update`
 - `should handle errors gracefully`
 - `should log batch resolution start`
@@ -144,20 +151,23 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 - `should log broadcast event (debug)`
 - `should log message for unimplemented feature`
 
-**推定時間**: 30分
+**推定時間**: 30 分
 
 ### 2.2 プラグイン数・順序の確認と修正
 
-**ファイル**: 
+**ファイル**:
+
 - 実装: `lib/tiptap-extensions/unified-link-mark/plugins/index.ts`
 - テスト: `lib/tiptap-extensions/unified-link-mark/plugins/__tests__/index.test.ts`
 
 **修正手順**:
+
 1. `createPlugins()` 実装を確認
 2. 実際に返されるプラグイン数を確認
 3. テストの期待値を実装に合わせて更新
 
-**対象テスト数**: 6個
+**対象テスト数**: 6 個
+
 - `should return exactly 3 plugins`
 - `should include click-handler plugin`
 - `should return plugins in consistent order`
@@ -165,7 +175,7 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 - `should handle editor without throwing`
 - `should create plugins with consistent structure`
 
-**推定時間**: 20分
+**推定時間**: 20 分
 
 ---
 
@@ -177,25 +187,27 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 - [ ] migration テスト修正
 - [ ] プラグイン実装確認
 - [ ] プラグインテスト更新
-- [ ] テスト実行: `bun test` → 14個失敗から0に削減
+- [ ] テスト実行: `bun test` → 14 個失敗から 0 に削減
 
-**期待結果**: 14個失敗から0に削減
+**期待結果**: 14 個失敗から 0 に削減
 
 ---
 
-## 📋 Phase 3: High 優先度 統合テスト (計画的対応 - 90分以上)
+## 📋 Phase 3: High 優先度 統合テスト (計画的対応 - 90 分以上)
 
 ### 3.1 Input Rules 統合テスト
 
 **ファイル**:
+
 - `lib/tiptap-extensions/unified-link-mark/input-rules/__tests__/utils.test.ts`
 - `lib/tiptap-extensions/unified-link-mark/input-rules/__tests__/tag-rule.test.ts`
 - `lib/tiptap-extensions/unified-link-mark/input-rules/__tests__/bracket-rule.test.ts`
 - `app/(protected)/pages/[id]/_hooks/__tests__/useLinkSync.test.ts`
 
-**対象テスト数**: 16個
+**対象テスト数**: 16 個
 
-#### 3.1.1 isInCodeContext テスト (3個)
+#### 3.1.1 isInCodeContext テスト (3 個)
+
 ```typescript
 // 失敗テスト
 - should return true at the start of inline code
@@ -204,10 +216,12 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 ```
 
 **修正方針**:
+
 - JSDOM 環境の Range/Selection API のモック強化
 - 複雑な DOM 操作のテストを単体テストに分割
 
-#### 3.1.2 createTagInputRule テスト (2個)
+#### 3.1.2 createTagInputRule テスト (2 個)
+
 ```typescript
 // 失敗テスト
 - should not match invalid tag patterns
@@ -215,36 +229,43 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 ```
 
 **修正方針**:
+
 - 正規表現マッチングロジックの単体テスト化
 - エッジケースの徹底的なテストカバレッジ
 
-#### 3.1.3 createBracketInputRule テスト (1個)
+#### 3.1.3 createBracketInputRule テスト (1 個)
+
 ```typescript
 // 失敗テスト
 - should use correct regex pattern
 ```
 
 **修正方針**:
+
 - ブラケットルール実装の確認
 - 正規表現の動作検証
 
-#### 3.1.4 useLinkSync テスト (1個)
+#### 3.1.4 useLinkSync テスト (1 個)
+
 ```typescript
 // 失敗テスト
 - should not crash with undefined editor methods
 ```
 
 **修正方針**:
+
 - エディターメソッドの null/undefined チェック
 
 ### 3.2 環境改善
 
 #### 3.2.1 モック環境の強化
+
 - JSDOM から Playwright への移行検討
 - ProseMirror mock の完成度向上
 - DOM API の完全性確認
 
 #### 3.2.2 テスト戦略の見直し
+
 - 統合テストと単体テストの分離
 - モック環境の最小化
 
@@ -258,15 +279,16 @@ expect(loggerDebugSpy).toHaveBeenCalled();
 - [ ] createBracketInputRule 設定確認
 - [ ] useLinkSync の null チェック
 - [ ] 単体テストへの分割
-- [ ] テスト実行: `bun test` → 16個失敗から0に削減
+- [ ] テスト実行: `bun test` → 16 個失敗から 0 に削減
 
-**期待結果**: 16個失敗から0に削減 → **合計33個のテスト失敗を完全解決**
+**期待結果**: 16 個失敗から 0 に削減 → **合計 33 個のテスト失敗を完全解決**
 
 ---
 
 ## 🚀 実装・検証手順
 
 ### 事前準備
+
 ```bash
 # 最新コードを確認
 git status
@@ -303,6 +325,7 @@ git push origin fix/test-failures-phase-1
 ```
 
 ### Phase 2 実装
+
 ```bash
 # 新ブランチ
 git checkout -b fix/test-failures-phase-2
@@ -319,6 +342,7 @@ git push origin fix/test-failures-phase-2
 ```
 
 ### Phase 3 実装
+
 ```bash
 # 新ブランチ
 git checkout -b fix/test-failures-phase-3
@@ -339,6 +363,7 @@ git push origin fix/test-failures-phase-3
 ## 📊 期待結果
 
 ### 修正前
+
 ```
 ✅ 574 pass
 ❌ 33 fail
@@ -346,6 +371,7 @@ git push origin fix/test-failures-phase-3
 ```
 
 ### 修正後
+
 ```
 ✅ 607 pass  (すべてのテスト成功)
 ❌ 0 fail
@@ -356,11 +382,11 @@ git push origin fix/test-failures-phase-3
 
 ## 🔄 進捗追跡
 
-| フェーズ | 状態 | 進捗 | 完了予定 |
-|---|---|---|---|
-| Phase 1 | 🔴 未開始 | 0% | 本日 |
-| Phase 2 | 🔴 未開始 | 0% | 翌日 |
-| Phase 3 | 🔴 未開始 | 0% | 計画的 |
+| フェーズ | 状態      | 進捗 | 完了予定 |
+| -------- | --------- | ---- | -------- |
+| Phase 1  | 🔴 未開始 | 0%   | 本日     |
+| Phase 2  | 🔴 未開始 | 0%   | 翌日     |
+| Phase 3  | 🔴 未開始 | 0%   | 計画的   |
 
 ---
 
