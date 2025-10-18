@@ -82,22 +82,25 @@ export function useLinkSync(
   const lastSyncTimeRef = useRef<number | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitialSyncRef = useRef(false);
+  const isSyncingRef = useRef(false);
 
   /**
    * Perform the actual sync operation
-   * Prevents duplicate requests using isSyncing flag
+   * Prevents duplicate requests using isSyncingRef (not state)
+   * This avoids infinite loops caused by state dependency changes
    */
   const performSync = useCallback(async () => {
-    if (isSyncing || !editor) {
+    if (isSyncingRef.current || !editor) {
       if (debug) {
         logger.debug(
-          { pageId, isSyncing, hasEditor: !!editor },
+          { pageId, isSyncing: isSyncingRef.current, hasEditor: !!editor },
           "[useLinkSync] Skipping sync (already syncing or no editor)"
         );
       }
       return;
     }
 
+    isSyncingRef.current = true;
     setIsSyncing(true);
 
     try {
@@ -129,9 +132,10 @@ export function useLinkSync(
     } catch (err) {
       logger.error({ err, pageId }, "[useLinkSync] Link sync failed");
     } finally {
+      isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  }, [editor, pageId, isSyncing, debug]);
+  }, [editor, pageId, debug]);
 
   /**
    * Trigger link synchronization with optional debounce
@@ -197,7 +201,7 @@ export function useLinkSync(
         clearTimeout(syncTimeoutRef.current);
       }
     };
-  }, [editor, pageId, syncLinks]);
+  }, [editor, pageId]);
 
   return {
     syncLinks,

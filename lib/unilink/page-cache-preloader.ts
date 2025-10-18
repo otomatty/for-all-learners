@@ -17,6 +17,18 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
   try {
     logger.debug({ userId }, "[PageCachePreloader] Starting preload");
 
+    // Validate environment variables before creating client
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      logger.warn(
+        { hasUrl: !!url, hasKey: !!key },
+        "[PageCachePreloader] Missing Supabase environment variables"
+      );
+      return 0;
+    }
+
     const supabase = createClient();
     let query = supabase
       .from("pages")
@@ -25,13 +37,20 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
 
     // Filter by user if provided
     if (userId) {
-      query = query.eq("owner_id", userId);
+      query = query.eq("user_id", userId);
     }
 
     const { data, error } = await query;
 
     if (error) {
-      logger.error({ error }, "[PageCachePreloader] Failed to fetch pages");
+      logger.error(
+        {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+        },
+        "[PageCachePreloader] Failed to fetch pages"
+      );
       return 0;
     }
 
@@ -56,8 +75,15 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
 
     return entries.length;
   } catch (error) {
+    // Extract error details for logging
+    const errorMessage =
+      error instanceof Error ? error.message : JSON.stringify(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     logger.error(
-      { error },
+      {
+        errorMessage,
+        errorStack,
+      },
       "[PageCachePreloader] Unexpected error during preload"
     );
     return 0;

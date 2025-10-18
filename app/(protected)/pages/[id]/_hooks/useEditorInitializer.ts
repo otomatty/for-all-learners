@@ -40,7 +40,12 @@ export function useEditorInitializer({
     if (!editor) return;
 
     // Preload all page titles into cache for cross-page link resolution
-    void preloadPageTitles(userId).catch(() => {
+    void preloadPageTitles(userId).catch((error) => {
+      // Log error details for debugging
+      const errorMessage =
+        error instanceof Error ? error.message : JSON.stringify(error);
+      // biome-ignore lint/suspicious/noConsole: Error logging for preload failure
+      console.error("[useEditorInitializer] Preload failed:", errorMessage);
       // Silently fail - preloading is an optimization, not critical
     });
 

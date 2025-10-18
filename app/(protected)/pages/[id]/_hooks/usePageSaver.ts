@@ -89,6 +89,18 @@ export function usePageSaver(
 
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
+  const onSaveSuccessRef = useRef(onSaveSuccess);
+  const onSaveErrorRef = useRef(onSaveError);
+  const setIsLoadingRef = useRef(setIsLoading);
+  const setIsDirtyRef = useRef(setIsDirty);
+
+  // Update refs when callbacks change (without triggering re-renders)
+  useEffect(() => {
+    onSaveSuccessRef.current = onSaveSuccess;
+    onSaveErrorRef.current = onSaveError;
+    setIsLoadingRef.current = setIsLoading;
+    setIsDirtyRef.current = setIsDirty;
+  }, [onSaveSuccess, onSaveError, setIsLoading, setIsDirty]);
 
   /**
    * Save the current editor content
@@ -108,7 +120,7 @@ export function usePageSaver(
 
     setIsSaving(true);
     isSavingRef.current = true;
-    setIsLoading?.(true);
+    setIsLoadingRef.current?.(true);
 
     try {
       // Get editor content
@@ -125,28 +137,20 @@ export function usePageSaver(
       });
 
       // Success callbacks
-      onSaveSuccess?.();
-      setIsDirty?.(false);
+      onSaveSuccessRef.current?.();
+      setIsDirtyRef.current?.(false);
 
       logger.info({ pageId }, "Page saved successfully");
     } catch (err) {
       logger.error({ err, pageId }, "Failed to save page");
       toast.error("保存に失敗しました");
-      onSaveError?.(err as Error);
+      onSaveErrorRef.current?.(err as Error);
     } finally {
       setIsSaving(false);
       isSavingRef.current = false;
-      setIsLoading?.(false);
+      setIsLoadingRef.current?.(false);
     }
-  }, [
-    editor,
-    pageId,
-    title,
-    onSaveSuccess,
-    onSaveError,
-    setIsLoading,
-    setIsDirty,
-  ]);
+  }, [editor, pageId, title]);
 
   /**
    * Block browser navigation (page refresh, close, etc.) during save
