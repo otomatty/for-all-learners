@@ -5,185 +5,217 @@
 
 import type { Editor } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
+import logger from "../logger";
 import type { UnifiedLinkAttributes } from "../tiptap-extensions/unified-link-mark";
 
 export interface MarkPosition {
-  from: number;
-  to: number;
-  markId: string;
-  attrs: UnifiedLinkAttributes;
+	from: number;
+	to: number;
+	markId: string;
+	attrs: UnifiedLinkAttributes;
 }
 
-export class MarkIndex {
-  private editor: Editor;
-  private index = new Map<string, MarkPosition[]>(); // key -> positions
-  private lastScanTime = 0;
-  private scanThrottleMs = 100; // スキャン頻度制限
-
-  constructor(editor: Editor) {
-    this.editor = editor;
-  }
-
-  /**
-   * エディタ全体をスキャンしてインデックスを再構築
-   * 頻繁な呼び出しを防ぐため、スロットル処理を実装
-   */
-  rebuild(): void {
-    const now = Date.now();
-    if (now - this.lastScanTime < this.scanThrottleMs) {
-      return; // スロットル制限内なのでスキップ
-    }
-
-    this.index.clear();
-    const { state } = this.editor.view;
-    const markType = state.schema.marks.unilink;
-
-    if (!markType) {
-      console.warn("[MarkIndex] unilink mark type not found");
-      return;
-    }
-
-    state.doc.descendants((node: ProseMirrorNode, pos: number) => {
-      if (!node.isText) return;
-
-      node.marks.forEach((mark) => {
-        if (mark.type !== markType) return;
-
-        const attrs = mark.attrs as UnifiedLinkAttributes;
-
-        // missing状態のマークのみをインデックス化
-        if (attrs.state !== "missing") return;
-
-        const key = attrs.key;
-        if (!key) return;
-
-        const position: MarkPosition = {
-          from: pos,
-          to: pos + node.nodeSize,
-          markId: attrs.markId,
-          attrs,
-        };
-
-        const existing = this.index.get(key);
-        if (existing) {
-          existing.push(position);
-        } else {
-          this.index.set(key, [position]);
-        }
-      });
-    });
-
-    this.lastScanTime = now;
-    console.log(
-      `[MarkIndex] Rebuilt index with ${
-        this.index.size
-      } unique keys, ${this.getTotalMarks()} total marks`
-    );
-  }
-
-  /**
-   * 指定されたkeyに関連するmissingマークの位置を取得
-   */
-  getPositionsByKey(key: string): MarkPosition[] {
-    return this.index.get(key) || [];
-  }
-
-  /**
-   * 複数のkeyに関連するmissingマークをまとめて取得
-   */
-  getPositionsByKeys(keys: string[]): Map<string, MarkPosition[]> {
-    const result = new Map<string, MarkPosition[]>();
-    keys.forEach((key) => {
-      const positions = this.getPositionsByKey(key);
-      if (positions.length > 0) {
-        result.set(key, positions);
-      }
-    });
-    return result;
-  }
-
-  /**
-   * 全てのmissing状態のkeyを取得
-   */
-  getAllKeys(): string[] {
-    return Array.from(this.index.keys());
-  }
-
-  /**
-   * 指定されたkeyのマークをexists状態に更新
-   */
-  updateToExists(key: string, pageId: string): boolean {
-    const positions = this.getPositionsByKey(key);
-    if (positions.length === 0) {
-      return false;
-    }
-
-    const { state, dispatch } = this.editor.view;
-    const { tr } = state;
-    const markType = state.schema.marks.unilink;
-    let changed = false;
-
-    positions.forEach((position) => {
-      const newAttrs: UnifiedLinkAttributes = {
-        ...position.attrs,
-        state: "exists",
-        exists: true,
-        pageId,
-        href: `/pages/${pageId}`,
-      };
-
-      try {
-        tr.removeMark(position.from, position.to, markType);
-        tr.addMark(position.from, position.to, markType.create(newAttrs));
-        changed = true;
-      } catch (error) {
-        console.warn(
-          `[MarkIndex] Failed to update mark at ${position.from}-${position.to}:`,
-          error
-        );
-      }
-    });
-
-    if (changed && dispatch) {
-      dispatch(tr);
-      // インデックスから削除（もはやmissingではない）
-      this.index.delete(key);
-      console.log(
-        `[MarkIndex] Updated ${positions.length} marks for key "${key}" to exists`
-      );
-    }
-
-    return changed;
-  }
-
-  /**
-   * デバッグ用: インデックス統計
-   */
-  getStats(): {
-    uniqueKeys: number;
-    totalMarks: number;
-    keys: string[];
-  } {
-    return {
-      uniqueKeys: this.index.size,
-      totalMarks: this.getTotalMarks(),
-      keys: this.getAllKeys(),
-    };
-  }
-
-  private getTotalMarks(): number {
-    let count = 0;
-    this.index.forEach((positions) => {
-      count += positions.length;
-    });
-    return count;
-  }
-
-  /**
-   * インデックスをクリア
-   */
-  clear(): void {
-    this.index.clear();
-    this.lastScanTime = 0;
-  }
+interface MarkIndexState {
+	editor: Editor;
+	index: Map<string, MarkPosition[]>; // key -> positions
+	lastScanTime: number;
+	scanThrottleMs: number;
 }
+
+/**
+ * Create a mark index for efficient unilink mark search and update
+ */
+export const createMarkIndex = (editor: Editor) => {
+	const state: MarkIndexState = {
+		editor,
+		index: new Map(),
+		lastScanTime: 0,
+		scanThrottleMs: 100, // Throttle scan frequency
+	};
+
+	/**
+	 * Get total number of marks across all keys
+	 */
+	const getTotalMarks = (): number => {
+		let count = 0;
+		state.index.forEach((positions) => {
+			count += positions.length;
+		});
+		return count;
+	};
+
+	/**
+	 * Rebuild index by scanning editor document
+	 * Throttled to prevent excessive scanning
+	 */
+	const rebuild = (): void => {
+		const now = Date.now();
+		if (now - state.lastScanTime < state.scanThrottleMs) {
+			logger.debug("[MarkIndex] Skipping rebuild due to throttle");
+			return;
+		}
+
+		state.index.clear();
+		const { state: editorState } = state.editor.view;
+		const markType = editorState.schema.marks.unilink;
+
+		if (!markType) {
+			logger.warn("[MarkIndex] unilink mark type not found in schema");
+			return;
+		}
+
+		editorState.doc.descendants((node: ProseMirrorNode, pos: number) => {
+			if (!node.isText) return;
+
+			node.marks.forEach((mark) => {
+				if (mark.type !== markType) return;
+
+				const attrs = mark.attrs as UnifiedLinkAttributes;
+
+				// Only index marks in 'missing' state
+				if (attrs.state !== "missing") return;
+
+				const key = attrs.key;
+				if (!key) return;
+
+				const position: MarkPosition = {
+					from: pos,
+					to: pos + node.nodeSize,
+					markId: attrs.markId,
+					attrs,
+				};
+
+				const existing = state.index.get(key);
+				if (existing) {
+					existing.push(position);
+				} else {
+					state.index.set(key, [position]);
+				}
+			});
+		});
+
+		state.lastScanTime = now;
+		logger.debug(
+			{
+				uniqueKeys: state.index.size,
+				totalMarks: getTotalMarks(),
+			},
+			"[MarkIndex] Index rebuilt",
+		);
+	};
+
+	/**
+	 * Get mark positions for a specific key
+	 */
+	const getPositionsByKey = (key: string): MarkPosition[] => {
+		return state.index.get(key) || [];
+	};
+
+	/**
+	 * Get mark positions for multiple keys
+	 */
+	const getPositionsByKeys = (keys: string[]): Map<string, MarkPosition[]> => {
+		const result = new Map<string, MarkPosition[]>();
+		keys.forEach((key) => {
+			const positions = getPositionsByKey(key);
+			if (positions.length > 0) {
+				result.set(key, positions);
+			}
+		});
+		return result;
+	};
+
+	/**
+	 * Get all keys that have missing marks
+	 */
+	const getAllKeys = (): string[] => {
+		return Array.from(state.index.keys());
+	};
+
+	/**
+	 * Update marks for a key to 'exists' state
+	 * @returns true if any marks were updated
+	 */
+	const updateToExists = (key: string, pageId: string): boolean => {
+		const positions = getPositionsByKey(key);
+		if (positions.length === 0) {
+			logger.debug({ key }, "[MarkIndex] No positions found for key");
+			return false;
+		}
+
+		const { state: editorState, dispatch } = state.editor.view;
+		const { tr } = editorState;
+		const markType = editorState.schema.marks.unilink;
+		let changed = false;
+
+		positions.forEach((position) => {
+			const newAttrs: UnifiedLinkAttributes = {
+				...position.attrs,
+				state: "exists",
+				exists: true,
+				pageId,
+				href: `/pages/${pageId}`,
+			};
+
+			try {
+				tr.removeMark(position.from, position.to, markType);
+				tr.addMark(position.from, position.to, markType.create(newAttrs));
+				changed = true;
+			} catch (error) {
+				logger.warn(
+					{ key, position, error },
+					`[MarkIndex] Failed to update mark at ${position.from}-${position.to}`,
+				);
+			}
+		});
+
+		if (changed && dispatch) {
+			dispatch(tr);
+			// Remove from index (no longer missing)
+			state.index.delete(key);
+			logger.info(
+				{ key, pageId, marksUpdated: positions.length },
+				"[MarkIndex] Marks updated to exists",
+			);
+		}
+
+		return changed;
+	};
+
+	/**
+	 * Get index statistics for debugging
+	 */
+	const getStats = (): {
+		uniqueKeys: number;
+		totalMarks: number;
+		keys: string[];
+	} => {
+		return {
+			uniqueKeys: state.index.size,
+			totalMarks: getTotalMarks(),
+			keys: getAllKeys(),
+		};
+	};
+
+	/**
+	 * Clear all index data
+	 */
+	const clear = (): void => {
+		const previousSize = state.index.size;
+		state.index.clear();
+		state.lastScanTime = 0;
+		logger.debug({ clearedKeys: previousSize }, "[MarkIndex] Index cleared");
+	};
+
+	return {
+		rebuild,
+		getPositionsByKey,
+		getPositionsByKeys,
+		getAllKeys,
+		updateToExists,
+		getStats,
+		clear,
+	};
+};
+
+export type MarkIndex = ReturnType<typeof createMarkIndex>;

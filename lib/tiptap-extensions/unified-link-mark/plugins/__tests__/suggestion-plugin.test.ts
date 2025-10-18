@@ -3,14 +3,13 @@
  * Tests the page title suggestion functionality
  */
 
-import { describe, it, expect } from "vitest";
 import { PluginKey } from "prosemirror-state";
-import type { Editor } from "@tiptap/core";
-import { createSuggestionPlugin } from "../suggestion-plugin";
+import { describe, expect, it } from "vitest";
 import {
   createMinimalMockEditor,
   createMockOptions,
 } from "@/lib/__tests__/helpers";
+import { createSuggestionPlugin } from "../suggestion-plugin";
 
 describe("createSuggestionPlugin", () => {
   const mockEditor = createMinimalMockEditor();

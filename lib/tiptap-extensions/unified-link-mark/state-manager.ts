@@ -4,6 +4,7 @@
  */
 
 import type { Editor } from "@tiptap/core";
+import logger from "../../logger";
 import type { UnifiedLinkAttributes } from "./types";
 
 /**
@@ -17,34 +18,37 @@ export function updateMarkState(
   markId: string,
   updates: Partial<UnifiedLinkAttributes>
 ): void {
+  logger.debug({ markId, updates }, "[StateManager] updateMarkState called");
+
   try {
     const { state, dispatch } = editor.view;
     if (!state || !dispatch) {
-      console.warn("Editor state or dispatch not available");
+      logger.warn("Editor state or dispatch not available");
       return;
     }
 
     const { tr } = state;
     const markType = state.schema.marks.unilink;
     if (!markType) {
-      console.warn("unilink mark type not found in schema");
+      logger.warn("unilink mark type not found in schema");
       return;
     }
 
     let changed = false;
+    let foundMarks = 0;
 
     state.doc.descendants((node, pos: number) => {
       if (!node.isText || !node.text) return;
 
       for (const mark of node.marks) {
         if (mark.type === markType && mark.attrs.markId === markId) {
+          foundMarks++;
           const newAttrs = { ...mark.attrs, ...updates };
 
           // Sync exists flag with state
           if (updates.state) {
             newAttrs.exists = updates.state === "exists";
           }
-
           tr.removeMark(pos, pos + node.text.length, markType);
           tr.addMark(pos, pos + node.text.length, markType.create(newAttrs));
           changed = true;
@@ -53,10 +57,19 @@ export function updateMarkState(
     });
 
     if (changed) {
+      logger.debug(
+        { markId, foundMarks, updates },
+        "[StateManager] Dispatching state update"
+      );
       dispatch(tr);
+    } else {
+      logger.warn(
+        { markId, foundMarks },
+        "[StateManager] No marks found to update"
+      );
     }
   } catch (error) {
-    console.error("Failed to update mark state:", error);
+    logger.error({ error }, "Failed to update mark state");
   }
 }
 

@@ -1,344 +1,506 @@
-import { searchPages } from "@/lib/utils/searchPages";
 import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import tippy, { type Instance, type Props } from "tippy.js";
+import { searchPages } from "@/lib/utils/searchPages";
 import type { UnifiedLinkMarkOptions } from "../types";
 
 // Suggestion state interface
 interface UnifiedLinkSuggestionState {
-  active: boolean;
-  range: { from: number; to: number } | null;
-  query: string;
-  results: Array<{ id: string; title: string; slug?: string }>;
-  selectedIndex: number;
+	active: boolean;
+	range: { from: number; to: number } | null;
+	query: string;
+	results: Array<{ id: string; title: string; slug?: string }>;
+	selectedIndex: number;
+	variant?: "bracket" | "tag";
+	loading?: boolean;
 }
 
 // Plugin key for state management
 const suggestionPluginKey = new PluginKey<UnifiedLinkSuggestionState>(
-  "unifiedLinkSuggestion"
+	"unifiedLinkSuggestion",
 );
 
 /**
  * Create suggestion plugin for UnifiedLinkMark
  * Provides real-time page title suggestions while typing inside brackets
  */
-export function createSuggestionPlugin(context: {
-  editor: Editor;
-  options: UnifiedLinkMarkOptions;
+export function createSuggestionPlugin(_context: {
+	editor: Editor;
+	options: UnifiedLinkMarkOptions;
 }) {
-  return new Plugin<UnifiedLinkSuggestionState>({
-    key: suggestionPluginKey,
+	return new Plugin<UnifiedLinkSuggestionState>({
+		key: suggestionPluginKey,
 
-    state: {
-      // Initialize empty state
-      init: () => ({
-        active: false,
-        range: null,
-        query: "",
-        results: [],
-        selectedIndex: 0,
-      }),
+		state: {
+			// Initialize empty state
+			init: () => ({
+				active: false,
+				range: null,
+				query: "",
+				results: [],
+				selectedIndex: 0,
+			}),
 
-      // Apply state updates from transaction metadata
-      apply(tr, prev) {
-        const meta = tr.getMeta(suggestionPluginKey) as
-          | UnifiedLinkSuggestionState
-          | undefined;
-        return meta ?? prev;
-      },
-    },
+			// Apply state updates from transaction metadata
+			apply(tr, prev) {
+				const meta = tr.getMeta(suggestionPluginKey) as
+					| UnifiedLinkSuggestionState
+					| undefined;
+				return meta ?? prev;
+			},
+		},
 
-    view(view) {
-      let debounceTimeoutId: number | null = null;
-      let tippyInstance: Instance<Props> | null = null;
+		view() {
+			let debounceTimeoutId: number | null = null;
+			let tippyInstance: Instance<Props> | null = null;
 
-      return {
-        update(editorView) {
-          const state = suggestionPluginKey.getState(
-            editorView.state
-          ) as UnifiedLinkSuggestionState;
-          const { $from } = editorView.state.selection;
+			return {
+				update(editorView) {
+					const state = suggestionPluginKey.getState(
+						editorView.state,
+					) as UnifiedLinkSuggestionState;
+					const { $from } = editorView.state.selection;
 
-          // Get paragraph boundaries
-          const paraStart = $from.start($from.depth);
-          const paraEnd = $from.end($from.depth);
-          const text = editorView.state.doc.textBetween(
-            paraStart,
-            paraEnd,
-            "",
-            ""
-          );
-          const posInPara = $from.pos - paraStart;
+					// Get paragraph boundaries
+					const paraStart = $from.start($from.depth);
+					const paraEnd = $from.end($from.depth);
+					const text = editorView.state.doc.textBetween(
+						paraStart,
+						paraEnd,
+						"",
+						"",
+					);
+					const posInPara = $from.pos - paraStart;
 
-          // Detect bracket range: [query]
-          const openBracketIndex = text.lastIndexOf("[", posInPara - 1);
+					// Detect bracket range: [query]
+					const openBracketIndex = text.lastIndexOf("[", posInPara - 1);
+					// Detect tag range: #tag
+					const hashIndex = text.lastIndexOf("#", posInPara - 1);
 
-          if (openBracketIndex !== -1) {
-            // Find closing bracket or end of text
-            const rest = text.slice(openBracketIndex + 1);
-            const closeBracketIndex = rest.indexOf("]");
-            const endInPara =
-              closeBracketIndex === -1
-                ? text.length
-                : openBracketIndex + 1 + closeBracketIndex;
+					// Determine which pattern is active (prefer the closest one to cursor)
+					let detectedRange: {
+						from: number;
+						to: number;
+						query: string;
+						variant: "bracket" | "tag";
+					} | null = null;
 
-            // Check if cursor is within bracket range
-            if (posInPara > openBracketIndex && posInPara <= endInPara) {
-              const rangeFrom = paraStart + openBracketIndex + 1; // After '['
-              const rangeTo = paraStart + endInPara; // Before ']' or end
-              const query = text.slice(openBracketIndex + 1, endInPara);
+					// Check bracket pattern - only show suggestions when bracket is closed
+					if (openBracketIndex !== -1) {
+						const rest = text.slice(openBracketIndex + 1);
+						const closeBracketIndex = rest.indexOf("]");
 
-              // Only show suggestions for non-empty query
-              if (query.length > 0) {
-                // Check if state needs update
-                if (
-                  !state.active ||
-                  !state.range ||
-                  state.range.from !== rangeFrom ||
-                  state.range.to !== rangeTo ||
-                  state.query !== query
-                ) {
-                  // Clear existing timeout
-                  if (debounceTimeoutId) {
-                    clearTimeout(debounceTimeoutId);
-                  }
+						// Only show suggestions if closing bracket exists
+						if (closeBracketIndex !== -1) {
+							const endInPara = openBracketIndex + 1 + closeBracketIndex;
 
-                  // Debounced search (300ms)
-                  debounceTimeoutId = window.setTimeout(async () => {
-                    const results = await searchPages(query);
-                    editorView.dispatch(
-                      editorView.state.tr.setMeta(suggestionPluginKey, {
-                        active: true,
-                        range: { from: rangeFrom, to: rangeTo },
-                        query,
-                        results,
-                        selectedIndex: 0,
-                      } satisfies UnifiedLinkSuggestionState)
-                    );
-                  }, 300);
-                }
-              } else if (state.active) {
-                // Clear suggestion when query is empty
-                if (debounceTimeoutId) {
-                  clearTimeout(debounceTimeoutId);
-                }
-                editorView.dispatch(
-                  editorView.state.tr.setMeta(suggestionPluginKey, {
-                    active: false,
-                    range: null,
-                    query: "",
-                    results: [],
-                    selectedIndex: 0,
-                  } satisfies UnifiedLinkSuggestionState)
-                );
-              }
-            } else if (state.active) {
-              // Cursor moved outside bracket range
-              if (debounceTimeoutId) {
-                clearTimeout(debounceTimeoutId);
-              }
-              editorView.dispatch(
-                editorView.state.tr.setMeta(suggestionPluginKey, {
-                  active: false,
-                  range: null,
-                  query: "",
-                  results: [],
-                  selectedIndex: 0,
-                } satisfies UnifiedLinkSuggestionState)
-              );
-            }
-          } else if (state.active) {
-            // No open bracket found
-            if (debounceTimeoutId) {
-              clearTimeout(debounceTimeoutId);
-            }
-            editorView.dispatch(
-              editorView.state.tr.setMeta(suggestionPluginKey, {
-                active: false,
-                range: null,
-                query: "",
-                results: [],
-                selectedIndex: 0,
-              } satisfies UnifiedLinkSuggestionState)
-            );
-          }
+							// Cursor must be inside the closed brackets
+							if (posInPara > openBracketIndex && posInPara <= endInPara) {
+								const rangeFrom = paraStart + openBracketIndex + 1;
+								const rangeTo = paraStart + endInPara;
+								const query = text.slice(openBracketIndex + 1, endInPara);
 
-          // Show/hide Tippy tooltip
-          const currentState = suggestionPluginKey.getState(
-            editorView.state
-          ) as UnifiedLinkSuggestionState;
+								detectedRange = {
+									from: rangeFrom,
+									to: rangeTo,
+									query,
+									variant: "bracket",
+								};
+							}
+						}
+					} // Check tag pattern (only if no bracket pattern or tag is closer)
+					if (
+						hashIndex !== -1 &&
+						(!detectedRange || hashIndex > openBracketIndex)
+					) {
+						const rest = text.slice(hashIndex + 1);
+						// Find tag end (space, punctuation, or end of text)
+						const tagEndMatch = rest.match(/[\s\])}.,;!?]|$/);
+						const tagEndIndex = tagEndMatch
+							? (tagEndMatch.index ?? rest.length)
+							: rest.length;
+						const endInPara = hashIndex + 1 + tagEndIndex;
 
-          if (currentState.active && currentState.range) {
-            const { from } = currentState.range;
-            const coords = editorView.coordsAtPos(from);
+						if (posInPara > hashIndex && posInPara <= endInPara) {
+							const rangeFrom = paraStart + hashIndex + 1;
+							const rangeTo = paraStart + endInPara;
+							const query = text.slice(hashIndex + 1, endInPara);
 
-            // Create suggestion list DOM
-            const createSuggestionList = () => {
-              const list = document.createElement("div");
-              list.className = "unified-link-suggestion-list";
+							detectedRange = {
+								from: rangeFrom,
+								to: rangeTo,
+								query,
+								variant: "tag",
+							};
+						}
+					}
 
-              currentState.results.forEach((item, index) => {
-                const div = document.createElement("div");
-                div.textContent = item.title;
-                div.className = `suggestion-item${
-                  index === currentState.selectedIndex ? " active" : ""
-                }`;
+					if (detectedRange) {
+						const {
+							from: rangeFrom,
+							to: rangeTo,
+							query,
+							variant,
+						} = detectedRange;
 
-                // Handle mouse click
-                div.addEventListener("mousedown", (e) => {
-                  e.preventDefault();
-                  insertUnifiedLink(editorView, currentState, item);
-                  tippyInstance?.hide();
-                });
+						// Only show suggestions for non-empty query
+						if (query.length > 0) {
+							// Check if state needs update
+							if (
+								!state.active ||
+								!state.range ||
+								state.range.from !== rangeFrom ||
+								state.range.to !== rangeTo ||
+								state.query !== query
+							) {
+								// Clear existing timeout
+								if (debounceTimeoutId) {
+									clearTimeout(debounceTimeoutId);
+								}
 
-                list.appendChild(div);
-              });
+								// Show loading state immediately
+								editorView.dispatch(
+									editorView.state.tr.setMeta(suggestionPluginKey, {
+										active: true,
+										range: { from: rangeFrom, to: rangeTo },
+										query,
+										results: [],
+										selectedIndex: 0,
+										variant,
+										loading: true,
+									} satisfies UnifiedLinkSuggestionState),
+								);
 
-              return list;
-            };
+								// Debounced search (300ms)
+								debounceTimeoutId = window.setTimeout(async () => {
+									const results = await searchPages(query);
+									editorView.dispatch(
+										editorView.state.tr.setMeta(suggestionPluginKey, {
+											active: true,
+											range: { from: rangeFrom, to: rangeTo },
+											query,
+											results,
+											selectedIndex: 0,
+											variant,
+											loading: false,
+										} satisfies UnifiedLinkSuggestionState),
+									);
+								}, 300);
+							}
+						} else if (state.active) {
+							// Clear suggestion when query is empty
+							if (debounceTimeoutId) {
+								clearTimeout(debounceTimeoutId);
+							}
+							editorView.dispatch(
+								editorView.state.tr.setMeta(suggestionPluginKey, {
+									active: false,
+									range: null,
+									query: "",
+									results: [],
+									selectedIndex: 0,
+								} satisfies UnifiedLinkSuggestionState),
+							);
+						}
+					} else if (state.active) {
+						// No pattern detected - clear suggestion
+						if (debounceTimeoutId) {
+							clearTimeout(debounceTimeoutId);
+						}
+						editorView.dispatch(
+							editorView.state.tr.setMeta(suggestionPluginKey, {
+								active: false,
+								range: null,
+								query: "",
+								results: [],
+								selectedIndex: 0,
+							} satisfies UnifiedLinkSuggestionState),
+						);
+					}
 
-            // Create or update Tippy instance
-            if (!tippyInstance) {
-              tippyInstance = tippy(document.body, {
-                trigger: "manual",
-                interactive: true,
-                placement: "bottom-start",
-                arrow: false,
-                getReferenceClientRect: () =>
-                  new DOMRect(coords.left, coords.bottom, 0, 0),
-                content: createSuggestionList(),
-              });
-            } else {
-              tippyInstance.setContent(createSuggestionList());
-              tippyInstance.setProps({
-                getReferenceClientRect: () =>
-                  new DOMRect(coords.left, coords.bottom, 0, 0),
-              });
-            }
+					// Show/hide Tippy tooltip
+					const currentState = suggestionPluginKey.getState(
+						editorView.state,
+					) as UnifiedLinkSuggestionState;
 
-            tippyInstance.show();
-          } else if (tippyInstance) {
-            tippyInstance.hide();
-          }
-        },
+					if (currentState.active && currentState.range) {
+						const { from } = currentState.range;
+						const coords = editorView.coordsAtPos(from);
 
-        destroy() {
-          if (debounceTimeoutId) {
-            clearTimeout(debounceTimeoutId);
-          }
-          tippyInstance?.destroy();
-          tippyInstance = null;
-        },
-      };
-    },
+						// Create suggestion list DOM
+						const createSuggestionList = () => {
+							const container = document.createElement("div");
+							const variant = currentState.variant || "bracket";
 
-    props: {
-      handleKeyDown(view, event) {
-        const state = suggestionPluginKey.getState(
-          view.state
-        ) as UnifiedLinkSuggestionState;
+							// Main list container with improved styling
+							container.className = `${variant}-suggestion-list bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden`;
 
-        if (!state.active || !state.range) {
-          return false;
-        }
+							// Loading state
+							if (currentState.loading) {
+								const loadingState = document.createElement("div");
+								loadingState.className =
+									"px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2";
 
-        // Arrow key navigation
-        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-          event.preventDefault();
-          const direction = event.key === "ArrowDown" ? 1 : -1;
-          const newIndex =
-            (state.selectedIndex + direction + state.results.length) %
-            state.results.length;
+								const spinner = document.createElement("span");
+								spinner.className =
+									"inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin";
+								loadingState.appendChild(spinner);
 
-          view.dispatch(
-            view.state.tr.setMeta(suggestionPluginKey, {
-              ...state,
-              selectedIndex: newIndex,
-            } satisfies UnifiedLinkSuggestionState)
-          );
-          return true;
-        }
+								const text = document.createElement("span");
+								text.textContent = "検索中...";
+								loadingState.appendChild(text);
 
-        // Select current item with Tab or Enter
-        if (event.key === "Tab" || event.key === "Enter") {
-          event.preventDefault();
-          const selectedItem = state.results[state.selectedIndex];
+								container.appendChild(loadingState);
+								return container;
+							}
 
-          if (!selectedItem) {
-            return false;
-          }
+							// No results message
+							if (currentState.results.length === 0) {
+								const emptyState = document.createElement("div");
+								emptyState.className =
+									"px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center";
+								emptyState.textContent = "結果が見つかりませんでした";
+								container.appendChild(emptyState);
+								return container;
+							}
 
-          insertUnifiedLink(view, state, selectedItem);
-          return true;
-        }
+							// Header with hint
+							const header = document.createElement("div");
+							header.className =
+								"px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between";
 
-        // Close suggestion with Escape
-        if (event.key === "Escape") {
-          event.preventDefault();
-          view.dispatch(
-            view.state.tr.setMeta(suggestionPluginKey, {
-              active: false,
-              range: null,
-              query: "",
-              results: [],
-              selectedIndex: 0,
-            } satisfies UnifiedLinkSuggestionState)
-          );
-          return true;
-        }
+							const headerText = document.createElement("span");
+							headerText.textContent =
+								variant === "tag" ? "タグページ" : "ページ";
+							header.appendChild(headerText);
 
-        return false;
-      },
-    },
-  });
+							const hint = document.createElement("span");
+							hint.className = "text-gray-400 dark:text-gray-500";
+							hint.textContent = "↑↓ 選択 • Enter 決定";
+							header.appendChild(hint);
+
+							container.appendChild(header);
+
+							// Results list
+							const list = document.createElement("div");
+							list.className = "max-h-[200px] overflow-y-auto py-1";
+
+							currentState.results.forEach((item, index) => {
+								const itemDiv = document.createElement("div");
+								itemDiv.className = `suggestion-item px-3 py-2 cursor-pointer flex items-center gap-2 transition-colors ${
+									index === currentState.selectedIndex
+										? "bg-blue-500 text-white"
+										: "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+								}`;
+
+								// Icon
+								const icon = document.createElement("span");
+								icon.className = `flex-shrink-0 text-sm ${
+									index === currentState.selectedIndex
+										? "text-white"
+										: "text-gray-400 dark:text-gray-500"
+								}`;
+								icon.textContent = variant === "tag" ? "#" : "📄";
+								itemDiv.appendChild(icon);
+
+								// Title
+								const title = document.createElement("span");
+								title.className = "flex-1 text-sm truncate";
+								title.textContent = item.title;
+								itemDiv.appendChild(title);
+
+								// Selected indicator
+								if (index === currentState.selectedIndex) {
+									const indicator = document.createElement("span");
+									indicator.className =
+										"flex-shrink-0 text-xs text-white opacity-75";
+									indicator.textContent = "⏎";
+									itemDiv.appendChild(indicator);
+								}
+
+								// Handle mouse events
+								itemDiv.addEventListener("mousedown", (e) => {
+									e.preventDefault();
+									insertUnifiedLink(editorView, currentState, item);
+									tippyInstance?.hide();
+								});
+
+								itemDiv.addEventListener("mouseenter", () => {
+									// Update selected index on hover
+									editorView.dispatch(
+										editorView.state.tr.setMeta(suggestionPluginKey, {
+											...currentState,
+											selectedIndex: index,
+										} satisfies UnifiedLinkSuggestionState),
+									);
+								});
+
+								list.appendChild(itemDiv);
+							});
+
+							container.appendChild(list);
+
+							return container;
+						};
+
+						// Create or update Tippy instance
+						if (!tippyInstance) {
+							tippyInstance = tippy(document.body, {
+								trigger: "manual",
+								interactive: true,
+								placement: "bottom-start",
+								arrow: false,
+								offset: [0, 8],
+								duration: [200, 150],
+								animation: "shift-away",
+								theme: "light-border",
+								maxWidth: 400,
+								getReferenceClientRect: () =>
+									new DOMRect(coords.left, coords.bottom, 0, 0),
+								content: createSuggestionList(),
+								// Improve accessibility
+								role: "listbox",
+								appendTo: () => document.body,
+							});
+						} else {
+							tippyInstance.setContent(createSuggestionList());
+							tippyInstance.setProps({
+								getReferenceClientRect: () =>
+									new DOMRect(coords.left, coords.bottom, 0, 0),
+							});
+						}
+
+						tippyInstance.show();
+					} else if (tippyInstance) {
+						tippyInstance.hide();
+					}
+				},
+
+				destroy() {
+					if (debounceTimeoutId) {
+						clearTimeout(debounceTimeoutId);
+					}
+					tippyInstance?.destroy();
+					tippyInstance = null;
+				},
+			};
+		},
+
+		props: {
+			handleKeyDown(view, event) {
+				const state = suggestionPluginKey.getState(
+					view.state,
+				) as UnifiedLinkSuggestionState;
+
+				if (!state.active || !state.range) {
+					return false;
+				}
+
+				// Arrow key navigation
+				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+					event.preventDefault();
+					const direction = event.key === "ArrowDown" ? 1 : -1;
+					const newIndex =
+						(state.selectedIndex + direction + state.results.length) %
+						state.results.length;
+
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							...state,
+							selectedIndex: newIndex,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+					return true;
+				}
+
+				// Select current item with Tab or Enter
+				if (event.key === "Tab" || event.key === "Enter") {
+					event.preventDefault();
+					const selectedItem = state.results[state.selectedIndex];
+
+					if (!selectedItem) {
+						return false;
+					}
+
+					insertUnifiedLink(view, state, selectedItem);
+					return true;
+				}
+
+				// Close suggestion with Escape
+				if (event.key === "Escape") {
+					event.preventDefault();
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							active: false,
+							range: null,
+							query: "",
+							results: [],
+							selectedIndex: 0,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+					return true;
+				}
+
+				return false;
+			},
+		},
+	});
 }
 
 /**
  * Insert UnifiedLink mark for selected item
  */
 function insertUnifiedLink(
-  view: EditorView,
-  state: UnifiedLinkSuggestionState,
-  item: { id: string; title: string; slug?: string }
+	view: EditorView,
+	state: UnifiedLinkSuggestionState,
+	item: { id: string; title: string; slug?: string },
 ) {
-  if (!state.range) return;
+	if (!state.range) return;
 
-  const { from, to } = state.range;
-  const key = item.slug || item.title;
+	const { from, to } = state.range;
+	const variant = state.variant || "bracket";
+	const key = item.slug || item.title;
 
-  // Create transaction to replace bracket content with UnifiedLink mark
-  const tr = view.state.tr;
+	// Create transaction to replace bracket content with UnifiedLink mark
+	const tr = view.state.tr;
 
-  // Delete bracket range including brackets
-  tr.delete(
-    from - 1,
-    to + (view.state.doc.textBetween(to, to + 1) === "]" ? 1 : 0)
-  );
+	if (variant === "bracket") {
+		// For bracket notation, only replace the text content
+		// The InputRule will handle the Mark conversion when user closes the bracket with ]
+		tr.delete(from, to);
+		tr.insertText(item.title, from);
+	} else if (variant === "tag") {
+		// Delete # and tag text
+		tr.delete(from - 1, to);
 
-  // Insert text with UnifiedLink mark
-  const markType = view.state.schema.marks.unifiedLink;
-  if (markType) {
-    const mark = markType.create({
-      key,
-      title: item.title,
-      noteSlug: item.slug,
-      resolved: true,
-      status: "exists",
-      pageId: item.id,
-    });
+		// Insert text with UnifiedLink mark (with # prefix)
+		const markType = view.state.schema.marks.unifiedLink;
+		if (markType) {
+			const mark = markType.create({
+				variant: "tag",
+				raw: item.title,
+				text: `#${item.title}`,
+				key,
+				pageId: item.id,
+				href: `/pages/${item.id}`,
+				state: "exists",
+				exists: true,
+				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			});
 
-    tr.insert(from - 1, view.state.schema.text(item.title, [mark]));
-  }
+			tr.insert(from - 1, view.state.schema.text(`#${item.title}`, [mark]));
+		}
+	}
 
-  // Clear suggestion state
-  tr.setMeta(suggestionPluginKey, {
-    active: false,
-    range: null,
-    query: "",
-    results: [],
-    selectedIndex: 0,
-  } satisfies UnifiedLinkSuggestionState);
+	// Clear suggestion state
+	tr.setMeta(suggestionPluginKey, {
+		active: false,
+		range: null,
+		query: "",
+		results: [],
+		selectedIndex: 0,
+	} satisfies UnifiedLinkSuggestionState);
 
-  view.dispatch(tr);
+	view.dispatch(tr);
 }

@@ -13,5 +13,5 @@ import { createTagInputRule } from "./tag-rule";
  * @returns Array of InputRules
  */
 export function createInputRules(context: { editor: Editor; name: string }) {
-  return [createTagInputRule(context), createBracketInputRule(context)];
+	return [createTagInputRule(context), createBracketInputRule(context)];
 }

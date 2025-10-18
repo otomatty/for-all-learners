@@ -4,6 +4,7 @@
  */
 
 import { toast } from "sonner";
+import logger from "@/lib/logger";
 
 /**
  * Navigate to a specific page by ID
@@ -12,15 +13,15 @@ import { toast } from "sonner";
  * @param pageId Page ID to navigate to
  */
 export function navigateToPage(pageId: string): void {
-  try {
-    // Client-side navigation in Next.js App Router
-    if (typeof window !== "undefined") {
-      window.location.href = `/pages/${pageId}`;
-    }
-  } catch (error) {
-    console.error("Navigation failed:", error);
-    toast.error("ページの表示に失敗しました");
-  }
+	try {
+		// Client-side navigation in Next.js App Router
+		if (typeof window !== "undefined") {
+			window.location.href = `/pages/${pageId}`;
+		}
+	} catch (error) {
+		logger.error({ pageId, error }, "Navigation failed");
+		toast.error("ページの表示に失敗しました");
+	}
 }
 
 /**
@@ -33,22 +34,25 @@ export function navigateToPage(pageId: string): void {
  * @param isNewPage Flag indicating if this is a newly created page
  */
 export function navigateToPageWithContext(
-  pageId: string,
-  noteSlug?: string | null,
-  isNewPage = false
+	pageId: string,
+	noteSlug?: string | null,
+	isNewPage = false,
 ): void {
-  try {
-    if (typeof window !== "undefined") {
-      const queryParam = isNewPage ? "?newPage=true" : "";
+	try {
+		if (typeof window !== "undefined") {
+			const queryParam = isNewPage ? "?newPage=true" : "";
 
-      const href = noteSlug
-        ? `/notes/${encodeURIComponent(noteSlug)}/${pageId}${queryParam}`
-        : `/pages/${pageId}${queryParam}`;
+			const href = noteSlug
+				? `/notes/${encodeURIComponent(noteSlug)}/${pageId}${queryParam}`
+				: `/pages/${pageId}${queryParam}`;
 
-      window.location.href = href;
-    }
-  } catch (error) {
-    console.error("[UnifiedResolver] Navigation failed:", error);
-    toast.error("ページの表示に失敗しました");
-  }
+			window.location.href = href;
+		}
+	} catch (error) {
+		logger.error(
+			{ pageId, noteSlug, isNewPage, error },
+			"[UnifiedResolver] Navigation failed",
+		);
+		toast.error("ページの表示に失敗しました");
+	}
 }

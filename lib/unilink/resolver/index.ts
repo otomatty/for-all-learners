@@ -7,28 +7,24 @@
  * is organized across multiple focused files.
  */
 
-// Page creation
-export { createPageFromMark, createPageFromLink } from "./page-creation";
-
-// Navigation
-export { navigateToPage, navigateToPageWithContext } from "./navigation";
-
-// Link types
-export {
-  resolveIconLink,
-  parseBracketContent,
-  isExternalLink,
-  openExternalLink,
-  handleMissingLinkClick,
-  type BracketContent,
-} from "./link-types";
-
-// Mark operations
-export { updateMarkToExists, batchResolveMarks } from "./mark-operations";
-
 // Broadcast (internal use, but exported for flexibility)
 export {
-  getBroadcastChannel,
-  notifyPageCreated,
-  notifyPageUpdated,
+	getBroadcastChannel,
+	notifyPageCreated,
+	notifyPageUpdated,
 } from "./broadcast";
+// Link types
+export {
+	type BracketContent,
+	handleMissingLinkClick,
+	isExternalLink,
+	openExternalLink,
+	parseBracketContent,
+	resolveIconLink,
+} from "./link-types";
+// Mark operations
+export { batchResolveMarks, updateMarkToExists } from "./mark-operations";
+// Navigation
+export { navigateToPage, navigateToPageWithContext } from "./navigation";
+// Page creation
+export { createPageFromLink, createPageFromMark } from "./page-creation";

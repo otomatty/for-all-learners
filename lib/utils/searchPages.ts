@@ -15,9 +15,12 @@ export async function searchPages(
     .ilike("title", `%${query}%`)
     .order("updated_at", { ascending: true })
     .limit(5);
+
   if (error) {
-    console.error("searchPages error:", error);
     return [];
   }
-  return (data ?? []).map(({ id, title }) => ({ id, title }));
+
+  const results = (data ?? []).map(({ id, title }) => ({ id, title }));
+
+  return results;
 }
