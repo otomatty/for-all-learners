@@ -39,7 +39,7 @@ export function createSuggestionPlugin(_context: {
 				range: null,
 				query: "",
 				results: [],
-				selectedIndex: 0,
+				selectedIndex: -1, // No item selected initially; user must select with arrow keys
 			}),
 
 			// Apply state updates from transaction metadata
@@ -144,8 +144,12 @@ export function createSuggestionPlugin(_context: {
 							variant,
 						} = detectedRange;
 
-						// Only show suggestions for non-empty query
-						if (query.length > 0) {
+						// Show suggestions for tag pattern even with empty query (#)
+						// For bracket pattern, only show if query is non-empty
+						const shouldShowSuggestions =
+							query.length > 0 || variant === "tag";
+
+						if (shouldShowSuggestions) {
 							// Check if state needs update
 							if (
 								!state.active ||
@@ -166,7 +170,7 @@ export function createSuggestionPlugin(_context: {
 										range: { from: rangeFrom, to: rangeTo },
 										query,
 										results: [],
-										selectedIndex: 0,
+										selectedIndex: -1, // No item selected initially
 										variant,
 										loading: true,
 									} satisfies UnifiedLinkSuggestionState),
@@ -181,7 +185,7 @@ export function createSuggestionPlugin(_context: {
 											range: { from: rangeFrom, to: rangeTo },
 											query,
 											results,
-											selectedIndex: 0,
+											selectedIndex: -1, // Maintain -1 after search
 											variant,
 											loading: false,
 										} satisfies UnifiedLinkSuggestionState),
@@ -401,9 +405,14 @@ export function createSuggestionPlugin(_context: {
 				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
 					event.preventDefault();
 					const direction = event.key === "ArrowDown" ? 1 : -1;
-					const newIndex =
-						(state.selectedIndex + direction + state.results.length) %
-						state.results.length;
+					let newIndex = state.selectedIndex + direction;
+
+					// Handle wrap-around from -1 to first item with down arrow
+					if (newIndex < -1) {
+						newIndex = state.results.length - 1;
+					} else if (newIndex >= state.results.length) {
+						newIndex = -1; // Wrap to unselected state
+					}
 
 					view.dispatch(
 						view.state.tr.setMeta(suggestionPluginKey, {
@@ -417,6 +426,15 @@ export function createSuggestionPlugin(_context: {
 				// Select current item with Tab or Enter
 				if (event.key === "Tab" || event.key === "Enter") {
 					event.preventDefault();
+
+					// If no item is selected (selectedIndex === -1), use input text as-is
+					if (state.selectedIndex === -1) {
+						// Create link with input text
+						insertUnifiedLinkWithQuery(view, state);
+						return true;
+					}
+
+					// Otherwise, use the selected item
 					const selectedItem = state.results[state.selectedIndex];
 
 					if (!selectedItem) {
@@ -436,7 +454,7 @@ export function createSuggestionPlugin(_context: {
 							range: null,
 							query: "",
 							results: [],
-							selectedIndex: 0,
+							selectedIndex: -1,
 						} satisfies UnifiedLinkSuggestionState),
 					);
 					return true;
@@ -499,7 +517,59 @@ function insertUnifiedLink(
 		range: null,
 		query: "",
 		results: [],
-		selectedIndex: 0,
+		selectedIndex: -1,
+	} satisfies UnifiedLinkSuggestionState);
+
+	view.dispatch(tr);
+}
+
+/**
+ * Insert unified link using input query text (when no suggestion is selected)
+ * Used for " #MyTag" + Enter → creates link with "MyTag"
+ */
+function insertUnifiedLinkWithQuery(
+	view: EditorView,
+	state: UnifiedLinkSuggestionState,
+) {
+	if (!state.range) return;
+
+	const { from, to } = state.range;
+	const variant = state.variant || "bracket";
+	const rawQuery = state.query;
+
+	// Create transaction
+	const tr = view.state.tr;
+
+	if (variant === "tag") {
+		// For tag: delete # and tag text, insert with mark
+		tr.delete(from - 1, to);
+
+		const markType = view.state.schema.marks.unifiedLink;
+		if (markType) {
+			const key = rawQuery.toLowerCase();
+			const mark = markType.create({
+				variant: "tag",
+				raw: rawQuery,
+				text: `#${rawQuery}`,
+				key,
+				pageId: null,
+				href: "#",
+				state: "pending",
+				exists: false,
+				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			});
+
+			tr.insert(from - 1, view.state.schema.text(`#${rawQuery}`, [mark]));
+		}
+	}
+
+	// Clear suggestion state
+	tr.setMeta(suggestionPluginKey, {
+		active: false,
+		range: null,
+		query: "",
+		results: [],
+		selectedIndex: -1,
 	} satisfies UnifiedLinkSuggestionState);
 
 	view.dispatch(tr);
