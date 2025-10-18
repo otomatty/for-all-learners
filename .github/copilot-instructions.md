@@ -403,16 +403,74 @@ docs/
    cp docs/issues/templates/issue-template.md docs/issues/open/YYYYMMDD_01_issue-name.md
    ```
 
-2. **必須情報を記入**:
+2. **GitHub 上に issue を作成**:
+
+   AI 開発時は `mcp_github_create_issue` を使用して GitHub リポジトリ上に issue を作成:
+
+   ```
+   mcp_github_create_issue:
+   - owner: otomatty
+   - repo: for-all-learners
+   - title: [問題の要約]
+   - body: [問題の詳細、影響範囲、提案する解決策]
+   - labels: [問題に応じて: bug, technical-debt, enhancement, documentation など]
+   ```
+
+   **ラベルの使用例**:
+
+   - `bug`: 実際のバグ・不具合
+   - `technical-debt`: 技術的負債
+   - `enhancement`: 改善提案
+   - `documentation`: ドキュメント不足
+   - `performance`: パフォーマンス問題
+   - `security`: セキュリティ上の懸念
+
+3. **ドキュメントに GitHub issue 情報を記入**:
+
+   - 作成された GitHub issue 番号とリンクを「基本情報」セクションに記載
+   - GitHub issue URL: `https://github.com/otomatty/for-all-learners/issues/{issue_number}`
+
+4. **必須情報を記入**:
 
    - 発見日時・発見場所
    - 問題の詳細と影響範囲
    - 重要度の評価
    - 提案する解決策（コード例を含む）
 
-3. **関連ドキュメントへのリンク**:
+5. **関連ドキュメントへのリンク**:
    - 作業ログから問題ファイルへリンク
    - 問題ファイルから関連する設計書・実装計画へリンク
+   - GitHub issue へのリンク（両方向）
+
+#### GitHub issue へのリンク（両方向）の設定
+
+GitHub issue 上での相互参照を設定することで、GitHub と ドキュメントの双方から問題にアクセスできます:
+
+1. **ドキュメント内に GitHub issue リンクを記載**:
+
+   issue ドキュメントの「基本情報」セクションに GitHub issue URL を記載:
+
+   ```markdown
+   - **GitHub Issue**: [#123](https://github.com/otomatty/for-all-learners/issues/123)
+   ```
+
+2. **GitHub issue のボディに ドキュメントリンクを記載**:
+
+   GitHub issue の説明欄に対応するドキュメントへのリンクを記載:
+
+   ```markdown
+   ## 関連ドキュメント
+
+   - [Issue ドキュメント](https://github.com/otomatty/for-all-learners/blob/fix/legacy-data-migration-attributes/docs/issues/open/20251019_01_example-issue.md)
+   ```
+
+3. **リポジトリへのリンク**:
+
+   ドキュメント内に GitHub リポジトリ内の相対パスを記載することで、GitHub 上からも直接アクセス可能:
+
+   ```markdown
+   - **詳細**: [docs/issues/open/20251019_01_example-issue.md](../../docs/issues/open/20251019_01_example-issue.md)
+   ```
 
 ### 問題の対応
 

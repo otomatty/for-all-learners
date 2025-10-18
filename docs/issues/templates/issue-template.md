@@ -6,6 +6,7 @@
 - **発見者**: [記入者名 or AI]
 - **ステータス**: Open / In Progress / Resolved
 - **重要度**: Critical / High / Medium / Low
+- **GitHub Issue**: [#123](https://github.com/otomatty/for-all-learners/issues/123) (GitHub issue 番号とリンク)
 
 ## 🔍 発見場所
 
