@@ -66,7 +66,7 @@ Data Layer (Supabase, External APIs)
   gemini.ts             → Gemini API の共通処理
   logger.ts             → ログ出力
 
-/stores                 → 状態管理 (Zustand)
+/stores                 → 状態管理 (Jotai)
   user.ts               → ユーザー状態
 
 /types                  → TypeScript 型定義
