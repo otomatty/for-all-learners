@@ -155,21 +155,21 @@ describe("Unilink Utils", () => {
 				// In real implementation, cache should expire after TTL
 			});
 
-			it("should normalize keys before caching", () => {
-				// Current implementation doesn't normalize keys internally
-				// Caller must normalize keys before caching
-				const normalizedKey = normalizeTitleToKey("Test  Multiple  Spaces");
-				setCachedPageId(normalizedKey, "id-normalized");
+		it("should normalize keys before caching", () => {
+			// Both setCachedPageId and getCachedPageId normalize keys internally
+			// This ensures consistent lookups regardless of input format
+			const normalizedKey = normalizeTitleToKey("Test  Multiple  Spaces");
+			setCachedPageId(normalizedKey, "id-normalized");
 
-				// Retrieve with same normalized key
-				const result = getCachedPageId(normalizedKey);
+			// Retrieve with same normalized key
+			const result = getCachedPageId(normalizedKey);
+			expect(result).toBe("id-normalized");
 
-				expect(result).toBe("id-normalized");
-
-				// Different non-normalized key won't find it
-				const nonNormalized = getCachedPageId("Test  Multiple  Spaces");
-				expect(nonNormalized).toBeNull();
-			});
+			// Different non-normalized key should also find it
+			// because both keys normalize to the same value
+			const nonNormalized = getCachedPageId("Test  Multiple  Spaces");
+			expect(nonNormalized).toBe("id-normalized");
+		});
 		});
 
 		describe("clearCache", () => {

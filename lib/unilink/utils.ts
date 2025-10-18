@@ -148,26 +148,33 @@ export const getCachedPageId = (key: string): string | null => {
 /**
  * Set cache entry with current timestamp
  * Persists to SessionStorage for cross-page sharing
+ * Automatically normalizes the key for consistent storage
  */
 export const setCachedPageId = (key: string, pageId: string): void => {
-  resolvedCache.set(key, {
+  // Normalize the key for consistent storage
+  const normalizedKey = normalizeTitleToKey(key);
+
+  resolvedCache.set(normalizedKey, {
     pageId,
     timestamp: Date.now(),
   });
   saveCacheToStorage();
-  logger.debug({ key, pageId }, "[Cache] Entry set");
+  logger.debug({ key: normalizedKey, pageId }, "[Cache] Entry set");
 };
 
 /**
  * Bulk set multiple cache entries
  * Useful for preloading all page titles
+ * Automatically normalizes all keys for consistent storage
  */
 export const setCachedPageIds = (
   entries: Array<{ key: string; pageId: string }>
 ): void => {
   const timestamp = Date.now();
   for (const { key, pageId } of entries) {
-    resolvedCache.set(key, { pageId, timestamp });
+    // Normalize the key for consistent storage
+    const normalizedKey = normalizeTitleToKey(key);
+    resolvedCache.set(normalizedKey, { pageId, timestamp });
   }
   saveCacheToStorage();
   logger.debug({ count: entries.length }, "[Cache] Bulk entries set");
