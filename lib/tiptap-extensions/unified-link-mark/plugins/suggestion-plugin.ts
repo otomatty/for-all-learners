@@ -6,7 +6,12 @@ import { searchPages } from "@/lib/utils/searchPages";
 import type { UnifiedLinkMarkOptions } from "../types";
 
 // Debug flag - set to true to enable detailed logging
-const DEBUG_TAG_DUPLICATION = true;
+const DEBUG_TAG_DUPLICATION = false;
+
+// Feature flag: Disable suggestion feature to isolate tag duplication issue
+// When false, suggestion plugin will not show any suggestions (bracket or tag)
+// This helps identify whether the problem is in InputRule or Suggestion Plugin
+const ENABLE_SUGGESTION_FEATURE = false;
 
 // Debug logging utility
 function debugLog(
@@ -74,6 +79,17 @@ export function createSuggestionPlugin(_context: {
 
 			return {
 				update(editorView) {
+					// Feature flag: Skip all suggestion logic if disabled
+					if (!ENABLE_SUGGESTION_FEATURE) {
+						// Clear any active suggestion state
+						if (debounceTimeoutId) {
+							clearTimeout(debounceTimeoutId);
+						}
+						tippyInstance?.destroy();
+						tippyInstance = null;
+						return;
+					}
+
 					const state = suggestionPluginKey.getState(
 						editorView.state,
 					) as UnifiedLinkSuggestionState;
@@ -410,13 +426,28 @@ export function createSuggestionPlugin(_context: {
 
 		props: {
 			handleKeyDown(view, event) {
+				// Feature flag: Skip suggestion handling if disabled
+				if (!ENABLE_SUGGESTION_FEATURE) {
+					return false;
+				}
+
 				const state = suggestionPluginKey.getState(
 					view.state,
 				) as UnifiedLinkSuggestionState;
 
+				// Always log key events for debugging
+				debugLog("handleKeyDown", `Key pressed: ${event.key}`, {
+					active: state.active,
+					hasRange: !!state.range,
+					variant: state.variant,
+				});
+
 				if (!state.active || !state.range) {
+					debugLog("handleKeyDown", `Early return: active=${state.active}, hasRange=${!!state.range}`);
 					return false;
 				}
+
+				debugLog("handleKeyDown", `Suggestion is active, processing key: ${event.key}`);
 
 				// Arrow key navigation
 				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -661,7 +692,10 @@ function insertUnifiedLinkWithQuery(
 		to,
 		variant,
 		rawQuery,
-		docContent: view.state.doc.textBetween(Math.max(0, from - 5), to + 5),
+		docContent: view.state.doc.textBetween(
+			Math.max(0, from - 5),
+			Math.min(view.state.doc.content.size, to + 5),
+		),
 	});
 
 	// Create transaction

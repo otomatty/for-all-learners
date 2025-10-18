@@ -13,6 +13,9 @@ import { generateMarkId } from "../state-manager";
 import type { UnifiedLinkAttributes } from "../types";
 import { isInCodeContext } from "./utils";
 
+// Track processed matches to prevent duplicates
+let processedBracketMatches = new Set<string>();
+
 /**
  * Create the bracket InputRule
  * @param context - InputRule context
@@ -31,6 +34,14 @@ export function createBracketInputRule(context: {
 			}
 
 			const raw = match[1];
+			// Create a unique identifier for this match (key + position)
+			const matchId = `${raw}:${range.from}:${range.to}`;
+
+			// Check if we've already processed this exact match
+			if (processedBracketMatches.has(matchId)) {
+				return null;
+			}
+
 			const text = raw;
 			const key = normalizeTitleToKey(raw);
 			const markId = generateMarkId();
@@ -66,11 +77,14 @@ export function createBracketInputRule(context: {
 						},
 					],
 				})
-				.run();
+			.run();
 
-			// Enqueue for resolution if not external
-			if (!isExternal) {
-				logger.debug(
+		// Mark this match as processed to prevent future duplicates
+		processedBracketMatches.add(matchId);
+
+		// Enqueue for resolution if not external
+		if (!isExternal) {
+			logger.debug(
 					{ key, raw, markId, variant: "bracket" },
 					"[BracketInputRule] Enqueueing resolve for bracket link",
 				);
