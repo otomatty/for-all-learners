@@ -95,13 +95,6 @@ export const createMarkIndex = (editor: Editor) => {
 		});
 
 		state.lastScanTime = now;
-		logger.debug(
-			{
-				uniqueKeys: state.index.size,
-				totalMarks: getTotalMarks(),
-			},
-			"[MarkIndex] Index rebuilt",
-		);
 	};
 
 	/**

@@ -121,14 +121,6 @@ export function useLinkSync(
 				hasInitialSyncRef.current = true;
 			}
 
-			logger.debug(
-				{
-					pageId,
-					linkCount: outgoingIds.length,
-					timestamp: lastSyncTimeRef.current,
-				},
-				"[useLinkSync] Link sync completed successfully",
-			);
 		} catch (err) {
 			logger.error({ err, pageId }, "[useLinkSync] Link sync failed");
 		} finally {
@@ -185,7 +177,6 @@ export function useLinkSync(
 			return;
 		}
 
-		logger.debug({ pageId }, "[useLinkSync] Setting up editor update listener");
 
 		// Handler for editor updates (debounced)
 		const updateHandler = () => {

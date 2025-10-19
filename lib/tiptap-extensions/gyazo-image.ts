@@ -27,9 +27,6 @@ export const GyazoImage = Image.extend({
 	},
 
 	addInputRules() {
-		console.log(
-			"🖼️ GyazoImage: addInputRules called - InputRules are being registered",
-		);
 		const rules = [
 			// double-bracket wrapper triggers full-width image
 			nodeInputRule({
@@ -52,21 +49,6 @@ export const GyazoImage = Image.extend({
 				type: this.type,
 				getAttributes: (match: RegExpMatchArray) => {
 					const id = match[1];
-					console.log(
-						"🖼️ GyazoImage: Single-bracket InputRule triggered (FIXED)",
-						{
-							fullMatch: match[0],
-							id: match[1],
-							matchIndex: match.index,
-							matchLength: match[0].length,
-							textBeforeMatch: match.input?.substring(0, match.index || 0),
-							textAfterMatch: match.input?.substring(
-								(match.index || 0) + match[0].length,
-							),
-							inputLength: match.input?.length,
-							isExactMatch: match[0] === match.input,
-						},
-					);
 					return { src: `https://i.gyazo.com/${id}.png` };
 				},
 			}),
@@ -88,7 +70,6 @@ export const GyazoImage = Image.extend({
 			// 	},
 			// }),
 		];
-		console.log("🖼️ GyazoImage: Returning", rules.length, "InputRules");
 		return rules;
 	},
 
@@ -109,12 +90,6 @@ export const GyazoImage = Image.extend({
 				type: this.type,
 				getAttributes: (match: RegExpMatchArray) => {
 					const id = match[1];
-					console.log("🖼️ GyazoImage: PasteRule triggered", {
-						fullMatch: match[0],
-						id: match[1],
-						matchIndex: match.index,
-						matchLength: match[0].length,
-					});
 					return { src: `https://i.gyazo.com/${id}.png` };
 				},
 			}),
@@ -153,11 +128,6 @@ export const GyazoImage = Image.extend({
 					const text = event.clipboardData?.getData("text/plain");
 					const match = text?.match(/https:\/\/gyazo\.com\/([A-Za-z0-9]+)/);
 					if (match) {
-						console.log("🖼️ GyazoImage: Direct paste conversion", {
-							originalText: text,
-							id: match[1],
-						});
-
 						// 直接画像ノードに変換（ブラケット化をスキップ）
 						const schema = view.state.schema;
 						const imageType = schema.nodes.gyazoImage;
@@ -190,30 +160,14 @@ export const GyazoImage = Image.extend({
 							Math.min(state.doc.content.size, to + 50),
 						);
 
-						console.log("🖼️ GyazoImage: Enter key pressed", {
-							cursorPos: from,
-							selection: { from, to },
-							textAround: textAround,
-							docSize: state.doc.content.size,
-						});
-
 						// 手動でInputRule相当の処理をテスト
 						const bracketMatch = textAround.match(
 							/\[https:\/\/gyazo\.com\/([A-Za-z0-9]+)\]/,
 						);
 						if (bracketMatch) {
-							console.log(
-								"🖼️ GyazoImage: Manual bracket detection in Enter handler",
-								{
-									match: bracketMatch[0],
-									id: bracketMatch[1],
-								},
-							);
-
 							// Ctrl+Enter で手動変換をテスト
 							if (event.ctrlKey || event.metaKey) {
 								event.preventDefault();
-								console.log("🖼️ GyazoImage: Manual conversion triggered");
 
 								const schema = view.state.schema;
 								const imageType = schema.nodes.gyazoImage;

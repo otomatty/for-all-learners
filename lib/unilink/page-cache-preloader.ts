@@ -15,7 +15,6 @@ import { normalizeTitleToKey, setCachedPageIds } from "./utils";
  */
 export async function preloadPageTitles(userId?: string): Promise<number> {
 	try {
-		logger.debug({ userId }, "[PageCachePreloader] Starting preload");
 
 		// Validate environment variables before creating client
 		const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -55,7 +54,6 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
 		}
 
 		if (!data || data.length === 0) {
-			logger.debug("[PageCachePreloader] No pages found");
 			return 0;
 		}
 
@@ -67,11 +65,6 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
 
 		// Bulk set cache entries
 		setCachedPageIds(entries);
-
-		logger.info(
-			{ count: entries.length },
-			"[PageCachePreloader] Preloaded page titles",
-		);
 
 		return entries.length;
 	} catch (error) {
@@ -99,8 +92,4 @@ export async function preloadPageTitles(userId?: string): Promise<number> {
 export function addPageToCache(pageId: string, title: string): void {
 	const key = normalizeTitleToKey(title);
 	setCachedPageIds([{ key, pageId }]);
-	logger.debug(
-		{ pageId, title, key },
-		"[PageCachePreloader] Added page to cache",
-	);
 }

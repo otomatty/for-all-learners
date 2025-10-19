@@ -39,14 +39,6 @@ export const createBracketCursorPlugin = (editor: Editor) => {
 				return null;
 			}
 
-			logger.debug(
-				{
-					oldPos: oldSelection.from,
-					newPos: newSelection.from,
-				},
-				"[BracketCursor] Cursor position changed",
-			);
-
 			// Get text around the cursor position
 			const { $from } = newSelection;
 			const textBefore = $from.parent.textBetween(
@@ -56,16 +48,10 @@ export const createBracketCursorPlugin = (editor: Editor) => {
 				"\ufffc",
 			);
 
-			logger.debug(
-				{ textBefore: textBefore.slice(-50) },
-				"[BracketCursor] Text before cursor",
-			);
-
 			// Check if we just moved out of closed brackets
 			// Pattern: [text] where text doesn't contain brackets
 			const match = textBefore.match(/\[([^[\]]+)\]$/);
 			if (!match) {
-				logger.debug("[BracketCursor] No bracket pattern found");
 				return null;
 			}
 
@@ -74,17 +60,6 @@ export const createBracketCursorPlugin = (editor: Editor) => {
 			const matchLength = match[0].length;
 			const matchStart = $from.pos - matchLength;
 			const matchEnd = $from.pos;
-
-			logger.debug(
-				{
-					key,
-					raw,
-					matchStart,
-					matchEnd,
-					matchLength,
-				},
-				"[BracketCursor] Detected cursor leaving closed bracket",
-			);
 
 			// Check if this range already has a unilink mark
 			const existingMark = newState.doc.rangeHasMark(
