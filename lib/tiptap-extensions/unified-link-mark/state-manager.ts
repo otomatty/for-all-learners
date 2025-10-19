@@ -21,9 +21,10 @@ export function updateMarkState(
 	logger.debug({ markId, updates }, "[StateManager] updateMarkState called");
 
 	try {
-		const { state, dispatch } = editor.view;
-		if (!state || !dispatch) {
-			logger.warn("Editor state or dispatch not available");
+		// Get the current state from the editor
+		const state = editor.state;
+		if (!state) {
+			logger.warn("Editor state not available");
 			return;
 		}
 
@@ -61,7 +62,7 @@ export function updateMarkState(
 				{ markId, foundMarks, updates },
 				"[StateManager] Dispatching state update",
 			);
-			dispatch(tr);
+			editor.view.dispatch(tr);
 		} else {
 			logger.warn(
 				{ markId, foundMarks },

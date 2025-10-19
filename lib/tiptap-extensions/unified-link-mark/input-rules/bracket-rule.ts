@@ -63,31 +63,30 @@ export function createBracketInputRule(context: {
 				markId,
 			};
 
-			// Apply mark using chain API
-			chain()
-				.focus()
-				.deleteRange({ from, to })
-				.insertContent({
-					type: "text",
-					text: text,
-					marks: [
-						{
-							type: context.name,
-							attrs,
-						},
-					],
-				})
-			.run();
-
-		// Mark this match as processed to prevent future duplicates
+		// Apply mark using chain API
+		chain()
+			.focus()
+			.deleteRange({ from, to })
+			.insertContent({
+				type: "text",
+				text: text,
+				marks: [
+					{
+						type: "unilink",
+						attrs,
+					},
+				],
+			})
+			.run();		// Mark this match as processed to prevent future duplicates
 		processedBracketMatches.add(matchId);
 
 		// Enqueue for resolution if not external
 		if (!isExternal) {
 			logger.debug(
-					{ key, raw, markId, variant: "bracket" },
-					"[BracketInputRule] Enqueueing resolve for bracket link",
-				);
+				{ key, raw, markId, variant: "bracket" },
+				"[BracketInputRule] Enqueueing resolve for bracket link",
+			);
+			queueMicrotask(() => {
 				enqueueResolve({
 					key,
 					raw, // Pass original text for flexible search
@@ -95,12 +94,13 @@ export function createBracketInputRule(context: {
 					editor: context.editor,
 					variant: "bracket",
 				});
-			} else {
-				logger.debug(
-					{ raw, markId },
-					"[BracketInputRule] External link detected, skipping resolution",
-				);
-			}
+			});
+		} else {
+			logger.debug(
+				{ raw, markId },
+				"[BracketInputRule] External link detected, skipping resolution",
+			);
+		}
 		},
 	});
 }

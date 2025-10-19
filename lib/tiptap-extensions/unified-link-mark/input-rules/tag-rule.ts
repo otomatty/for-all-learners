@@ -12,15 +12,11 @@ import { generateMarkId } from "../state-manager";
 import type { UnifiedLinkAttributes } from "../types";
 import { isInCodeContext } from "./utils";
 
-// Debug flag
-const DEBUG_TAG_DUPLICATION = false;
+// Debug flag - enable to see detailed duplication detection logs
+const DEBUG_TAG_DUPLICATION = true;
 
 // Track InputRule calls for debugging
 let inputRuleCallCount = 0;
-
-// Track processed matches to prevent duplicates
-let lastProcessedKey = "";
-let processedMatches = new Set<string>();
 
 function debugLog(
 	context: string,
@@ -30,7 +26,7 @@ function debugLog(
 	if (!DEBUG_TAG_DUPLICATION) return;
 	const timestamp = new Date().toISOString().split("T")[1];
 	const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
-	console.log(`[${timestamp}] [TagRule] [${context}] ${message}${dataStr}`);
+	console.error(`[${timestamp}] [TagRule-DEBUG] [${context}] ${message}${dataStr}`);
 }
 
 /**
@@ -43,66 +39,47 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 		find: PATTERNS.tag,
 		handler: ({ state, match, range, chain }) => {
 			inputRuleCallCount++;
-			const currentTime = Date.now();
-			const currentKey = match[1]; // The key part of the tag (without #)
-			const currentMatch = match[0]; // Full match including #
+			const { from, to } = range;
 
-			// Create a unique identifier for this match (key + position)
-			const matchId = `${currentKey}:${range.from}:${range.to}`;
-
-			// Check if we've already processed this exact match
-			const isDuplicate = processedMatches.has(matchId);
-
-			debugLog("handler", `Tag InputRule triggered (call #${inputRuleCallCount})`, {
-				match: currentMatch,
-				raw: currentKey,
-				range,
-				isDuplicate,
-				matchId,
+			debugLog("CALL", `Call #${inputRuleCallCount}`, {
+				match: match[0],
+				range: { from, to },
 			});
-
-			// Skip if this is a duplicate match
-			if (isDuplicate) {
-				debugLog("handler", `Skipping duplicate: ${matchId}`);
-				return null;
-			}
 
 			// Suppress in code context
 			if (isInCodeContext(state)) {
-				debugLog("handler", "Skipping: in code context");
-				return null;
+				debugLog("SKIP", "in code context");
+				return;
 			}
 
-			// Check if the matched text already has UnifiedLink mark
-			// This prevents double processing when InputRule triggers multiple times
-			const { from, to } = range;
-			const markType = state.schema.marks.unifiedLink;
-			let hasUnifiedLinkMark = false;
-
-			if (markType) {
-				state.doc.nodesBetween(Math.max(0, from - 1), Math.min(state.doc.content.size, to + 1), (node) => {
-					if (node.marks.some((mark) => mark.type === markType)) {
-						hasUnifiedLinkMark = true;
-						return false; // Stop traversal
-					}
-				});
+			// PRIMARY CHECK: Verify that the mark type exists
+			const markType = state.schema.marks.unilink;
+			if (!markType) {
+				debugLog("SKIP", "unilink mark type not found in schema");
+				return;
 			}
 
-			if (hasUnifiedLinkMark) {
-				debugLog("handler", "Skipping: text already has UnifiedLink mark (prevents double processing)");
-				return null;
+			// CRITICAL: Check if the range already has this mark
+			// This is the key prevention for duplicate marks
+			let hasExistingMark = false;
+			state.doc.nodesBetween(from, to, (node) => {
+				if (node.isText && node.marks.some((m) => m.type === markType)) {
+					hasExistingMark = true;
+					return false; // Stop traversal
+				}
+			});
+
+			if (hasExistingMark) {
+				debugLog("SKIP", "mark already exists on this range", { from, to });
+				return;
 			}
 
 			const raw = match[1];
-			const text = `#${raw}`; // Tag displays with # prefix
+			const text = `#${raw}`;
 			const key = normalizeTitleToKey(raw);
 			const markId = generateMarkId();
 
-			debugLog("handler", "Processing tag", {
-				raw,
-				text,
-				key,
-			});
+			debugLog("PROCESS", "applying mark", { raw, text, range: { from, to } });
 
 			const attrs: UnifiedLinkAttributes = {
 				variant: "tag",
@@ -116,56 +93,34 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 				markId,
 			};
 
-		const rangeFrom = range.from;
-		const rangeTo = range.to;
+			chain()
+				.focus()
+				.deleteRange({ from, to })
+				.insertContent({
+					type: "text",
+					text: text,
+					marks: [
+						{
+							type: "unilink",
+							attrs,
+						},
+					],
+				})
+				.run();
 
-		// Debug: Log the state before deletion
-		const stateBefore = state.doc.textBetween(Math.max(0, rangeFrom - 2), Math.min(state.doc.content.size, rangeTo + 2));
-		debugLog("handler", "State before deletion", {
-			from: rangeFrom,
-			to: rangeTo,
-			stateBefore: `"${stateBefore}"`,
-			matchedText: match[0],
-		});
+			debugLog("COMPLETE", "mark applied", { text, markId });
 
-		debugLog("handler", "Executing chain operations", {
-			from: rangeFrom,
-			to: rangeTo,
-			deleteRange: `${rangeFrom}-${rangeTo}`,
-		});
-
-		// Apply mark using chain API
-		chain()
-			.focus()
-			.deleteRange({ from: rangeFrom, to: rangeTo })
-			.insertContent({
-				type: "text",
-				text: text,
-				marks: [
-					{
-						type: context.name,
-						attrs,
-					},
-				],
-			})
-			.run();
-
-		debugLog("handler", "Chain operations completed", {
-			insertedText: text,
-		});
-
-		// Mark this match as processed to prevent future duplicates
-		processedMatches.add(matchId);
-		lastProcessedKey = currentKey;
-
-		// Enqueue for resolution
-		enqueueResolve({
-			key,
-			raw, // Pass original text for flexible search
-			markId,
-			editor: context.editor,
-			variant: "tag",
-		});
+			// Enqueue for resolution
+			// Add a microtask delay to ensure the mark is in the document
+			queueMicrotask(() => {
+				enqueueResolve({
+					key,
+					raw,
+					markId,
+					editor: context.editor,
+					variant: "tag",
+				});
+			});
 		},
 	});
 }
