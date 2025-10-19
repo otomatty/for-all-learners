@@ -13,7 +13,7 @@ import type { UnifiedLinkAttributes } from "../types";
 import { isInCodeContext } from "./utils";
 
 // Debug flag - enable to see detailed duplication detection logs
-const DEBUG_TAG_DUPLICATION = true;
+const DEBUG_TAG_DUPLICATION = false;
 
 // Track InputRule calls for debugging
 let inputRuleCallCount = 0;
