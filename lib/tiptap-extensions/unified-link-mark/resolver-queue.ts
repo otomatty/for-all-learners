@@ -130,8 +130,8 @@ class ResolverQueue {
 			const cachedPageId = getCachedPageId(key);
 
 			if (cachedPageId) {
-				// Wait a tick to ensure the mark is in the document
-				await new Promise((resolve) => setTimeout(resolve, 10));
+				// Defer to the next microtask to ensure the mark is in the document
+				await new Promise((resolve) => queueMicrotask(resolve));
 
 				updateMarkState(editor, markId, {
 					state: "exists",
