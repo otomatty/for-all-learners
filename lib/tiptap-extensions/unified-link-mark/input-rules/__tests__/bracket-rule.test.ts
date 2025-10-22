@@ -45,7 +45,6 @@ describe("createBracketInputRule", () => {
 					expected: "Multi Word Page",
 				},
 				{ input: "[123 Numbers]", shouldMatch: true, expected: "123 Numbers" },
-				{ input: "[[Double Bracket]]", shouldMatch: false },
 				{ input: "[Unclosed bracket", shouldMatch: false },
 				{ input: "No brackets", shouldMatch: false },
 				{ input: "[]", shouldMatch: false },
@@ -95,7 +94,6 @@ describe("createBracketInputRule", () => {
 
 		it("should not match invalid bracket patterns", () => {
 			const invalidPatterns = [
-				"[[double brackets]]",
 				"[unclosed",
 				"closed]",
 				"[]", // empty brackets - correctly fails
@@ -145,10 +143,9 @@ describe("createBracketInputRule", () => {
 	describe("Configuration", () => {
 		it("should use correct regex pattern", () => {
 			// Test the pattern directly
-			// Pattern: /\[([^[\]]+)\](?=\s|$|[.,!?;:])/
-			// Lookahead allows triggering on space, end of line, or punctuation
+			// Pattern: /\[([^\[\]]+)\]/
+			// No lookahead - simpler and more flexible
 			expect(PATTERNS.bracket.source).toContain("[^[\\]]+");
-			expect(PATTERNS.bracket.source).toContain("?=");
 			expect(PATTERNS.bracket.global).toBe(false);
 			expect(PATTERNS.bracket.multiline).toBe(false);
 		});

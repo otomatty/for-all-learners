@@ -38,9 +38,9 @@ export const RESOLVER_CONFIG = {
  * Regular expression patterns
  */
 export const PATTERNS = {
-	// Bracket pattern: matches [text] followed by space, punctuation, or end of line
-	// This allows InputRule to trigger on space/enter after closing bracket
-	bracket: /\[([^[\]]+)\](?=\s|$|[.,!?;:])/,
+	// Bracket pattern: matches [text] in any context
+	// No lookahead - let InputRule handler decide when to apply
+	bracket: /\[([^[\]]+)\]/,
 	// Tag pattern: detects #tag in text (not just at line end)
 	// Matches: start of line or whitespace, followed by #, then tag characters
 	// Lookahead ensures tag ends at whitespace, punctuation, or end of text
