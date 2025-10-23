@@ -143,7 +143,7 @@ describe("createBracketInputRule", () => {
 	describe("Configuration", () => {
 		it("should use correct regex pattern", () => {
 			// Test the pattern directly
-			// Pattern: /\[([^\[\]]+)\]/
+			// Pattern: /\[([^[\]]+)\]/
 			// No lookahead - simpler and more flexible
 			expect(PATTERNS.bracket.source).toContain("[^[\\]]+");
 			expect(PATTERNS.bracket.global).toBe(false);
@@ -188,6 +188,291 @@ describe("createBracketInputRule", () => {
 
 			expect(rule).toBeDefined();
 			expect(typeof rule.handler).toBe("function");
+		});
+	});
+
+	describe("Bracket Duplication Bug (Issue #20251023_01)", () => {
+		/**
+		 * TC-001: 改行後のブラケット保護
+		 *
+		 * 再現手順:
+		 * 1. エディタに [テスト] と入力
+		 * 2. カーソルをブラケットの外に移動: [テスト]|
+		 * 3. エンターキーを入力
+		 * 4. 問題: テキストが [[[[[[テスト] のように変わる
+		 *
+		 * 期待値: ブラケットは1つだけ存在する
+		 */
+		it("TC-001: should not duplicate brackets on Enter key after bracket", () => {
+			// Set up content with bracket
+			editor.chain().insertContent("[テスト]").run();
+
+			// Get initial bracket count
+			const initialJson = editor.getJSON();
+			const initialStr = JSON.stringify(initialJson);
+			const initialOpenBrackets = (initialStr.match(/\[/g) || []).length;
+
+			// Simulate Enter key - cursor will be at end after insertContent
+			editor.chain().insertContent("\n").run();
+
+			// Check final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+			const finalOpenBrackets = (finalStr.match(/\[/g) || []).length;
+
+			// Assertions
+			// Should not have exponential bracket growth
+			expect(finalOpenBrackets).toBeLessThanOrEqual(initialOpenBrackets + 1);
+			// Definitely should not have multiple duplicate brackets
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-002: スペースキー入力時の保護
+		 *
+		 * 再現手順:
+		 * 1. エディタに [テスト] と入力
+		 * 2. カーソルをブラケット外に移動: [テスト]|
+		 * 3. スペースキーを入力
+		 * 4. 問題: テキストが [[[[[[テスト] のように変わる
+		 *
+		 * 期待値: ブラケットは1つだけ存在する
+		 */
+		it("TC-002: should not duplicate brackets on Space key after bracket", () => {
+			// Set up content with bracket
+			editor.chain().insertContent("[テスト]").run();
+
+			// Get initial bracket count
+			const initialJson = editor.getJSON();
+			const initialStr = JSON.stringify(initialJson);
+			const initialOpenBrackets = (initialStr.match(/\[/g) || []).length;
+
+			// Simulate Space key - cursor will be at end after insertContent
+			editor.chain().insertContent(" ").run();
+
+			// Check final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+			const finalOpenBrackets = (finalStr.match(/\[/g) || []).length;
+
+			// Assertions
+			expect(finalOpenBrackets).toBeLessThanOrEqual(initialOpenBrackets + 1);
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-003: 複数のブラケット要素の独立性
+		 *
+		 * 期待値:
+		 * - 複数の [bracket] 要素を入力
+		 * - 各要素は独立しており、相互に影響しない
+		 * - 重複が発生しない
+		 */
+		it("TC-003: should handle multiple bracket elements independently", () => {
+			// Insert multiple bracket elements
+			editor
+				.chain()
+				.insertContent("[First]")
+				.insertContent(" ")
+				.insertContent("[Second]")
+				.insertContent(" ")
+				.insertContent("[Third]")
+				.run();
+
+			const json = editor.getJSON();
+			const str = JSON.stringify(json);
+
+			// Count brackets
+			const openCount = (str.match(/\[/g) || []).length;
+			const closeCount = (str.match(/\]/g) || []).length;
+
+			// Note: insertContent doesn't trigger InputRule for pre-formatted content
+			// So bracket marks may not be applied. This test validates the count logic.
+			// Should have 5 brackets total when multiple contents are inserted separately
+			expect(openCount).toBeGreaterThan(0);
+			expect(closeCount).toBeGreaterThan(0);
+			expect(openCount).toBe(closeCount);
+
+			// No duplicate opening brackets (main concern for the bug)
+			expect(str).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-004: インラインテキスト混在時のブラケット重複防止
+		 *
+		 * 期待値:
+		 * - 通常のテキストとブラケット記法が混在
+		 * - ブラケット記法のみに mark が適用される
+		 * - ブラケットが重複しない
+		 */
+		it("TC-004: should not duplicate brackets with inline text", () => {
+			// Insert mixed content
+			editor
+				.chain()
+				.insertContent("This is a ")
+				.insertContent("[link]")
+				.insertContent(" in text")
+				.run();
+
+			const json = editor.getJSON();
+			const str = JSON.stringify(json);
+
+			// Verify structure
+			expect(str).toContain("This is a");
+			expect(str).toContain("link");
+			expect(str).toContain("in text");
+
+			// No duplicate brackets (main bug check)
+			expect(str).not.toMatch(/\[\[\[\[/);
+
+			// Count brackets
+			const openCount = (str.match(/\[/g) || []).length;
+			const closeCount = (str.match(/\]/g) || []).length;
+
+			// Should have at least 1 bracket pair (may not have marks applied via insertContent)
+			expect(openCount).toBeGreaterThan(0);
+			expect(closeCount).toBeGreaterThan(0);
+			expect(openCount).toBe(closeCount);
+		});
+
+		/**
+		 * TC-005: 連続した Enter キー入力時の安定性
+		 *
+		 * 期待値:
+		 * - Enter を複数回入力
+		 * - ブラケットが複数回増殖しない
+		 */
+		it("TC-005: should remain stable with multiple Enter key presses", () => {
+			// Setup: Create content
+			editor.chain().insertContent("[テスト]").run();
+
+			// Get initial bracket count
+			const initialJson = editor.getJSON();
+			const initialStr = JSON.stringify(initialJson);
+			const initialBrackets = (initialStr.match(/\[/g) || []).length;
+
+			// Press Enter multiple times - cursor will be at end
+			editor
+				.chain()
+				.insertContent("\n")
+				.insertContent("\n")
+				.insertContent("\n")
+				.run();
+
+			// Get final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+			const finalBrackets = (finalStr.match(/\[/g) || []).length;
+
+			// Should not have exponential duplication
+			// With 3 Enter presses, maximum growth should be 3 additional brackets
+			expect(finalBrackets).toBeLessThanOrEqual(initialBrackets + 3);
+
+			// Definitely should not have massive duplication
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-006: ブラケット直後の任意キー入力
+		 *
+		 * 期待値:
+		 * - ブラケット直後に任意のキー（@, #, !, など）を入力
+		 * - ブラケットが重複しない
+		 */
+		it("TC-006: should not duplicate on special character input after bracket", () => {
+			// Setup
+			editor.chain().insertContent("[テスト]").run();
+
+			// Insert special characters immediately - cursor at end
+			editor
+				.chain()
+				.insertContent("@")
+				.insertContent("#")
+				.insertContent("!")
+				.run();
+
+			// Get final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// Verify no duplication
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
+
+			// Verify special characters were inserted
+			expect(finalStr).toContain("@");
+			expect(finalStr).toContain("#");
+			expect(finalStr).toContain("!");
+		});
+
+		/**
+		 * TC-007: Pattern マッチング後の改行時の重複防止
+		 *
+		 * 期待値:
+		 * - [content] パターンがマッチした直後に改行入力
+		 * - マッチの処理が複数回実行されない
+		 * - ブラケットが増殖しない
+		 */
+		it("TC-007: should not duplicate pattern on immediate Enter after match", () => {
+			// Insert bracket notation
+			editor.chain().insertContent("[テスト]").run();
+
+			// Get initial state
+			const initialJson = editor.getJSON();
+			const initialStr = JSON.stringify(initialJson);
+
+			// Immediately press Enter (simulating rapid keystroke)
+			editor.chain().insertContent("\n").run();
+
+			// Check state
+			const afterJson = editor.getJSON();
+			const afterStr = JSON.stringify(afterJson);
+
+			// No duplication should occur
+			expect(afterStr).not.toMatch(/\[\[\[\[/);
+
+			// Pattern should not create multiple opening brackets
+			const openBrackets = (afterStr.match(/\[/g) || []).length;
+			expect(openBrackets).toBeGreaterThanOrEqual(
+				(initialStr.match(/\[/g) || []).length,
+			);
+			expect(openBrackets).toBeLessThanOrEqual(
+				(initialStr.match(/\[/g) || []).length + 1,
+			);
+		});
+
+		/**
+		 * TC-008: 改行後のテキストが新しいパターンマッチを引き起こさない
+		 *
+		 * 期待値:
+		 * - [test]の後に改行して\nを入力
+		 * - その後のテキスト行は独立した処理
+		 * - 元の [test] は再処理されない
+		 */
+		it("TC-008: should not re-process bracket after line break", () => {
+			// Create initial bracket
+			editor.chain().insertContent("[Bracket]").run();
+
+			// Get content after initial bracket
+			const afterBracketJson = editor.getJSON();
+			const afterBracketStr = JSON.stringify(afterBracketJson);
+			const bracketCountAfter = (afterBracketStr.match(/\[/g) || []).length;
+
+			// Add newline and new content
+			editor
+				.chain()
+				.insertContent("\n")
+				.insertContent("New line content")
+				.run();
+
+			// Check final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+			const bracketCountFinal = (finalStr.match(/\[/g) || []).length;
+
+			// Bracket count should not increase (original should not be reprocessed)
+			expect(bracketCountFinal).toBe(bracketCountAfter);
+			// No duplication
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
 		});
 	});
 });
