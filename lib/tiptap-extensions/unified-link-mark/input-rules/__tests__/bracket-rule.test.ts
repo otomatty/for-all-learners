@@ -143,9 +143,9 @@ describe("createBracketInputRule", () => {
 	describe("Configuration", () => {
 		it("should use correct regex pattern", () => {
 			// Test the pattern directly
-			// Pattern: /\[([^[\]]+)\]/
-			// No lookahead - simpler and more flexible
-			expect(PATTERNS.bracket.source).toContain("[^[\\]]+");
+			// Pattern: /\[([^\[\]\n]+)\]/
+			// Updated to exclude line breaks to prevent duplication bug
+			expect(PATTERNS.bracket.source).toContain("\\n");
 			expect(PATTERNS.bracket.global).toBe(false);
 			expect(PATTERNS.bracket.multiline).toBe(false);
 		});
@@ -204,15 +204,21 @@ describe("createBracketInputRule", () => {
 		 * 期待値: ブラケットは1つだけ存在する
 		 */
 		it("TC-001: should not duplicate brackets on Enter key after bracket", () => {
-			// Set up content with bracket
-			editor.chain().insertContent("[テスト]").run();
+			// Setup: type bracket content character by character
+			// This will trigger InputRule when the closing bracket is typed
+			editor.chain().insertContent("[").run();
+			editor.chain().insertContent("テスト").run();
+			editor.chain().insertContent("]").run();
 
 			// Get initial bracket count
 			const initialJson = editor.getJSON();
 			const initialStr = JSON.stringify(initialJson);
 			const initialOpenBrackets = (initialStr.match(/\[/g) || []).length;
+			expect(initialOpenBrackets).toBeGreaterThan(0); // Should have at least one
 
-			// Simulate Enter key - cursor will be at end after insertContent
+			// Position cursor at end and insert newline
+			const endPos = editor.state.doc.content.size;
+			editor.commands.focus(endPos);
 			editor.chain().insertContent("\n").run();
 
 			// Check final state
@@ -221,9 +227,9 @@ describe("createBracketInputRule", () => {
 			const finalOpenBrackets = (finalStr.match(/\[/g) || []).length;
 
 			// Assertions
-			// Should not have exponential bracket growth
+			// Should not have exponential bracket growth (at most 1 more bracket)
 			expect(finalOpenBrackets).toBeLessThanOrEqual(initialOpenBrackets + 1);
-			// Definitely should not have multiple duplicate brackets
+			// Definitely should not have multiple duplicate brackets pattern
 			expect(finalStr).not.toMatch(/\[\[\[\[/);
 		});
 
@@ -240,14 +246,18 @@ describe("createBracketInputRule", () => {
 		 */
 		it("TC-002: should not duplicate brackets on Space key after bracket", () => {
 			// Set up content with bracket
-			editor.chain().insertContent("[テスト]").run();
+			editor.chain().insertContent("[").run();
+			editor.chain().insertContent("テスト").run();
+			editor.chain().insertContent("]").run();
 
 			// Get initial bracket count
 			const initialJson = editor.getJSON();
 			const initialStr = JSON.stringify(initialJson);
 			const initialOpenBrackets = (initialStr.match(/\[/g) || []).length;
 
-			// Simulate Space key - cursor will be at end after insertContent
+			// Position cursor at end and insert space
+			const endPos = editor.state.doc.content.size;
+			editor.commands.focus(endPos);
 			editor.chain().insertContent(" ").run();
 
 			// Check final state
@@ -473,6 +483,194 @@ describe("createBracketInputRule", () => {
 			expect(bracketCountFinal).toBe(bracketCountAfter);
 			// No duplication
 			expect(finalStr).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-009: 既存マークの再処理防止（ブラケット外でキー入力）
+		 *
+		 * 再現手順:
+		 * 1. エディタに [テスト] と入力してリンクマークが作成される
+		 * 2. カーソルをブラケットの外（末尾）に移動: [テスト]|
+		 * 3. 任意のキー（例: "a"）を入力
+		 * 4. バグ: ブラケット記号 [ ] だけが通常テキストになり、入力したキーが実行されない
+		 *
+		 * 期待値:
+		 * - 既存のブラケットマークは保持される
+		 * - ブラケット記号がプレーンテキストにならない
+		 * - 入力したキーが正しく反映される
+		 */
+		it("TC-009: should not reprocess existing bracket mark on key input outside bracket", () => {
+			// Step 1: Create bracket link by typing character by character
+			editor.chain().insertContent("[").run();
+			editor.chain().insertContent("テスト").run();
+			editor.chain().insertContent("]").run();
+
+			// Step 2: Move cursor to end of document (outside bracket)
+			const endPos = editor.state.doc.content.size;
+			editor.commands.focus(endPos);
+
+			// Step 3: Type a key outside the bracket
+			editor.chain().insertContent("a").run();
+
+			// Verify final state
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// Assertion 1: Bracket symbols should not become plain text
+			// If they did, we'd see literal "[" and "]" in text content
+			const hasPlainBrackets =
+				finalStr.includes('"text":"["') || finalStr.includes('"text":"]"');
+			expect(hasPlainBrackets).toBe(false);
+
+			// Assertion 2: The typed character "a" should be present in the content
+			expect(finalStr).toContain("a");
+
+			// Assertion 3: No duplicate brackets
+			expect(finalStr).not.toMatch(/\[\[\[\[/);
+		});
+
+		/**
+		 * TC-010: 既存マークに隣接した位置での入力
+		 *
+		 * 期待値:
+		 * - [テスト] の直前または直後に文字を入力
+		 * - 既存マークが再処理されない
+		 * - 新しい文字が正しく挿入される
+		 */
+		it("TC-010: should not reprocess mark when typing adjacent to existing bracket", () => {
+			// Create bracket link
+			editor.chain().insertContent("[テスト]").run();
+
+			// Type before bracket
+			editor.commands.focus(1); // Position at start
+			editor.chain().insertContent("前").run();
+
+			// Type after bracket
+			const endPos = editor.state.doc.content.size;
+			editor.commands.focus(endPos);
+			editor.chain().insertContent("後").run();
+
+			// Verify
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// Should contain new characters
+			expect(finalStr).toContain("前");
+			expect(finalStr).toContain("後");
+
+			// Should not have plain bracket text
+			const hasPlainBrackets =
+				finalStr.includes('"text":"["') || finalStr.includes('"text":"]"');
+			expect(hasPlainBrackets).toBe(false);
+		});
+
+		/**
+		 * TC-011: 複数の既存マークが存在する場合の保護
+		 *
+		 * 期待値:
+		 * - 複数のブラケットリンク [A] [B] [C] を作成
+		 * - 各リンクの間にテキストを追加
+		 * - どのリンクも再処理されない
+		 */
+		it("TC-011: should protect all existing marks when editing between them", () => {
+			// Create multiple bracket links
+			editor
+				.chain()
+				.insertContent("[A]")
+				.insertContent(" ")
+				.insertContent("[B]")
+				.insertContent(" ")
+				.insertContent("[C]")
+				.run();
+
+			// Insert text between first and second bracket
+			// Find approximate position (after first bracket)
+			editor.commands.focus(4); // Rough position after [A]
+			editor.chain().insertContent("X").run();
+
+			// Insert text between second and third bracket
+			editor.commands.focus(8); // Rough position after [B]
+			editor.chain().insertContent("Y").run();
+
+			// Verify
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// New characters should be present
+			expect(finalStr).toContain("X");
+			expect(finalStr).toContain("Y");
+
+			// No brackets should become plain text
+			const plainBracketCount =
+				(finalStr.match(/"text":"\["/g) || []).length +
+				(finalStr.match(/"text":"]"/g) || []).length;
+			expect(plainBracketCount).toBe(0);
+		});
+
+		/**
+		 * TC-012: 既存マーク内でのカーソル移動と編集
+		 *
+		 * 期待値:
+		 * - [テスト] を作成
+		 * - マーク内部にカーソルを移動して文字を追加
+		 * - マークは保持されたまま内容が更新される
+		 */
+		it("TC-012: should maintain mark when editing inside bracket content", () => {
+			// Create bracket link character by character
+			editor.chain().insertContent("[").run();
+			editor.chain().insertContent("テスト").run();
+			editor.chain().insertContent("]").run();
+
+			// Move cursor inside the bracket (approximate position)
+			editor.commands.focus(3); // Inside "テスト"
+			editor.chain().insertContent("追加").run();
+
+			// Verify
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// Should contain the added text
+			expect(finalStr).toContain("追加");
+
+			// Bracket symbols should not become plain text
+			const hasPlainBrackets =
+				finalStr.includes('"text":"["') || finalStr.includes('"text":"]"');
+			expect(hasPlainBrackets).toBe(false);
+		});
+
+		/**
+		 * TC-013: 削除操作後の既存マーク保護
+		 *
+		 * 期待値:
+		 * - [A] テキスト [B] のような構造を作成
+		 * - 中間のテキストを削除
+		 * - 両側のブラケットマークは影響を受けない
+		 */
+		it("TC-013: should protect existing marks after deletion operations", () => {
+			// Create structure: [A] middle [B]
+			editor
+				.chain()
+				.insertContent("[A]")
+				.insertContent(" middle ")
+				.insertContent("[B]")
+				.run();
+
+			// Delete "middle" text (approximate position)
+			editor.commands.focus(4);
+			editor.commands.deleteRange({ from: 4, to: 11 });
+
+			// Verify
+			const finalJson = editor.getJSON();
+			const finalStr = JSON.stringify(finalJson);
+
+			// Should not contain "middle"
+			expect(finalStr).not.toContain("middle");
+
+			// Both brackets should still be marks, not plain text
+			const plainBracketCount =
+				(finalStr.match(/"text":"\["/g) || []).length +
+				(finalStr.match(/"text":"]"/g) || []).length;
+			expect(plainBracketCount).toBe(0);
 		});
 	});
 });

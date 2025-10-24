@@ -15,11 +15,8 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import { toast } from "sonner";
 import logger from "@/lib/logger";
 import {
-	handleMissingLinkClick,
-	navigateToPageWithContext,
 	openExternalLink,
 	parseBracketContent,
-	resolveIconLink,
 } from "../../../unilink/resolver";
 import type { UnifiedLinkAttributes, UnifiedLinkMarkOptions } from "../types";
 
@@ -90,20 +87,10 @@ const detectBracketAtPosition = (
  */
 const handleBracketClick = async (
 	bracketContent: string,
-	context: { editor: Editor; options: UnifiedLinkMarkOptions },
+	_context: { editor: Editor; options: UnifiedLinkMarkOptions },
 ): Promise<boolean> => {
 	try {
 		const parsed = parseBracketContent(bracketContent);
-		const { noteSlug } = context.options;
-
-		// Handle .icon notation
-		if (parsed.type === "icon" && parsed.userSlug) {
-			const result = await resolveIconLink(parsed.userSlug, noteSlug);
-			if (result) {
-				window.location.href = result.href;
-			}
-			return true;
-		}
 
 		// Handle external links
 		if (parsed.type === "external") {
@@ -111,10 +98,11 @@ const handleBracketClick = async (
 			return true;
 		}
 
-		// Handle regular page links
-		// This will be handled by the existing PageLink extension
-		// until full migration is complete
-		return false;
+		// Handle regular page links - simple navigation to key-based URL
+		const href = `/notes/${parsed.slug}`;
+		logger.debug({ slug: parsed.slug, href }, "Navigating to bracket link");
+		window.location.href = href;
+		return true;
 	} catch (error) {
 		logger.error({ bracketContent, error }, "Failed to handle bracket click");
 		toast.error("リンクの処理に失敗しました");
@@ -243,24 +231,10 @@ export const createClickHandlerPlugin = (context: {
 						event.preventDefault();
 						const attrs = unilinkMark.attrs as UnifiedLinkAttributes;
 
-						// Phase 3.1: Handle by linkType
-						if (attrs.linkType === "icon" && attrs.userSlug) {
-							// Handle .icon links
-							resolveIconLink(attrs.userSlug, context.options.noteSlug)
-								.then((result) => {
-									if (result) {
-										window.location.href = result.href;
-									}
-								})
-								.catch((error) => {
-									logger.error(
-										{ userSlug: attrs.userSlug, error },
-										"Failed to resolve icon link",
-									);
-									toast.error("リンクの解決に失敗しました");
-								});
-							return true;
-						}
+						// Simple navigation: use the key to navigate to the page
+						// For bracket links: navigate to /notes/{key}
+						// For tag links: navigate to /tags/{key}
+						// For external links: open in new tab
 
 						if (attrs.linkType === "external" && attrs.href) {
 							// Handle external links
@@ -268,33 +242,17 @@ export const createClickHandlerPlugin = (context: {
 							return true;
 						}
 
-						// Handle regular page links with noteSlug support
-						if (attrs.state === "exists" && attrs.pageId) {
-							navigateToPageWithContext(
-								attrs.pageId,
-								context.options.noteSlug,
-								attrs.created,
-							);
-						} else if (
-							attrs.state === "missing" &&
-							attrs.text &&
-							attrs.markId
-						) {
-							handleMissingLinkClick(
-								context.editor,
-								attrs.markId,
-								attrs.text,
-								context.options.userId || undefined,
-								context.options.onShowCreatePageDialog,
-							);
-						} else if (attrs.state === "pending") {
-							logger.debug({ attrs }, "[UnifiedLinkMark] Link is pending");
-						} else {
-							logger.warn(
-								{ attrs },
-								"[UnifiedLinkMark] Unknown state or missing data",
-							);
-						}
+						// Handle internal links (bracket and tag)
+						const href =
+							attrs.variant === "tag"
+								? `/tags/${attrs.key}`
+								: `/notes/${attrs.key}`;
+
+						logger.debug(
+							{ key: attrs.key, href },
+							"[UnifiedLinkMark] Navigating to link",
+						);
+						window.location.href = href;
 
 						return true;
 					}

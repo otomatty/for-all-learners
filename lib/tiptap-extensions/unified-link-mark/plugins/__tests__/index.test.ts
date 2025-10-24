@@ -3,7 +3,7 @@
  */
 
 import type { Editor } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin } from "prosemirror-state";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	createMinimalMockEditor,
