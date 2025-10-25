@@ -5,6 +5,7 @@
 
 import type { Editor } from "@tiptap/core";
 import { InputRule } from "@tiptap/core";
+import logger from "../../../logger";
 import { normalizeTitleToKey } from "../../../unilink";
 import { PATTERNS } from "../config";
 import { enqueueResolve } from "../resolver-queue";
@@ -24,9 +25,7 @@ function debugLog(
 	data?: Record<string, unknown>,
 ) {
 	if (!DEBUG_TAG_DUPLICATION) return;
-	const timestamp = new Date().toISOString().split("T")[1];
-	const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
-	console.error(`[${timestamp}] [TagRule-DEBUG] [${context}] ${message}${dataStr}`);
+	logger.debug(data || {}, `[TagRule-DEBUG] [${context}] ${message}`);
 }
 
 /**
@@ -124,4 +123,3 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 		},
 	});
 }
-

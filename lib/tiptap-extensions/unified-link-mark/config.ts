@@ -41,7 +41,7 @@ export const PATTERNS = {
 	// Bracket pattern: matches [text] in any context
 	// Excludes line breaks to prevent re-matching after line breaks
 	// This prevents the duplication bug where brackets multiply on Enter/Space
-	bracket: /\[([^\[\]\n]+)\]/,
+	bracket: /\[([^[\]\n]+)\]/,
 	// Tag pattern: detects #tag in text (not just at line end)
 	// Matches: start of line or whitespace, followed by #, then tag characters
 	// Lookahead ensures tag ends at whitespace, punctuation, or end of text

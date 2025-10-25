@@ -2,6 +2,7 @@ import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import tippy, { type Instance, type Props } from "tippy.js";
+import logger from "@/lib/logger";
 import { searchPages } from "@/lib/utils/searchPages";
 import type { UnifiedLinkMarkOptions } from "../types";
 
@@ -20,11 +21,7 @@ function debugLog(
 	data?: Record<string, unknown>,
 ) {
 	if (!DEBUG_TAG_DUPLICATION) return;
-	const timestamp = new Date().toISOString().split("T")[1];
-	const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
-	console.log(
-		`[${timestamp}] [UnifiedLinkMark] [${context}] ${message}${dataStr}`,
-	);
+	logger.debug(data || {}, `[UnifiedLinkMark] [${context}] ${message}`);
 }
 
 // Suggestion state interface
