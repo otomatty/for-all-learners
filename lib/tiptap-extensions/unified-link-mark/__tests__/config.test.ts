@@ -77,18 +77,27 @@ describe("UnifiedLinkMark Config", () => {
 				expect(match).toBeNull();
 			});
 
-			it("should not match nested brackets due to pattern restriction", () => {
-				const text = "Check this [Title [nested]]";
-				const match = text.match(PATTERNS.bracket);
-				// Pattern [^\[\]]+ does not match brackets inside
-				expect(match).toBeNull();
-			});
-
 			it("should match at end of string", () => {
 				const text = "[Title]";
 				const match = text.match(PATTERNS.bracket);
 				expect(match).toBeTruthy();
 				expect(match?.[1]).toBe("Title");
+			});
+
+			it("should handle bracket content correctly without lookahead", () => {
+				// After removing lookahead, pattern is simpler
+				const testCases = [
+					{ text: "[test]", expected: "test" },
+					{ text: "[a]", expected: "a" },
+					{ text: "[multiple words]", expected: "multiple words" },
+					{ text: "[test]extra", expected: "test" },
+				];
+
+				for (const { text, expected } of testCases) {
+					const match = text.match(PATTERNS.bracket);
+					expect(match).toBeTruthy();
+					expect(match?.[1]).toBe(expected);
+				}
 			});
 		});
 

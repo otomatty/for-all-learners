@@ -131,7 +131,7 @@ class ResolverQueue {
 
 			if (cachedPageId) {
 				// Defer to the next microtask to ensure the mark is in the document
-				await new Promise((resolve) => queueMicrotask(resolve));
+				await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
 
 				updateMarkState(editor, markId, {
 					state: "exists",
