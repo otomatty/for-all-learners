@@ -28,7 +28,7 @@ function debugLog(
 }
 
 // Suggestion state interface
-interface UnifiedLinkSuggestionState {
+export interface UnifiedLinkSuggestionState {
 	active: boolean;
 	range: { from: number; to: number } | null;
 	query: string;
@@ -39,7 +39,7 @@ interface UnifiedLinkSuggestionState {
 }
 
 // Plugin key for state management
-const suggestionPluginKey = new PluginKey<UnifiedLinkSuggestionState>(
+export const suggestionPluginKey = new PluginKey<UnifiedLinkSuggestionState>(
 	"unifiedLinkSuggestion",
 );
 
@@ -179,8 +179,7 @@ export function createSuggestionPlugin(_context: {
 
 						// Show suggestions for tag pattern even with empty query (#)
 						// For bracket pattern, only show if query is non-empty
-						const shouldShowSuggestions =
-							query.length > 0 || variant === "tag";
+						const shouldShowSuggestions = query.length > 0 || variant === "tag";
 
 						if (shouldShowSuggestions) {
 							// Check if state needs update
@@ -443,11 +442,17 @@ export function createSuggestionPlugin(_context: {
 				});
 
 				if (!state.active || !state.range) {
-					debugLog("handleKeyDown", `Early return: active=${state.active}, hasRange=${!!state.range}`);
+					debugLog(
+						"handleKeyDown",
+						`Early return: active=${state.active}, hasRange=${!!state.range}`,
+					);
 					return false;
 				}
 
-				debugLog("handleKeyDown", `Suggestion is active, processing key: ${event.key}`);
+				debugLog(
+					"handleKeyDown",
+					`Suggestion is active, processing key: ${event.key}`,
+				);
 
 				// Arrow key navigation
 				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
