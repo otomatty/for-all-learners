@@ -3,10 +3,10 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { GroupedPageCard } from "../grouped-page-card";
+import { describe, expect, test } from "vitest";
 import type { LinkGroupPage } from "@/types/link-group";
+import { GroupedPageCard } from "../grouped-page-card";
 
 describe("GroupedPageCard", () => {
 	test("should render page title", () => {

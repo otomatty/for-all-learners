@@ -2,9 +2,9 @@
  * Tests for extractTextFromTiptap utility
  */
 
+import type { JSONContent } from "@tiptap/core";
 import { describe, expect, test } from "vitest";
 import { extractTextFromTiptap } from "../extract-text-from-tiptap";
-import type { JSONContent } from "@tiptap/core";
 
 describe("extractTextFromTiptap", () => {
 	test("should extract text from simple paragraph", () => {

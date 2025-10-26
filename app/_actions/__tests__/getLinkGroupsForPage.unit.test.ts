@@ -3,7 +3,7 @@
  * Note: These are simplified unit tests. Integration tests require actual Supabase connection.
  */
 
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getLinkGroupsForPage } from "../linkGroups";
 
 // Mock Supabase server client

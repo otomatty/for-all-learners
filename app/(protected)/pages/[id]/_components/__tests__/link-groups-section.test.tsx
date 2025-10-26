@@ -3,10 +3,10 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { LinkGroupsSection } from "../link-groups-section";
+import { describe, expect, test } from "vitest";
 import type { LinkGroupForUI } from "@/types/link-group";
+import { LinkGroupsSection } from "../link-groups-section";
 
 describe("LinkGroupsSection", () => {
 	test("should render nothing when linkGroups is empty", () => {

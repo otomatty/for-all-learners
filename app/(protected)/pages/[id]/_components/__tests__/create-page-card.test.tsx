@@ -3,14 +3,14 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CreatePageCard } from "../create-page-card";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { useRouter } from "next/navigation";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createClient } from "@/lib/supabase/client";
+import { CreatePageCard } from "../create-page-card";
 
 // Mock modules
 vi.mock("@/lib/supabase/client");
