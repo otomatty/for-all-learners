@@ -16,6 +16,16 @@ declare module "@tiptap/core" {
 			 * Refresh all unified links
 			 */
 			refreshUnifiedLinks: () => ReturnType;
+			/**
+			 * Wrap selected text with brackets [text]
+			 * The bracket monitor plugin will automatically apply the mark
+			 */
+			wrapWithBrackets: () => ReturnType;
+			/**
+			 * Remove brackets and mark from selected text
+			 * Converts [text] back to text
+			 */
+			unwrapBrackets: () => ReturnType;
 		};
 	}
 }

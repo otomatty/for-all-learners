@@ -6,7 +6,7 @@
 import type { Editor } from "@tiptap/core";
 import type { UnifiedLinkMarkOptions } from "../types";
 import { createAutoBracketPlugin } from "./auto-bracket-plugin";
-import { createBracketCursorPlugin } from "./bracket-cursor-plugin";
+// import { createBracketCursorPlugin } from "./bracket-cursor-plugin"; // DISABLED: Replaced by bracket-monitor-plugin
 import { createBracketMonitorPlugin } from "./bracket-monitor-plugin";
 import { createClickHandlerPlugin } from "./click-handler-plugin";
 import { createSuggestionPlugin } from "./suggestion-plugin";
@@ -23,10 +23,10 @@ export function createPlugins(context: {
 }) {
 	return [
 		createAutoBracketPlugin(),
-		createBracketCursorPlugin(context.editor),
-		createBracketMonitorPlugin(context.editor), // Add bracket monitor plugin
+		// createBracketCursorPlugin(context.editor), // DISABLED: Replaced by bracket-monitor-plugin
+		createBracketMonitorPlugin(context.editor), // Real-time bracket monitoring
 		createClickHandlerPlugin(context),
 		createSuggestionPlugin(context),
-		createTagMonitorPlugin(context.editor), // Add tag monitor plugin
+		createTagMonitorPlugin(context.editor), // Real-time tag monitoring
 	];
 }

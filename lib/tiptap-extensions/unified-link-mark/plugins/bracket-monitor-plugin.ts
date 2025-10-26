@@ -40,7 +40,7 @@ import { enqueueResolve } from "../resolver-queue";
 import { generateMarkId } from "../state-manager";
 import type { UnifiedLinkAttributes } from "../types";
 
-const DEBUG = false;
+const DEBUG = true; // Temporarily enabled for debugging
 
 function debugLog(
 	context: string,
@@ -214,6 +214,7 @@ function applyBracketMark(
 
 	// Check if we should reuse existing markId
 	let existingMarkId: string | undefined;
+	let existingRaw: string | undefined;
 
 	try {
 		tr.doc.nodesBetween(from, to, (node) => {
@@ -223,6 +224,7 @@ function applyBracketMark(
 				);
 				if (bracketMark) {
 					existingMarkId = bracketMark.attrs.markId;
+					existingRaw = bracketMark.attrs.raw;
 					return false; // Stop searching
 				}
 			}
@@ -232,6 +234,7 @@ function applyBracketMark(
 	}
 
 	const markId = existingMarkId || generateMarkId();
+	const hasTextChanged = existingRaw !== raw;
 
 	// Check if this is an external URL (starts with http:// or https://)
 	const isExternal = PATTERNS.externalUrl.test(raw);
@@ -255,6 +258,7 @@ function applyBracketMark(
 		markId,
 		isExternal,
 		reusingMarkId: !!existingMarkId,
+		hasTextChanged,
 	});
 
 	// Remove any existing unilink marks in this range
@@ -263,9 +267,16 @@ function applyBracketMark(
 	// Add the new mark
 	tr.addMark(from, to, markType.create(attrs));
 
-	// Enqueue for resolution (only if markId is new)
-	if (!existingMarkId) {
-		debugLog("QUEUE", "enqueueing resolution", { key, raw, markId });
+	// Enqueue for resolution if:
+	// 1. markId is new, OR
+	// 2. text content has changed (requires re-resolution)
+	if (!existingMarkId || hasTextChanged) {
+		debugLog("QUEUE", "enqueueing resolution", {
+			key,
+			raw,
+			markId,
+			reason: !existingMarkId ? "new markId" : "text changed",
+		});
 		queueMicrotask(() => {
 			enqueueResolve({
 				key,
@@ -276,7 +287,7 @@ function applyBracketMark(
 			});
 		});
 	} else {
-		debugLog("SKIP_QUEUE", "reusing existing markId, skipping queue", {
+		debugLog("SKIP_QUEUE", "reusing existing markId, text unchanged", {
 			markId,
 		});
 	}
