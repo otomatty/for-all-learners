@@ -60,6 +60,15 @@ export function NotesExplorerSidebar({
 
 	const currentNote = notes.find((note) => note.slug === currentNoteSlug);
 
+	// CRITICAL FIX: Remove duplicate IDs
+	// Create a unique set of notes by ID to prevent duplicate key error
+	const uniqueNotes = notes.reduce((acc, note) => {
+		if (!acc.find((n) => n.id === note.id)) {
+			acc.push(note);
+		}
+		return acc;
+	}, [] as Note[]);
+
 	// ドラッグ&ドロップセンサー設定
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -108,10 +117,10 @@ export function NotesExplorerSidebar({
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SortableContext
-									items={notes.map((note) => note.id)}
+									items={uniqueNotes.map((note) => note.id)}
 									strategy={verticalListSortingStrategy}
 								>
-									{notes.map((note) => {
+									{uniqueNotes.map((note) => {
 										const isCurrentNote = note.slug === currentNoteSlug;
 
 										return (

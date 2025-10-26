@@ -3,8 +3,8 @@
  * Tests for the bracket monitor plugin that maintains bracket links during editing
  */
 
-import { PluginKey } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
 import { describe, expect, it, vi } from "vitest";
 import {
 	bracketMonitorPluginKey,

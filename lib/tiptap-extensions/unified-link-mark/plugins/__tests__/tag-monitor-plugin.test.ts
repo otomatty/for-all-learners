@@ -3,16 +3,16 @@
  * Tests for the tag monitor plugin that maintains tag links during editing
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
 import { Editor } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
+import { beforeEach, describe, expect, it } from "vitest";
+import { UnifiedLinkMark } from "../../index";
 import {
 	createTagMonitorPlugin,
 	tagMonitorPluginKey,
 } from "../tag-monitor-plugin";
-import { UnifiedLinkMark } from "../../index";
 
 describe("Tag Monitor Plugin", () => {
 	let editor: Editor;

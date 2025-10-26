@@ -231,28 +231,71 @@ export const createClickHandlerPlugin = (context: {
 						event.preventDefault();
 						const attrs = unilinkMark.attrs as UnifiedLinkAttributes;
 
-						// Simple navigation: use the key to navigate to the page
-						// For bracket links: navigate to /notes/{key}
-						// For tag links: navigate to /tags/{key}
-						// For external links: open in new tab
-
+						// Handle external links
 						if (attrs.linkType === "external" && attrs.href) {
-							// Handle external links
 							openExternalLink(attrs.href);
 							return true;
 						}
 
-						// Handle internal links (bracket and tag)
-						const href =
-							attrs.variant === "tag"
-								? `/tags/${attrs.key}`
-								: `/notes/${attrs.key}`;
+						// Handle existing pages (state === "exists" and pageId is set)
+						if (attrs.state === "exists" && attrs.pageId) {
+							// Navigate to existing page using UUID
+							const href = context.options.noteSlug
+								? `/notes/${encodeURIComponent(context.options.noteSlug)}/${attrs.pageId}`
+								: `/pages/${attrs.pageId}`;
 
-						logger.debug(
-							{ key: attrs.key, href },
-							"[UnifiedLinkMark] Navigating to link",
-						);
-						window.location.href = href;
+							logger.debug(
+								{ pageId: attrs.pageId, href },
+								"[UnifiedLinkMark] Navigating to existing page",
+							);
+							window.location.href = href;
+							return true;
+						}
+
+						// Handle missing pages (state === "missing" or no pageId)
+						if (attrs.state === "missing" || !attrs.pageId) {
+							logger.debug(
+								{ text: attrs.text, state: attrs.state },
+								"[UnifiedLinkMark] Missing page clicked - will create page",
+							);
+
+							// Get the title to create
+							const titleToCreate = attrs.text || attrs.raw || "";
+
+							if (!titleToCreate.trim()) {
+								toast.error("ページタイトルが空です");
+								return true;
+							}
+
+							// Call the onShowCreatePageDialog callback if provided
+							if (context.options.onShowCreatePageDialog) {
+								context.options.onShowCreatePageDialog(
+									titleToCreate,
+									async () => {
+										// This callback will be called when user confirms page creation
+										// The actual page creation logic should be handled by the component
+										// that provides this callback
+									},
+								);
+							} else {
+								// If no dialog callback, directly create the page using handleAnchorClick logic
+								// This simulates clicking on a data-page-title link
+								handleAnchorClick(
+									{
+										getAttribute: (attr: string) => {
+											if (attr === "data-page-title") return titleToCreate;
+											return null;
+										},
+										hasAttribute: (attr: string) => attr === "data-page-title",
+										tagName: "A",
+									} as unknown as HTMLAnchorElement,
+									event as MouseEvent,
+									context,
+								);
+							}
+
+							return true;
+						}
 
 						return true;
 					}

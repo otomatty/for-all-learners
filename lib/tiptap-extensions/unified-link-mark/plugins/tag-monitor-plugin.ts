@@ -9,8 +9,8 @@
  */
 
 import type { Editor } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import logger from "../../../logger";
 import { normalizeTitleToKey } from "../../../unilink";
 import { PATTERNS } from "../config";

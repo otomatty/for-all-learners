@@ -7,8 +7,8 @@ import type { Editor } from "@tiptap/core";
 import type { MarkType } from "prosemirror-model";
 import { createInsertUnifiedLinkCommand } from "./insert-unified-link";
 import { createRefreshUnifiedLinksCommand } from "./refresh-unified-links";
-import { createWrapWithBracketsCommand } from "./wrap-with-brackets";
 import { createUnwrapBracketsCommand } from "./unwrap-brackets";
+import { createWrapWithBracketsCommand } from "./wrap-with-brackets";
 
 /**
  * Create all commands for UnifiedLinkMark
