@@ -120,7 +120,6 @@ export function useLinkSync(
 			if (!hasInitialSyncRef.current) {
 				hasInitialSyncRef.current = true;
 			}
-
 		} catch (err) {
 			logger.error({ err, pageId }, "[useLinkSync] Link sync failed");
 		} finally {
@@ -176,7 +175,6 @@ export function useLinkSync(
 			}
 			return;
 		}
-
 
 		// Handler for editor updates (debounced)
 		const updateHandler = () => {

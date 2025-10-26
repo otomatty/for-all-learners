@@ -117,14 +117,21 @@ export function parseHTML() {
 				const pageTitle = node.getAttribute("data-page-title");
 				const state = node.getAttribute("data-state") || "missing";
 
+				// Note: key is used for internal identification, not for URL generation
+				// For missing pages, we store the title as-is for later page creation
+				// URL generation uses pageId (UUID) when the page exists
+				const normalizedKey = pageTitle
+					? pageTitle.toLowerCase().trim().replace(/\s+/g, "_")
+					: "";
+
 				// Generate UnifiedLinkMark format attributes
 				const attrs = {
 					variant: "bracket",
-					pageId: null,
+					pageId: null, // Will be set when page is created
 					state,
 					exists: false,
-					href: "#",
-					key: pageTitle?.toLowerCase() || "",
+					href: "#", // Placeholder until page is created
+					key: normalizedKey,
 					raw: pageTitle || "",
 					text: pageTitle || "",
 					markId: `migrated-${Date.now()}-${Math.random()

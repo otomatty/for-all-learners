@@ -15,7 +15,6 @@ import { normalizeTitleToKey, setCachedPageIds } from "./utils";
  */
 export async function preloadPageTitles(userId?: string): Promise<number> {
 	try {
-
 		// Validate environment variables before creating client
 		const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 		const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

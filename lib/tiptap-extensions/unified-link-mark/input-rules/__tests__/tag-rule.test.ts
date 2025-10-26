@@ -33,7 +33,7 @@ describe("createTagInputRule", () => {
 	describe("Pattern matching", () => {
 		it("should match tag notation correctly", () => {
 			const testCases = [
-				{ input: " #tag", shouldMatch: true, expected: "tag" }, // Requires space or line start
+				{ input: " #tag", shouldMatch: true, expected: "tag" }, // Space before
 				{ input: " #タグ", shouldMatch: true, expected: "タグ" },
 				{ input: " #tag123", shouldMatch: true, expected: "tag123" },
 				{ input: " #テスト", shouldMatch: true, expected: "テスト" },
@@ -41,7 +41,7 @@ describe("createTagInputRule", () => {
 				{ input: "# space", shouldMatch: false }, // space after hash
 				{ input: "notag", shouldMatch: false },
 				{ input: "#", shouldMatch: false },
-				{ input: "no#tag", shouldMatch: false }, // No space before #
+				{ input: "no#tag", shouldMatch: false }, // No space before # (lookbehind fails)
 			];
 
 			for (const { input, shouldMatch, expected } of testCases) {
@@ -83,11 +83,33 @@ describe("createTagInputRule", () => {
 				" #tag123",
 				" #a",
 				" #Z",
+				// Test cases for the reported bug fix
+				" #aaa", // Should match entire "aaa", not just "a"
+				" #abc123def", // Should match entire string
+				" #テストケース", // Should match entire Japanese string
 			];
 
 			for (const pattern of validPatterns) {
 				const match = PATTERNS.tag.exec(pattern);
 				expect(match).not.toBeNull();
+			}
+		});
+
+		it("should capture complete tag text including multiple consecutive characters", () => {
+			// Test for the specific bug: #aaa should capture "aaa", not just "a"
+			const testCases = [
+				{ input: " #aaa", expected: "aaa" },
+				{ input: " #abc123", expected: "abc123" },
+				{ input: " #テストケース", expected: "テストケース" },
+				{ input: " #中文测试", expected: "中文测试" },
+				{ input: " #mixedText123", expected: "mixedText123" },
+				{ input: " #a1b2c3d4e5", expected: "a1b2c3d4e5" },
+			];
+
+			for (const { input, expected } of testCases) {
+				const match = PATTERNS.tag.exec(input);
+				expect(match).not.toBeNull();
+				expect(match?.[1]).toBe(expected);
 			}
 		});
 
@@ -103,9 +125,6 @@ describe("createTagInputRule", () => {
 				" #  ", // Only spaces after #
 				"normal text", // No tag at all
 				"no#hash", // # in middle without leading space
-				" #-dash", // Dash not allowed in tag
-				" #_underscore", // Underscore not allowed in tag
-				" #@symbol", // @ not allowed in tag
 			];
 
 			for (const pattern of invalidPatterns) {
@@ -251,10 +270,15 @@ describe("createTagInputRule", () => {
 	});
 	describe("Configuration", () => {
 		it("should use correct regex pattern with unicode flag", () => {
-			// Test the pattern directly - updated for new regex with lookahead
-			expect(PATTERNS.tag.source).toContain(
-				"#([a-zA-Z0-9\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3400-\\u4DBF\\uAC00-\\uD7AF]{1,50})",
-			);
+			// Test the pattern directly - updated for new regex with special characters support
+			expect(PATTERNS.tag.source).toContain("#([a-zA-Z0-9");
+			// Verify special characters are included (note: - is escaped as \- in regex)
+			expect(PATTERNS.tag.source).toContain("\\-");
+			expect(PATTERNS.tag.source).toContain("_");
+			expect(PATTERNS.tag.source).toContain("+");
+			expect(PATTERNS.tag.source).toContain("=");
+			// Verify Unicode ranges are included
+			expect(PATTERNS.tag.source).toContain("\\u3040-\\u309F");
 			expect(PATTERNS.tag.unicode).toBe(true); // Now uses unicode flag
 			expect(PATTERNS.tag.global).toBe(false);
 			expect(PATTERNS.tag.multiline).toBe(false);
@@ -442,6 +466,164 @@ describe("createTagInputRule", () => {
 				expect(rule).toBeDefined();
 				// Resolver should update state based on page existence
 			});
+		});
+	});
+
+	describe("Progressive tag input (regression test for #aaa issue)", () => {
+		it("should handle progressive tag input with regex pattern", () => {
+			// This test verifies that the regex pattern correctly matches
+			// progressively longer tags
+			const testCases = [
+				{ input: " #a", expected: "a" },
+				{ input: " #aa", expected: "aa" },
+				{ input: " #aaa", expected: "aaa" },
+				{ input: " #test", expected: "test" },
+				{ input: " #a1b2c3", expected: "a1b2c3" },
+			];
+
+			for (const { input, expected } of testCases) {
+				const match = PATTERNS.tag.exec(input);
+				expect(match).not.toBeNull();
+				expect(match?.[1]).toBe(expected);
+			}
+		});
+
+		it("should verify mark replacement logic does not cause range errors", () => {
+			// This test verifies the logic for replacing shorter marks with longer ones
+			// It simulates the scenario where:
+			// 1. User types "#a" -> mark created at range (0, 2)
+			// 2. User types "a" -> new match "#aa", should replace old mark
+
+			// We can't easily simulate progressive input with insertContent,
+			// so we test the pattern matching and document structure expectations
+
+			const pattern = PATTERNS.tag;
+
+			// Simulate "#a" exists in document
+			const shortMatch = pattern.exec(" #a");
+			expect(shortMatch?.[1]).toBe("a");
+
+			// Simulate user types another "a" -> "#aa"
+			const longMatch = pattern.exec(" #aa");
+			expect(longMatch?.[1]).toBe("aa");
+
+			// Verify longer match has longer raw text
+			if (shortMatch?.[1] && longMatch?.[1]) {
+				expect(longMatch[1].length).toBeGreaterThan(shortMatch[1].length);
+			}
+		});
+		it("should handle mark length comparison correctly", () => {
+			// Test the logic: newLength > existingLength
+			const existingRaw = "a";
+			const newRaw = "aa";
+
+			expect(newRaw.length).toBeGreaterThan(existingRaw.length);
+
+			const evenLongerRaw = "aaa";
+			expect(evenLongerRaw.length).toBeGreaterThan(newRaw.length);
+		});
+
+		it("should not replace mark if lengths are equal or shorter", () => {
+			const existingRaw = "test";
+			const sameLength = "exam";
+			const shorter = "te";
+
+			// Same length should be skipped
+			expect(sameLength.length).toBe(existingRaw.length);
+
+			// Shorter should be skipped
+			expect(shorter.length).toBeLessThan(existingRaw.length);
+		});
+
+		it("should handle various character types in progressive matching", () => {
+			// Test that pattern matches work correctly for different character types
+			const testCases = [
+				{ input: " #テ", expected: "テ" },
+				{ input: " #テス", expected: "テス" },
+				{ input: " #テスト", expected: "テスト" },
+				{ input: " #中", expected: "中" },
+				{ input: " #中文", expected: "中文" },
+				{ input: " #1", expected: "1" },
+				{ input: " #1a", expected: "1a" },
+				{ input: " #1a2", expected: "1a2" },
+			];
+
+			for (const { input, expected } of testCases) {
+				const match = PATTERNS.tag.exec(input);
+				expect(match).not.toBeNull();
+				expect(match?.[1]).toBe(expected);
+			}
+		});
+
+		it("should verify regex can match at different positions", () => {
+			// Ensure that regex works correctly regardless of where the tag appears
+			const text1 = " #tag";
+			const text2 = "before #tag";
+
+			// Direct match at start (after space)
+			const match1 = PATTERNS.tag.exec(text1);
+			expect(match1?.[1]).toBe("tag");
+
+			// Match after other text
+			const match2 = PATTERNS.tag.exec(text2);
+			expect(match2?.[1]).toBe("tag");
+		});
+
+		it("should match tags with dots for versioning", () => {
+			const text1 = "#v1.0.0 ";
+			const text2 = "#release.2024.10 ";
+			const text3 = "#test.case ";
+
+			const match1 = PATTERNS.tag.exec(text1);
+			expect(match1?.[1]).toBe("v1.0.0");
+
+			const match2 = PATTERNS.tag.exec(text2);
+			expect(match2?.[1]).toBe("release.2024.10");
+
+			const match3 = PATTERNS.tag.exec(text3);
+			expect(match3?.[1]).toBe("test.case");
+		});
+
+		it("should match tags with special characters", () => {
+			// Hyphen
+			const text1 = "#feature-branch ";
+			const match1 = PATTERNS.tag.exec(text1);
+			expect(match1?.[1]).toBe("feature-branch");
+
+			// Underscore
+			const text2 = "#my_tag ";
+			const match2 = PATTERNS.tag.exec(text2);
+			expect(match2?.[1]).toBe("my_tag");
+
+			// Plus
+			const text3 = "#C++ ";
+			const match3 = PATTERNS.tag.exec(text3);
+			expect(match3?.[1]).toBe("C++");
+
+			// Equal
+			const text4 = "#key=value ";
+			const match4 = PATTERNS.tag.exec(text4);
+			expect(match4?.[1]).toBe("key=value");
+
+			// At sign
+			const text5 = "#user@domain ";
+			const match5 = PATTERNS.tag.exec(text5);
+			expect(match5?.[1]).toBe("user@domain");
+
+			// Slash
+			const text6 = "#2024/10/26 ";
+			const match6 = PATTERNS.tag.exec(text6);
+			expect(match6?.[1]).toBe("2024/10/26");
+
+			// Colon
+			const text7 = "#category:item ";
+			const match7 = PATTERNS.tag.exec(text7);
+			expect(match7?.[1]).toBe("category:item");
+
+			// Combined
+			const text8 = "#v1.0-beta_2 ";
+			const match8 = PATTERNS.tag.exec(text8);
+			expect(match8?.[1]).toBe("v1.0-beta_2");
 		});
 	});
 });

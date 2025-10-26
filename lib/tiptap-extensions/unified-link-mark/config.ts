@@ -41,10 +41,12 @@ export const PATTERNS = {
 	// Bracket pattern: matches [text] in any context
 	// Excludes line breaks to prevent re-matching after line breaks
 	// This prevents the duplication bug where brackets multiply on Enter/Space
-	bracket: /\[([^\[\]\n]+)\]/,
-	// Tag pattern: detects #tag in text (not just at line end)
-	// Matches: start of line or whitespace, followed by #, then tag characters
-	// Lookahead ensures tag ends at whitespace, punctuation, or end of text
-	tag: /(?:^|\s)#([a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF\uAC00-\uD7AF]{1,50})(?=\s|$|[^\p{Letter}\p{Number}])/u,
+	bracket: /\[([^[\]\n]+)\]/,
+	// Tag pattern: detects #tag in text
+	// Uses positive lookbehind (?<=...) to ensure # is preceded by start of line or whitespace
+	// but doesn't include that whitespace in the match
+	// This prevents the matched range from including leading space
+	// Includes special characters: . - _ + = @ / : for versatile tag names
+	tag: /(?<=^|\s)#([a-zA-Z0-9.\-_+=@/::\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF\uAC00-\uD7AF]{1,50})(?=\s|$)/u,
 	externalUrl: /^https?:\/\//,
 } as const;

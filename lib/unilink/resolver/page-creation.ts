@@ -85,7 +85,7 @@ export async function createPageFromMark(
  * Create a new page from DOM click handler
  * Called from <a> tags with data-page-title attribute
  *
- * @param title Page title to create
+ * @param title Page title to create (may contain Japanese, spaces, etc.)
  * @param userId User ID (authenticated user)
  * @param noteSlug Optional note slug (for note_page_links table association)
  * @returns Created page ID and href, or null on failure
@@ -97,7 +97,15 @@ export async function createPageFromLink(
 ): Promise<{ pageId: string; href: string } | null> {
 	try {
 		// Convert underscores to spaces for page title
+		// This allows users to write titles like "My_Page" which becomes "My Page"
 		const titleWithSpaces = title.replace(/_/g, " ");
+
+		// Validate title
+		if (!titleWithSpaces.trim()) {
+			logger.error({ title }, "Empty title provided for page creation");
+			toast.error("ページタイトルを入力してください");
+			return null;
+		}
 
 		// Dynamic import to avoid circular dependency
 		const { createClient } = await import("@/lib/supabase/client");
