@@ -58,28 +58,104 @@ export function createTagInputRule(context: { editor: Editor; name: string }) {
 				return;
 			}
 
+			// Extract the raw tag text first
+			const raw = match[1];
+
 			// CRITICAL: Check if the range already has this mark
-			// This is the key prevention for duplicate marks
-			let hasExistingMark = false;
-			state.doc.nodesBetween(from, to, (node) => {
+			// If a mark exists, compare lengths and replace if new match is longer
+			type ExistingMarkInfo = { from: number; to: number; raw: string };
+			let existingMarkInfo: ExistingMarkInfo | null = null;
+			state.doc.nodesBetween(from, to, (node, pos) => {
 				if (node.isText && node.marks.some((m) => m.type === markType)) {
-					hasExistingMark = true;
-					return false; // Stop traversal
+					const mark = node.marks.find((m) => m.type === markType);
+					if (mark) {
+						existingMarkInfo = {
+							from: pos,
+							to: pos + node.nodeSize,
+							raw: mark.attrs.raw || "",
+						};
+						return false; // Stop traversal
+					}
 				}
 			});
 
-			if (hasExistingMark) {
-				debugLog("SKIP", "mark already exists on this range", { from, to });
-				return;
-			}
+			if (existingMarkInfo !== null) {
+				const newLength = raw.length;
+				// Type assertion to satisfy TypeScript
+				const existingInfo: ExistingMarkInfo = existingMarkInfo;
+				const existingLength = existingInfo.raw.length;
 
-			const raw = match[1];
+				if (newLength <= existingLength) {
+					// New match is same or shorter - skip to prevent unnecessary updates
+					debugLog("SKIP", "existing mark is same or longer", {
+						existing: existingInfo,
+						newRaw: raw,
+						newLength,
+						existingLength,
+					});
+					return;
+				}
+
+				// New match is longer - update the mark in place
+				debugLog("REPLACE", "replacing shorter mark with longer one", {
+					existing: existingInfo,
+					newRaw: raw,
+					newLength,
+					existingLength,
+				});
+
+				// Generate new attributes for the longer tag
+				const text = `#${raw}`;
+				const key = normalizeTitleToKey(raw);
+				const markId = generateMarkId();
+
+				const attrs: UnifiedLinkAttributes = {
+					variant: "tag",
+					raw,
+					text,
+					key,
+					pageId: null,
+					href: "#",
+					state: "pending",
+					exists: false,
+					markId,
+				};
+
+				// Replace the entire range (old mark + new characters) with the new mark
+				chain()
+					.focus()
+					.deleteRange({ from, to })
+					.insertContent({
+						type: "text",
+						text: text,
+						marks: [
+							{
+								type: "unilink",
+								attrs,
+							},
+						],
+					})
+					.run();
+
+				debugLog("COMPLETE", "mark replaced", { text, markId });
+
+				// Enqueue for resolution
+				queueMicrotask(() => {
+					enqueueResolve({
+						key,
+						raw,
+						markId,
+						variant: "tag",
+						editor: context.editor,
+					});
+				});
+
+				return; // Exit early after replacement
+			}
 			const text = `#${raw}`;
 			const key = normalizeTitleToKey(raw);
 			const markId = generateMarkId();
-
 			debugLog("PROCESS", "applying mark", { raw, text, range: { from, to } });
-
 			const attrs: UnifiedLinkAttributes = {
 				variant: "tag",
 				raw,
