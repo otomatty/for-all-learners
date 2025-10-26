@@ -1,8 +1,8 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	determineLinkGroupState,
-	shouldDisplayAsRegularLink,
 	getLinkGroupStateClass,
+	shouldDisplayAsRegularLink,
 } from "../link-group-state";
 
 describe("determineLinkGroupState", () => {

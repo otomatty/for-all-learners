@@ -9,13 +9,11 @@ import { toast } from "sonner";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { duplicatePage } from "@/app/_actions/duplicatePage";
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
-import { updateIncomingPageLinks } from "@/app/_actions/updateIncomingPageLinks";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
 // Types
 import type { Database } from "@/types/database.types";
+import type { LinkGroupForUI } from "@/types/link-group";
 import { useDateShortcut } from "../_hooks/useDateShortcut";
 import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
 // Hooks
@@ -24,6 +22,7 @@ import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
+import { LinkGroupsSection } from "./link-groups-section";
 import { PageHeader } from "./page-header";
 import PageLinksGrid from "./page-links-grid";
 import RelatedCardsGrid from "./related-cards-grid";
@@ -34,34 +33,23 @@ interface EditPageFormProps {
 	initialContent?: JSONContent;
 	/** Cosense プロジェクト名 (manual sync 用) */
 	cosenseProjectName?: string | null;
-	outgoingPages: Array<{
-		id: string;
-		title: string;
-		thumbnail_url: string | null;
-		content_tiptap: JSONContent;
-	}>;
 	missingLinks: string[];
-	incomingPages: Array<{
-		id: string;
-		title: string;
-		thumbnail_url: string | null;
-		content_tiptap: JSONContent;
-	}>;
 	nestedLinks: Record<string, string[]>;
+	linkGroups: LinkGroupForUI[];
 }
 
 export default function EditPageForm({
 	page,
 	initialContent,
 	cosenseProjectName,
-	outgoingPages,
 	missingLinks,
-	incomingPages,
 	nestedLinks,
+	linkGroups,
 }: EditPageFormProps) {
-	const originalTitle = page.title;
-	const [showLinkAlert, setShowLinkAlert] = useState(false);
-	const [hasPromptedLink, setHasPromptedLink] = useState(false);
+	// Link alert removed - now handled by link groups
+	// const originalTitle = page.title;
+	// const [showLinkAlert, setShowLinkAlert] = useState(false);
+	// const [hasPromptedLink, setHasPromptedLink] = useState(false);
 
 	// Detect if this is a newly created page via query param
 	const searchParams = useSearchParams();
@@ -86,17 +74,17 @@ export default function EditPageForm({
 		isOnline,
 	} = usePageFormState({ page, isNewPage });
 
-	// Moved useEffect here now that title is declared
-	useEffect(() => {
-		if (
-			!hasPromptedLink &&
-			title !== originalTitle &&
-			incomingPages.length > 0
-		) {
-			setShowLinkAlert(true);
-			setHasPromptedLink(true);
-		}
-	}, [originalTitle, incomingPages.length, hasPromptedLink, title]);
+	// Incoming pages check removed - now handled by link groups
+	// useEffect(() => {
+	// 	if (
+	// 		!hasPromptedLink &&
+	// 		title !== originalTitle &&
+	// 		incomingPages.length > 0
+	// 	) {
+	// 		setShowLinkAlert(true);
+	// 		setHasPromptedLink(true);
+	// 	}
+	// }, [originalTitle, hasPromptedLink, title]);
 
 	// 自動サムネイル設定（ページ表示時）
 	useEffect(() => {
@@ -271,43 +259,7 @@ export default function EditPageForm({
 
 	return (
 		<>
-			{showLinkAlert && (
-				<Alert className="mb-4">
-					<AlertTitle>リンク更新の確認</AlertTitle>
-					<AlertDescription>
-						このページを参照している {incomingPages.length}{" "}
-						件のリンクが見つかりました。
-						<br />
-						タイトルを更新するとリンクテキストを「{originalTitle}」→「{title}
-						」に変更しますか？
-					</AlertDescription>
-					<div className="mt-2 flex gap-2">
-						<Button
-							onClick={async () => {
-								try {
-									await updateIncomingPageLinks({
-										currentPageId: page.id,
-										oldTitle: originalTitle,
-										newTitle: title,
-										incomingPageIds: incomingPages.map((p) => p.id),
-									});
-									toast.success("リンクを更新しました");
-								} catch (err) {
-									console.error("リンク更新エラー:", err);
-									toast.error("リンクの更新に失敗しました");
-								} finally {
-									setShowLinkAlert(false);
-								}
-							}}
-						>
-							更新する
-						</Button>
-						<Button variant="outline" onClick={() => setShowLinkAlert(false)}>
-							後で
-						</Button>
-					</div>
-				</Alert>
-			)}
+			{/* Link alert removed - now handled by link groups */}
 			<div className="flex gap-2">
 				<div className="flex-1 space-y-6">
 					{editor && (
@@ -352,11 +304,11 @@ export default function EditPageForm({
 									/>
 								)}
 							</div>
+							{/* リンクグループセクション（新規） */}
+							<LinkGroupsSection linkGroups={linkGroups} noteSlug={noteSlug} />
 							{/* リンク一覧 */}
 							<PageLinksGrid
-								outgoingPages={outgoingPages}
 								missingLinks={missingLinks}
-								incomingPages={incomingPages}
 								nestedLinks={nestedLinks}
 								noteSlug={noteSlug}
 							/>

@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from "vitest";
 import type { JSONContent } from "@tiptap/core";
+import { beforeEach, describe, expect, test } from "vitest";
 import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
 
 /**

@@ -20,21 +20,17 @@ export function renderHTML(
 	const { variant, groupState, ...rest } = HTMLAttributes;
 	const variantClass = `unilink--${variant}`;
 
-	// Phase 1 (Link Group): Add group state class if available
-	const groupStateClass = groupState ? `unilink--${groupState}` : "";
+	// Phase 1 (Link Group): Add group state as data attribute
+	const dataAttributes = groupState ? { "data-group-state": groupState } : {};
 
 	// Combine all classes
-	const allClasses = [
-		options.HTMLAttributes.class,
-		variantClass,
-		groupStateClass,
-	]
+	const allClasses = [options.HTMLAttributes.class, variantClass]
 		.filter(Boolean)
 		.join(" ");
 
 	return [
 		"a",
-		mergeAttributes(options.HTMLAttributes, rest, {
+		mergeAttributes(options.HTMLAttributes, rest, dataAttributes, {
 			class: allClasses,
 		}),
 		0,

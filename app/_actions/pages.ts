@@ -2,14 +2,14 @@
 
 import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeTitleToKey } from "@/lib/unilink/utils";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 import type { Database } from "@/types/database.types";
 import {
-	syncLinkGroupsForPage,
-	deleteLinkGroupsForPage,
 	connectLinkGroupToPage,
+	deleteLinkGroupsForPage,
+	syncLinkGroupsForPage,
 } from "./syncLinkGroups";
-import { normalizeTitleToKey } from "@/lib/unilink/utils";
 
 export async function getPagesByNote(noteId: string) {
 	const supabase = await createClient();

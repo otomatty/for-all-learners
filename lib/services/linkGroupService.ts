@@ -333,3 +333,62 @@ async function getPagesByLinkKeyFallback(
 
 	return Array.from(pageMap.values());
 }
+
+/**
+ * Get link group information for multiple keys
+ * Used to enrich UnifiedLinkMark attributes with link group state
+ *
+ * @param supabase - Supabase client
+ * @param keys - Array of normalized link keys
+ * @returns Map of key to link group info (pageId and linkCount)
+ */
+export async function getLinkGroupInfoByKeys(
+	supabase: SupabaseClient,
+	keys: string[],
+): Promise<
+	Map<
+		string,
+		{
+			pageId: string | null;
+			linkCount: number;
+			linkGroupId: string;
+		}
+	>
+> {
+	try {
+		if (keys.length === 0) {
+			return new Map();
+		}
+
+		const { data, error } = await supabase
+			.from("link_groups")
+			.select("id, key, page_id, link_count")
+			.in("key", keys);
+
+		if (error) {
+			throw error;
+		}
+
+		const resultMap = new Map<
+			string,
+			{
+				pageId: string | null;
+				linkCount: number;
+				linkGroupId: string;
+			}
+		>();
+
+		for (const group of data || []) {
+			resultMap.set(group.key, {
+				pageId: group.page_id,
+				linkCount: group.link_count,
+				linkGroupId: group.id,
+			});
+		}
+
+		return resultMap;
+	} catch (error) {
+		logger.error({ keys, error }, "Failed to get link group info by keys");
+		throw error;
+	}
+}

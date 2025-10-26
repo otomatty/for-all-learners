@@ -1,10 +1,10 @@
 import type { JSONContent } from "@tiptap/core";
 import { notFound, redirect } from "next/navigation";
+import { getLinkGroupsForPage } from "@/app/_actions/linkGroups";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
 
 import EditPageForm from "./_components/edit-page-form";
@@ -109,52 +109,20 @@ export default async function PageDetail({
 	}
 	const missingLinks = missingBracketNames;
 
-	// --- このページがリンクしているページ一覧をDBから取得 ---
-	const { data: outRecs, error: outErr } = await supabase
-		.from("page_page_links")
-		.select("linked_id")
-		.eq("page_id", page.id);
-	if (outErr) throw outErr;
-	const outgoingIds = outRecs.map((r) => r.linked_id);
-	const { data: outgoingPages, error: fetchErr } = await supabase
-		.from("pages")
-		.select("id, title, content_tiptap, thumbnail_url")
-		.in("id", outgoingIds as string[]);
-	if (fetchErr) throw fetchErr;
-
-	// Compute nestedLinks for each outgoing page
+	// Compute nestedLinks (kept for compatibility)
 	const nestedLinks: Record<string, string[]> = {};
-	for (const p of outgoingPages) {
-		nestedLinks[p.id] = extractLinkData(
-			p.content_tiptap as JSONContent,
-		).outgoingIds;
-	}
 
-	// --- このページを参照しているページ（被リンク）をDBから取得 ---
-	const { data: inRecs, error: inErr } = await supabase
-		.from("page_page_links")
-		.select("page_id")
-		.eq("linked_id", page.id);
-	if (inErr) throw inErr;
-	const incomingIds = inRecs.map((r) => r.page_id);
-	let incomingPages: Array<{
-		id: string;
-		title: string;
-		content_tiptap: JSONContent;
-		thumbnail_url: string | null;
-	}> = [];
-	if (incomingIds.length > 0) {
-		const { data: fetchedIncomingPages, error: incomingErr } = await supabase
-			.from("pages")
-			.select("id, title, content_tiptap, thumbnail_url")
-			.in("id", incomingIds as string[]);
-		if (incomingErr) throw incomingErr;
-		incomingPages = fetchedIncomingPages.map((p) => ({
-			...p,
-			content_tiptap: p.content_tiptap as JSONContent,
-			thumbnail_url: p.thumbnail_url ?? null,
-		}));
-	}
+	// --- リンクグループデータの取得（新規） ---
+	const { data: linkGroups } = await getLinkGroupsForPage(page.id);
+
+	// missingLinks から linkCount > 1 のグループを除外
+	const missingLinksFiltered = missingLinks.filter((linkText) => {
+		// linkGroups の displayText と一致するものを除外
+		const isInGroup = linkGroups?.some(
+			(group) => group.displayText === linkText,
+		);
+		return !isInGroup;
+	});
 
 	return (
 		<Container>
@@ -165,15 +133,9 @@ export default async function PageDetail({
 						page={page}
 						initialContent={decoratedDoc}
 						cosenseProjectName={cosenseProjectName}
-						outgoingPages={outgoingPages.map((p) => ({
-							id: p.id,
-							title: p.title,
-							thumbnail_url: p.thumbnail_url ?? null,
-							content_tiptap: p.content_tiptap as JSONContent,
-						}))}
-						incomingPages={incomingPages}
-						missingLinks={missingLinks}
+						missingLinks={missingLinksFiltered}
 						nestedLinks={nestedLinks}
+						linkGroups={linkGroups || []}
 					/>
 				</div>
 			</div>

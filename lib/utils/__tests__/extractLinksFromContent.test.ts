@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
+import type { JSONContent } from "@tiptap/core";
+import { describe, expect, test } from "vitest";
 import {
-	extractLinksFromContent,
 	countLinksByKey,
+	extractLinksFromContent,
 	getUniqueLinkKeys,
 } from "../extractLinksFromContent";
-import type { JSONContent } from "@tiptap/core";
 
 describe("extractLinksFromContent", () => {
 	test("should extract links from simple content", () => {

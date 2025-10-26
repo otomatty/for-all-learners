@@ -22,6 +22,7 @@ import type { Database } from "@/types/database.types";
 import { useAutoSave } from "./useAutoSave";
 import { useEditorInitializer } from "./useEditorInitializer";
 import { useGenerateContent } from "./useGenerateContent";
+import { useLinkGroupState } from "./useLinkGroupState";
 import { useLinkSync } from "./useLinkSync";
 import { usePageSaver } from "./usePageSaver";
 import { useSmartThumbnailSync } from "./useSmartThumbnailSync";
@@ -181,6 +182,9 @@ export function usePageEditorLogic({
 		debounceMs: 500,
 		debug: false,
 	});
+
+	// Phase 1 (Link Group): Update link group state for all links
+	useLinkGroupState(editor, page.id);
 
 	// Note: initialContent is already set by useEditorInitializer
 	// The previous useEffect that re-set initialContent was redundant and has been removed

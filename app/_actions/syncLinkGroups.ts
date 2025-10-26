@@ -6,14 +6,14 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-import { createClient } from "@/lib/supabase/server";
-import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
+import logger from "@/lib/logger";
 import {
+	deleteLinkOccurrencesByPage,
 	upsertLinkGroup,
 	upsertLinkOccurrence,
-	deleteLinkOccurrencesByPage,
 } from "@/lib/services/linkGroupService";
-import logger from "@/lib/logger";
+import { createClient } from "@/lib/supabase/server";
+import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
 
 /**
  * Sync link groups for a page

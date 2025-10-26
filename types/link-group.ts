@@ -65,3 +65,27 @@ export interface CreateLinkOccurrenceRequest {
 	markId: string;
 	position?: number | null;
 }
+
+/**
+ * Link Group Page (referenced or target page)
+ */
+export interface LinkGroupPage {
+	id: string;
+	title: string;
+	thumbnail_url: string | null;
+	content_tiptap: Record<string, unknown>;
+	updated_at: string;
+}
+
+/**
+ * Link Group for UI display
+ */
+export interface LinkGroupForUI {
+	key: string; // Normalized link key
+	displayText: string; // Original link text for display
+	linkGroupId: string; // link_groups.id
+	pageId: string | null; // Target page ID (if exists)
+	linkCount: number; // Number of references (always > 1)
+	targetPage: LinkGroupPage | null; // Target page details (if pageId exists)
+	referencingPages: LinkGroupPage[]; // Pages that reference this link
+}
