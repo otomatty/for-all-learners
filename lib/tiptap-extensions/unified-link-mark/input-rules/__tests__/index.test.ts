@@ -39,13 +39,13 @@ describe("createInputRules", () => {
 			expect(rules.length).toBeGreaterThan(0);
 		});
 
-		it("should return exactly 2 rules (tag and bracket)", () => {
+		it("should return exactly 1 rule (tag only, bracket handled by plugin)", () => {
 			const rules = createInputRules(
 				mockContext as { editor: Editor; name: string },
 			);
 
-			// Should contain both tag and bracket rules
-			expect(rules.length).toBe(2);
+			// Should contain only tag rule (bracket rule is disabled, handled by bracket-monitor-plugin)
+			expect(rules.length).toBe(1);
 		});
 
 		it("should return InputRule instances", () => {
@@ -79,21 +79,21 @@ describe("createInputRules", () => {
 			expect(tagRule).toBeDefined();
 		});
 
-		it("should include bracket input rule", () => {
+		// Bracket rule is now handled by bracket-monitor-plugin, not by input rules
+		it("should only include tag input rule (bracket handled by plugin)", () => {
 			const rules = createInputRules(
 				mockContext as { editor: Editor; name: string },
 			);
 
-			// Find rule that matches bracket pattern
-			const bracketRule = rules.find((rule) => {
-				const pattern = rule.find;
-				if (pattern instanceof RegExp) {
-					return pattern.source.includes("\\[");
-				}
-				return false;
-			});
+			// Should only have tag rule
+			expect(rules.length).toBe(1);
 
-			expect(bracketRule).toBeDefined();
+			// The rule should match tag pattern
+			const tagRule = rules[0];
+			const pattern = tagRule.find;
+			if (pattern instanceof RegExp) {
+				expect(pattern.source).toContain("#");
+			}
 		});
 	});
 
@@ -111,7 +111,7 @@ describe("createInputRules", () => {
 			const rules = createInputRules(context);
 
 			// Rules should be created successfully with custom context
-			expect(rules.length).toBe(2);
+			expect(rules.length).toBe(1);
 			expect(rules.every((rule) => rule !== null && rule !== undefined)).toBe(
 				true,
 			);
@@ -140,22 +140,16 @@ describe("createInputRules", () => {
 			}
 		});
 
-		it("should have tag rule first and bracket rule second", () => {
+		it("should have tag rule only (bracket handled by plugin)", () => {
 			const context = { editor, name: "unifiedLink" };
 			const rules = createInputRules(context);
 
-			expect(rules.length).toBe(2);
+			expect(rules.length).toBe(1);
 
-			// First rule should be tag (contains #)
-			const firstPattern = rules[0].find;
-			if (firstPattern instanceof RegExp) {
-				expect(firstPattern.source).toContain("#");
-			}
-
-			// Second rule should be bracket (contains \\[)
-			const secondPattern = rules[1].find;
-			if (secondPattern instanceof RegExp) {
-				expect(secondPattern.source).toContain("\\[");
+			// Should be tag rule (contains #)
+			const pattern = rules[0].find;
+			if (pattern instanceof RegExp) {
+				expect(pattern.source).toContain("#");
 			}
 		});
 	});
@@ -179,9 +173,9 @@ describe("createInputRules", () => {
 				const rules1 = createInputRules(context1);
 				const rules2 = createInputRules(context2);
 
-				// Both should create valid rules
-				expect(rules1.length).toBe(2);
-				expect(rules2.length).toBe(2);
+				// Both should create valid rules (only tag rule)
+				expect(rules1.length).toBe(1);
+				expect(rules2.length).toBe(1);
 
 				// Rules should be independent
 				expect(rules1).not.toBe(rules2);
@@ -198,7 +192,7 @@ describe("createInputRules", () => {
 				const context = { editor, name };
 				const rules = createInputRules(context);
 
-				expect(rules.length).toBe(2);
+				expect(rules.length).toBe(1);
 				expect(rules.every((rule) => rule !== null)).toBe(true);
 			}
 		});
@@ -230,9 +224,9 @@ describe("createInputRules", () => {
 				ruleArrays.push(createInputRules(context));
 			}
 
-			// All should be valid
+			// All should be valid (only tag rule)
 			expect(ruleArrays.length).toBe(1000);
-			expect(ruleArrays.every((rules) => rules.length === 2)).toBe(true);
+			expect(ruleArrays.every((rules) => rules.length === 1)).toBe(true);
 		});
 	});
 
@@ -248,7 +242,7 @@ describe("createInputRules", () => {
 			for (const context of validContexts) {
 				expect(() => {
 					const rules = createInputRules(context);
-					expect(rules.length).toBe(2);
+					expect(rules.length).toBe(1);
 				}).not.toThrow();
 			}
 		});
@@ -270,20 +264,19 @@ describe("createInputRules", () => {
 			}
 		});
 
-		it("should create rules that don't interfere with each other", () => {
+		it("should create single tag rule (bracket handled by plugin)", () => {
 			const context = { editor, name: "unifiedLink" };
 			const rules = createInputRules(context);
 
-			// Get patterns
-			const patterns = rules.map((rule) => rule.find);
+			// Should have only tag rule
+			expect(rules.length).toBe(1);
 
-			// Should have different patterns
-			expect(patterns.length).toBe(2);
-			expect(patterns[0]).not.toEqual(patterns[1]);
+			// Get pattern
+			const pattern = rules[0].find;
 
-			// Patterns should not overlap in problematic ways
-			if (patterns[0] instanceof RegExp && patterns[1] instanceof RegExp) {
-				expect(patterns[0].source).not.toBe(patterns[1].source);
+			// Should be tag pattern (contains #)
+			if (pattern instanceof RegExp) {
+				expect(pattern.source).toContain("#");
 			}
 		});
 	});

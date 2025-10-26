@@ -19,12 +19,16 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
 	createMinimalMockEditor,
 	createMockOptions,
+	setupJSDOMEnvironment,
 } from "@/lib/__tests__/helpers";
 import {
 	createSuggestionPlugin,
 	suggestionPluginKey,
 	type UnifiedLinkSuggestionState,
 } from "../suggestion-plugin";
+
+// Setup jsdom environment for this test
+setupJSDOMEnvironment();
 
 describe("Suggestion Plugin - Empty Query Behavior", () => {
 	let editorView: EditorView;

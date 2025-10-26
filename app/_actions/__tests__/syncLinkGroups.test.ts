@@ -41,7 +41,7 @@ describe("syncLinkGroups", () => {
 								text: "React",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "React",
 											key: "react",
@@ -60,7 +60,7 @@ describe("syncLinkGroups", () => {
 								text: "Vue",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "Vue",
 											key: "vue",
@@ -95,7 +95,7 @@ describe("syncLinkGroups", () => {
 								text: "React",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "React",
 											key: "react",
@@ -115,7 +115,7 @@ describe("syncLinkGroups", () => {
 								text: "React",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "React",
 											key: "react",
@@ -135,7 +135,7 @@ describe("syncLinkGroups", () => {
 								text: "React",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "React",
 											key: "react",
@@ -173,7 +173,7 @@ describe("syncLinkGroups", () => {
 								text: "#JavaScript",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "#JavaScript",
 											key: "javascript",
@@ -206,7 +206,7 @@ describe("syncLinkGroups", () => {
 								text: "React",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "React",
 											key: "react",
@@ -225,7 +225,7 @@ describe("syncLinkGroups", () => {
 								text: "#JavaScript",
 								marks: [
 									{
-										type: "unifiedLink",
+										type: "unilink",
 										attrs: {
 											text: "#JavaScript",
 											key: "javascript",

@@ -21,12 +21,13 @@ describe("createPlugins", () => {
 		mockOptions = createMockOptions();
 	});
 
-	it("should return exactly 4 plugins", () => {
+	it("should return exactly 5 plugins", () => {
 		const plugins = createPlugins({
 			editor: mockEditor,
 			options: mockOptions,
 		});
-		expect(plugins.length).toBe(4);
+		// AutoBracket, BracketMonitor, ClickHandler, Suggestion, TagMonitor
+		expect(plugins.length).toBe(5);
 	});
 
 	it("should return Plugin instances", () => {
