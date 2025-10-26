@@ -32,6 +32,7 @@ export interface UnifiedLinkMarkOptions {
 /**
  * Mark attributes interface
  * Extended in Phase 3.1 to support icon links and external links
+ * Extended in Phase 1 (Link Group) to support link group state
  */
 export interface UnifiedLinkAttributes {
 	variant: "bracket" | "tag";
@@ -49,6 +50,11 @@ export interface UnifiedLinkAttributes {
 	// Phase 3.1: New fields for link type classification
 	linkType?: LinkType; // Link type (optional for backward compatibility)
 	userSlug?: string; // User slug for .icon links (e.g., "username" from "username.icon")
+
+	// Phase 1 (Link Group): New fields for link group functionality
+	linkGroupId?: string | null; // Link group ID from link_groups table
+	groupState?: "exists" | "grouped" | "missing"; // Link group state
+	linkCount?: number; // Number of links in the same group
 }
 
 /**

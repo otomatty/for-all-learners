@@ -413,6 +413,27 @@ a.page-link-mark[data-state="pending"]::before {
 	color: #60a5fa; /* blue-400 */
 }
 
+/* Phase 1 (Link Group): grouped state - display as regular link even without target page */
+/* grouped: リンク先ページ未作成だが、同じリンクテキストが複数存在 */
+.ProseMirror a[data-group-state="grouped"] {
+	color: #2563eb; /* blue-600 - same as exists */
+	text-decoration-line: underline;
+	text-decoration-style: solid;
+	cursor: pointer;
+}
+.dark .ProseMirror a[data-group-state="grouped"] {
+	color: #60a5fa; /* blue-400 - same as exists */
+}
+
+/* grouped hover state */
+.ProseMirror a[data-group-state="grouped"]:hover {
+	color: #1d4ed8; /* blue-700 */
+	text-decoration-style: solid;
+}
+.dark .ProseMirror a[data-group-state="grouped"]:hover {
+	color: #93c5fd; /* blue-300 */
+}
+
 /* missing: 未解決（該当ページ無し）。赤基調 + 破線 + 背景の淡いトーン */
 .ProseMirror a[data-state="missing"] {
 	color: #dc2626; /* red-600 */

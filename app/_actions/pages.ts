@@ -4,6 +4,12 @@ import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 import type { Database } from "@/types/database.types";
+import {
+	syncLinkGroupsForPage,
+	deleteLinkGroupsForPage,
+	connectLinkGroupToPage,
+} from "./syncLinkGroups";
+import { normalizeTitleToKey } from "@/lib/unilink/utils";
 
 export async function getPagesByNote(noteId: string) {
 	const supabase = await createClient();
@@ -45,9 +51,6 @@ export async function createPage(
 		);
 		if (thumbnailUrl) {
 			pageWithThumbnail.thumbnail_url = thumbnailUrl;
-			console.log(
-				`[createPage] 新規ページ: サムネイル自動生成 = ${thumbnailUrl}`,
-			);
 		}
 	}
 
@@ -57,6 +60,17 @@ export async function createPage(
 		.select()
 		.single();
 	if (error) throw error;
+
+	// 1. Sync link groups for the new page
+	if (data.content_tiptap) {
+		await syncLinkGroupsForPage(data.id, data.content_tiptap as JSONContent);
+	}
+
+	// 2. Connect link groups that match this page title
+	// If a link group exists with key matching this page title, update its page_id
+	const normalizedKey = normalizeTitleToKey(data.title);
+	await connectLinkGroupToPage(normalizedKey, data.id);
+
 	return data;
 }
 
@@ -76,6 +90,11 @@ export async function updatePage(
 
 export async function deletePage(id: string) {
 	const supabase = await createClient();
+
+	// Delete link group occurrences for this page
+	// Trigger will automatically update link_count on link_groups
+	await deleteLinkGroupsForPage(id);
+
 	const { data, error } = await supabase
 		.from("pages")
 		.delete()

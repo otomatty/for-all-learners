@@ -368,14 +368,48 @@ export function createBracketMonitorPlugin(editor: Editor) {
 					);
 
 					if (!stillComplete) {
-						// Bracket became incomplete - remove mark
-						debugLog("REMOVE", "removing incomplete bracket mark", {
-							from: existingMark.from,
-							to: existingMark.to,
-							raw: existingMark.raw,
-						});
-						tr.removeMark(existingMark.from, existingMark.to, markType);
-						modified = true;
+						// Check if this is a migrated/created mark (created: false)
+						// These marks don't have surrounding brackets, so we shouldn't remove them
+						let shouldPreserve = false;
+						newState.doc.nodesBetween(
+							existingMark.from,
+							existingMark.to,
+							(node) => {
+								if (node.isText) {
+									const mark = node.marks.find(
+										(m) =>
+											m.type === markType &&
+											m.attrs.variant === "bracket" &&
+											m.attrs.markId === existingMark.markId,
+									);
+									if (mark && mark.attrs.created === false) {
+										shouldPreserve = true;
+										debugLog(
+											"PRESERVE",
+											"preserving migrated/created mark (created=false)",
+											{
+												from: existingMark.from,
+												to: existingMark.to,
+												raw: existingMark.raw,
+												markId: existingMark.markId,
+											},
+										);
+										return false; // Stop searching
+									}
+								}
+							},
+						);
+
+						if (!shouldPreserve) {
+							// Bracket became incomplete - remove mark
+							debugLog("REMOVE", "removing incomplete bracket mark", {
+								from: existingMark.from,
+								to: existingMark.to,
+								raw: existingMark.raw,
+							});
+							tr.removeMark(existingMark.from, existingMark.to, markType);
+							modified = true;
+						}
 					}
 				}
 			}
