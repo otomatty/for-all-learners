@@ -1,5 +1,6 @@
 /**
  * Tests for LinkGroupsSection component
+ * @vitest-environment jsdom
  */
 
 import { describe, expect, test } from "vitest";
@@ -9,7 +10,9 @@ import type { LinkGroupForUI } from "@/types/link-group";
 
 describe("LinkGroupsSection", () => {
 	test("should render nothing when linkGroups is empty", () => {
-		const { container } = render(<LinkGroupsSection linkGroups={[]} noteSlug={undefined} />);
+		const { container } = render(
+			<LinkGroupsSection linkGroups={[]} noteSlug={undefined} />,
+		);
 		expect(container.firstChild).toBeNull();
 	});
 
@@ -40,7 +43,9 @@ describe("LinkGroupsSection", () => {
 			},
 		];
 
-		render(<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />);
+		render(
+			<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />,
+		);
 
 		expect(screen.getByText("関連ページ")).toBeInTheDocument();
 		expect(screen.getByText("React")).toBeInTheDocument();
@@ -69,7 +74,9 @@ describe("LinkGroupsSection", () => {
 			},
 		];
 
-		render(<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />);
+		render(
+			<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />,
+		);
 
 		expect(screen.getByText("Undefined Link")).toBeInTheDocument();
 		expect(screen.getByText("新規ページを作成")).toBeInTheDocument();
@@ -110,7 +117,9 @@ describe("LinkGroupsSection", () => {
 			},
 		];
 
-		render(<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />);
+		render(
+			<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />,
+		);
 
 		expect(screen.getByText("React")).toBeInTheDocument();
 		expect(screen.getByText("Vue")).toBeInTheDocument();
@@ -157,7 +166,9 @@ describe("LinkGroupsSection", () => {
 			},
 		];
 
-		render(<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={null} />);
+		render(
+			<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug={undefined} />,
+		);
 
 		expect(screen.getByText("TypeScript")).toBeInTheDocument();
 		expect(screen.getByText("Ref Page 1")).toBeInTheDocument();
@@ -178,7 +189,9 @@ describe("LinkGroupsSection", () => {
 			},
 		];
 
-		render(<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug="test-note" />);
+		render(
+			<LinkGroupsSection linkGroups={mockLinkGroups} noteSlug="test-note" />,
+		);
 
 		expect(screen.getByText("Angular")).toBeInTheDocument();
 		expect(screen.getByText("新規ページを作成")).toBeInTheDocument();
