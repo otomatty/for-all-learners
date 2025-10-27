@@ -1,4 +1,4 @@
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 
 export default function FeatureComparisonSection() {
 	return (

@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 
 interface PageLinksGridProps {
 	missingLinks: string[];
-	nestedLinks: Record<string, string[]>;
 	/** note内ページの場合のnoteSlug */
 	noteSlug?: string;
 }

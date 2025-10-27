@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { createClient } from "@/lib/supabase/server";
 import { AudioCardGenerator } from "../_components/audio-card-generator";
 export default async function AudioPage({

@@ -4,9 +4,9 @@ import type { LucideIcon } from "lucide-react";
 import * as Icons from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { NavItem } from "@/lib/navigation/types";
 import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
 
 interface AppNavDropdownProps {
 	items: NavItem[];

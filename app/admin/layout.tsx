@@ -3,8 +3,8 @@ import type React from "react";
 import { isAdmin } from "@/app/_actions/admin";
 import { getCurrentUser } from "@/app/_actions/auth";
 import { getUserPlan } from "@/app/_actions/subscriptions";
-import { AuthHeader } from "@/components/auth-header";
-import { Container } from "@/components/container";
+import { AuthHeader } from "@/components/auth/AuthHeader";
+import { Container } from "@/components/layouts/container";
 import pkg from "../../package.json";
 
 interface AdminLayoutProps {

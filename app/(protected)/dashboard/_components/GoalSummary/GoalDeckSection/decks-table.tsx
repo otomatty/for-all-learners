@@ -4,8 +4,8 @@ import { Camera, MoreHorizontal, Pencil, Trash2, Volume2 } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,

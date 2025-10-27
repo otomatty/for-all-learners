@@ -5,9 +5,9 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { createClient } from "@/lib/supabase/client";
-import GoalHeatmap from "./goal-heatmap";
-import GoalSelect from "./goal-select";
-import TimeProgress from "./time-progress";
+import GoalHeatmap from "./GoalHeatmap";
+import GoalSelect from "./GoalSelect";
+import TimeProgress from "./TimeProgress";
 
 interface StudyGoal {
 	id: string;

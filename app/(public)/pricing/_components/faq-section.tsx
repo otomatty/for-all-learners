@@ -1,4 +1,4 @@
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FAQSection() {

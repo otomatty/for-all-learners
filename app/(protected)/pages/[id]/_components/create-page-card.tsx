@@ -8,7 +8,7 @@
 import { PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
+import { PageCard } from "@/components/notes/PageCard";
 import { createClient } from "@/lib/supabase/client";
 
 interface CreatePageCardProps {
@@ -89,22 +89,11 @@ export function CreatePageCard({
 	};
 
 	return (
-		<Card
-			className="h-full border-dashed border-2 hover:border-primary 
-                 hover:bg-accent cursor-pointer transition-all
-                 flex flex-col items-center justify-center py-8 gap-3"
+		<PageCard
+			title="ページを作成"
+			variant="dashed"
 			onClick={handleClick}
-			role="button"
-			tabIndex={0}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					handleClick();
-				}
-			}}
-		>
-			<PlusCircle className="w-10 h-10 text-muted-foreground" />
-			<p className="text-sm font-medium text-center px-3">ページを作成</p>
-		</Card>
+			icon={<PlusCircle className="w-10 h-10 text-muted-foreground" />}
+		/>
 	);
 }

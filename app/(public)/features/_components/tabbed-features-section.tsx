@@ -12,7 +12,7 @@ import {
 	Zap,
 } from "lucide-react";
 import Image from "next/image";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

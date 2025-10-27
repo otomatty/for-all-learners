@@ -5,7 +5,7 @@ import {
 	getDecksLinkedToNote,
 } from "@/app/_actions/note-deck-links";
 import { getNoteDetail } from "@/app/_actions/notes";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { NoteDeckManager } from "./_components/note-deck-manager";

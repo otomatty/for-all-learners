@@ -1,14 +1,14 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import React, { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { createDeckAction } from "@/app/_actions/decks";
 import type { Deck } from "@/app/_actions/goal-decks";
 import {
 	addGoalDeckLink,
 	getAvailableDecksForGoal,
 } from "@/app/_actions/goal-decks";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { DecksTableSkeleton } from "./decks-table-skeleton";
+import { DecksTableSkeleton } from "./DecksTableSkeleton";
 
 interface AddDeckLinkDialogProps {
 	goalId: string;

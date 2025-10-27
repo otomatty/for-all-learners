@@ -5,11 +5,11 @@ import React, { useCallback, useState, useTransition } from "react";
 // actions
 import type { Deck as ServerDeck } from "@/app/_actions/goal-decks";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
-import { AddDeckLinkDialog } from "./add-deck-link-dialog";
-import { AddStudySessionDialog } from "./add-study-session-dialog";
+import { AddDeckLinkDialog } from "./AddDeckLinkDialog";
+import { AddStudySessionDialog } from "./AddStudySessionDialog";
 // components
 import { DecksTable } from "./decks-table";
-import { MobileDecksList } from "./mobile-decks-list";
+import { MobileDecksList } from "./MobileDecksList";
 
 // Deck type extends server-side Deck and adds today's review count
 export interface Deck extends ServerDeck {

@@ -4,8 +4,8 @@ import {
 	getStudyGoalsByUser,
 	getUserGoalLimits,
 } from "@/app/_actions/study_goals";
-import { Container } from "@/components/container";
 import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
+import { Container } from "@/components/layouts/container";
 import { createClient } from "@/lib/supabase/server";
 import { GoalsList } from "./_components/goals-list";
 

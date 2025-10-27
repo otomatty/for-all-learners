@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { addDeckStudyLog } from "@/app/_actions/goal-decks";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 

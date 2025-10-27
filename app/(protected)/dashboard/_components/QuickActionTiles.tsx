@@ -14,7 +14,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { Database } from "@/types/database.types";
-import { DeckSelectionDialog } from "./deck-selection-dialog";
+import { DeckSelectionDialog } from "./DeckSelectionDialog";
 
 // 型定義: 復習対象カード数を含むデッキ型
 type DeckWithDueCount = Database["public"]["Tables"]["decks"]["Row"] & {

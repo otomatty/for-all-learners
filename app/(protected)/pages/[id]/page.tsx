@@ -2,7 +2,7 @@ import type { JSONContent } from "@tiptap/core";
 import { notFound, redirect } from "next/navigation";
 import { getLinkGroupsForPage } from "@/app/_actions/linkGroups";
 import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
@@ -39,7 +39,7 @@ export default async function PageDetail({
 	const page = pageData;
 
 	// Fetch user's Cosense projectName for manual sync
-	const { data: relation, error: relError } = await supabase
+	const { data: relation } = await supabase
 		.from("user_cosense_projects")
 		.select("cosense_projects(project_name)")
 		.eq("user_id", user.id)
@@ -109,9 +109,6 @@ export default async function PageDetail({
 	}
 	const missingLinks = missingBracketNames;
 
-	// Compute nestedLinks (kept for compatibility)
-	const nestedLinks: Record<string, string[]> = {};
-
 	// --- ページ読み込み時にリンクグループを同期（既存ページ対応） ---
 	const { syncLinkGroupsForPage } = await import(
 		"@/app/_actions/syncLinkGroups"
@@ -140,7 +137,6 @@ export default async function PageDetail({
 						initialContent={decoratedDoc}
 						cosenseProjectName={cosenseProjectName}
 						missingLinks={missingLinksFiltered}
-						nestedLinks={nestedLinks}
 						linkGroups={linkGroups || []}
 					/>
 				</div>

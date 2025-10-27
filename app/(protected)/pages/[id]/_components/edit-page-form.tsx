@@ -20,12 +20,12 @@ import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
 import { usePageFormState } from "../_hooks/usePageFormState";
 import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
+import BacklinksGrid from "./backlinks-grid";
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import { LinkGroupsSection } from "./link-groups-section";
 import { PageHeader } from "./page-header";
 import PageLinksGrid from "./page-links-grid";
-import RelatedCardsGrid from "./related-cards-grid";
 import ResponsiveToolbar from "./responsive-toolbar";
 
 interface EditPageFormProps {
@@ -34,7 +34,6 @@ interface EditPageFormProps {
 	/** Cosense プロジェクト名 (manual sync 用) */
 	cosenseProjectName?: string | null;
 	missingLinks: string[];
-	nestedLinks: Record<string, string[]>;
 	linkGroups: LinkGroupForUI[];
 }
 
@@ -43,7 +42,6 @@ export default function EditPageForm({
 	initialContent,
 	cosenseProjectName,
 	missingLinks,
-	nestedLinks,
 	linkGroups,
 }: EditPageFormProps) {
 	// Link alert removed - now handled by link groups
@@ -110,8 +108,8 @@ export default function EditPageForm({
 					// 必要に応じてページを再読み込みまたは状態を更新
 				} else if (result.error) {
 				}
-			} catch (error) {
-				console.error("サムネイル自動設定でエラーが発生:", error);
+			} catch {
+				// サムネイル自動設定でエラーが発生
 			}
 		};
 
@@ -185,11 +183,10 @@ export default function EditPageForm({
 			toast.dismiss(); // ローディング中のトーストを消す
 			toast.success(`ページ「${title}」を削除しました`);
 			router.push("/pages"); // ページ一覧などにリダイレクト
-		} catch (err) {
-			console.error("ページ削除エラー:", err);
+		} catch {
 			toast.dismiss(); // ローディング中のトーストを消す
 			toast.error("ページの削除に失敗しました");
-			throw err; // DeletePageDialog でエラーを捕捉できるように再スロー
+			throw new Error("ページ削除エラー"); // DeletePageDialog でエラーを捕捉できるように再スロー
 		} finally {
 			setIsDeleting(false);
 			setIsLoading(false);
@@ -210,8 +207,7 @@ export default function EditPageForm({
 						.insertContent({ type: "gyazoImage", attrs: { src: url } })
 						.run();
 				}
-			} catch (err) {
-				console.error("画像アップロードエラー:", err);
+			} catch {
 				toast.error("画像アップロードに失敗しました");
 			} finally {
 				setIsLoading(false);
@@ -248,8 +244,7 @@ export default function EditPageForm({
 			} else {
 				router.push(`/pages/${newPage.id}`);
 			}
-		} catch (err) {
-			console.error("ページ複製エラー:", err);
+		} catch {
 			toast.dismiss();
 			toast.error("ページの複製に失敗しました");
 		} finally {
@@ -304,16 +299,12 @@ export default function EditPageForm({
 									/>
 								)}
 							</div>
+							{/* 参照元ページ（バックリンク） */}
+							<BacklinksGrid pageId={page.id} />
 							{/* リンクグループセクション（新規） */}
 							<LinkGroupsSection linkGroups={linkGroups} noteSlug={noteSlug} />
-							{/* リンク一覧 */}
-							<PageLinksGrid
-								missingLinks={missingLinks}
-								nestedLinks={nestedLinks}
-								noteSlug={noteSlug}
-							/>
-							{/* 関連カード */}
-							<RelatedCardsGrid pageId={page.id} />
+							{/* 未設定リンク一覧 */}
+							<PageLinksGrid missingLinks={missingLinks} noteSlug={noteSlug} />
 						</div>
 					)}
 				</div>

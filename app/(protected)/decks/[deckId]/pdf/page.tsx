@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getDeckById } from "@/app/_actions/decks";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { PdfCardGenerator } from "../_components/pdf-card-generator";

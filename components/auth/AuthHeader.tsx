@@ -2,12 +2,13 @@
 
 import { UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { AdminNav } from "@/components/admin-nav";
-import AppNavDropdown from "@/components/app-nav-dropdown";
+import { AdminNav } from "@/components/admins/admin-nav";
+import AppNavDropdown from "@/components/layouts/AppNavDropdown";
+import { PageHelpButton } from "@/components/layouts/PageHelpButton";
+import { Logo } from "@/components/layouts/SiteLogo";
+import { UserNav } from "@/components/layouts/UserNav";
 import { MobileNav } from "@/components/mobile-nav";
-import { PageHelpButton } from "@/components/page-help-button";
-import { SearchBar } from "@/components/search-bar";
-import { Logo } from "@/components/site-logo";
+import { SearchBar } from "@/components/notes/SearchBar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
 	Tooltip,
@@ -15,10 +16,9 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { UserNav } from "@/components/user-nav";
 import { useActiveUsers } from "@/hooks/use-active-users";
 import type { NavItem } from "@/lib/navigation/types";
-import { createClient } from "@/lib/supabase/client"; // Supabaseクライアントのパスを適宜修正してください
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
 export interface AuthHeaderProps {
