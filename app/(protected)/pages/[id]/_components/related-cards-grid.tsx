@@ -58,7 +58,7 @@ export default function RelatedCardsGrid({ pageId }: RelatedCardsGridProps) {
 	};
 
 	return (
-		<section className="max-w-5xl mx-auto">
+		<section>
 			<h2 className="text-lg font-semibold mb-2">関連カード</h2>
 			<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 				{cards.map((card) => (

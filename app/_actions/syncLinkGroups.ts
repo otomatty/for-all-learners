@@ -33,8 +33,8 @@ export async function syncLinkGroupsForPage(
 		const links = extractLinksFromContent(contentTiptap);
 
 		logger.info(
-			{ pageId, linkCount: links.length },
-			"Syncing link groups for page",
+			{ pageId, linkCount: links.length, links: links.slice(0, 3) },
+			"[SYNC] Syncing link groups for page",
 		);
 
 		// Delete existing occurrences for this page
@@ -42,12 +42,22 @@ export async function syncLinkGroupsForPage(
 
 		// Process each link
 		for (const link of links) {
+			logger.info(
+				{ pageId, linkKey: link.key, linkText: link.text },
+				"[SYNC] Processing link",
+			);
+
 			// 1. Upsert link group
 			const linkGroup = await upsertLinkGroup(supabase, {
 				key: link.key,
 				rawText: link.text,
 				pageId: link.pageId,
 			});
+
+			logger.info(
+				{ linkGroupId: linkGroup.id, linkKey: link.key },
+				"[SYNC] Link group upserted",
+			);
 
 			// 2. Create link occurrence
 			await upsertLinkOccurrence(supabase, {
@@ -56,13 +66,21 @@ export async function syncLinkGroupsForPage(
 				markId: link.markId,
 				position: link.position,
 			});
+
+			logger.info(
+				{ linkGroupId: linkGroup.id, sourcePageId: pageId },
+				"[SYNC] Link occurrence created",
+			);
 		}
 
-		logger.info({ pageId, linkCount: links.length }, "Link groups synced");
+		logger.info(
+			{ pageId, linkCount: links.length },
+			"[SYNC] Link groups synced successfully",
+		);
 
 		return { success: true };
 	} catch (error) {
-		logger.error({ pageId, error }, "Failed to sync link groups");
+		logger.error({ pageId, error }, "[SYNC] Failed to sync link groups");
 		return {
 			success: false,
 			error: "Failed to sync link groups",

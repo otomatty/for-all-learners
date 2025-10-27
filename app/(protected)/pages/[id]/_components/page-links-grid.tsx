@@ -73,7 +73,7 @@ export default function PageLinksGrid({
 		<div className="my-8 space-y-8 min-h-[300px]">
 			{/* 未設定リンク一覧 */}
 			{missingLinks && missingLinks.length > 0 && (
-				<section className="max-w-5xl mx-auto">
+				<section>
 					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
 					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 						{missingLinks.map((name) => (

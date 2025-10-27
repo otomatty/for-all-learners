@@ -112,6 +112,12 @@ export default async function PageDetail({
 	// Compute nestedLinks (kept for compatibility)
 	const nestedLinks: Record<string, string[]> = {};
 
+	// --- ページ読み込み時にリンクグループを同期（既存ページ対応） ---
+	const { syncLinkGroupsForPage } = await import(
+		"@/app/_actions/syncLinkGroups"
+	);
+	await syncLinkGroupsForPage(page.id, page.content_tiptap as JSONContent);
+
 	// --- リンクグループデータの取得（新規） ---
 	const { data: linkGroups } = await getLinkGroupsForPage(page.id);
 
