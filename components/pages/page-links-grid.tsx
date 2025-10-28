@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 
 interface PageLinksGridProps {
@@ -39,11 +40,10 @@ export default function PageLinksGrid({
 				.select("id")
 				.single();
 			if (insertError || !insertedPage) {
+				logger.error({ error: insertError, name, noteSlug }, "ページ作成失敗");
 				toast.error("ページ作成に失敗しました");
 				return;
-			}
-
-			// noteSlugが指定されている場合はnoteに関連付け
+			} // noteSlugが指定されている場合はnoteに関連付け
 			if (noteSlug) {
 				// noteIDを取得
 				const { data: note, error: noteError } = await supabase
