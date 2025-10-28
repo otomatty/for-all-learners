@@ -15,7 +15,6 @@ import {
 import { ChevronRight, FolderOpen } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
 	Sidebar,
 	SidebarContent,
@@ -62,12 +61,10 @@ export function NotesExplorerSidebar({
 
 	// CRITICAL FIX: Remove duplicate IDs
 	// Create a unique set of notes by ID to prevent duplicate key error
-	const uniqueNotes = notes.reduce((acc, note) => {
-		if (!acc.find((n) => n.id === note.id)) {
-			acc.push(note);
-		}
-		return acc;
-	}, [] as Note[]);
+	// Optimized: O(n) using Map instead of O(n²) using reduce+find
+	const uniqueNotes = Array.from(
+		new Map(notes.map((note) => [note.id, note])).values(),
+	);
 
 	// ドラッグ&ドロップセンサー設定
 	const sensors = useSensors(

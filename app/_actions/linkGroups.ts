@@ -210,52 +210,82 @@ export async function getLinkGroupsForPage(pageId: string): Promise<{
 			return { data: [], error: null };
 		}
 
-		// 4. Build result with target page and referencing pages
-		const result: LinkGroupForUI[] = [];
+		// 4. Build result with target page and referencing pages (OPTIMIZED: Batch queries)
+		// Collect all IDs first
+		const targetPageIds = linkGroupsData
+			.map((g) => g.page_id)
+			.filter((id): id is string => id !== null);
+		const linkGroupIds = linkGroupsData.map((g) => g.id);
 
-		for (const group of linkGroupsData) {
-			// 4-1. Get target page if exists
-			let targetPage = null;
-			if (group.page_id) {
-				const { data: targetPageData } = await supabase
-					.from("pages")
-					.select("id, title, thumbnail_url, content_tiptap, updated_at")
-					.eq("id", group.page_id)
-					.single();
+		// 4-1. Batch fetch all target pages (1 query instead of N)
+		const allTargetPages =
+			targetPageIds.length > 0
+				? await supabase
+						.from("pages")
+						.select("id, title, thumbnail_url, content_tiptap, updated_at")
+						.in("id", targetPageIds)
+						.then(({ data }) => data || [])
+				: [];
 
-				if (targetPageData) {
-					targetPage = targetPageData;
-				}
+		// 4-2. Batch fetch all occurrences (1 query instead of N)
+		const allOccurrences = await supabase
+			.from("link_occurrences")
+			.select("link_group_id, source_page_id")
+			.in("link_group_id", linkGroupIds)
+			.then(({ data }) => data || []);
+
+		// 4-3. Collect all referencing page IDs and batch fetch (1 query instead of N)
+		const allReferencingPageIds = [
+			...new Set(
+				allOccurrences
+					.map((o) => o.source_page_id)
+					.filter((id) => id !== pageId && !targetPageIds.includes(id)),
+			),
+		];
+
+		const allReferencingPages =
+			allReferencingPageIds.length > 0
+				? await supabase
+						.from("pages")
+						.select("id, title, thumbnail_url, content_tiptap, updated_at")
+						.in("id", allReferencingPageIds)
+						.order("updated_at", { ascending: false })
+						.then(({ data }) => data || [])
+				: [];
+
+		// 4-4. Build lookup maps for O(1) access
+		const targetPagesMap = new Map(allTargetPages.map((p) => [p.id, p]));
+		const occurrencesByGroupId = new Map<string, typeof allOccurrences>();
+		for (const occ of allOccurrences) {
+			if (!occurrencesByGroupId.has(occ.link_group_id)) {
+				occurrencesByGroupId.set(occ.link_group_id, []);
 			}
+			occurrencesByGroupId.get(occ.link_group_id)?.push(occ);
+		}
+		const referencingPagesMap = new Map(
+			allReferencingPages.map((p) => [p.id, p]),
+		);
 
-			// 4-2. Get referencing pages
-			const { data: occurrences } = await supabase
-				.from("link_occurrences")
-				.select("source_page_id")
-				.eq("link_group_id", group.id);
+		// 4-5. Build result using maps (O(n) instead of O(n²))
+		const result: LinkGroupForUI[] = linkGroupsData.map((group) => {
+			const targetPage = group.page_id
+				? targetPagesMap.get(group.page_id)
+				: null;
 
+			const occurrences = occurrencesByGroupId.get(group.id) || [];
 			const referencingPageIds = [
 				...new Set(
-					(occurrences || [])
+					occurrences
 						.map((o) => o.source_page_id)
 						.filter((id) => id !== pageId && id !== group.page_id),
 				),
 			];
 
-			const referencingPages = [];
-			if (referencingPageIds.length > 0) {
-				const { data: pagesData } = await supabase
-					.from("pages")
-					.select("id, title, thumbnail_url, content_tiptap, updated_at")
-					.in("id", referencingPageIds)
-					.order("updated_at", { ascending: false });
+			const referencingPages = referencingPageIds
+				.map((id) => referencingPagesMap.get(id))
+				.filter((p): p is NonNullable<typeof p> => p !== undefined);
 
-				if (pagesData) {
-					referencingPages.push(...pagesData);
-				}
-			}
-
-			result.push({
+			return {
 				key: group.key,
 				displayText: group.raw_text,
 				linkGroupId: group.id,
@@ -276,9 +306,8 @@ export async function getLinkGroupsForPage(pageId: string): Promise<{
 					content_tiptap: p.content_tiptap as Record<string, unknown>,
 					updated_at: p.updated_at ?? "",
 				})),
-			});
-		}
-
+			};
+		});
 		return { data: result, error: null };
 	} catch (error) {
 		logger.error({ pageId, error }, "Failed to get link groups for page");
