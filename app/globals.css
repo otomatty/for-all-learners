@@ -49,6 +49,10 @@
 		opacity: 0.8;
 	}
 
+	.preview-content-fade.loaded {
+		opacity: 1;
+	}
+
 	/* Activity Calendar - スライドインアニメーション */
 	@keyframes slide-in-right {
 		from {
@@ -63,9 +67,6 @@
 
 	.animate-slide-in-right {
 		animation: slide-in-right 0.3s ease-out;
-	}
-}	.preview-content-fade.loaded {
-		opacity: 1;
 	}
 }
 
