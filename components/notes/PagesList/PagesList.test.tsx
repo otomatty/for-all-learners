@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import { PagesList } from "./PagesList";
 import type { Database } from "@/types/database.types";
+import { PagesList } from "./PagesList";
 
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
 

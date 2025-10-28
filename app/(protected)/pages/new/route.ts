@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
 		.single();
 
 	if (pageError) {
-		console.error("New page creation error:", pageError);
 		throw pageError;
 	}
 
@@ -45,12 +44,11 @@ export async function GET(req: NextRequest) {
 	});
 
 	if (linkError) {
-		console.error("Error linking page to default note:", linkError);
 		throw linkError;
 	}
 
 	// Redirect to the newly created page (using ID as temporary slug)
 	return NextResponse.redirect(
-		new URL(`/pages/${encodeURIComponent(page.id)}`, req.url),
+		new URL(`/notes/default/${encodeURIComponent(page.id)}`, req.url),
 	);
 }

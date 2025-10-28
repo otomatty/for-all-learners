@@ -15,18 +15,18 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 import type { LinkGroupForUI } from "@/types/link-group";
 // Hooks
-import { useDateShortcut } from "../_hooks/useDateShortcut";
-import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
-import { usePageFormState } from "../_hooks/usePageFormState";
-import { useSpeechControls } from "../_hooks/useSpeechControls";
+import { useDateShortcut } from "@/components/pages/_hooks/useDateShortcut";
+import { usePageEditorLogic } from "@/components/pages/_hooks/usePageEditorLogic";
+import { usePageFormState } from "@/components/pages/_hooks/usePageFormState";
+import { useSpeechControls } from "@/components/pages/_hooks/useSpeechControls";
 // Components
-import BacklinksGrid from "./BacklinksGrid";
-import { ContentSkeleton } from "./content-skeleton";
-import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
-import { LinkGroupsSection } from "./link-groups-section";
-import { PageHeader } from "./page-header";
-import PageLinksGrid from "./page-links-grid";
-import ResponsiveToolbar from "./responsive-toolbar";
+import BacklinksGrid from "@/components/pages/BacklinksGrid";
+import { ContentSkeleton } from "@/components/pages/content-skeleton";
+import { EditPageBubbleMenu } from "@/components/pages/edit-page-bubble-menu";
+import { LinkGroupsSection } from "@/components/pages/link-groups-section";
+import { PageHeader } from "@/components/pages/page-header";
+import PageLinksGrid from "@/components/pages/page-links-grid";
+import ResponsiveToolbar from "@/components/pages/responsive-toolbar";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
