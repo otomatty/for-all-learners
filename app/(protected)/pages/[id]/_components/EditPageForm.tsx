@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { duplicatePage } from "@/app/_actions/duplicatePage";
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
+// Logger
+import logger from "@/lib/logger";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
 // Types
@@ -108,11 +110,13 @@ export default function EditPageForm({
 					// 必要に応じてページを再読み込みまたは状態を更新
 				} else if (result.error) {
 				}
-			} catch {
-				// サムネイル自動設定でエラーが発生
+			} catch (error) {
+				logger.error(
+					{ error, pageId: page.id },
+					"サムネイル自動設定でエラーが発生",
+				);
 			}
 		};
-
 		autoSetThumbnail();
 	}, [page.id, page.thumbnail_url, initialContent]);
 
@@ -183,10 +187,11 @@ export default function EditPageForm({
 			toast.dismiss(); // ローディング中のトーストを消す
 			toast.success(`ページ「${title}」を削除しました`);
 			router.push("/pages"); // ページ一覧などにリダイレクト
-		} catch {
+		} catch (error) {
+			logger.error({ error, pageId: page.id, title }, "ページ削除エラー");
 			toast.dismiss(); // ローディング中のトーストを消す
 			toast.error("ページの削除に失敗しました");
-			throw new Error("ページ削除エラー"); // DeletePageDialog でエラーを捕捉できるように再スロー
+			throw new Error("ページ削除エラー", { cause: error }); // DeletePageDialog でエラーを捕捉できるように再スロー
 		} finally {
 			setIsDeleting(false);
 			setIsLoading(false);
