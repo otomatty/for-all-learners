@@ -4,7 +4,7 @@ import type { Editor } from "@tiptap/core";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createPage } from "@/app/_actions/pages";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

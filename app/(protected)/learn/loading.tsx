@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
 	Card,

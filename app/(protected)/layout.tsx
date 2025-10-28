@@ -4,8 +4,8 @@ import { isAdmin } from "@/app/_actions/admin";
 import { getCurrentUser } from "@/app/_actions/auth";
 import { getUserPlan } from "@/app/_actions/subscriptions";
 import { getHelpVideoAudioSetting } from "@/app/_actions/user_settings";
-import { AppFooter } from "@/components/app-footer";
-import { AuthHeader } from "@/components/auth-header";
+import { AuthHeader } from "@/components/auth/AuthHeader";
+import { AppFooter } from "@/components/layouts/AppFooter";
 import pkg from "../../package.json";
 import { navItems } from "./navItems";
 

@@ -413,6 +413,27 @@ a.page-link-mark[data-state="pending"]::before {
 	color: #60a5fa; /* blue-400 */
 }
 
+/* Phase 1 (Link Group): grouped state - display as regular link even without target page */
+/* grouped: リンク先ページ未作成だが、同じリンクテキストが複数存在 */
+.ProseMirror a[data-group-state="grouped"] {
+	color: #2563eb; /* blue-600 - same as exists */
+	text-decoration-line: underline;
+	text-decoration-style: solid;
+	cursor: pointer;
+}
+.dark .ProseMirror a[data-group-state="grouped"] {
+	color: #60a5fa; /* blue-400 - same as exists */
+}
+
+/* grouped hover state */
+.ProseMirror a[data-group-state="grouped"]:hover {
+	color: #1d4ed8; /* blue-700 */
+	text-decoration-style: solid;
+}
+.dark .ProseMirror a[data-group-state="grouped"]:hover {
+	color: #93c5fd; /* blue-300 */
+}
+
 /* missing: 未解決（該当ページ無し）。赤基調 + 破線 + 背景の淡いトーン */
 .ProseMirror a[data-state="missing"] {
 	color: #dc2626; /* red-600 */
@@ -458,3 +479,60 @@ a.page-link-mark[data-state="pending"]::before {
 	transform: translateY(-1px);
 }
 /* --- End PageLinkMark state styles --- */
+
+/* ==============================================
+   UnifiedLinkMark - Link Group State Styles
+   ============================================== */
+
+/* Phase 1: Link Group state styles using data-group-state attribute */
+
+/* exists: ページが存在する → 青色リンク */
+.ProseMirror a.unilink[data-group-state="exists"] {
+	color: #2563eb; /* blue-600 */
+}
+.dark .ProseMirror a.unilink[data-group-state="exists"] {
+	color: #60a5fa; /* blue-400 */
+}
+
+/* grouped: ページ未作成だが複数箇所で参照 → 青色リンク（グループ） */
+.ProseMirror a.unilink[data-group-state="grouped"] {
+	color: #2563eb; /* blue-600 */
+}
+.dark .ProseMirror a.unilink[data-group-state="grouped"] {
+	color: #60a5fa; /* blue-400 */
+}
+
+/* missing: ページ未作成かつ単独参照 → 赤色リンク */
+.ProseMirror a.unilink[data-group-state="missing"] {
+	color: #dc2626; /* red-600 */
+}
+.dark .ProseMirror a.unilink[data-group-state="missing"] {
+	color: #f87171; /* red-400 */
+}
+
+/* Hover states for UnifiedLinkMark */
+.ProseMirror a.unilink[data-group-state="exists"]:hover {
+	color: #1d4ed8; /* blue-700 */
+}
+.dark .ProseMirror a.unilink[data-group-state="exists"]:hover {
+	color: #93c5fd; /* blue-300 */
+}
+
+.ProseMirror a.unilink[data-group-state="grouped"]:hover {
+	color: #1d4ed8; /* blue-700 */
+	text-decoration-style: double; /* グループ状態を視覚的に区別 */
+}
+.dark .ProseMirror a.unilink[data-group-state="grouped"]:hover {
+	color: #93c5fd; /* blue-300 */
+	text-decoration-style: double;
+}
+
+.ProseMirror a.unilink[data-group-state="missing"]:hover {
+	color: #b91c1c; /* red-700 */
+	background: #fee2e2; /* red-100 */
+}
+.dark .ProseMirror a.unilink[data-group-state="missing"]:hover {
+	color: #fca5a5; /* red-300 */
+	background: rgba(127, 29, 29, 0.4); /* red-900 40% */
+}
+/* --- End UnifiedLinkMark state styles --- */

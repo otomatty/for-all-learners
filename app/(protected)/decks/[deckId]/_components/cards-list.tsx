@@ -4,7 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialog をインポート
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

@@ -160,12 +160,12 @@ export const Button: React.FC<ButtonProps> = (props) => {
  *
  * DEPENDENCY MAP:
  *
- * Parents (このファイルを使用している場所):
+ * Parents (Files that import this file):
  *   ├─ src/components/Form/SubmitButton.tsx
  *   ├─ src/components/Modal/ConfirmDialog.tsx
  *   └─ src/pages/Dashboard.tsx
  *
- * Dependencies (このファイルが使用している外部ファイル):
+ * Dependencies (External files that this file imports):
  *   ├─ src/hooks/useClickHandler.ts
  *   ├─ src/utils/classNameBuilder.ts
  *   └─ ./Button.module.css

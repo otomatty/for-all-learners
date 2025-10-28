@@ -6,7 +6,7 @@ import {
 	deleteChangelogEntry,
 	getChangelogData,
 } from "@/app/_actions/changelog";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialog をインポート
 import {
 	AlertDialog,
 	AlertDialogAction,

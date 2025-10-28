@@ -1,5 +1,5 @@
 import { BookOpen, Brain, Layers, Users, Zap } from "lucide-react";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 
 export default function DetailedFeaturesListSection() {
 	return (

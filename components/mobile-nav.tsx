@@ -3,6 +3,7 @@
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserNav } from "@/components/layouts/UserNav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
 	Sheet,
@@ -11,11 +12,10 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { UserNav } from "@/components/user-nav";
 import { useNavigation } from "@/hooks/use-navigation";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
-import { SearchBar } from "./search-bar";
+import { SearchBar } from "./notes/SearchBar";
 
 interface MobileNavProps {
 	isAdmin: boolean;

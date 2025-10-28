@@ -1,6 +1,6 @@
 import { BarChart, BookOpen, Brain, Layers, Share2, Zap } from "lucide-react";
 import Image from "next/image";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { getUserCosenseProjects } from "@/app/_actions/cosense";
 import { getUserSettings } from "@/app/_actions/user_settings";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import UserSettingsForm from "./_components/user-settings-form";
 

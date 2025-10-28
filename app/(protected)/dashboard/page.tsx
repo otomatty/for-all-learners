@@ -7,11 +7,11 @@ import { getDashboardStats } from "@/app/_actions/dashboardStats";
 import { getLearningLogsByUser } from "@/app/_actions/learning_logs";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 // conponents
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
-import { GoalSummary } from "./_components/goal-summary";
-import { QuickActionTiles } from "./_components/quick-action-tiles";
+import { GoalSummary } from "./_components/GoalSummary";
+import { QuickActionTiles } from "./_components/QuickActionTiles";
 
 export default async function DashboardPage({
 	searchParams: searchParamsPromise, // Renaming to clarify it's a promise

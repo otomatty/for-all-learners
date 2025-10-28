@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * A skeleton placeholder shown while generating page content.
  */

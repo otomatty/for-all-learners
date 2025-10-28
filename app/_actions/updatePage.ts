@@ -10,6 +10,7 @@ import {
 	type SmartThumbnailUpdateParams,
 } from "@/lib/utils/smartThumbnailUpdater";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
+import { syncLinkGroupsForPage } from "./syncLinkGroups";
 
 export type UpdatePageParams = {
 	id: string;
@@ -128,6 +129,9 @@ export async function updatePage({
 			.insert(outgoingIds.map((linked_id) => ({ page_id: id, linked_id })));
 		if (linksErr) throw linksErr;
 	}
+
+	// 5) Phase 1 (Link Group): Sync link groups for this page
+	await syncLinkGroupsForPage(id, parsedContent);
 
 	return { success: true };
 }

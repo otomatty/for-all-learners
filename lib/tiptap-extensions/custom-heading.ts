@@ -1,7 +1,28 @@
-import { mergeAttributes } from "@tiptap/core";
+import { mergeAttributes, textblockTypeInputRule } from "@tiptap/core";
 import Heading from "@tiptap/extension-heading";
 
 export const CustomHeading = Heading.extend({
+	addInputRules() {
+		// Override default heading input rules to shift levels by 1
+		// # text -> H2, ## text -> H3, etc.
+		// This prevents H1 conflicts with page title while allowing # notation
+		return this.options.levels.map((level) => {
+			// Map markdown notation to heading level + 1
+			// For level 2: match # (1 hash)
+			// For level 3: match ## (2 hashes)
+			// etc.
+			const hashCount = Math.max(1, level - 1);
+
+			return textblockTypeInputRule({
+				find: new RegExp(`^(#{${hashCount}})\\s$`),
+				type: this.type,
+				getAttributes: {
+					level,
+				},
+			});
+		});
+	},
+
 	renderHTML({ node, HTMLAttributes }) {
 		const level = node.attrs.level;
 		const sizeClassMap: Record<number, string> = {

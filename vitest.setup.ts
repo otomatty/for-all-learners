@@ -10,6 +10,36 @@ import React from "react";
 // Make React available globally for JSX
 global.React = React;
 
+// Mock Next.js Image component
+vi.mock("next/image", () => ({
+	default: ({
+		src,
+		alt,
+		...props
+	}: {
+		src: string;
+		alt: string;
+		[key: string]: unknown;
+	}) => {
+		return React.createElement("img", { src, alt, ...props });
+	},
+}));
+
+// Mock Next.js Link component
+vi.mock("next/link", () => ({
+	default: ({
+		children,
+		href,
+		...props
+	}: {
+		children: React.ReactNode;
+		href: string;
+		[key: string]: unknown;
+	}) => {
+		return React.createElement("a", { href, ...props }, children);
+	},
+}));
+
 // Cleanup after each test
 afterEach(() => {
 	vi.clearAllMocks();

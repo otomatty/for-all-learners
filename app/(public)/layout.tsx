@@ -1,6 +1,6 @@
 import type React from "react";
-import { AppFooter } from "@/components/app-footer";
-import { UnauthHeader } from "@/components/unauth-header";
+import { UnauthHeader } from "@/components/auth/UnauthHeader";
+import { AppFooter } from "@/components/layouts/AppFooter";
 // Supabase のサーバーサイドクライアントを作成する関数をインポートします。
 // パスはプロジェクトの構成に合わせて調整してください。
 import { createClient } from "@/lib/supabase/server"; // 例: utils/supabase/server.ts

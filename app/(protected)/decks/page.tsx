@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 import { CreateDeckDialogButton } from "@/app/(protected)/decks/_components/create-deck-dialog-button";
 import { DecksList } from "@/app/(protected)/decks/_components/decks-list";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/server";

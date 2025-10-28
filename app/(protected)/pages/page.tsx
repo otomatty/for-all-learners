@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getPagesByUser } from "@/app/_actions/pages";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import PagesPageClient from "./page-client";
