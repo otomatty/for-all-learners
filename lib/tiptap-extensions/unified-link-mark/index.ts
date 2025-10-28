@@ -26,7 +26,9 @@ export * from "./types";
 export const UnifiedLinkMark = Mark.create<UnifiedLinkMarkOptions>({
 	name: "unilink",
 	priority: 1000,
-	inclusive: false,
+	inclusive: true,
+	excludes: "",
+	spanning: false,
 
 	addOptions() {
 		return DEFAULT_OPTIONS;

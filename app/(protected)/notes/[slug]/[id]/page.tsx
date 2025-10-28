@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
 
-import EditPageForm from "../../../pages/[id]/_components/edit-page-form";
+import EditPageForm from "../../../pages/[id]/_components/EditPageForm";
 
 interface PageDetailProps {
 	params: Promise<{ slug: string; id: string }>;

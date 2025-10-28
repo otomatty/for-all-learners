@@ -73,8 +73,8 @@ export default function PageLinksGrid({
 			{/* 未設定リンク一覧 */}
 			{missingLinks && missingLinks.length > 0 && (
 				<section>
-					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
-					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+					<h2 className="text-lg font-semibold mb-2">新しいリンク</h2>
+					<div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
 						{missingLinks.map((name) => (
 							<Card
 								key={name}

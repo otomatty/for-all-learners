@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import type { JSONContent } from "@tiptap/core";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getPageBacklinks } from "@/app/_actions/pages/get-backlinks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageCard } from "@/components/notes/PageCard";
+import { Badge } from "@/components/ui/badge";
+import { extractTextFromTiptap } from "./extract-text-from-tiptap";
 
 /**
  * BacklinksGrid Component
@@ -16,8 +18,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  *
  * Dependencies (依存先):
  *   ├─ @/app/_actions/pages/get-backlinks
- *   ├─ @/components/ui/card
- *   ├─ next/link
+ *   ├─ @/components/notes/PageCard
+ *   ├─ ./extract-text-from-tiptap
  *   └─ sonner
  *
  * Related Files:
@@ -31,8 +33,8 @@ interface BacklinksGridProps {
 interface BacklinkPage {
 	id: string;
 	title: string;
-	user_id: string;
-	created_at: string | null;
+	thumbnail_url: string | null;
+	content_tiptap: JSONContent;
 	updated_at: string | null;
 }
 
@@ -82,30 +84,27 @@ export default function BacklinksGrid({ pageId }: BacklinksGridProps) {
 	}
 
 	return (
-		<section>
-			<h2 className="text-lg font-semibold mb-2">
-				このページへのリンク ({backlinks.length})
-			</h2>
-			<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-				{backlinks.map((page) => (
-					<Link key={page.id} href={`/pages/${page.id}`}>
-						<Card className="h-full overflow-hidden transition-all hover:shadow-md py-2 md:py-4 gap-2 cursor-pointer">
-							<CardHeader className="px-2 md:px-4 pb-2">
-								<CardTitle className="text-sm font-semibold line-clamp-2">
-									{page.title}
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="px-2 md:px-4">
-								<p className="text-xs text-muted-foreground">
-									更新:{" "}
-									{page.updated_at
-										? new Date(page.updated_at).toLocaleDateString("ja-JP")
-										: "不明"}
-								</p>
-							</CardContent>
-						</Card>
-					</Link>
-				))}
+		<section className="my-8 space-y-6">
+			<div className="flex items-center gap-2 mb-4">
+				<h2 className="text-lg font-semibold">このページへのリンク</h2>
+				<Badge variant="default">{backlinks.length}</Badge>
+			</div>
+			<div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+				{backlinks.map((page) => {
+					const text = extractTextFromTiptap(page.content_tiptap)
+						.replace(/\s+/g, " ")
+						.trim();
+
+					return (
+						<PageCard
+							key={page.id}
+							title={page.title}
+							href={`/pages/${page.id}`}
+							thumbnailUrl={page.thumbnail_url}
+							contentPreview={text || undefined}
+						/>
+					);
+				})}
 			</div>
 		</section>
 	);

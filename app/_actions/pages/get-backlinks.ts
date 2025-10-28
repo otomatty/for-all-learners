@@ -1,5 +1,6 @@
 "use server";
 
+import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -21,8 +22,8 @@ import { createClient } from "@/lib/supabase/server";
 interface BacklinkPage {
 	id: string;
 	title: string;
-	user_id: string;
-	created_at: string | null;
+	thumbnail_url: string | null;
+	content_tiptap: JSONContent;
 	updated_at: string | null;
 }
 
@@ -35,7 +36,7 @@ export async function getPageBacklinks(
 		// Get all pages that might contain links to the target page
 		const { data: pages, error: pagesError } = await supabase
 			.from("pages")
-			.select("id, title, user_id, created_at, updated_at, content_tiptap")
+			.select("id, title, thumbnail_url, content_tiptap, updated_at")
 			.neq("id", targetPageId); // Exclude the target page itself
 
 		if (pagesError) {
@@ -47,7 +48,7 @@ export async function getPageBacklinks(
 		}
 
 		// Filter pages that contain links to the target page
-		const backlinks: BacklinkPage[] = pages.filter((page) => {
+		const backlinks = pages.filter((page) => {
 			if (!page.content_tiptap) return false;
 
 			// Convert content to string for searching
@@ -58,13 +59,13 @@ export async function getPageBacklinks(
 			return contentStr.includes(targetPageId);
 		});
 
-		// Map to the desired format (exclude content_tiptap from response)
-		const result = backlinks.map((page) => ({
+		// Map to the desired format (same as link groups)
+		const result: BacklinkPage[] = backlinks.map((page) => ({
 			id: page.id,
 			title: page.title,
-			user_id: page.user_id,
-			created_at: page.created_at,
-			updated_at: page.updated_at,
+			thumbnail_url: page.thumbnail_url,
+			content_tiptap: page.content_tiptap as JSONContent,
+			updated_at: page.updated_at ?? "",
 		}));
 
 		return { data: result, error: null };

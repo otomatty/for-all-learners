@@ -7,7 +7,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
 
-import EditPageForm from "./_components/edit-page-form";
+import EditPageForm from "./_components/EditPageForm";
 
 export default async function PageDetail({
 	params,

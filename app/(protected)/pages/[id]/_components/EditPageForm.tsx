@@ -14,13 +14,13 @@ import { createClient } from "@/lib/supabase/client";
 // Types
 import type { Database } from "@/types/database.types";
 import type { LinkGroupForUI } from "@/types/link-group";
+// Hooks
 import { useDateShortcut } from "../_hooks/useDateShortcut";
 import { usePageEditorLogic } from "../_hooks/usePageEditorLogic";
-// Hooks
 import { usePageFormState } from "../_hooks/usePageFormState";
 import { useSpeechControls } from "../_hooks/useSpeechControls";
 // Components
-import BacklinksGrid from "./backlinks-grid";
+import BacklinksGrid from "./BacklinksGrid";
 import { ContentSkeleton } from "./content-skeleton";
 import { EditPageBubbleMenu } from "./edit-page-bubble-menu";
 import { LinkGroupsSection } from "./link-groups-section";
