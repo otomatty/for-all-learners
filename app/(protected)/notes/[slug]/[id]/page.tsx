@@ -3,12 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { getAllUserPages } from "@/app/_actions/notes";
 import { getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/layouts/container";
+import EditPageForm from "@/components/pages/EditPageForm";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
-
-import EditPageForm from "@/components/pages/EditPageForm";
 
 interface PageDetailProps {
 	params: Promise<{ slug: string; id: string }>;

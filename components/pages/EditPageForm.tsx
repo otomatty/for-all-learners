@@ -9,11 +9,6 @@ import { toast } from "sonner";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { duplicatePage } from "@/app/_actions/duplicatePage";
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
-// Supabase
-import { createClient } from "@/lib/supabase/client";
-// Types
-import type { Database } from "@/types/database.types";
-import type { LinkGroupForUI } from "@/types/link-group";
 // Hooks
 import { useDateShortcut } from "@/components/pages/_hooks/useDateShortcut";
 import { usePageEditorLogic } from "@/components/pages/_hooks/usePageEditorLogic";
@@ -27,6 +22,11 @@ import { LinkGroupsSection } from "@/components/pages/link-groups-section";
 import { PageHeader } from "@/components/pages/page-header";
 import PageLinksGrid from "@/components/pages/page-links-grid";
 import ResponsiveToolbar from "@/components/pages/responsive-toolbar";
+// Supabase
+import { createClient } from "@/lib/supabase/client";
+// Types
+import type { Database } from "@/types/database.types";
+import type { LinkGroupForUI } from "@/types/link-group";
 
 interface EditPageFormProps {
 	page: Database["public"]["Tables"]["pages"]["Row"];
