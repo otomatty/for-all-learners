@@ -223,8 +223,9 @@ export default function EditPageForm({
 
 	// Handler for generating cards
 	const handleNavigateToGenerateCards = useCallback(() => {
-		router.push(`/pages/${page.id}/generate-cards`);
-	}, [router, page.id]);
+		const slug = noteSlug || "default";
+		router.push(`/notes/${slug}/${page.id}/generate-cards`);
+	}, [router, page.id, noteSlug]);
 
 	// Handler for duplicating page
 	const handleDuplicatePage = useCallback(async () => {
