@@ -71,6 +71,16 @@ export async function createPage(
 	const normalizedKey = normalizeTitleToKey(data.title);
 	await connectLinkGroupToPage(normalizedKey, data.id);
 
+	// 3. Auto-link to default note (for /pages consolidation)
+	// Import here to avoid circular dependencies
+	const { linkPageToDefaultNote } = await import("./notes/getDefaultNote");
+	try {
+		await linkPageToDefaultNote(data.user_id, data.id);
+	} catch {
+		// Log but don't fail the page creation
+		// The page can still be manually linked later
+	}
+
 	return data;
 }
 
