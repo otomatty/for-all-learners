@@ -427,14 +427,6 @@ async function calculateNoteStats(
   date: Date
 ): Promise<NoteStats>;
 ```
-
----
-
-## データモデル
-
-### 型定義
-
-```typescript
 ---
 
 ## データモデル

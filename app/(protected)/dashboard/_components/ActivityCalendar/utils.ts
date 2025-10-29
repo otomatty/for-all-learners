@@ -35,17 +35,20 @@ export function generateCalendarGrid(
 	const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 });
 	const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
+	// O(n) optimization: Create a Map for O(1) lookup instead of O(n) find
+	const daysMap = new Map(days.map((d) => [d.date, d]));
+
 	const grid: (DailyActivitySummary | null)[] = [];
 	let currentDate = gridStart;
 
 	// グリッドの全セルを生成
 	while (currentDate <= gridEnd) {
 		const dateStr = format(currentDate, "yyyy-MM-dd");
-		const dayData = days.find((d) => d.date === dateStr);
 
 		// 当月の日付のみデータを持ち、前月・翌月は null
 		if (currentDate >= monthStart && currentDate <= monthEnd) {
-			grid.push(dayData || null);
+			// O(1) lookup with Map
+			grid.push(daysMap.get(dateStr) || null);
 		} else {
 			grid.push(null);
 		}

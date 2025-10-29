@@ -4,6 +4,7 @@
  * カレンダーのグリッド表示を担当するコンポーネント
  */
 
+import { cn } from "@/lib/utils";
 import { WEEKDAY_LABELS } from "./constants";
 import { DayCell } from "./DayCell";
 import type { DailyActivitySummary, MonthData } from "./types";
@@ -59,8 +60,4 @@ export function CalendarGrid({
 			</div>
 		</div>
 	);
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-	return classes.filter(Boolean).join(" ");
 }

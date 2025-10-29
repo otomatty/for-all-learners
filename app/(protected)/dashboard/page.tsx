@@ -29,51 +29,46 @@ export default async function DashboardPage({
 		redirect("/auth/login");
 	}
 
-	// Fetch account info, dashboard stats, and study data
-	await getAccountById(user.id);
-	const [studyGoals, logs] = await Promise.all([
-		getStudyGoalsByUser(user.id),
-		getLearningLogsByUser(user.id),
-	]);
-
+	// Parallel data fetching for optimal performance
 	const searchParams = searchParamsPromise
 		? await searchParamsPromise
 		: undefined;
 	const currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
 
-	// シリアライズしてプロトタイプを剥がす
-	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals || []));
-	const safeLogs = JSON.parse(JSON.stringify(logs || []));
+	const today = new Date();
+	const currentYear = today.getFullYear();
+	const currentMonth = today.getMonth() + 1;
 
-	// ユーザーの全デッキを取得
-	const { data: deckRows, error: deckError } = await supabase
-		.from("decks")
-		.select("*")
-		.eq("user_id", user.id);
-	if (deckError || !deckRows) {
+	// Fetch account info first (may have side effects)
+	await getAccountById(user.id);
+
+	// Fetch all required data in parallel to minimize latency
+	const [studyGoals, logs, decksResult, dueMap, monthData] = await Promise.all([
+		getStudyGoalsByUser(user.id),
+		getLearningLogsByUser(user.id),
+		supabase.from("decks").select("*").eq("user_id", user.id),
+		getAllDueCountsByUser(user.id),
+		getMonthlyActivitySummary(user.id, currentYear, currentMonth),
+	]);
+
+	// Check decks result
+	if (decksResult.error || !decksResult.data) {
 		return (
 			<Container>
 				<p>デッキの取得に失敗しました。</p>
 			</Container>
 		);
 	}
-	// 期限切れカード数マップを1回で取得
-	const dueMap = await getAllDueCountsByUser(user.id);
+
+	// シリアライズしてプロトタイプを剥がす
+	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals || []));
+	const safeLogs = JSON.parse(JSON.stringify(logs || []));
+
 	// デッキに復習数をマージ
-	const decksWithDueCount = deckRows.map((d) => ({
+	const decksWithDueCount = decksResult.data.map((d) => ({
 		...d,
 		todayReviewCount: dueMap[d.id] ?? 0,
 	}));
-
-	// 現在月のカレンダーデータを取得
-	const today = new Date();
-	const currentYear = today.getFullYear();
-	const currentMonth = today.getMonth() + 1;
-	const monthData = await getMonthlyActivitySummary(
-		user.id,
-		currentYear,
-		currentMonth,
-	);
 
 	return (
 		<Container>

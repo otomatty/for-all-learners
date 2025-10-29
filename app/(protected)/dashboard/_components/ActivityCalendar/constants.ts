@@ -86,3 +86,31 @@ export const ACTIVITY_THRESHOLDS = {
 		minutes: 15,
 	},
 } as const;
+
+/**
+ * ノート編集時間の推定値（分）
+ */
+export const NOTE_EDIT_TIME_ESTIMATES = {
+	CREATE: 15, // ページ作成の推定時間（分）
+	UPDATE: 10, // ページ更新の推定時間（分）
+	LINK: 1, // リンク作成の推定時間（分）
+} as const;
+
+/**
+ * 目標達成判定閾値（%）
+ */
+export const GOAL_THRESHOLDS = {
+	HIGH: 80, // 高達成率の閾値（80%以上）
+	MEDIUM: 50, // 中達成率の閾値（50%以上）
+	LOW: 20, // 低達成率の閾値（20%以上）
+} as const;
+
+/**
+ * アクティビティレベルテキスト
+ */
+export const ACTIVITY_LEVEL_TEXT = {
+	excellent: "優秀",
+	good: "良好",
+	partial: "わずか",
+	none: "活動なし",
+} as const;

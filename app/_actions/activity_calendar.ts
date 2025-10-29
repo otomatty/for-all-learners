@@ -8,7 +8,10 @@ import {
 	startOfDay,
 	startOfMonth,
 } from "date-fns";
-import { ACTIVITY_THRESHOLDS } from "@/app/(protected)/dashboard/_components/ActivityCalendar/constants";
+import {
+	ACTIVITY_THRESHOLDS,
+	NOTE_EDIT_TIME_ESTIMATES,
+} from "@/app/(protected)/dashboard/_components/ActivityCalendar/constants";
 import type {
 	ActivityLevel,
 	DailyActivitySummary,
@@ -20,6 +23,7 @@ import type {
 	NoteActivityDetail,
 	NoteStats,
 } from "@/app/(protected)/dashboard/_components/ActivityCalendar/types";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -85,6 +89,36 @@ function determineActivityLevel(
 	}
 
 	return "none";
+}
+
+/**
+ * 月全体の学習ログを一括取得
+ *
+ * @param userId ユーザーID
+ * @param startDate 開始日
+ * @param endDate 終了日
+ * @returns 学習ログの配列
+ */
+async function fetchMonthlyLearningLogs(
+	userId: string,
+	startDate: Date,
+	endDate: Date,
+) {
+	const supabase = await createClient();
+
+	const { data: logs, error } = await supabase
+		.from("learning_logs")
+		.select("*")
+		.eq("user_id", userId)
+		.gte("answered_at", startDate.toISOString())
+		.lte("answered_at", endDate.toISOString());
+
+	if (error) {
+		logger.error({ error, userId }, "Failed to fetch learning logs");
+		return [];
+	}
+
+	return logs || [];
 }
 
 /**
@@ -154,6 +188,123 @@ async function calculateLearningStats(
 }
 
 /**
+ * ログデータから特定日の学習統計を計算（クライアント側集計）
+ *
+ * @param logs 学習ログの配列
+ * @param date 対象日付
+ * @returns 学習統計
+ */
+function calculateLearningStatsFromLogs(
+	logs: Array<{
+		answered_at: string | null;
+		practice_mode: string;
+		is_correct: boolean;
+		effort_time: number | null;
+	}>,
+	date: Date,
+): LearningStats {
+	const dayStart = startOfDay(date);
+	const dayEnd = endOfDay(date);
+
+	// Filter logs for the specific day
+	const dayLogs = logs.filter((log) => {
+		if (!log.answered_at) return false;
+		const logDate = new Date(log.answered_at);
+		return logDate >= dayStart && logDate <= dayEnd;
+	});
+
+	if (dayLogs.length === 0) {
+		return {
+			totalCards: 0,
+			reviewedCards: 0,
+			newCards: 0,
+			correctRate: 0,
+			totalMinutes: 0,
+		};
+	}
+
+	const totalCards = dayLogs.length;
+	const reviewedCards = dayLogs.filter(
+		(log) => log.practice_mode === "review",
+	).length;
+	const newCards = dayLogs.filter((log) => log.practice_mode === "new").length;
+	const correctCount = dayLogs.filter((log) => log.is_correct).length;
+	const correctRate = totalCards > 0 ? (correctCount / totalCards) * 100 : 0;
+	const totalSeconds = dayLogs.reduce(
+		(sum, log) => sum + (log.effort_time || 0),
+		0,
+	);
+	const totalMinutes = Math.round(totalSeconds / 60);
+
+	return {
+		totalCards,
+		reviewedCards,
+		newCards,
+		correctRate: Math.round(correctRate * 10) / 10,
+		totalMinutes,
+	};
+}
+
+/**
+ * 月全体のページ作成・更新データを一括取得
+ *
+ * @param userId ユーザーID
+ * @param startDate 開始日
+ * @param endDate 終了日
+ * @returns ページデータ
+ */
+async function fetchMonthlyPages(
+	userId: string,
+	startDate: Date,
+	endDate: Date,
+) {
+	const supabase = await createClient();
+
+	const { data: pages, error } = await supabase
+		.from("pages")
+		.select("id, created_at, updated_at")
+		.eq("user_id", userId)
+		.or(
+			`created_at.gte.${startDate.toISOString()},updated_at.gte.${startDate.toISOString()}`,
+		)
+		.lte("created_at", endDate.toISOString())
+		.lte("updated_at", endDate.toISOString());
+
+	if (error) {
+		logger.error({ error, userId }, "Failed to fetch pages");
+		return [];
+	}
+
+	return pages || [];
+}
+
+/**
+ * 月全体のリンク作成データを一括取得
+ *
+ * @param userId ユーザーID
+ * @param startDate 開始日
+ * @param endDate 終了日
+ * @returns リンクデータ
+ */
+async function fetchMonthlyLinks(startDate: Date, endDate: Date) {
+	const supabase = await createClient();
+
+	const { data: links, error } = await supabase
+		.from("card_page_links")
+		.select("id, card_id, created_at")
+		.gte("created_at", startDate.toISOString())
+		.lte("created_at", endDate.toISOString())
+		.limit(10000); // Large limit for monthly data
+
+	if (error) {
+		logger.error({ error }, "Failed to fetch links");
+		return [];
+	}
+
+	return links || [];
+}
+
+/**
  * ページ作成・編集から日別の統計を計算
  *
  * @param userId ユーザーID
@@ -178,13 +329,13 @@ async function calculateNoteStats(
 		.lte("created_at", dayEnd.toISOString());
 
 	// 更新ページ数（作成日と更新日が異なるもの）
-	const { data: updatedPages, error: updatedError } = await supabase
+	// Note: .neq() cannot compare column values, so we filter client-side
+	const { data: allUpdatedPages, error: updatedError } = await supabase
 		.from("pages")
 		.select("id, created_at, updated_at")
 		.eq("user_id", userId)
 		.gte("updated_at", dayStart.toISOString())
-		.lte("updated_at", dayEnd.toISOString())
-		.neq("created_at", "updated_at");
+		.lte("updated_at", dayEnd.toISOString());
 
 	// リンク作成数
 	const { data: links, error: linksError } = await supabase
@@ -204,13 +355,83 @@ async function calculateNoteStats(
 		};
 	}
 
+	// Client-side filtering: pages where created_at !== updated_at
+	const updatedPages =
+		allUpdatedPages?.filter((page) => page.created_at !== page.updated_at) ||
+		[];
+
 	const pagesCreated = createdPages?.length || 0;
-	const pagesUpdated = updatedPages?.length || 0;
+	const pagesUpdated = updatedPages.length;
 	const linksCreated = links?.length || 0;
 
-	// 編集時間の推定（ページ作成: 15分、更新: 10分、リンク: 1分）
+	// 編集時間の推定（定数を使用）
 	const totalEditMinutes =
-		pagesCreated * 15 + pagesUpdated * 10 + linksCreated * 1;
+		pagesCreated * NOTE_EDIT_TIME_ESTIMATES.CREATE +
+		pagesUpdated * NOTE_EDIT_TIME_ESTIMATES.UPDATE +
+		linksCreated * NOTE_EDIT_TIME_ESTIMATES.LINK;
+
+	return {
+		pagesCreated,
+		pagesUpdated,
+		linksCreated,
+		totalEditMinutes,
+	};
+}
+
+/**
+ * ページ・リンクデータから特定日のノート統計を計算（クライアント側集計）
+ *
+ * @param pages ページデータの配列
+ * @param links リンクデータの配列
+ * @param date 対象日付
+ * @returns ノート統計
+ */
+function calculateNoteStatsFromData(
+	pages: Array<{
+		id: string;
+		created_at: string | null;
+		updated_at: string | null;
+	}>,
+	links: Array<{
+		id: string;
+		created_at: string | null;
+	}>,
+	date: Date,
+): NoteStats {
+	const dayStart = startOfDay(date);
+	const dayEnd = endOfDay(date);
+
+	// Filter pages created on this day
+	const pagesCreated = pages.filter((page) => {
+		if (!page.created_at) return false;
+		const createdAt = new Date(page.created_at);
+		return createdAt >= dayStart && createdAt <= dayEnd;
+	}).length;
+
+	// Filter pages updated on this day (created_at != updated_at)
+	const pagesUpdated = pages.filter((page) => {
+		if (!page.updated_at || !page.created_at) return false;
+		const updatedAt = new Date(page.updated_at);
+		const createdAt = new Date(page.created_at);
+		return (
+			updatedAt >= dayStart &&
+			updatedAt <= dayEnd &&
+			createdAt.getTime() !== updatedAt.getTime()
+		);
+	}).length;
+
+	// Filter links created on this day
+	const linksCreated = links.filter((link) => {
+		if (!link.created_at) return false;
+		const createdAt = new Date(link.created_at);
+		return createdAt >= dayStart && createdAt <= dayEnd;
+	}).length;
+
+	// 編集時間の推定（定数を使用）
+	const totalEditMinutes =
+		pagesCreated * NOTE_EDIT_TIME_ESTIMATES.CREATE +
+		pagesUpdated * NOTE_EDIT_TIME_ESTIMATES.UPDATE +
+		linksCreated * NOTE_EDIT_TIME_ESTIMATES.LINK;
 
 	return {
 		pagesCreated,
@@ -236,16 +457,23 @@ export async function getMonthlyActivitySummary(
 	const monthStart = startOfMonth(new Date(year, month - 1));
 	const monthEnd = endOfMonth(new Date(year, month - 1));
 
+	// Bulk fetch all data for the month (3-4 queries instead of N*2)
+	const [learningLogs, pages, links] = await Promise.all([
+		fetchMonthlyLearningLogs(userId, monthStart, monthEnd),
+		fetchMonthlyPages(userId, monthStart, monthEnd),
+		fetchMonthlyLinks(monthStart, monthEnd),
+	]);
+
 	const days: DailyActivitySummary[] = [];
 	const currentDate = new Date(monthStart);
 
-	// 月の全日付を処理
+	// Process all days of the month with client-side aggregation
 	while (currentDate <= monthEnd) {
 		const dateStr = format(currentDate, "yyyy-MM-dd");
-		const [learning, notes] = await Promise.all([
-			calculateLearningStats(userId, currentDate),
-			calculateNoteStats(userId, currentDate),
-		]);
+
+		// Client-side aggregation from bulk-fetched data
+		const learning = calculateLearningStatsFromLogs(learningLogs, currentDate);
+		const notes = calculateNoteStatsFromData(pages, links, currentDate);
 
 		const activityLevel = determineActivityLevel(learning, notes);
 
@@ -415,14 +643,19 @@ export async function getDayActivityDetail(
 		.lte("created_at", dayEnd.toISOString())
 		.order("created_at", { ascending: false });
 
-	const { data: updatedPages } = await supabase
+	// Note: .neq() cannot compare column values, so we filter client-side
+	const { data: allUpdatedPages } = await supabase
 		.from("pages")
 		.select("id, title, updated_at, created_at")
 		.eq("user_id", userId)
 		.gte("updated_at", dayStart.toISOString())
 		.lte("updated_at", dayEnd.toISOString())
-		.neq("created_at", "updated_at")
 		.order("updated_at", { ascending: false });
+
+	// Client-side filtering: pages where created_at !== updated_at
+	const updatedPages =
+		allUpdatedPages?.filter((page) => page.created_at !== page.updated_at) ||
+		[];
 
 	const { data: linksData } = await supabase
 		.from("card_page_links")
