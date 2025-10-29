@@ -1,6 +1,7 @@
 import { Container } from "@/components/layouts/container";
 import { EmptySearchResults } from "@/components/notes/EmptySearchResults";
 import { SearchFiltersClient } from "@/components/notes/SearchFiltersClient";
+import { SearchHistoryUpdater } from "@/components/notes/SearchHistoryUpdater";
 import { SearchPagination } from "@/components/notes/SearchPagination";
 import { SearchResultItem } from "@/components/notes/SearchResultItem";
 import { BackLink } from "@/components/ui/back-link";
@@ -169,6 +170,14 @@ export default async function SearchPage({
 
 	return (
 		<>
+			{/* 検索履歴更新 */}
+			<SearchHistoryUpdater
+				query={query}
+				resultsCount={totalResults}
+				type={filterType}
+				sort={sortBy}
+			/>
+
 			<div className="mb-6 max-w-5xl mx-auto py-4 lg:py-8">
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
