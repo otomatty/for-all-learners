@@ -82,7 +82,8 @@ describe("TargetPageCard", () => {
 
 		render(<TargetPageCard page={page} />);
 
-		expect(screen.getByText("プレビューなし")).toBeInTheDocument();
+		// Empty state: no thumbnail, no content preview (CardContent is empty)
+		expect(screen.getByText("Empty Page")).toBeInTheDocument();
 	});
 
 	test("should link to correct page", () => {
@@ -97,7 +98,7 @@ describe("TargetPageCard", () => {
 		render(<TargetPageCard page={page} />);
 
 		const link = screen.getByRole("link");
-		expect(link).toHaveAttribute("href", "/pages/page-5");
+		expect(link).toHaveAttribute("href", "/notes/default/page-5");
 	});
 
 	test("should render with ring border styling", () => {
@@ -111,7 +112,8 @@ describe("TargetPageCard", () => {
 
 		const { container } = render(<TargetPageCard page={page} />);
 
-		const link = container.querySelector("a");
-		expect(link).toHaveClass("ring-2", "ring-primary/20");
+		// The Card component should have the ring border classes
+		const card = container.querySelector('[data-slot="card"]');
+		expect(card).toHaveClass("ring-2", "ring-primary/20");
 	});
 });

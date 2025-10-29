@@ -104,7 +104,7 @@ describe("Mark Operations Module", () => {
 					state: "exists",
 					exists: true,
 					pageId: "page-123",
-					href: "/pages/page-123",
+					href: "/notes/default/page-123",
 					created: true,
 				}),
 			);

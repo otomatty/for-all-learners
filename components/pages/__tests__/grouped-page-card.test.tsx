@@ -79,7 +79,8 @@ describe("GroupedPageCard", () => {
 
 		render(<GroupedPageCard page={page} />);
 
-		expect(screen.getByText("プレビューなし")).toBeInTheDocument();
+		// Empty state: no thumbnail, no content preview (CardContent is empty)
+		expect(screen.getByText("Empty Referencing Page")).toBeInTheDocument();
 	});
 
 	test("should link to correct page", () => {
@@ -94,7 +95,7 @@ describe("GroupedPageCard", () => {
 		render(<GroupedPageCard page={page} />);
 
 		const link = screen.getByRole("link");
-		expect(link).toHaveAttribute("href", "/pages/page-5");
+		expect(link).toHaveAttribute("href", "/notes/default/page-5");
 	});
 
 	test("should not have ring border styling", () => {
@@ -108,8 +109,9 @@ describe("GroupedPageCard", () => {
 
 		const { container } = render(<GroupedPageCard page={page} />);
 
-		const link = container.querySelector("a");
-		expect(link).not.toHaveClass("ring-2");
-		expect(link).not.toHaveClass("ring-primary/20");
+		// The Card component should not have ring border classes (default variant)
+		const card = container.querySelector('[data-slot="card"]');
+		expect(card).not.toHaveClass("ring-2");
+		expect(card).not.toHaveClass("ring-primary/20");
 	});
 });

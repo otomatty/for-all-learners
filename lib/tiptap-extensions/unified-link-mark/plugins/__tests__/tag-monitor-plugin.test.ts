@@ -7,7 +7,7 @@ import { Editor } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UnifiedLinkMark } from "../../index";
 import {
 	createTagMonitorPlugin,
@@ -31,6 +31,10 @@ describe("Tag Monitor Plugin", () => {
 			],
 			content: "",
 		});
+	});
+
+	afterEach(() => {
+		editor.destroy();
 	});
 
 	describe("Plugin Creation", () => {
