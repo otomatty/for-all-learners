@@ -242,7 +242,7 @@ export const createClickHandlerPlugin = (context: {
 							// Navigate to existing page using UUID
 							const href = context.options.noteSlug
 								? `/notes/${encodeURIComponent(context.options.noteSlug)}/${attrs.pageId}`
-								: `/pages/${attrs.pageId}`;
+								: `/notes/default/${attrs.pageId}`;
 
 							logger.debug(
 								{ pageId: attrs.pageId, href },

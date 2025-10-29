@@ -3,7 +3,6 @@
 import { Calendar, FileText, Grid3X3, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getNotePages } from "@/app/_actions/notes";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

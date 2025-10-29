@@ -71,6 +71,16 @@ export async function createPage(
 	const normalizedKey = normalizeTitleToKey(data.title);
 	await connectLinkGroupToPage(normalizedKey, data.id);
 
+	// 3. Auto-link to default note (for /pages consolidation)
+	// Import here to avoid circular dependencies
+	const { linkPageToDefaultNote } = await import("./notes/getDefaultNote");
+	try {
+		await linkPageToDefaultNote(data.user_id, data.id);
+	} catch {
+		// Log but don't fail the page creation
+		// The page can still be manually linked later
+	}
+
 	return data;
 }
 
@@ -102,35 +112,6 @@ export async function deletePage(id: string) {
 		.single();
 	if (error) throw error;
 	return data;
-}
-
-/**
- * Fetches pages for a user with pagination and sorting.
- * @param userId User ID to fetch pages for.
- * @param limit Number of items to return (default 100).
- * @param offset Number of items to skip (default 0).
- * @param sortBy Sort key: 'updated' or 'created' (default 'updated').
- * @returns Object containing pages array and totalCount.
- */
-export async function getPagesByUser(
-	userId: string,
-	limit = 100,
-	offset = 0,
-	sortBy: "updated" | "created" = "updated",
-): Promise<{
-	pages: Database["public"]["Tables"]["pages"]["Row"][];
-	totalCount: number;
-}> {
-	const supabase = await createClient();
-	const sortColumn = sortBy === "updated" ? "updated_at" : "created_at";
-	const { data, error, count } = await supabase
-		.from("pages")
-		.select("*", { count: "exact" })
-		.eq("user_id", userId)
-		.order(sortColumn, { ascending: false })
-		.range(offset, offset + limit - 1);
-	if (error) throw error;
-	return { pages: data ?? [], totalCount: count ?? 0 };
 }
 
 export async function getSharedPagesByUser(userId: string): Promise<
