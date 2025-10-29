@@ -1,7 +1,6 @@
-import parse from "html-react-parser";
-import Link from "next/link";
-import sanitizeHtml from "sanitize-html";
 import { Container } from "@/components/layouts/container";
+import { EmptySearchResults } from "@/components/notes/EmptySearchResults";
+import { SearchResultItem } from "@/components/notes/SearchResultItem";
 import { BackLink } from "@/components/ui/back-link";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 
@@ -17,6 +16,8 @@ interface SuggestionRow {
 	suggestion: string;
 	/** 抜粋（ハイライト付きHTML） */
 	excerpt: string;
+	/** 更新日時 */
+	updated_at?: string;
 }
 
 /**
@@ -49,21 +50,54 @@ export default async function SearchPage({
 	}
 
 	const rows = rpcData as SuggestionRow[];
-	// カード候補の deck_id をまとめて取得
+
+	// カード候補の deck_id と更新日時をまとめて取得
 	const cards = rows.filter((r) => r.type === "card");
-	let deckMap = new Map<string, string>();
+	const deckMap = new Map<string, string>();
+	const cardUpdates = new Map<string, string>();
+
 	if (cards.length > 0) {
 		const { data: cardData, error: cardError } = await supabase
 			.from("cards")
-			.select("id, deck_id")
+			.select("id, deck_id, updated_at")
 			.in(
 				"id",
 				cards.map((c) => c.id),
 			);
 		if (!cardError && cardData) {
-			deckMap = new Map(cardData.map((row) => [row.id, row.deck_id]));
+			// 1回のループで両方のMapを生成
+			for (const card of cardData) {
+				deckMap.set(card.id, card.deck_id);
+				if (card.updated_at) {
+					cardUpdates.set(card.id, card.updated_at);
+				}
+			}
 		}
 	}
+
+	// ページの更新日時を取得
+	const pages = rows.filter((r) => r.type === "page");
+	const pageUpdates = new Map<string, string>();
+
+	if (pages.length > 0) {
+		const { data: pageData, error: pageError } = await supabase
+			.from("pages")
+			.select("id, updated_at")
+			.in(
+				"id",
+				pages.map((p) => p.id),
+			);
+		if (!pageError && pageData) {
+			for (const page of pageData) {
+				if (page.updated_at) {
+					pageUpdates.set(page.id, page.updated_at);
+				}
+			}
+		}
+	}
+
+	// 検索結果の総数
+	const totalResults = rows.length;
 
 	return (
 		<>
@@ -71,36 +105,45 @@ export default async function SearchPage({
 				<BackLink path="/dashboard" title="ホームに戻る" />
 			</div>
 			<Container>
-				<h1 className="text-2xl font-bold mb-6">検索結果: {query}</h1>
-				{rows.length === 0 ? (
-					<p>該当する結果がありません。</p>
-				) : (
-					<ul className="space-y-2">
-						{rows.map((r) => {
-							const href =
-								r.type === "card"
-									? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
-									: `/notes/default/${encodeURIComponent(r.id)}`;
-							return (
-								<li key={`${r.type}-${r.id}`}>
-									<div className="space-y-1">
-										<Link href={href} className="text-blue-600 hover:underline">
-											{r.suggestion}
-										</Link>
-										<p className="text-sm text-gray-600">
-											{parse(
-												sanitizeHtml(r.excerpt, {
-													allowedTags: ["mark"],
-													allowedAttributes: {},
-												}),
-											)}
-										</p>
-									</div>
-								</li>
-							);
-						})}
-					</ul>
-				)}
+				<div className="space-y-6">
+					{/* タイトルと結果数 */}
+					<div>
+						<h1 className="text-2xl font-bold mb-2">検索結果</h1>
+						<p className="text-muted-foreground">
+							「{query}」の検索結果: {totalResults}件
+						</p>
+					</div>
+
+					{/* 検索結果 */}
+					{rows.length === 0 ? (
+						<EmptySearchResults query={query} />
+					) : (
+						<div className="space-y-4">
+							{rows.map((r) => {
+								const href =
+									r.type === "card"
+										? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
+										: `/notes/default/${encodeURIComponent(r.id)}`;
+
+								const updatedAt =
+									r.type === "card"
+										? cardUpdates.get(r.id)
+										: pageUpdates.get(r.id);
+
+								return (
+									<SearchResultItem
+										key={`${r.type}-${r.id}`}
+										type={r.type}
+										title={r.suggestion}
+										excerpt={r.excerpt}
+										href={href}
+										updatedAt={updatedAt}
+									/>
+								);
+							})}
+						</div>
+					)}
+				</div>
 			</Container>
 		</>
 	);
