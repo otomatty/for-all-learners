@@ -4,8 +4,8 @@
  * Tests for parseMarkdownToNodes and parseInlineMarks functions
  */
 
-import { describe, expect, it } from "vitest";
 import type { JSONContent } from "@tiptap/core";
+import { describe, expect, it } from "vitest";
 import {
 	containsMarkdownSyntax,
 	parseInlineMarks,

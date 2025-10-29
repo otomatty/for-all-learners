@@ -69,7 +69,7 @@ export default function DraggablePageItem({
 					<div className="flex items-center gap-2 mb-1">
 						<FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
 						<Link
-							href={`/pages/${page.id}`}
+							href={`/notes/default/${page.id}`}
 							className="font-medium hover:underline truncate"
 						>
 							{page.title}
