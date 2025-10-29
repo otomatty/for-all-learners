@@ -1,3 +1,19 @@
+/**
+ * SearchFiltersClient Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (このファイルを import している場所):
+ *   └─ app/(protected)/search/page.tsx
+ *
+ * Dependencies (このファイルが import している外部ファイル):
+ *   ├─ next/navigation
+ *   └─ ./SearchFilters
+ *
+ * Related Files:
+ *   └─ Issue: docs/01_issues/open/2025_10/20251029_XX_xxx.md
+ */
+
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,16 +31,9 @@ export function SearchFiltersClient({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
-	const handleTypeChange = (newType: "all" | "card" | "page") => {
+	const handleParamChange = (key: "type" | "sort", value: string) => {
 		const params = new URLSearchParams(searchParams);
-		params.set("type", newType);
-		params.set("page", "1"); // ページをリセット
-		router.push(`/search?${params.toString()}`);
-	};
-
-	const handleSortChange = (newSort: "relevance" | "updated" | "created") => {
-		const params = new URLSearchParams(searchParams);
-		params.set("sort", newSort);
+		params.set(key, value);
 		params.set("page", "1"); // ページをリセット
 		router.push(`/search?${params.toString()}`);
 	};
@@ -33,8 +42,8 @@ export function SearchFiltersClient({
 		<SearchFilters
 			currentType={currentType}
 			currentSort={currentSort}
-			onTypeChange={handleTypeChange}
-			onSortChange={handleSortChange}
+			onTypeChange={(newType) => handleParamChange("type", newType)}
+			onSortChange={(newSort) => handleParamChange("sort", newSort)}
 		/>
 	);
 }

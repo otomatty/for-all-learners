@@ -135,22 +135,15 @@ export default async function SearchPage({
 	// ソート適用
 	const sortedRows = (() => {
 		const rows = [...filteredRows];
-		if (sortBy === "updated") {
+		if (sortBy === "updated" || sortBy === "created") {
+			const cardDateMap = sortBy === "updated" ? cardUpdates : cardCreated;
+			const pageDateMap = sortBy === "updated" ? pageUpdates : pageCreated;
+
 			rows.sort((a, b) => {
 				const aDate =
-					a.type === "card" ? cardUpdates.get(a.id) : pageUpdates.get(a.id);
+					a.type === "card" ? cardDateMap.get(a.id) : pageDateMap.get(a.id);
 				const bDate =
-					b.type === "card" ? cardUpdates.get(b.id) : pageUpdates.get(b.id);
-				if (!aDate) return 1;
-				if (!bDate) return -1;
-				return new Date(bDate).getTime() - new Date(aDate).getTime();
-			});
-		} else if (sortBy === "created") {
-			rows.sort((a, b) => {
-				const aDate =
-					a.type === "card" ? cardCreated.get(a.id) : pageCreated.get(a.id);
-				const bDate =
-					b.type === "card" ? cardCreated.get(b.id) : pageCreated.get(b.id);
+					b.type === "card" ? cardDateMap.get(b.id) : pageDateMap.get(b.id);
 				if (!aDate) return 1;
 				if (!bDate) return -1;
 				return new Date(bDate).getTime() - new Date(aDate).getTime();
@@ -167,7 +160,12 @@ export default async function SearchPage({
 	const paginatedRows = sortedRows.slice(offset, offset + perPage);
 
 	// ベースURL（ページネーション用）
-	const baseUrl = `/search?q=${encodeURIComponent(query)}&type=${filterType}&sort=${sortBy}`;
+	const params = new URLSearchParams({
+		q: query,
+		type: filterType,
+		sort: sortBy,
+	});
+	const baseUrl = `/search?${params.toString()}`;
 
 	return (
 		<>

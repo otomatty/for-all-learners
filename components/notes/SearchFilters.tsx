@@ -1,3 +1,19 @@
+/**
+ * SearchFilters Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (このファイルを import している場所):
+ *   └─ components/notes/SearchFiltersClient.tsx
+ *
+ * Dependencies (このファイルが import している外部ファイル):
+ *   ├─ ./TypeFilter
+ *   └─ ./SortSelect
+ *
+ * Related Files:
+ *   └─ Issue: docs/01_issues/open/2025_10/20251029_XX_xxx.md
+ */
+
 import { SortSelect } from "./SortSelect";
 import { TypeFilter } from "./TypeFilter";
 

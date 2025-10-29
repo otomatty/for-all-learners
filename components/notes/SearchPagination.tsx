@@ -1,3 +1,18 @@
+/**
+ * SearchPagination Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (このファイルを import している場所):
+ *   └─ app/(protected)/search/page.tsx
+ *
+ * Dependencies (このファイルが import している外部ファイル):
+ *   └─ @/components/ui/pagination
+ *
+ * Related Files:
+ *   └─ Issue: docs/01_issues/open/2025_10/20251029_XX_xxx.md
+ */
+
 import {
 	Pagination,
 	PaginationContent,
@@ -24,14 +39,20 @@ export function SearchPagination({
 	}
 
 	// ページ番号を生成（最初の3ページ、最後の3ページ、現在ページの前後2ページ）
-	const pageNumbers = Array.from(
-		{ length: totalPages },
-		(_, i) => i + 1,
-	).filter((page) => {
-		return (
-			page <= 3 || page > totalPages - 3 || Math.abs(page - currentPage) <= 2
-		);
-	});
+	const pageNumbers = (() => {
+		const pages = new Set<number>();
+		// 最初の3ページ、最後の3ページ、現在ページの前後2ページを追加
+		for (let i = 1; i <= Math.min(totalPages, 3); i++) pages.add(i);
+		for (let i = Math.max(1, totalPages - 2); i <= totalPages; i++)
+			pages.add(i);
+		for (
+			let i = Math.max(1, currentPage - 2);
+			i <= Math.min(totalPages, currentPage + 2);
+			i++
+		)
+			pages.add(i);
+		return Array.from(pages).sort((a, b) => a - b);
+	})();
 
 	return (
 		<Pagination>
@@ -39,8 +60,7 @@ export function SearchPagination({
 				<PaginationItem>
 					<PaginationPrevious
 						href={`${baseUrl}&page=${currentPage - 1}`}
-						aria-disabled={currentPage <= 1}
-						className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+						disabled={currentPage <= 1}
 					/>
 				</PaginationItem>
 
@@ -70,10 +90,7 @@ export function SearchPagination({
 				<PaginationItem>
 					<PaginationNext
 						href={`${baseUrl}&page=${currentPage + 1}`}
-						aria-disabled={currentPage >= totalPages}
-						className={
-							currentPage >= totalPages ? "pointer-events-none opacity-50" : ""
-						}
+						disabled={currentPage >= totalPages}
 					/>
 				</PaginationItem>
 			</PaginationContent>
