@@ -23,6 +23,10 @@ interface SuggestionRow {
 	updated_at?: string;
 	/** 作成日時 */
 	created_at?: string;
+	/** 関連度スコア（ts_rank） */
+	rank?: number;
+	/** 類似度スコア（pg_trgm） */
+	similarity?: number;
 }
 
 /**
@@ -59,11 +63,19 @@ export default async function SearchPage({
 	}
 
 	const supabase = createAdminClient();
+
+	// ファジー検索を使用（タイポ対応）
+	// 通常検索: "search_suggestions" - 完全一致のみ
+	// ファジー検索: "search_suggestions_fuzzy" - タイポ対応
+	const useFuzzySearch = true;
+
 	// RPC で検索候補を取得
-	const { data: rpcData, error: rpcError } = await supabase.rpc(
-		"search_suggestions",
-		{ p_query: query },
-	);
+	const { data: rpcData, error: rpcError } = useFuzzySearch
+		? await supabase.rpc("search_suggestions_fuzzy" as "search_suggestions", {
+				p_query: query,
+			})
+		: await supabase.rpc("search_suggestions", { p_query: query });
+
 	if (rpcError || !rpcData) {
 		return (
 			<div className="p-4 text-red-600">
@@ -136,7 +148,18 @@ export default async function SearchPage({
 	// ソート適用
 	const sortedRows = (() => {
 		const rows = [...filteredRows];
-		if (sortBy === "updated" || sortBy === "created") {
+
+		if (sortBy === "relevance") {
+			// 関連度でソート（rank or similarity）
+			// ファジー検索の場合: similarity を優先
+			// 通常検索の場合: rank を使用
+			rows.sort((a, b) => {
+				const aScore = a.similarity ?? a.rank ?? 0;
+				const bScore = b.similarity ?? b.rank ?? 0;
+				return bScore - aScore;
+			});
+		} else if (sortBy === "updated" || sortBy === "created") {
+			// 日付でソート
 			const cardDateMap = sortBy === "updated" ? cardUpdates : cardCreated;
 			const pageDateMap = sortBy === "updated" ? pageUpdates : pageCreated;
 
@@ -150,7 +173,7 @@ export default async function SearchPage({
 				return new Date(bDate).getTime() - new Date(aDate).getTime();
 			});
 		}
-		// relevance の場合はRPCの順序のまま（rank DESC）
+
 		return rows;
 	})();
 

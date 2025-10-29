@@ -7,6 +7,8 @@ interface RpcRow {
 	type: string;
 	id: string;
 	suggestion: string;
+	rank?: number;
+	similarity?: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -24,11 +26,16 @@ export async function GET(request: NextRequest) {
 	// サーバーサイド Service Role キーでのクライアント生成
 	const supabase = createAdminClient();
 
+	// ファジー検索を使用（タイポ対応）
+	const useFuzzySearch = true;
+
 	// Use RPC for combined search
-	const { data: rpcData, error: rpcError } = await supabase.rpc(
-		"search_suggestions",
-		{ p_query: q },
-	);
+	const { data: rpcData, error: rpcError } = useFuzzySearch
+		? await supabase.rpc("search_suggestions_fuzzy" as "search_suggestions", {
+				p_query: q,
+			})
+		: await supabase.rpc("search_suggestions", { p_query: q });
+
 	if (rpcError) {
 		return NextResponse.json([], {
 			status: 200,
