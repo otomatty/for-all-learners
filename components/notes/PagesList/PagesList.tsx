@@ -72,7 +72,7 @@ function extractTextFromTiptap(node: Json): string {
 export function PagesList({
 	pages,
 	slug = "all-pages",
-	gridCols = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4",
+	gridCols = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
 }: PagesListProps) {
 	if (pages.length === 0) {
 		return (
