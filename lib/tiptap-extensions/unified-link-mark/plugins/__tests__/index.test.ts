@@ -3,7 +3,7 @@
  */
 
 import type { Editor } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin } from "prosemirror-state";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	createMinimalMockEditor,
@@ -21,12 +21,13 @@ describe("createPlugins", () => {
 		mockOptions = createMockOptions();
 	});
 
-	it("should return exactly 4 plugins", () => {
+	it("should return exactly 5 plugins", () => {
 		const plugins = createPlugins({
 			editor: mockEditor,
 			options: mockOptions,
 		});
-		expect(plugins.length).toBe(4);
+		// AutoBracket, BracketMonitor, ClickHandler, Suggestion, TagMonitor
+		expect(plugins.length).toBe(5);
 	});
 
 	it("should return Plugin instances", () => {

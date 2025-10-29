@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import {
 	Card,
 	CardContent,

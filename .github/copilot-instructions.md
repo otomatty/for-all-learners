@@ -1,501 +1,240 @@
 # AI 駆動開発 共通ガイドライン
 
-## 開発の基本理念
+詳細なコーディング規則については、以下を参照してください：
+
+> **参照**: [`docs/rules/`](../docs/rules/README.md) - 開発規則の詳細
+
+このガイドでは、プロジェクト全体で共有される開発原則と、ドキュメント駆動開発のワークフローを説明します。
+
+## 開発の基本原則
+
+詳しくは [`docs/rules/code-quality-standards.md`](../docs/rules/code-quality-standards.md) を参照してください。
+
+### コード品質と保守性
 
 - 動くコードを書くだけでなく、品質・保守性・安全性を常に意識する
 - プロジェクトの段階（プロトタイプ、MVP、本番環境）に応じて適切なバランスを取る
 - 問題を見つけたら放置せず、必ず対処または明示的に記録する
-- ボーイスカウトルール:コードを見つけた時よりも良い状態で残す
+- ボーイスカウトルール: コードを見つけた時よりも良い状態で残す
 
-## 問題の発見と報告の原則
+### 言語規則
 
-- **無駄なコード・デッドコード**: 使用されていないコードを発見したら必ず報告
-- **問題のある処理**: 非効率な実装、バグの温床となりうるコードを発見したら報告
-- **調査中の発見**: タスク実行中に見つけた問題は、たとえ無関係に見えても記録する
-- **即座に記録**: 問題を発見したら `docs/issues/open/` に記録する
-- **詳細な記述**: 問題の場所、内容、影響範囲、解決策を明確に記述する発見したら即座に `docs/issues/open/` に記録する
+詳しくは [`docs/rules/language-rules.md`](../docs/rules/language-rules.md) を参照してください。
 
-## エラーハンドリングの原則
+- **コード内のコメント**: 英語で記述
+- **ドキュメントファイル**: 日本語で記述
+- **コミットメッセージ**: 英語で記述（コンベンショナルコミット形式）
+- **関数・変数名**: 英語で記述
+- **エラーメッセージ**: ユーザー向けは日本語、ログやデバッグ用は英語
 
-- 関連が薄く見えるエラーでも必ず解決する
-- エラーの抑制（@ts-ignore、try-catch で握りつぶす等）ではなく、根本原因を修正
-- 早期にエラーを検出し、明確なエラーメッセージを提供
-- エラーケースも必ずテストでカバーする
-- 外部 API やネットワーク通信は必ず失敗する可能性を考慮
+## ドキュメント駆動開発
 
-## コード品質の基準
+### 概要
 
-- DRY 原則：重複を避け、単一の信頼できる情報源を維持
-- 意味のある変数名・関数名で意図を明確に伝える
-- プロジェクト全体で一貫したコーディングスタイルを維持
-- 小さな問題も放置せず、発見次第修正（Broken Windows 理論）
-- コメントは「なぜ」を説明し、「何を」はコードで表現
+詳しくは [`docs/rules/ai-documentation.md`](../docs/rules/ai-documentation.md) を参照してください。
 
-## コメントとドキュメントの言語規則
+このプロジェクトでは、以下の5種類のドキュメントを中心とした**ドキュメント駆動開発** + **テスト駆動開発**を実践します。
 
-- **コード内のコメント**: 英語で記述（グローバルな開発環境での可読性を考慮）
-- **ドキュメントファイル**: 日本語で記述（`docs/` 配下のマークダウンファイル、README 等）
-- **コミットメッセージ**: 英語で記述（コンベンショナルコミット形式に従う）
-- **関数・変数名**: 英語で記述（コードの一貫性のため）
-- **エラーメッセージ**: ユーザー向けは日本語、ログやデバッグ用は英語を推奨
+#### ドキュメント5種類
 
-## テスト規律
+1. **Prompt（プロンプト）**: `docs/00_prompts/` - AI・開発者への指示書
+2. **Issue（問題・要件）**: `docs/01_issues/open/YYYY_MM/` - 問題・要件定義
+3. **Research（技術調査）**: `docs/02_research/YYYY_MM/` - 技術選定・調査結果
+4. **Plan（実装計画）**: `docs/03_plans/{機能名}/` - 段階的な実装計画
+5. **Test（仕様書）**: `src/{path}/{FileName}.spec.md` - 仕様定義＋テストケース定義
+6. **Log（作業ログ）**: `docs/05_logs/YYYY_MM/YYYYMMDD/` - 作業記録
 
-- テストをスキップせず、問題があれば修正する
-- 実装詳細ではなく振る舞いをテスト
-- テスト間の依存を避け、任意の順序で実行可能に
-- テストは高速で、常に同じ結果を返すように
-- カバレッジは指標であり、質の高いテストを重視
+### 実装フロー
 
-## 保守性とリファクタリング
+```
+PROMPT → ISSUE → RESEARCH → PLAN → SPEC+TEST → IMPLEMENTATION → LOG
+```
 
-- 機能追加と同時に既存コードの改善を検討
-- 大規模な変更は小さなステップに分割
-- 使用されていないコードは積極的に削除
-- 依存関係は定期的に更新（セキュリティと互換性のため）
-- 技術的負債は明示的にコメントやドキュメントに記録
-
-## セキュリティの考え方
-
-- API キー、パスワード等は環境変数で管理（ハードコード禁止）
-- すべての外部入力を検証
-- 必要最小限の権限で動作（最小権限の原則）
-- 不要な依存関係を避ける
-- セキュリティ監査ツールを定期的に実行
-
-## パフォーマンスの意識
-
-- 推測ではなく計測に基づいて最適化
-- 初期段階から拡張性を考慮
-- 必要になるまでリソースの読み込みを遅延
-- キャッシュの有効期限と無効化戦略を明確に
-- N+1 問題やオーバーフェッチを避ける
-
-## 信頼性の確保
-
-- タイムアウト処理を適切に設定
-- リトライ機構の実装（指数バックオフを考慮）
-- サーキットブレーカーパターンの活用
-- 一時的な障害に対する耐性を持たせる
-- 適切なログとメトリクスで可観測性を確保
-
-## プロジェクトコンテキストの理解
-
-- ビジネス要件と技術要件のバランスを取る
-- 現在のフェーズで本当に必要な品質レベルを判断
-- 時間制約がある場合でも、最低限の品質基準を維持
-- チーム全体の技術レベルに合わせた実装選択
-
-## トレードオフの認識
-
-- すべてを完璧にすることは不可能（銀の弾丸は存在しない）
-- 制約の中で最適なバランスを見つける
-- プロトタイプなら簡潔さを、本番なら堅牢性を優先
-- 妥協点とその理由を明確にドキュメント化
-
-## Git 運用の基本
-
-- コンベンショナルコミット形式を使用（feat:, fix:, docs:, test:, refactor:, chore:）
-- コミットは原子的で、単一の変更に焦点を当てる
-- 明確で説明的なコミットメッセージを英語で記述
-- main/master ブランチへの直接コミットは避ける
-
-## コードレビューの姿勢
-
-- レビューコメントは建設的な改善提案として受け取る
-- 個人ではなくコードに焦点を当てる
-- 変更の理由と影響を明確に説明
-- フィードバックを学習機会として歓迎
-
-## デバッグのベストプラクティス
-
-- 問題を確実に再現できる手順を確立
-- 二分探索で問題の範囲を絞り込む
-- 最近の変更から調査を開始
-- デバッガー、プロファイラー等の適切なツールを活用
-- 調査結果と解決策を記録し、知識を共有
-
-## 依存関係の管理
-
-- 本当に必要な依存関係のみを追加
-- package-lock.json 等のロックファイルを必ずコミット
-- 新しい依存関係追加前にライセンス、サイズ、メンテナンス状況を確認
-- セキュリティパッチとバグ修正のため定期的に更新
-
-## 継続的な改善
-
-- 学んだことを次のプロジェクトに活かす
-- 定期的に振り返りを行い、プロセスを改善
-- 新しいツールや手法を適切に評価して取り入れる
-- チームや将来の開発者のために知識を文書化
-
-## ドキュメント管理
+詳細なワークフローについては、[`docs/rules/ai-documentation.md` の実装フロー](../docs/rules/ai-documentation.md)を参照してください。
 
 ### ドキュメント構造
 
 プロジェクトのドキュメントは `docs/` 配下にソフトウェア開発ライフサイクルに沿って整理されています。
 
+詳しくは [`docs/README.md`](../docs/README.md) を参照してください。
+
+## ファイルとドキュメントの同期
+
+### 重要な原則
+
+**ファイルを修正したら、必ず関連ドキュメントも更新してください。**
+
+この原則により、コードとドキュメントの整合性を保ち、軽量なAIモデルでも正確な情報を参照できるようにします。
+
+### 更新が必要なドキュメント
+
+#### 1. コンポーネント・ロジックファイルを修正した場合
+
 ```
-docs/
-├── README.md                    # ドキュメント全体の説明とナビゲーション
-├── 01_planning/                 # 企画・計画
-│   ├── ideas/                  # アイデア、発想
-│   ├── roadmap/                # ロードマップ
-│   └── business/               # ビジネスプラン、料金設定
-├── 02_requirements/             # 要件定義
-│   └── features/               # 機能別要件定義
-├── 03_design/                   # 設計
-│   ├── architecture/           # システムアーキテクチャ
-│   ├── database/               # DB設計
-│   ├── api/                    # API設計
-│   ├── features/               # 機能設計
-│   └── specifications/         # 技術仕様書
-├── 04_implementation/           # 実装
-│   ├── plans/                  # 実装計画書
-│   └── guides/                 # 実装ガイド
-├── 05_testing/                  # テスト
-│   └── test-cases/             # テストケース
-├── 06_operations/               # 運用
-│   ├── deployment/             # デプロイ手順
-│   └── maintenance/            # メンテナンス
-├── 07_research/                 # 調査・研究
-│   └── YYYY_MM/                # 月別整理
-├── 08_worklogs/                 # 作業ログ
-│   └── YYYY_MM/                # 月別整理
-├── 09_improvements/             # 改善提案
-├── 10_reverse/                  # リバースエンジニアリング
-├── 11_marketing/                # マーケティング
-│   └── introductions/          # 製品紹介
-├── issues/                      # 問題管理
-│   ├── open/                   # 未解決の問題
-│   ├── in-progress/            # 対応中の問題
-│   ├── resolved/               # 解決済みの問題
-│   └── templates/              # 問題記録用テンプレート
-├── archive/                     # アーカイブ
-│   └── deprecated/             # 廃止機能の資料
-└── templates/                   # ドキュメントテンプレート
+修正ファイル: src/components/Button/Button.tsx
+↓ 必ず更新
+関連ドキュメント:
+  - src/components/Button/Button.spec.md（仕様書）
+  - src/components/Button/Button.test.tsx（テストケース）
+  - docs/03_plans/button-component/（実装計画）
 ```
 
-### ドキュメント作成ルール
-
-#### 新規ドキュメントの作成
-
-1. **適切なカテゴリを選択**
-
-   - 企画段階 → `01_planning/`
-   - 要件定義 → `02_requirements/features/`
-   - 設計 → `03_design/` (architecture/database/api/features/specifications)
-   - 実装計画 → `04_implementation/plans/{機能名}/`
-   - 調査 → `07_research/YYYY_MM/`
-   - 作業ログ → `08_worklogs/YYYY_MM/YYYYMMDD/`
-   - 改善提案 → `09_improvements/`
-   - 問題報告 → `issues/open/`
-
-2. **機能別ディレクトリの作成**
-
-   複数のドキュメントが同じ機能に関連する場合、機能別ディレクトリを作成:
-
-   **対象カテゴリ**:
-
-   - `04_implementation/plans/` - 実装計画
-   - `08_worklogs/YYYY_MM/YYYYMMDD/` - 日別作業ログ
-
-   **作成ルール**:
-
-   - 機能名でディレクトリを作成（例: `unified-link-mark/`, `pdf-processing/`）
-   - ディレクトリ内のファイルは `YYYYMMDD_{番号}_{内容}.md` 形式
-   - README.md を作成してディレクトリの概要を記載
-
-   **例**:
-
-   ```
-   04_implementation/plans/
-   ├── README.md
-   └── unified-link-mark/
-       ├── 20250925_01_implementation-plan.md
-       ├── 20250929_02_p2-implementation-plan.md
-       └── 20251011_03_migration-plan.md
-   ```
-
-3. **テンプレートを使用**
-
-   - 要件定義: `docs/templates/requirement-template.md`
-   - 設計書: `docs/templates/design-template.md`
-   - 作業ログ: `docs/templates/worklog-template.md`
-   - 調査レポート: `docs/templates/research-template.md`
-
-4. **ファイル命名規則**
-
-   **基本形式**:
-
-   - 日付を含む場合: `YYYYMMDD_{2桁番号}_{説明}.md`
-   - 例: `20251012_01_unit-tests-complete.md`, `20251012_02_implementation-status.md`
-   - 番号は作業順序を表す（01, 02, 03, ...）
-   - 2 桁ゼロパディングで統一（将来の拡張性のため）
-
-   **機能名のみの場合**:
-
-   - 形式: `機能名-タイプ.md` (例: `pdf-processing-design.md`)
-   - スネークケースまたはケバブケースを使用
-
-   **共通ルール**:
-
-   - **必須**: すべてのドキュメントファイル名の先頭に `YYYYMMDD_` 形式の日付を付ける
-   - 日本語ファイル名は避ける（検索性・互換性のため）
-   - 作業の時系列が明確になり、ドキュメント間の関連性が把握しやすい
-   - 例外: README.md やディレクトリの概要ファイルのみ日付不要
-
-#### ドキュメントに含めるべき内容
-
-すべてのドキュメントに以下を含める:
-
-1. **概要**: ドキュメントの目的を明確に
-2. **背景**: なぜこのドキュメントが必要か
-3. **本文**: 詳細な内容
-4. **関連ドキュメント**: 他のドキュメントへのリンク
-5. **作成日と最終更新日**: 情報の鮮度を明示
-
-#### 作業ログの記録
-
-日々の作業は必ず `08_worklogs/YYYY_MM/YYYYMMDD/*.md` に記録:
-
-- **作業開始時**: テンプレートを使用して作業ログを作成
-- **作業中**: 発見した問題、学び、変更内容を記録
-- **作業終了時**: 次回の作業予定、残タスクを明記
-
-**ファイル命名規則**:
-
-- 1 日 1 作業: `YYYYMMDD_説明.md`
-- 1 日複数作業: `YYYYMMDD_{2桁番号}_{説明}.md` (例: `20251012_01_unit-tests.md`, `20251012_02_refactoring.md`)
-- 番号は作業順序を示す（01, 02, 03, ...）
-
-**記載すべき内容**:
-
-- 実施した作業の詳細
-- 変更したファイルと変更内容
-- 発見した課題と対応
-- 学んだこと・気づき
-- テスト結果
-- 次回の作業予定
-
-#### 実装計画の記録
-
-実装計画は `04_implementation/plans/{機能名}/` に記録:
-
-- **機能別ディレクトリを作成**: 複数のドキュメントがある場合は必須
-- **README.md を配置**: ディレクトリの概要、ファイル一覧、実装の経緯を記載
-- **時系列で番号付け**: `YYYYMMDD_{2桁番号}_{内容}.md` 形式で管理
-- **関連ドキュメントへのリンク**: 設計書、作業ログへの参照を明記
-
-**ファイル命名例**:
-
-- `20250925_01_implementation-plan.md` - 初期実装計画
-- `20250929_02_p2-implementation-plan.md` - Phase 2 計画
-- `20251011_07_migration-plan.md` - 移行計画
-- `20251011_08_refactoring-plan.md` - リファクタリング計画
-
-#### 調査・研究の記録
-
-技術調査、競合調査は `07_research/YYYY_MM/` に記録:
-
-- **調査前**: 調査目的と背景を明確に
-- **調査結果**: 発見したことを構造的に記述
-- **メリット・デメリット**: 客観的な評価
-- **推奨事項**: 調査結果を踏まえた提案
-- **参考資料**: 参照した URL、ドキュメントのリスト
-
-#### 問題・課題の記録
-
-コードレビューや調査中に発見した問題は `issues/` に記録:
-
-- **即座に記録**: 問題を発見したら即座に `issues/open/YYYYMMDD_{番号}_{問題要約}.md` として記録
-- **テンプレート使用**: `issues/templates/issue-template.md` を使用
-- **記録すべき内容**:
-  - 発見場所（ファイルパス、関数名、行番号）
-  - 問題の詳細（何が問題か、なぜ問題か）
-  - 影響範囲（どこに影響するか）
-  - 重要度（Critical / High / Medium / Low）
-  - 提案する解決策（具体的なコード例を含む）
-- **ステータス管理**:
-  - 未解決: `issues/open/`
-  - 対応中: `issues/in-progress/`
-  - 解決済: `issues/resolved/`
-
-**記録すべき問題の例**:
-
-- 無駄なコード、デッドコード
-- 非効率な実装、パフォーマンス問題
-- セキュリティ上の懸念
-- テストの不足
-- ドキュメントの欠如
-- 技術的負債
-
-#### ドキュメントの更新
-
-既存ドキュメントを更新する際:
-
-1. **変更履歴を記録**: 何を、なぜ変更したか
-2. **最終更新日を更新**: 情報の鮮度を維持
-3. **関連ドキュメントも更新**: 一貫性を保つ
-4. **古い情報はアーカイブ**: 削除ではなく `archive/` へ移動
-
-#### ドキュメントのアーカイブ
-
-以下の場合はアーカイブへ移動:
-
-- 機能が廃止された
-- 情報が古くなり、参照価値がなくなった
-- 新しいドキュメントで置き換えられた
-
-**手順**:
-
-1. `archive/deprecated/` または `archive/YYYY_MM/` へ移動
-2. ファイル冒頭に廃止理由と日付を追記
-3. 新しいドキュメントへのリンクがあれば明記
-
-### AI 開発時のドキュメント活用
-
-#### ドキュメント作成を忘れない
-
-- 新機能の実装前: 要件定義と設計書を作成
-- 実装中: 作業ログを記録
-- 技術選定時: 調査レポートを作成
-- 問題解決後: 解決策をドキュメント化
-
-#### ドキュメントを読んでから実装
-
-- 既存機能の修正前に関連ドキュメントを確認
-- 設計意図を理解してから変更を加える
-- 過去の作業ログから学ぶ
-
-#### ドキュメントの一貫性
-
-- 複数ドキュメント間の矛盾を発見したら修正
-- リンク切れを見つけたら更新
-- 情報が古い場合は最新化またはアーカイブ
-
-### ドキュメント検索のコツ
-
-- **目的別**: README.md の「目的別」セクションを参照
-- **時系列**: worklogs/ や research/ の月別ディレクトリを確認
-- **機能別**: plans/ や worklogs/ 内の機能別ディレクトリを確認
-- **日付・番号順**: ファイル名の `YYYYMMDD_{番号}_` でソート・検索
-- **機能名**: grep や VS Code の検索機能を活用
-- **関連ドキュメント**: 各ドキュメントの「関連ドキュメント」セクションを辿る
-
-## 問題管理のワークフロー
-
-### 問題の発見と記録
-
-#### いつ記録するか
-
-- コードレビュー中に問題を発見した時
-- 調査タスク実行中に無駄なコードや問題のある処理を見つけた時
-- 実装中に技術的負債や改善点を識別した時
-- テスト中にバグやカバレッジ不足を確認した時
-- リファクタリングが必要な箇所を発見した時
-
-#### 記録の手順
-
-1. **テンプレートをコピー**:
-
-   ```bash
-   cp docs/issues/templates/issue-template.md docs/issues/open/YYYYMMDD_01_issue-name.md
-   ```
-
-2. **GitHub 上に issue を作成**:
-
-   AI 開発時は `mcp_github_create_issue` を使用して GitHub リポジトリ上に issue を作成:
-
-   ```
-   mcp_github_create_issue:
-   - owner: otomatty
-   - repo: for-all-learners
-   - title: [問題の要約]
-   - body: [問題の詳細、影響範囲、提案する解決策]
-   - labels: [問題に応じて: bug, technical-debt, enhancement, documentation など]
-   ```
-
-   **ラベルの使用例**:
-
-   - `bug`: 実際のバグ・不具合
-   - `technical-debt`: 技術的負債
-   - `enhancement`: 改善提案
-   - `documentation`: ドキュメント不足
-   - `performance`: パフォーマンス問題
-   - `security`: セキュリティ上の懸念
-
-3. **ドキュメントに GitHub issue 情報を記入**:
-
-   - 作成された GitHub issue 番号とリンクを「基本情報」セクションに記載
-   - GitHub issue URL: `https://github.com/otomatty/for-all-learners/issues/{issue_number}`
-
-4. **必須情報を記入**:
-
-   - 発見日時・発見場所
-   - 問題の詳細と影響範囲
-   - 重要度の評価
-   - 提案する解決策（コード例を含む）
-
-5. **関連ドキュメントへのリンク**:
-   - 作業ログから問題ファイルへリンク
-   - 問題ファイルから関連する設計書・実装計画へリンク
-   - GitHub issue へのリンク（両方向）
-
-#### GitHub issue へのリンク（両方向）の設定
-
-GitHub issue 上での相互参照を設定することで、GitHub と ドキュメントの双方から問題にアクセスできます:
-
-1. **ドキュメント内に GitHub issue リンクを記載**:
-
-   issue ドキュメントの「基本情報」セクションに GitHub issue URL を記載:
-
-   ```markdown
-   - **GitHub Issue**: [#123](https://github.com/otomatty/for-all-learners/issues/123)
-   ```
-
-2. **GitHub issue のボディに ドキュメントリンクを記載**:
-
-   GitHub issue の説明欄に対応するドキュメントへのリンクを記載:
-
-   ```markdown
-   ## 関連ドキュメント
-
-   - [Issue ドキュメント](https://github.com/otomatty/for-all-learners/blob/fix/legacy-data-migration-attributes/docs/issues/open/20251019_01_example-issue.md)
-   ```
-
-3. **リポジトリへのリンク**:
-
-   ドキュメント内に GitHub リポジトリ内の相対パスを記載することで、GitHub 上からも直接アクセス可能:
-
-   ```markdown
-   - **詳細**: [docs/issues/open/20251019_01_example-issue.md](../../docs/issues/open/20251019_01_example-issue.md)
-   ```
-
-### 問題の対応
-
-1. **優先順位の判断**:
-
-   - Critical: 即座に対応
-   - High: 優先的に対応
-   - Medium: 計画的に対応
-   - Low: 余裕がある時に対応
-
-2. **対応開始時**:
-
-   - `issues/open/` → `issues/in-progress/` へ移動
-   - 進捗記録セクションに調査内容を追記
-
-3. **解決時**:
-   - `issues/in-progress/` → `issues/resolved/` へ移動
-   - 解決方法、変更ファイル、コミットハッシュを記録
-   - 学んだことを記述
-
-### 報告の原則
-
-**調査中に見つけた問題は必ず報告**:
-
-- たとえ現在のタスクと直接関係なくても記録する
-- 「後で対応」ではなく「今すぐ記録」
-- 小さな問題でも放置しない（Broken Windows 理論）
-- 問題の累積を防ぎ、技術的負債を可視化する
+**更新手順:**
+1. `.spec.md` の「Requirements」セクションを更新
+2. `.spec.md` の「Test Cases」に新規テストケースを追加
+3. `.test.tsx` に対応するテストを追加
+4. 実装計画の進捗状況を更新
+
+#### 2. 新機能を追加した場合
+
+```
+新規ファイル: src/features/NewFeature/NewFeature.tsx
+↓ 必ず作成
+関連ドキュメント:
+  - src/features/NewFeature/NewFeature.spec.md（新規作成）
+  - docs/01_issues/open/YYYY_MM/YYYYMMDD_01_new-feature.md
+  - docs/03_plans/new-feature/（新規作成）
+  - docs/05_logs/YYYY_MM/YYYYMMDD/01_new-feature-implementation.md
+```
+
+#### 3. バグ修正した場合
+
+```
+修正ファイル: src/utils/helper.ts
+↓ 必ず更新
+関連ドキュメント:
+  - src/utils/helper.spec.md（バグを再現するテストケース追加）
+  - docs/01_issues/open/ → docs/01_issues/resolved/ へ移動
+  - docs/05_logs/YYYY_MM/YYYYMMDD/XX_bugfix-helper.md
+```
+
+### ファイル間の関連付け方法
+
+#### 方法1: コメントで明示（推奨）
+
+実装ファイルの先頭に関連ドキュメントを記載：
+
+```typescript
+/**
+ * Button Component
+ *
+ * Related Documentation:
+ * - Spec: src/components/Button/Button.spec.md
+ * - Test: src/components/Button/Button.test.tsx
+ * - Plan: docs/03_plans/button-component/20251022_01_implementation-plan.md
+ * - Issue: docs/01_issues/resolved/2025_10/20251022_01_button-component.md
+ */
+export const Button: React.FC<ButtonProps> = (props) => {
+  // ...
+};
+```
+
+#### 方法2: .spec.md に記載
+
+仕様書に実装ファイルへのリンクを記載：
+
+```markdown
+# Button.spec.md
+
+## Related Files
+
+- Implementation: `src/components/Button/Button.tsx`
+- Tests: `src/components/Button/Button.test.tsx`
+- Styles: `src/components/Button/Button.module.css`
+
+## Related Documentation
+
+- Issue: `docs/01_issues/resolved/2025_10/20251022_01_button-component.md`
+- Plan: `docs/03_plans/button-component/20251022_01_implementation-plan.md`
+```
+
+### 依存関係の明示
+
+#### ファイル先頭に DEPENDENCY MAP を記載
+
+すべてのコンポーネント・ロジックファイルの先頭に、依存関係マップを記載してください：
+
+```typescript
+/**
+ * Button Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   ├─ src/components/Form/SubmitButton.tsx
+ *   ├─ src/components/Modal/ConfirmDialog.tsx
+ *   └─ src/pages/Dashboard.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ src/hooks/useClickHandler.ts
+ *   ├─ src/utils/classNameBuilder.ts
+ *   └─ ./Button.module.css
+ *
+ * Related Documentation:
+ *   ├─ Spec: ./Button.spec.md
+ *   ├─ Tests: ./Button.test.tsx
+ *   └─ Plan: docs/03_plans/button-component/20251022_01_implementation-plan.md
+ */
+```
+
+**なぜ必要か:**
+- 修正時の影響範囲が即座に判定できる
+- リファクタリングのリスク評価が容易
+- 軽量AIモデルでも依存関係を理解できる
+- デッドコード検出が簡単
+
+**詳細は**: [`docs/rules/dependency-mapping.md`](../docs/rules/dependency-mapping.md) を参照
+
+### 更新チェックリスト
+
+ファイルを修正した際は、以下を必ず確認してください：
+
+- [ ] `.spec.md` の「Requirements」は最新か？
+- [ ] `.spec.md` の「Test Cases」に新しいケースを追加したか？
+- [ ] `.test.tsx` は `.spec.md` と一致しているか？
+- [ ] **DEPENDENCY MAP が最新か？（Parents / Dependencies）**
+- [ ] **親ファイル（Parents）の DEPENDENCY MAP も更新したか？**
+- [ ] 実装計画の進捗状況を更新したか？
+- [ ] 作業ログを記録したか？
+- [ ] Issue の状態を更新したか？（open → resolved など）
+
+### AIモデルへの指示例
+
+軽量なモデルでも理解しやすいように、明確な指示を心がけてください：
+
+```
+【タスク】Button コンポーネントに size プロパティを追加
+
+【更新するファイル】
+1. src/components/Button/Button.tsx
+   - size プロパティ実装
+   - DEPENDENCY MAP の確認（変更があれば更新）
+
+2. src/components/Button/Button.spec.md
+   - Requirements セクションに size 要件追加
+   - Test Cases に TC-006 追加
+
+3. src/components/Button/Button.test.tsx
+   - TC-006 として size テスト追加
+
+4. 親コンポーネントの確認
+   - Button を使用している全ての親コンポーネント（Parents）を確認
+   - 必要に応じて親コンポーネントの DEPENDENCY MAP も更新
+
+【参照ドキュメント】
+- 仕様書: src/components/Button/Button.spec.md
+- 実装計画: docs/03_plans/button-component/20251022_01_implementation-plan.md
+- 依存関係: src/components/Button/Button.tsx の DEPENDENCY MAP コメント
+
+【依存関係チェック】
+- Parents（このファイルを使用）: SubmitButton, ConfirmDialog, Dashboard
+- Dependencies（このファイルが使用）: useClickHandler, classNameBuilder
+```
+
+この構造により、AIモデルは以下を理解できます：
+- どのファイルを修正すべきか
+- どのドキュメントを参照すべきか
+- どのドキュメントを更新すべきか
+- **どのファイルが影響を受けるか（依存関係）**
+- **どのファイルの DEPENDENCY MAP を更新すべきか**
+```

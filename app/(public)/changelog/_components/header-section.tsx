@@ -1,5 +1,5 @@
 import React from "react";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 
 export default function HeaderSection() {
 	return (

@@ -1,55 +1,20 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 
-// テキストノード用型定義と型ガード
-type JSONTextNode = JSONContent & { type: "text"; text: string };
-function isTextNode(node: JSONContent): node is JSONTextNode {
-	const textNode = node as JSONTextNode;
-	return textNode.type === "text" && typeof textNode.text === "string";
-}
 interface PageLinksGridProps {
-	outgoingPages: {
-		id: string;
-		title: string;
-		thumbnail_url: string | null;
-		content_tiptap: JSONContent;
-	}[];
 	missingLinks: string[];
-	incomingPages: {
-		id: string;
-		title: string;
-		thumbnail_url: string | null;
-		content_tiptap: JSONContent;
-	}[];
-	nestedLinks: Record<string, string[]>;
 	/** note内ページの場合のnoteSlug */
 	noteSlug?: string;
 }
 
-// JSONContent からプレーンテキストを抽出するヘルパー
-function extractText(node: JSONContent): string {
-	if (isTextNode(node)) {
-		return node.text;
-	}
-	if (Array.isArray(node.content)) {
-		return node.content.map(extractText).join("");
-	}
-	return "";
-}
-
 export default function PageLinksGrid({
-	outgoingPages,
 	missingLinks,
-	incomingPages,
-	nestedLinks,
 	noteSlug,
 }: PageLinksGridProps) {
 	const router = useRouter();
@@ -75,12 +40,10 @@ export default function PageLinksGrid({
 				.select("id")
 				.single();
 			if (insertError || !insertedPage) {
-				console.error("ページ作成失敗:", insertError);
+				logger.error({ error: insertError, name, noteSlug }, "ページ作成失敗");
 				toast.error("ページ作成に失敗しました");
 				return;
-			}
-
-			// noteSlugが指定されている場合はnoteに関連付け
+			} // noteSlugが指定されている場合はnoteに関連付け
 			if (noteSlug) {
 				// noteIDを取得
 				const { data: note, error: noteError } = await supabase
@@ -91,13 +54,9 @@ export default function PageLinksGrid({
 
 				if (!noteError && note) {
 					// note_page_linksに挿入
-					const { error: linkError } = await supabase
+					await supabase
 						.from("note_page_links")
 						.insert({ note_id: note.id, page_id: insertedPage.id });
-
-					if (linkError) {
-						console.error("ページのnote関連付けに失敗:", linkError);
-					}
 				}
 			}
 			// 適切なURLにリダイレクト
@@ -109,71 +68,13 @@ export default function PageLinksGrid({
 		[router, noteSlug],
 	);
 
-	// outgoingPages と incomingPages をマージしてユニークなリンク一覧を作成
-	const linkedPages = React.useMemo(() => {
-		const map = new Map<string, (typeof outgoingPages)[0]>();
-		for (const p of outgoingPages) {
-			map.set(p.id, p);
-		}
-		for (const p of incomingPages) {
-			map.set(p.id, p);
-		}
-		return Array.from(map.values());
-	}, [outgoingPages, incomingPages]);
-
 	return (
 		<div className="my-8 space-y-8 min-h-[300px]">
-			{linkedPages.length > 0 && (
-				<section className="max-w-5xl mx-auto">
-					<h2 className="text-lg font-semibold mb-2">リンクしているページ</h2>
-					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-						{linkedPages.map((page) => {
-							const href = noteSlug
-								? `/notes/${encodeURIComponent(noteSlug)}/${page.id}`
-								: `/pages/${page.id}`;
-							return (
-								<Link key={page.id} href={href} className="block h-full">
-									<Card className="h-full overflow-hidden transition-all hover:shadow-md py-3 md:py-4 gap-2">
-										<CardHeader className="px-2 md:px-4">
-											<CardTitle>{page.title}</CardTitle>
-										</CardHeader>
-										<CardContent className="px-2 md:px-4">
-											{page.thumbnail_url ? (
-												<Image
-													src={page.thumbnail_url}
-													alt={page.title}
-													width={400}
-													height={200}
-													className="w-full h-32 object-contain mb-2"
-												/>
-											) : (
-												(() => {
-													const text = extractText(page.content_tiptap)
-														.replace(/\s+/g, " ")
-														.trim();
-													return (
-														text && (
-															<p className="line-clamp-5 text-sm text-muted-foreground mb-2">
-																{text}
-															</p>
-														)
-													);
-												})()
-											)}
-										</CardContent>
-									</Card>
-								</Link>
-							);
-						})}
-					</div>
-				</section>
-			)}
-
 			{/* 未設定リンク一覧 */}
 			{missingLinks && missingLinks.length > 0 && (
-				<section className="max-w-5xl mx-auto">
-					<h2 className="text-lg font-semibold mb-2">未設定リンク一覧</h2>
-					<div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+				<section>
+					<h2 className="text-lg font-semibold mb-2">新しいリンク</h2>
+					<div className="grid gap-2 md:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
 						{missingLinks.map((name) => (
 							<Card
 								key={name}

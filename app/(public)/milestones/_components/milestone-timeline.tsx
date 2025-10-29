@@ -17,7 +17,7 @@ import React, {
 	useRef,
 	useState,
 } from "react";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialogをインポート
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialogをインポート
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

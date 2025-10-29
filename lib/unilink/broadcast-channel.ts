@@ -50,12 +50,6 @@ export const createUnilinkBroadcastChannel = () => {
 				logger.warn({ message }, "[BroadcastChannel] Invalid message format");
 				return;
 			}
-
-			logger.debug(
-				{ key: message.key, pageId: message.pageId },
-				"[BroadcastChannel] Received page creation event",
-			);
-
 			// Notify all handlers
 			state.handlers.forEach((handler) => {
 				try {
@@ -73,7 +67,6 @@ export const createUnilinkBroadcastChannel = () => {
 	if (typeof BroadcastChannel !== "undefined") {
 		state.channel = new BroadcastChannel(CHANNEL_NAME);
 		state.channel.addEventListener("message", handleMessage);
-		logger.debug("[BroadcastChannel] Initialized");
 	} else {
 		logger.warn("[BroadcastChannel] Not supported in this environment");
 	}
@@ -83,10 +76,6 @@ export const createUnilinkBroadcastChannel = () => {
 	 */
 	const emitPageCreated = (key: string, pageId: string): void => {
 		if (!state.channel) {
-			logger.debug(
-				{ key, pageId },
-				"[BroadcastChannel] Cannot emit, channel not initialized",
-			);
 			return;
 		}
 
@@ -99,10 +88,6 @@ export const createUnilinkBroadcastChannel = () => {
 
 		try {
 			state.channel.postMessage(message);
-			logger.debug(
-				{ key, pageId },
-				"[BroadcastChannel] Emitted page creation event",
-			);
 		} catch (error) {
 			logger.warn(
 				{ key, pageId, error },
@@ -117,10 +102,6 @@ export const createUnilinkBroadcastChannel = () => {
 	 */
 	const onPageCreated = (handler: PageCreatedHandler): (() => void) => {
 		state.handlers.add(handler);
-		logger.debug(
-			{ handlerCount: state.handlers.size },
-			"[BroadcastChannel] Handler registered",
-		);
 
 		return () => {
 			state.handlers.delete(handler);

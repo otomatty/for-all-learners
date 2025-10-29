@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
 	Card,

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ResponsiveDialog } from "@/components/responsive-dialog"; // ResponsiveDialog をインポート
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialog をインポート
 import {
 	AlertDialog,
 	AlertDialogAction,

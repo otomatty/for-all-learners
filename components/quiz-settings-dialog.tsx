@@ -4,7 +4,7 @@ import { Grid, List, Type } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { startQuizAction } from "@/app/_actions/startQuiz";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 

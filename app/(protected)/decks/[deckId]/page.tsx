@@ -6,7 +6,7 @@ import {
 	getAvailableNotesForDeck,
 	getNotesLinkedToDeck,
 } from "@/app/_actions/note-deck-links";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";

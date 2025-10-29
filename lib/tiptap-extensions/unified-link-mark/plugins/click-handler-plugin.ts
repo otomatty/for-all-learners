@@ -15,11 +15,8 @@ import { Plugin, PluginKey } from "prosemirror-state";
 import { toast } from "sonner";
 import logger from "@/lib/logger";
 import {
-	handleMissingLinkClick,
-	navigateToPageWithContext,
 	openExternalLink,
 	parseBracketContent,
-	resolveIconLink,
 } from "../../../unilink/resolver";
 import type { UnifiedLinkAttributes, UnifiedLinkMarkOptions } from "../types";
 
@@ -90,20 +87,10 @@ const detectBracketAtPosition = (
  */
 const handleBracketClick = async (
 	bracketContent: string,
-	context: { editor: Editor; options: UnifiedLinkMarkOptions },
+	_context: { editor: Editor; options: UnifiedLinkMarkOptions },
 ): Promise<boolean> => {
 	try {
 		const parsed = parseBracketContent(bracketContent);
-		const { noteSlug } = context.options;
-
-		// Handle .icon notation
-		if (parsed.type === "icon" && parsed.userSlug) {
-			const result = await resolveIconLink(parsed.userSlug, noteSlug);
-			if (result) {
-				window.location.href = result.href;
-			}
-			return true;
-		}
 
 		// Handle external links
 		if (parsed.type === "external") {
@@ -111,10 +98,11 @@ const handleBracketClick = async (
 			return true;
 		}
 
-		// Handle regular page links
-		// This will be handled by the existing PageLink extension
-		// until full migration is complete
-		return false;
+		// Handle regular page links - simple navigation to key-based URL
+		const href = `/notes/${parsed.slug}`;
+		logger.debug({ slug: parsed.slug, href }, "Navigating to bracket link");
+		window.location.href = href;
+		return true;
 	} catch (error) {
 		logger.error({ bracketContent, error }, "Failed to handle bracket click");
 		toast.error("リンクの処理に失敗しました");
@@ -243,57 +231,70 @@ export const createClickHandlerPlugin = (context: {
 						event.preventDefault();
 						const attrs = unilinkMark.attrs as UnifiedLinkAttributes;
 
-						// Phase 3.1: Handle by linkType
-						if (attrs.linkType === "icon" && attrs.userSlug) {
-							// Handle .icon links
-							resolveIconLink(attrs.userSlug, context.options.noteSlug)
-								.then((result) => {
-									if (result) {
-										window.location.href = result.href;
-									}
-								})
-								.catch((error) => {
-									logger.error(
-										{ userSlug: attrs.userSlug, error },
-										"Failed to resolve icon link",
-									);
-									toast.error("リンクの解決に失敗しました");
-								});
-							return true;
-						}
-
+						// Handle external links
 						if (attrs.linkType === "external" && attrs.href) {
-							// Handle external links
 							openExternalLink(attrs.href);
 							return true;
 						}
 
-						// Handle regular page links with noteSlug support
+						// Handle existing pages (state === "exists" and pageId is set)
 						if (attrs.state === "exists" && attrs.pageId) {
-							navigateToPageWithContext(
-								attrs.pageId,
-								context.options.noteSlug,
-								attrs.created,
+							// Navigate to existing page using UUID
+							const href = context.options.noteSlug
+								? `/notes/${encodeURIComponent(context.options.noteSlug)}/${attrs.pageId}`
+								: `/pages/${attrs.pageId}`;
+
+							logger.debug(
+								{ pageId: attrs.pageId, href },
+								"[UnifiedLinkMark] Navigating to existing page",
 							);
-						} else if (
-							attrs.state === "missing" &&
-							attrs.text &&
-							attrs.markId
-						) {
-							handleMissingLinkClick(
-								context.editor,
-								attrs.markId,
-								attrs.text,
-								context.options.userId || undefined,
-								context.options.onShowCreatePageDialog,
+							window.location.href = href;
+							return true;
+						}
+
+						// Handle missing pages (state === "missing" or no pageId)
+						if (attrs.state === "missing" || !attrs.pageId) {
+							logger.debug(
+								{ text: attrs.text, state: attrs.state },
+								"[UnifiedLinkMark] Missing page clicked - will create page",
 							);
-						} else if (attrs.state === "pending") {
-							logger.debug({ attrs }, "[UnifiedLinkMark] Link is pending");
-						} else {
-							logger.warn(
-								{ attrs },
-								"[UnifiedLinkMark] Unknown state or missing data",
-							);
+
+							// Get the title to create
+							const titleToCreate = attrs.text || attrs.raw || "";
+
+							if (!titleToCreate.trim()) {
+								toast.error("ページタイトルが空です");
+								return true;
+							}
+
+							// Call the onShowCreatePageDialog callback if provided
+							if (context.options.onShowCreatePageDialog) {
+								context.options.onShowCreatePageDialog(
+									titleToCreate,
+									async () => {
+										// This callback will be called when user confirms page creation
+										// The actual page creation logic should be handled by the component
+										// that provides this callback
+									},
+								);
+							} else {
+								// If no dialog callback, directly create the page using handleAnchorClick logic
+								// This simulates clicking on a data-page-title link
+								handleAnchorClick(
+									{
+										getAttribute: (attr: string) => {
+											if (attr === "data-page-title") return titleToCreate;
+											return null;
+										},
+										hasAttribute: (attr: string) => attr === "data-page-title",
+										tagName: "A",
+									} as unknown as HTMLAnchorElement,
+									event as MouseEvent,
+									context,
+								);
+							}
+
+							return true;
 						}
 
 						return true;

@@ -2,11 +2,30 @@ import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import tippy, { type Instance, type Props } from "tippy.js";
+import logger from "@/lib/logger";
 import { searchPages } from "@/lib/utils/searchPages";
 import type { UnifiedLinkMarkOptions } from "../types";
 
+// Debug flag - set to true to enable detailed logging
+const DEBUG_TAG_DUPLICATION = false;
+
+// Feature flag: Disable suggestion feature to isolate tag duplication issue
+// When false, suggestion plugin will not show any suggestions (bracket or tag)
+// This helps identify whether the problem is in InputRule or Suggestion Plugin
+const ENABLE_SUGGESTION_FEATURE = false;
+
+// Debug logging utility
+function debugLog(
+	context: string,
+	message: string,
+	data?: Record<string, unknown>,
+) {
+	if (!DEBUG_TAG_DUPLICATION) return;
+	logger.debug(data || {}, `[UnifiedLinkMark] [${context}] ${message}`);
+}
+
 // Suggestion state interface
-interface UnifiedLinkSuggestionState {
+export interface UnifiedLinkSuggestionState {
 	active: boolean;
 	range: { from: number; to: number } | null;
 	query: string;
@@ -17,7 +36,7 @@ interface UnifiedLinkSuggestionState {
 }
 
 // Plugin key for state management
-const suggestionPluginKey = new PluginKey<UnifiedLinkSuggestionState>(
+export const suggestionPluginKey = new PluginKey<UnifiedLinkSuggestionState>(
 	"unifiedLinkSuggestion",
 );
 
@@ -39,7 +58,7 @@ export function createSuggestionPlugin(_context: {
 				range: null,
 				query: "",
 				results: [],
-				selectedIndex: 0,
+				selectedIndex: -1, // No item selected initially; user must select with arrow keys
 			}),
 
 			// Apply state updates from transaction metadata
@@ -57,6 +76,17 @@ export function createSuggestionPlugin(_context: {
 
 			return {
 				update(editorView) {
+					// Feature flag: Skip all suggestion logic if disabled
+					if (!ENABLE_SUGGESTION_FEATURE) {
+						// Clear any active suggestion state
+						if (debounceTimeoutId) {
+							clearTimeout(debounceTimeoutId);
+						}
+						tippyInstance?.destroy();
+						tippyInstance = null;
+						return;
+					}
+
 					const state = suggestionPluginKey.getState(
 						editorView.state,
 					) as UnifiedLinkSuggestionState;
@@ -144,8 +174,11 @@ export function createSuggestionPlugin(_context: {
 							variant,
 						} = detectedRange;
 
-						// Only show suggestions for non-empty query
-						if (query.length > 0) {
+						// Show suggestions for tag pattern even with empty query (#)
+						// For bracket pattern, only show if query is non-empty
+						const shouldShowSuggestions = query.length > 0 || variant === "tag";
+
+						if (shouldShowSuggestions) {
 							// Check if state needs update
 							if (
 								!state.active ||
@@ -166,7 +199,7 @@ export function createSuggestionPlugin(_context: {
 										range: { from: rangeFrom, to: rangeTo },
 										query,
 										results: [],
-										selectedIndex: 0,
+										selectedIndex: -1, // No item selected initially
 										variant,
 										loading: true,
 									} satisfies UnifiedLinkSuggestionState),
@@ -181,7 +214,7 @@ export function createSuggestionPlugin(_context: {
 											range: { from: rangeFrom, to: rangeTo },
 											query,
 											results,
-											selectedIndex: 0,
+											selectedIndex: -1, // Maintain -1 after search
 											variant,
 											loading: false,
 										} satisfies UnifiedLinkSuggestionState),
@@ -389,21 +422,47 @@ export function createSuggestionPlugin(_context: {
 
 		props: {
 			handleKeyDown(view, event) {
+				// Feature flag: Skip suggestion handling if disabled
+				if (!ENABLE_SUGGESTION_FEATURE) {
+					return false;
+				}
+
 				const state = suggestionPluginKey.getState(
 					view.state,
 				) as UnifiedLinkSuggestionState;
 
+				// Always log key events for debugging
+				debugLog("handleKeyDown", `Key pressed: ${event.key}`, {
+					active: state.active,
+					hasRange: !!state.range,
+					variant: state.variant,
+				});
+
 				if (!state.active || !state.range) {
+					debugLog(
+						"handleKeyDown",
+						`Early return: active=${state.active}, hasRange=${!!state.range}`,
+					);
 					return false;
 				}
+
+				debugLog(
+					"handleKeyDown",
+					`Suggestion is active, processing key: ${event.key}`,
+				);
 
 				// Arrow key navigation
 				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
 					event.preventDefault();
 					const direction = event.key === "ArrowDown" ? 1 : -1;
-					const newIndex =
-						(state.selectedIndex + direction + state.results.length) %
-						state.results.length;
+					let newIndex = state.selectedIndex + direction;
+
+					// Handle wrap-around from -1 to first item with down arrow
+					if (newIndex < -1) {
+						newIndex = state.results.length - 1;
+					} else if (newIndex >= state.results.length) {
+						newIndex = -1; // Wrap to unselected state
+					}
 
 					view.dispatch(
 						view.state.tr.setMeta(suggestionPluginKey, {
@@ -417,12 +476,48 @@ export function createSuggestionPlugin(_context: {
 				// Select current item with Tab or Enter
 				if (event.key === "Tab" || event.key === "Enter") {
 					event.preventDefault();
+
+					debugLog("KeyHandler", `${event.key} key pressed`, {
+						active: state.active,
+						variant: state.variant,
+						query: state.query,
+						selectedIndex: state.selectedIndex,
+						range: state.range,
+					});
+
+					// Immediately clear suggestion state to prevent InputRule from triggering again
+					// This prevents duplicate processing when Enter/Tab creates a new line
+					debugLog("KeyHandler", "Clearing suggestion state immediately");
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							active: false,
+							range: null,
+							query: "",
+							results: [],
+							selectedIndex: -1,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+
+					// If no item is selected (selectedIndex === -1), use input text as-is
+					if (state.selectedIndex === -1) {
+						// Create link with input text
+						debugLog("KeyHandler", "Creating link with input text", {
+							query: state.query,
+						});
+						insertUnifiedLinkWithQuery(view, state);
+						return true;
+					}
+
+					// Otherwise, use the selected item
 					const selectedItem = state.results[state.selectedIndex];
 
 					if (!selectedItem) {
 						return false;
 					}
 
+					debugLog("KeyHandler", "Creating link with selected item", {
+						title: selectedItem.title,
+					});
 					insertUnifiedLink(view, state, selectedItem);
 					return true;
 				}
@@ -436,9 +531,29 @@ export function createSuggestionPlugin(_context: {
 							range: null,
 							query: "",
 							results: [],
-							selectedIndex: 0,
+							selectedIndex: -1,
 						} satisfies UnifiedLinkSuggestionState),
 					);
+					return true;
+				}
+
+				// Handle Space key: create link with input text if tag pattern is active
+				if (event.key === " " && state.variant === "tag") {
+					event.preventDefault();
+
+					// Immediately clear suggestion state to prevent InputRule from triggering again
+					view.dispatch(
+						view.state.tr.setMeta(suggestionPluginKey, {
+							active: false,
+							range: null,
+							query: "",
+							results: [],
+							selectedIndex: -1,
+						} satisfies UnifiedLinkSuggestionState),
+					);
+
+					// Create link with input text (includes the space)
+					insertUnifiedLinkWithSpaceKey(view, state);
 					return true;
 				}
 
@@ -499,8 +614,136 @@ function insertUnifiedLink(
 		range: null,
 		query: "",
 		results: [],
-		selectedIndex: 0,
+		selectedIndex: -1,
 	} satisfies UnifiedLinkSuggestionState);
 
+	view.dispatch(tr);
+}
+
+/**
+ * Insert unified link using input query text when Space is pressed
+ * Used for " #MyTag" + Space → creates link for "MyTag" and continues with space
+ * The space is inserted after the link to allow normal text continuation
+ */
+function insertUnifiedLinkWithSpaceKey(
+	view: EditorView,
+	state: UnifiedLinkSuggestionState,
+) {
+	if (!state.range) return;
+
+	const { from, to } = state.range;
+	const variant = state.variant || "bracket";
+	const rawQuery = state.query;
+
+	// Create transaction
+	const tr = view.state.tr;
+
+	if (variant === "tag") {
+		// For tag: delete # and tag text, insert with mark, then add space
+		tr.delete(from - 1, to);
+
+		const markType = view.state.schema.marks.unifiedLink;
+		if (markType) {
+			const key = rawQuery.toLowerCase();
+			const mark = markType.create({
+				variant: "tag",
+				raw: rawQuery,
+				text: `#${rawQuery}`,
+				key,
+				pageId: null,
+				href: "#",
+				state: "pending",
+				exists: false,
+				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			});
+
+			// Insert link text and add space after it
+			const insertPos = from - 1;
+			tr.insert(insertPos, view.state.schema.text(`#${rawQuery}`, [mark]));
+			tr.insert(insertPos + `#${rawQuery}`.length, view.state.schema.text(" "));
+		}
+	}
+
+	// Clear suggestion state
+	tr.setMeta(suggestionPluginKey, {
+		active: false,
+		range: null,
+		query: "",
+		results: [],
+		selectedIndex: -1,
+	} satisfies UnifiedLinkSuggestionState);
+
+	view.dispatch(tr);
+}
+/**
+ * Insert unified link using input query text (when no suggestion is selected)
+ * Used for " #MyTag" + Enter → creates link with "MyTag"
+ */
+function insertUnifiedLinkWithQuery(
+	view: EditorView,
+	state: UnifiedLinkSuggestionState,
+) {
+	if (!state.range) return;
+
+	const { from, to } = state.range;
+	const variant = state.variant || "bracket";
+	const rawQuery = state.query;
+
+	debugLog("insertUnifiedLinkWithQuery", "Starting insertion", {
+		from,
+		to,
+		variant,
+		rawQuery,
+		docContent: view.state.doc.textBetween(
+			Math.max(0, from - 5),
+			Math.min(view.state.doc.content.size, to + 5),
+		),
+	});
+
+	// Create transaction
+	const tr = view.state.tr;
+
+	if (variant === "tag") {
+		debugLog("insertUnifiedLinkWithQuery", "Deleting old content", {
+			deleteFrom: from - 1,
+			deleteTo: to,
+		});
+		// For tag: delete # and tag text, insert with mark
+		tr.delete(from - 1, to);
+
+		const markType = view.state.schema.marks.unifiedLink;
+		if (markType) {
+			const key = rawQuery.toLowerCase();
+			const mark = markType.create({
+				variant: "tag",
+				raw: rawQuery,
+				text: `#${rawQuery}`,
+				key,
+				pageId: null,
+				href: "#",
+				state: "pending",
+				exists: false,
+				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+			});
+
+			const insertText = `#${rawQuery}`;
+			debugLog("insertUnifiedLinkWithQuery", "Inserting text with mark", {
+				insertPos: from - 1,
+				insertText,
+			});
+			tr.insert(from - 1, view.state.schema.text(insertText, [mark]));
+		}
+	}
+
+	// Clear suggestion state
+	tr.setMeta(suggestionPluginKey, {
+		active: false,
+		range: null,
+		query: "",
+		results: [],
+		selectedIndex: -1,
+	} satisfies UnifiedLinkSuggestionState);
+
+	debugLog("insertUnifiedLinkWithQuery", "Dispatching transaction");
 	view.dispatch(tr);
 }

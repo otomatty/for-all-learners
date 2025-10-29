@@ -115,4 +115,38 @@ export const unifiedLinkAttributes = {
 			"data-mark-id": attributes.markId,
 		}),
 	},
+	// Phase 1 (Link Group): New attributes for link group functionality
+	linkGroupId: {
+		default: null,
+		parseHTML: (element: HTMLElement) =>
+			element.getAttribute("data-link-group-id") || null,
+		renderHTML: (attributes: UnifiedLinkAttributes) =>
+			attributes.linkGroupId
+				? { "data-link-group-id": attributes.linkGroupId }
+				: {},
+	},
+	groupState: {
+		default: null,
+		parseHTML: (element: HTMLElement) => {
+			const state = element.getAttribute("data-group-state");
+			return state === "exists" || state === "grouped" || state === "missing"
+				? state
+				: null;
+		},
+		renderHTML: (attributes: UnifiedLinkAttributes) =>
+			attributes.groupState
+				? { "data-group-state": attributes.groupState }
+				: {},
+	},
+	linkCount: {
+		default: 0,
+		parseHTML: (element: HTMLElement) => {
+			const count = element.getAttribute("data-link-count");
+			return count ? Number.parseInt(count, 10) : 0;
+		},
+		renderHTML: (attributes: UnifiedLinkAttributes) =>
+			attributes.linkCount
+				? { "data-link-count": String(attributes.linkCount) }
+				: {},
+	},
 };

@@ -4,7 +4,7 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { addStudyGoal, getUserGoalLimits } from "@/app/_actions/study_goals";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

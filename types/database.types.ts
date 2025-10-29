@@ -219,10 +219,13 @@ export type Database = {
 					id: string;
 					last_reviewed_at: string | null;
 					next_review_at: string | null;
+					pdf_job_id: string | null;
+					pdf_metadata: Json | null;
 					repetition_count: number;
 					review_interval: number;
 					source_audio_url: string | null;
 					source_ocr_image_url: string | null;
+					source_page: number | null;
 					source_pdf_url: string | null;
 					stability: number;
 					updated_at: string | null;
@@ -238,10 +241,13 @@ export type Database = {
 					id?: string;
 					last_reviewed_at?: string | null;
 					next_review_at?: string | null;
+					pdf_job_id?: string | null;
+					pdf_metadata?: Json | null;
 					repetition_count?: number;
 					review_interval?: number;
 					source_audio_url?: string | null;
 					source_ocr_image_url?: string | null;
+					source_page?: number | null;
 					source_pdf_url?: string | null;
 					stability?: number;
 					updated_at?: string | null;
@@ -257,10 +263,13 @@ export type Database = {
 					id?: string;
 					last_reviewed_at?: string | null;
 					next_review_at?: string | null;
+					pdf_job_id?: string | null;
+					pdf_metadata?: Json | null;
 					repetition_count?: number;
 					review_interval?: number;
 					source_audio_url?: string | null;
 					source_ocr_image_url?: string | null;
+					source_page?: number | null;
 					source_pdf_url?: string | null;
 					stability?: number;
 					updated_at?: string | null;
@@ -272,6 +281,20 @@ export type Database = {
 						columns: ["deck_id"];
 						isOneToOne: false;
 						referencedRelation: "decks";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "cards_pdf_job_id_fkey";
+						columns: ["pdf_job_id"];
+						isOneToOne: false;
+						referencedRelation: "pdf_active_jobs";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "cards_pdf_job_id_fkey";
+						columns: ["pdf_job_id"];
+						isOneToOne: false;
+						referencedRelation: "pdf_processing_jobs";
 						referencedColumns: ["id"];
 					},
 					{
@@ -546,7 +569,7 @@ export type Database = {
 					created_at: string | null;
 					email: string | null;
 					id: string;
-					ip_address: unknown | null;
+					ip_address: unknown;
 					name: string | null;
 					page_path: string | null;
 					priority: Database["public"]["Enums"]["inquiry_priority_enum"] | null;
@@ -563,7 +586,7 @@ export type Database = {
 					created_at?: string | null;
 					email?: string | null;
 					id?: string;
-					ip_address?: unknown | null;
+					ip_address?: unknown;
 					name?: string | null;
 					page_path?: string | null;
 					priority?:
@@ -582,7 +605,7 @@ export type Database = {
 					created_at?: string | null;
 					email?: string | null;
 					id?: string;
-					ip_address?: unknown | null;
+					ip_address?: unknown;
 					name?: string | null;
 					page_path?: string | null;
 					priority?:
@@ -751,6 +774,86 @@ export type Database = {
 						columns: ["user_id"];
 						isOneToOne: false;
 						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			link_groups: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					key: string;
+					link_count: number | null;
+					page_id: string | null;
+					raw_text: string;
+					updated_at: string | null;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					key: string;
+					link_count?: number | null;
+					page_id?: string | null;
+					raw_text: string;
+					updated_at?: string | null;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					key?: string;
+					link_count?: number | null;
+					page_id?: string | null;
+					raw_text?: string;
+					updated_at?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "link_groups_page_id_fkey";
+						columns: ["page_id"];
+						isOneToOne: false;
+						referencedRelation: "pages";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			link_occurrences: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					link_group_id: string;
+					mark_id: string;
+					position: number | null;
+					source_page_id: string;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					link_group_id: string;
+					mark_id: string;
+					position?: number | null;
+					source_page_id: string;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					link_group_id?: string;
+					mark_id?: string;
+					position?: number | null;
+					source_page_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "link_occurrences_link_group_id_fkey";
+						columns: ["link_group_id"];
+						isOneToOne: false;
+						referencedRelation: "link_groups";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "link_occurrences_source_page_id_fkey";
+						columns: ["source_page_id"];
+						isOneToOne: false;
+						referencedRelation: "pages";
 						referencedColumns: ["id"];
 					},
 				];
@@ -1139,6 +1242,98 @@ export type Database = {
 						columns: ["user_id"];
 						isOneToOne: false;
 						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			pdf_processing_jobs: {
+				Row: {
+					actual_duration_seconds: number | null;
+					completed_at: string | null;
+					created_at: string | null;
+					current_step: string | null;
+					deck_id: string;
+					error_details: Json | null;
+					estimated_duration_seconds: number | null;
+					file_size_bytes: number;
+					generated_cards: number | null;
+					id: string;
+					last_heartbeat_at: string | null;
+					original_filename: string;
+					pdf_file_url: string;
+					priority: number | null;
+					processed_chunks: number | null;
+					processing_options: Json;
+					progress_percentage: number | null;
+					result_summary: Json | null;
+					started_at: string | null;
+					status: string;
+					total_chunks: number | null;
+					updated_at: string | null;
+					user_id: string;
+					worker_id: string | null;
+					worker_started_at: string | null;
+				};
+				Insert: {
+					actual_duration_seconds?: number | null;
+					completed_at?: string | null;
+					created_at?: string | null;
+					current_step?: string | null;
+					deck_id: string;
+					error_details?: Json | null;
+					estimated_duration_seconds?: number | null;
+					file_size_bytes: number;
+					generated_cards?: number | null;
+					id?: string;
+					last_heartbeat_at?: string | null;
+					original_filename: string;
+					pdf_file_url: string;
+					priority?: number | null;
+					processed_chunks?: number | null;
+					processing_options?: Json;
+					progress_percentage?: number | null;
+					result_summary?: Json | null;
+					started_at?: string | null;
+					status?: string;
+					total_chunks?: number | null;
+					updated_at?: string | null;
+					user_id: string;
+					worker_id?: string | null;
+					worker_started_at?: string | null;
+				};
+				Update: {
+					actual_duration_seconds?: number | null;
+					completed_at?: string | null;
+					created_at?: string | null;
+					current_step?: string | null;
+					deck_id?: string;
+					error_details?: Json | null;
+					estimated_duration_seconds?: number | null;
+					file_size_bytes?: number;
+					generated_cards?: number | null;
+					id?: string;
+					last_heartbeat_at?: string | null;
+					original_filename?: string;
+					pdf_file_url?: string;
+					priority?: number | null;
+					processed_chunks?: number | null;
+					processing_options?: Json;
+					progress_percentage?: number | null;
+					result_summary?: Json | null;
+					started_at?: string | null;
+					status?: string;
+					total_chunks?: number | null;
+					updated_at?: string | null;
+					user_id?: string;
+					worker_id?: string | null;
+					worker_started_at?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "pdf_processing_jobs_deck_id_fkey";
+						columns: ["deck_id"];
+						isOneToOne: false;
+						referencedRelation: "decks";
 						referencedColumns: ["id"];
 					},
 				];
@@ -1875,9 +2070,73 @@ export type Database = {
 			};
 		};
 		Views: {
-			[_ in never]: never;
+			pdf_active_jobs: {
+				Row: {
+					actual_runtime_seconds: number | null;
+					created_at: string | null;
+					current_step: string | null;
+					estimated_duration_seconds: number | null;
+					id: string | null;
+					is_stuck: boolean | null;
+					last_heartbeat_at: string | null;
+					original_filename: string | null;
+					progress_percentage: number | null;
+					started_at: string | null;
+					status: string | null;
+					user_email: string | null;
+					user_id: string | null;
+					user_name: string | null;
+					worker_id: string | null;
+				};
+				Relationships: [];
+			};
+			pdf_processing_stats: {
+				Row: {
+					avg_duration_seconds: number | null;
+					completed_jobs: number | null;
+					failed_jobs: number | null;
+					last_job_at: string | null;
+					pending_jobs: number | null;
+					processing_jobs: number | null;
+					success_rate_percentage: number | null;
+					total_cards_generated: number | null;
+					total_jobs: number | null;
+					user_id: string | null;
+				};
+				Relationships: [];
+			};
+			pdf_processing_system_stats: {
+				Row: {
+					active_users: number | null;
+					avg_duration_seconds: number | null;
+					avg_file_size_bytes: number | null;
+					cancelled_jobs: number | null;
+					completed_jobs: number | null;
+					completed_last_24h: number | null;
+					failed_jobs: number | null;
+					jobs_last_24h: number | null;
+					last_job_at: string | null;
+					pending_jobs: number | null;
+					processing_jobs: number | null;
+					success_rate_percentage: number | null;
+					total_cards_generated: number | null;
+					total_jobs: number | null;
+				};
+				Relationships: [];
+			};
 		};
 		Functions: {
+			cleanup_old_pdf_jobs: { Args: never; Returns: number };
+			complete_pdf_job: {
+				Args: {
+					generated_cards_count: number;
+					job_id: string;
+					processing_duration_seconds: number;
+					success_rate?: number;
+					total_chunks_processed?: number;
+				};
+				Returns: boolean;
+			};
 			decrypt_user_llm_api_key: {
 				Args: { encrypted_base64: string; key: string };
 				Returns: string;
@@ -1886,13 +2145,21 @@ export type Database = {
 				Args: { data: string; key: string };
 				Returns: string;
 			};
-			extract_page_link_ids: {
-				Args: { content: Json };
-				Returns: string[];
-			};
-			extract_tiptap_text: {
-				Args: { doc: Json };
-				Returns: string;
+			extract_page_link_ids: { Args: { content: Json }; Returns: string[] };
+			extract_tiptap_text: { Args: { doc: Json }; Returns: string };
+			fix_stuck_pdf_jobs: { Args: never; Returns: number };
+			get_next_pdf_job: {
+				Args: never;
+				Returns: {
+					deck_id: string;
+					estimated_duration_seconds: number;
+					file_size_bytes: number;
+					job_id: string;
+					original_filename: string;
+					pdf_file_url: string;
+					processing_options: Json;
+					user_id: string;
+				}[];
 			};
 			get_note_pages: {
 				Args: {
@@ -1914,14 +2181,10 @@ export type Database = {
 					updated_at: string;
 				}[];
 			};
-			is_admin_user: {
-				Args: Record<PropertyKey, never>;
-				Returns: boolean;
-			};
-			is_superadmin: {
-				Args: Record<PropertyKey, never>;
-				Returns: boolean;
-			};
+			is_admin_user: { Args: never; Returns: boolean };
+			is_superadmin: { Args: never; Returns: boolean };
+			maintain_pdf_jobs: { Args: never; Returns: Json };
+			rebalance_pdf_job_priorities: { Args: never; Returns: number };
 			search_all: {
 				Args: { p_limit?: number; p_query: string };
 				Returns: {
@@ -1940,6 +2203,28 @@ export type Database = {
 					suggestion: string;
 					type: string;
 				}[];
+			};
+			update_pdf_job_heartbeat: {
+				Args: {
+					current_step_text?: string;
+					job_id: string;
+					processed_chunks_count?: number;
+					progress_pct?: number;
+					worker_id: string;
+				};
+				Returns: boolean;
+			};
+			update_pdf_job_status: {
+				Args: {
+					current_step_text?: string;
+					error_info?: Json;
+					job_id: string;
+					new_status: string;
+					progress_pct?: number;
+					result_info?: Json;
+					worker_id?: string;
+				};
+				Returns: boolean;
 			};
 		};
 		Enums: {

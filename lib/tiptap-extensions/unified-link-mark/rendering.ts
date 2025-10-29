@@ -17,13 +17,21 @@ export function renderHTML(
 	HTMLAttributes: Record<string, unknown>,
 	options: UnifiedLinkMarkOptions,
 ): ["a", Record<string, unknown>, 0] {
-	const { variant, ...rest } = HTMLAttributes;
+	const { variant, groupState, ...rest } = HTMLAttributes;
 	const variantClass = `unilink--${variant}`;
+
+	// Phase 1 (Link Group): Add group state as data attribute
+	const dataAttributes = groupState ? { "data-group-state": groupState } : {};
+
+	// Combine all classes
+	const allClasses = [options.HTMLAttributes.class, variantClass]
+		.filter(Boolean)
+		.join(" ");
 
 	return [
 		"a",
-		mergeAttributes(options.HTMLAttributes, rest, {
-			class: `${options.HTMLAttributes.class} ${variantClass}`,
+		mergeAttributes(options.HTMLAttributes, rest, dataAttributes, {
+			class: allClasses,
 		}),
 		0,
 	];
@@ -61,14 +69,8 @@ export function parseHTML() {
 					return false;
 				}
 
-				// Convert PageLinkMark → UnifiedLinkMark
-				const pageId = node.getAttribute("data-page-id");
-				const state = node.getAttribute("data-state") || "pending";
-				const exists = node.getAttribute("data-exists") === "true";
-				const href = node.getAttribute("href") || "#";
+				// Check for external links (future support)
 				const external = node.getAttribute("data-external") === "true";
-
-				// Skip external links (future support)
 				if (external) {
 					logger.warn(
 						{ node: node.outerHTML },
@@ -77,23 +79,20 @@ export function parseHTML() {
 					return false;
 				}
 
-				// Generate UnifiedLinkMark format attributes
-				const attrs = {
-					variant: "bracket",
-					pageId,
-					state,
-					exists,
-					href,
-					key: "", // resolver will resolve later
-					raw: node.textContent || "",
-					text: node.textContent || "",
-					markId: `migrated-${Date.now()}-${Math.random()
-						.toString(36)
-						.slice(2, 8)}`,
-					created: false,
-				};
+				// Generate markId for migration
+				const markId = `migrated-${Date.now()}-${Math.random()
+					.toString(36)
+					.slice(2, 8)}`;
 
-				return attrs;
+				// Add data-mark-id to the element so parseHTML can pick it up
+				node.setAttribute("data-mark-id", markId);
+				node.setAttribute("data-variant", "bracket");
+				node.setAttribute("data-raw", node.textContent || "");
+				node.setAttribute("data-text", node.textContent || "");
+				node.setAttribute("data-created", "false");
+
+				// Return empty object to use parseHTML logic
+				return {};
 			},
 		},
 
@@ -115,25 +114,30 @@ export function parseHTML() {
 				}
 
 				const pageTitle = node.getAttribute("data-page-title");
-				const state = node.getAttribute("data-state") || "missing";
 
-				// Generate UnifiedLinkMark format attributes
-				const attrs = {
-					variant: "bracket",
-					pageId: null,
-					state,
-					exists: false,
-					href: "#",
-					key: pageTitle?.toLowerCase() || "",
-					raw: pageTitle || "",
-					text: pageTitle || "",
-					markId: `migrated-${Date.now()}-${Math.random()
-						.toString(36)
-						.slice(2, 8)}`,
-					created: false,
-				};
+				// Generate markId for migration
+				const markId = `migrated-${Date.now()}-${Math.random()
+					.toString(36)
+					.slice(2, 8)}`;
 
-				return attrs;
+				// Note: key is used for internal identification, not for URL generation
+				// For missing pages, we store the title as-is for later page creation
+				const normalizedKey = pageTitle
+					? pageTitle.toLowerCase().trim().replace(/\s+/g, " ")
+					: "";
+
+				// Add data attributes to the element so parseHTML can pick them up
+				node.setAttribute("data-mark-id", markId);
+				node.setAttribute("data-variant", "bracket");
+				node.setAttribute("data-raw", pageTitle || "");
+				node.setAttribute("data-text", pageTitle || "");
+				node.setAttribute("data-key", normalizedKey);
+				node.setAttribute("data-created", "false");
+				node.setAttribute("data-exists", "false");
+				node.setAttribute("href", "#");
+
+				// Return empty object to use parseHTML logic
+				return {};
 			},
 		},
 	];

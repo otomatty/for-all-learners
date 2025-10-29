@@ -21,12 +21,6 @@ export const normalizeTitleToKey = (raw: string): string => {
 		.replace(/　/g, " ") // Convert full-width space to half-width
 		.replace(/_/g, " ") // Convert underscore to space (compatibility)
 		.normalize("NFC"); // Unicode normalization
-
-	// Debug log only when input differs from output
-	if (raw !== normalized) {
-		logger.debug({ raw, normalized }, "[normalizeTitleToKey] Title normalized");
-	}
-
 	return normalized;
 };
 
@@ -68,11 +62,6 @@ function loadCacheFromStorage(): void {
 				resolvedCache.set(key, entry);
 			}
 		}
-
-		logger.debug(
-			{ loadedEntries: resolvedCache.size },
-			"[Cache] Loaded from SessionStorage",
-		);
 	} catch (error) {
 		logger.warn({ error }, "[Cache] Failed to load from SessionStorage");
 	}
@@ -90,10 +79,6 @@ function saveCacheToStorage(): void {
 			obj[key] = entry;
 		}
 		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-		logger.debug(
-			{ savedEntries: resolvedCache.size },
-			"[Cache] Saved to SessionStorage",
-		);
 	} catch (error) {
 		logger.warn({ error }, "[Cache] Failed to save to SessionStorage");
 	}
@@ -177,7 +162,6 @@ export const setCachedPageIds = (
 		resolvedCache.set(normalizedKey, { pageId, timestamp });
 	}
 	saveCacheToStorage();
-	logger.debug({ count: entries.length }, "[Cache] Bulk entries set");
 };
 
 /**

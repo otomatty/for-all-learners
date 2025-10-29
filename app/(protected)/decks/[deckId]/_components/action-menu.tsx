@@ -16,7 +16,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { deleteDeck } from "@/app/_actions/decks";
 import { duplicateDeck } from "@/app/_actions/duplicateDeck";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import {
 	AlertDialog,
 	AlertDialogAction,

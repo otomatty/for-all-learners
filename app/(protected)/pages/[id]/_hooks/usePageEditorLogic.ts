@@ -22,6 +22,7 @@ import type { Database } from "@/types/database.types";
 import { useAutoSave } from "./useAutoSave";
 import { useEditorInitializer } from "./useEditorInitializer";
 import { useGenerateContent } from "./useGenerateContent";
+import { useLinkGroupState } from "./useLinkGroupState";
 import { useLinkSync } from "./useLinkSync";
 import { usePageSaver } from "./usePageSaver";
 import { useSmartThumbnailSync } from "./useSmartThumbnailSync";
@@ -128,34 +129,16 @@ export function usePageEditorLogic({
 			return;
 		}
 
-		const selectedText = editor.state.doc.textBetween(from, to, "");
-
 		// Check if the selection already has a UnifiedLinkMark using TipTap's isActive method
 		const hasUnifiedLinkMark = editor.isActive("unifiedLink");
 
 		if (hasUnifiedLinkMark) {
-			// If already has UnifiedLinkMark, remove it
-			editor.chain().focus().unsetMark("unifiedLink").run();
+			// If already has UnifiedLinkMark, remove brackets and mark
+			editor.chain().focus().unwrapBrackets().run();
 		} else {
-			// If not marked, apply UnifiedLinkMark with bracket variant
-			editor
-				.chain()
-				.focus()
-				.command(({ commands }) => {
-					// Type assertion for custom command
-					const insertUnifiedLink = (commands as Record<string, unknown>)
-						.insertUnifiedLink as (options: {
-						variant: string;
-						raw: string;
-						text: string;
-					}) => boolean;
-					return insertUnifiedLink({
-						variant: "bracket",
-						raw: selectedText,
-						text: selectedText,
-					});
-				})
-				.run();
+			// If not marked, wrap with brackets [text]
+			// The bracket monitor plugin will automatically apply the mark
+			editor.chain().focus().wrapWithBrackets().run();
 		}
 
 		// エディターコンテンツが変更されたのでdirtyにする
@@ -199,6 +182,9 @@ export function usePageEditorLogic({
 		debounceMs: 500,
 		debug: false,
 	});
+
+	// Phase 1 (Link Group): Update link group state for all links
+	useLinkGroupState(editor, page.id);
 
 	// Note: initialContent is already set by useEditorInitializer
 	// The previous useEffect that re-set initialContent was redundant and has been removed

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
 import type { QuizMode } from "@/app/_actions/quiz";
-import { Container } from "@/components/container";
+import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
 	Card,

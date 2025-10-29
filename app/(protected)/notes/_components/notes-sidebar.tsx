@@ -15,7 +15,6 @@ import {
 import { ChevronRight, FolderOpen } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
 	Sidebar,
 	SidebarContent,
@@ -59,6 +58,13 @@ export function NotesExplorerSidebar({
 		pathSegments[1] === "notes" && pathSegments[3] ? pathSegments[3] : null;
 
 	const currentNote = notes.find((note) => note.slug === currentNoteSlug);
+
+	// CRITICAL FIX: Remove duplicate IDs
+	// Create a unique set of notes by ID to prevent duplicate key error
+	// Optimized: O(n) using Map instead of O(n²) using reduce+find
+	const uniqueNotes = Array.from(
+		new Map(notes.map((note) => [note.id, note])).values(),
+	);
 
 	// ドラッグ&ドロップセンサー設定
 	const sensors = useSensors(
@@ -108,10 +114,10 @@ export function NotesExplorerSidebar({
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SortableContext
-									items={notes.map((note) => note.id)}
+									items={uniqueNotes.map((note) => note.id)}
 									strategy={verticalListSortingStrategy}
 								>
-									{notes.map((note) => {
+									{uniqueNotes.map((note) => {
 										const isCurrentNote = note.slug === currentNoteSlug;
 
 										return (
