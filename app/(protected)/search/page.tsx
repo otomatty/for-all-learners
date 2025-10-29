@@ -53,7 +53,7 @@ export default async function SearchPage({
 
 	// カード候補の deck_id と更新日時をまとめて取得
 	const cards = rows.filter((r) => r.type === "card");
-	let deckMap = new Map<string, string>();
+	const deckMap = new Map<string, string>();
 	const cardUpdates = new Map<string, string>();
 
 	if (cards.length > 0) {
@@ -65,8 +65,9 @@ export default async function SearchPage({
 				cards.map((c) => c.id),
 			);
 		if (!cardError && cardData) {
-			deckMap = new Map(cardData.map((row) => [row.id, row.deck_id]));
+			// 1回のループで両方のMapを生成
 			for (const card of cardData) {
+				deckMap.set(card.id, card.deck_id);
 				if (card.updated_at) {
 					cardUpdates.set(card.id, card.updated_at);
 				}
@@ -133,7 +134,6 @@ export default async function SearchPage({
 									<SearchResultItem
 										key={`${r.type}-${r.id}`}
 										type={r.type}
-										id={r.id}
 										title={r.suggestion}
 										excerpt={r.excerpt}
 										href={href}

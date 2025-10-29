@@ -17,8 +17,6 @@ import {
 interface SearchResultItemProps {
 	/** 結果の種別 */
 	type: "card" | "page";
-	/** レコードID */
-	id: string;
 	/** タイトル */
 	title: string;
 	/** 抜粋（ハイライト付きHTML） */
