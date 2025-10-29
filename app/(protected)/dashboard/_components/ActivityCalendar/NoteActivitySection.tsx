@@ -53,7 +53,7 @@ export function NoteActivitySection({ activities }: NoteActivitySectionProps) {
 							{activities.created.map((page) => (
 								<Link
 									key={page.id}
-									href={`/pages/${page.id}`}
+									href={`/notes/default/${page.id}`}
 									className="block p-3 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:shadow-sm transition-all"
 								>
 									<div className="flex items-start gap-2">
@@ -89,7 +89,7 @@ export function NoteActivitySection({ activities }: NoteActivitySectionProps) {
 							{activities.updated.map((page) => (
 								<Link
 									key={page.id}
-									href={`/pages/${page.id}`}
+									href={`/notes/default/${page.id}`}
 									className="block p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
 								>
 									<div className="flex items-start gap-2">

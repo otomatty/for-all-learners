@@ -80,7 +80,7 @@ export default async function SearchPage({
 							const href =
 								r.type === "card"
 									? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
-									: `/pages/${encodeURIComponent(r.id)}`;
+									: `/notes/default/${encodeURIComponent(r.id)}`;
 							return (
 								<li key={`${r.type}-${r.id}`}>
 									<div className="space-y-1">

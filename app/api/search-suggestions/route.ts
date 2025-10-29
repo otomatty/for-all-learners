@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 			const deckId = deckMap.get(r.id);
 			href = deckId ? `/decks/${deckId}` : "/decks";
 		} else if (r.type === "page") {
-			href = `/pages/${encodeURIComponent(r.id)}`;
+			href = `/notes/default/${encodeURIComponent(r.id)}`;
 		}
 		return {
 			type: r.type,

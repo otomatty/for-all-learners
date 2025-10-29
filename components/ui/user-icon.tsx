@@ -54,8 +54,7 @@ export function UserIcon({
 						exists: false,
 					});
 				}
-			} catch (error) {
-				console.error("Failed to fetch user icon data:", error);
+			} catch {
 				setIconData({
 					thumbnailUrl: null,
 					pageId: null,
@@ -107,7 +106,7 @@ export function UserIcon({
 			onClick();
 		} else if (iconData?.pageId) {
 			// デフォルトのクリック動作：ユーザーページに遷移
-			window.location.href = `/pages/${iconData.pageId}`;
+			window.location.href = `/notes/default/${iconData.pageId}`;
 		}
 	};
 
@@ -145,24 +144,18 @@ export function UserIcon({
 			</Avatar>
 
 			{showName && (
-				<span
+				<button
+					type="button"
 					className={cn(
-						"font-medium",
+						"font-medium bg-transparent border-none p-0",
 						!iconData?.exists && "text-gray-500",
-						onClick || iconData?.pageId ? "hover:underline" : "",
+						onClick || iconData?.pageId ? "hover:underline cursor-pointer" : "",
 					)}
 					onClick={handleClick}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							handleClick();
-						}
-					}}
-					tabIndex={onClick || iconData?.pageId ? 0 : -1}
-					role={onClick || iconData?.pageId ? "button" : undefined}
+					disabled={!onClick && !iconData?.pageId}
 				>
 					{iconData?.fullName || userSlug}
-				</span>
+				</button>
 			)}
 		</div>
 	);

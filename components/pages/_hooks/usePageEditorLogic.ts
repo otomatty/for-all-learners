@@ -16,6 +16,7 @@ import { TableExtensions } from "@/lib/tiptap-extensions/custom-table";
 import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
+import { MarkdownPaste } from "@/lib/tiptap-extensions/markdown-paste";
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import type { Database } from "@/types/database.types";
@@ -81,6 +82,11 @@ export function usePageEditorLogic({
 			}),
 			// Table extensions for Markdown table support
 			...TableExtensions,
+			// Markdown Paste - automatically converts Markdown syntax on paste
+			MarkdownPaste.configure({
+				enabled: true,
+				debug: false, // Set to true for development debugging
+			}),
 			// Code blocks highlighted via Prism
 			// Prism highlighting is applied on editor updates
 			Placeholder.configure({
