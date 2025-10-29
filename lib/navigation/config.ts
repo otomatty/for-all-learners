@@ -17,7 +17,6 @@ export const desktopNavItems: NavItem[] = [
 			{ label: "エクスプローラー", href: "/notes/explorer" },
 		],
 	},
-	{ label: "ページ", href: "/pages", icon: "FileText", status: "enabled" },
 	{ label: "レポート", href: "/reports", icon: "BarChart", status: "demo" },
 	// {
 	//   label: "自習室",
@@ -41,7 +40,6 @@ export const mobileUserNavItems: MobileNavItem[] = [
 	{ href: "/learn", label: "学習を始める" },
 	{ href: "/decks", label: "デッキ" },
 	{ href: "/notes", label: "ノート" },
-	{ href: "/pages", label: "ページ" },
 	{ href: "/goals", label: "目標" },
 ];
 

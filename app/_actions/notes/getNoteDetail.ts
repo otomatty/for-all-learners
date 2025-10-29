@@ -22,7 +22,7 @@ export async function getNoteDetail(slug: string) {
 	const { data: note, error: noteError } = await supabase
 		.from("notes")
 		.select(
-			"id, slug, title, description, visibility, updated_at, page_count, participant_count, owner_id",
+			"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id",
 		)
 		.eq("slug", slug)
 		.single();

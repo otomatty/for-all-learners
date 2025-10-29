@@ -8,6 +8,7 @@ export * from "./createNote";
 export * from "./deleteNote";
 export * from "./deletePagesPermanently";
 export * from "./generateNoteShareLink";
+export * from "./getAllUserPages";
 export * from "./getDefaultNote";
 export * from "./getNoteDetail";
 export * from "./getNotePages";

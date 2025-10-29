@@ -19,8 +19,8 @@ import { getSupabaseClient } from "./getSupabaseClient";
 export async function createDefaultNote(userId: string) {
 	const supabase = await getSupabaseClient();
 
-	// デフォルトノートのスラグを生成（ユーザーIDをベースに）
-	const defaultSlug = `default-${userId.slice(0, 8)}`;
+	// デフォルトノートのスラグは "all-pages" に統一
+	const defaultSlug = "all-pages";
 
 	const { data, error } = await supabase
 		.from("notes")
@@ -28,8 +28,8 @@ export async function createDefaultNote(userId: string) {
 			{
 				owner_id: userId,
 				slug: defaultSlug,
-				title: "マイノート",
-				description: "デフォルトのノートです。ページを自由に整理できます。",
+				title: "すべてのページ",
+				description: "ユーザーが作成したすべてのページを含むデフォルトノート",
 				visibility: "private",
 			},
 		])

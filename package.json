@@ -8,7 +8,7 @@
 		"start": "next start",
 		"lint": "biome check --write",
 		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts",
-		"test": "vitest",
+		"test": "npx vitest run",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest --coverage",
 		"test:watch": "vitest --watch"

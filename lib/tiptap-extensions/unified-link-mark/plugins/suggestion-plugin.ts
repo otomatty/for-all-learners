@@ -598,7 +598,7 @@ function insertUnifiedLink(
 				text: `#${item.title}`,
 				key,
 				pageId: item.id,
-				href: `/pages/${item.id}`,
+				href: `/notes/default/${item.id}`,
 				state: "exists",
 				exists: true,
 				markId: `tag-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,

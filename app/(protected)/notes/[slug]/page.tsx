@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import React from "react";
 import {
 	getAvailableDecksForNote,
 	getDecksLinkedToNote,
 } from "@/app/_actions/note-deck-links";
-import { getNoteDetail } from "@/app/_actions/notes";
+import { getDefaultNote, getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
@@ -27,7 +26,16 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 		redirect("/auth/login");
 	}
 
-	const { note } = await getNoteDetail(slug);
+	// Handle special "default" slug
+	let note: Awaited<ReturnType<typeof getDefaultNote>>;
+	if (slug === "default") {
+		// Get user's default note (with is_default_note flag)
+		note = await getDefaultNote();
+	} else {
+		// Get note by slug
+		const result = await getNoteDetail(slug);
+		note = result.note;
+	}
 
 	// Note-Deck Links データ取得
 	const [linkedDecks, availableDecks] = await Promise.all([

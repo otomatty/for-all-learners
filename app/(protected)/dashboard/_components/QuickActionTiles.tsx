@@ -154,7 +154,7 @@ export const QuickActionTiles: React.FC<QuickActionTilesProps> = ({
 					</CardHeader>
 					<CardFooter>
 						<Button asChild className="w-full cursor-default">
-							<Link href="/pages">メモ一覧へ</Link>
+							<Link href="/notes/default">メモ一覧へ</Link>
 						</Button>
 					</CardFooter>
 				</Card>

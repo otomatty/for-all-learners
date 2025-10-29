@@ -158,7 +158,7 @@ export async function createPageFromLink(
 		// 3. Generate URL
 		const href = noteSlug
 			? `/notes/${encodeURIComponent(noteSlug)}/${newPage.id}?newPage=true`
-			: `/pages/${newPage.id}?newPage=true`;
+			: `/notes/default/${newPage.id}?newPage=true`;
 
 		// 4. Notify other tabs via BroadcastChannel
 		const key = normalizeTitleToKey(titleWithSpaces);
