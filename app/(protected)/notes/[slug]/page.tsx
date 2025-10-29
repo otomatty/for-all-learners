@@ -7,7 +7,6 @@ import { getDefaultNote, getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { NoteDeckManager } from "./_components/note-deck-manager";
 import NoteHeader from "./_components/note-header";
 import NotePagesClient from "./page-client";
 
@@ -59,18 +58,13 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 				updatedAt={note.updated_at}
 				ownerId={note.owner_id}
 			/>
-			<div className="flex flex-col lg:flex-row gap-6">
-				<div className="flex-1">
-					<NotePagesClient slug={slug} totalCount={note.page_count} />
-				</div>
-				<div className="lg:w-80 lg:shrink-0">
-					<NoteDeckManager
-						noteId={note.id}
-						linkedDecks={linkedDecks}
-						availableDecks={availableDecks}
-					/>
-				</div>
-			</div>
+			<NotePagesClient
+				slug={slug}
+				totalCount={note.page_count}
+				noteId={note.id}
+				linkedDecks={linkedDecks}
+				availableDecks={availableDecks}
+			/>
 		</Container>
 	);
 }

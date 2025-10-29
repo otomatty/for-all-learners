@@ -1,12 +1,15 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useState } from "react";
+import { Link as LinkIcon } from "lucide-react";
+import { useCallback, useState } from "react";
 import type { Database } from "@/types/database.types";
 
 // Define page row type
 type PageRow = Database["public"]["Tables"]["pages"]["Row"];
+type Deck = Database["public"]["Tables"]["decks"]["Row"];
 
+import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -15,19 +18,27 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { NoteDeckManager } from "./_components/note-deck-manager";
 import { PagesList } from "./_components/pages-list";
 import { PagesListSkeleton } from "./_components/pages-list-skeleton";
 
 interface NotePagesClientProps {
 	slug: string;
 	totalCount: number;
+	noteId: string;
+	linkedDecks: Deck[];
+	availableDecks: Deck[];
 }
 
 export default function NotePagesClient({
 	slug,
 	totalCount,
+	noteId,
+	linkedDecks,
+	availableDecks,
 }: NotePagesClientProps) {
 	const [sortBy, setSortBy] = useState<"updated" | "created">("updated");
+	const [deckDialogOpen, setDeckDialogOpen] = useState(false);
 	const limit = 100;
 
 	const {
@@ -61,12 +72,6 @@ export default function NotePagesClient({
 		(page, index, self) => self.findIndex((p) => p.id === page.id) === index,
 	);
 
-	useEffect(() => {
-		if (isError) {
-			console.error("Debug: error fetching pages", error);
-		}
-	}, [isError, error]);
-
 	const sentinelRef = useCallback(
 		(node: HTMLElement | null) => {
 			if (isFetchingNextPage) return;
@@ -85,6 +90,14 @@ export default function NotePagesClient({
 	return (
 		<>
 			<div className="flex justify-end mb-4 items-center space-x-2">
+				<Button
+					variant="outline"
+					onClick={() => setDeckDialogOpen(true)}
+					className="flex items-center gap-2"
+				>
+					<LinkIcon className="w-4 h-4" />
+					リンクされたデッキ
+				</Button>
 				<Select
 					value={sortBy}
 					onValueChange={(value) => setSortBy(value as "updated" | "created")}
@@ -115,6 +128,20 @@ export default function NotePagesClient({
 			<div className="hidden md:block fixed bottom-0 right-0 p-2 border-t border-l bg-background text-sm text-muted-foreground mt-4">
 				総ページ数: {totalCount}
 			</div>
+
+			{/* デッキ管理ダイアログ */}
+			<ResponsiveDialog
+				open={deckDialogOpen}
+				onOpenChange={setDeckDialogOpen}
+				dialogTitle="リンクされたデッキ"
+				dialogDescription="このノートにリンクされているデッキの一覧"
+			>
+				<NoteDeckManager
+					noteId={noteId}
+					linkedDecks={linkedDecks}
+					availableDecks={availableDecks}
+				/>
+			</ResponsiveDialog>
 		</>
 	);
 }
