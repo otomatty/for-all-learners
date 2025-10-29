@@ -54,12 +54,13 @@ export function getSearchHistory(): SearchHistoryItem[] {
  * - 最大件数を超えた場合は最古のアイテムを削除
  *
  * @param item - 追加する検索履歴（id と timestamp は自動生成）
+ * @returns 更新後の検索履歴配列
  */
 export function addToSearchHistory(
 	item: Omit<SearchHistoryItem, "id" | "timestamp">,
-): void {
-	// SSR環境では何もしない
-	if (typeof window === "undefined") return;
+): SearchHistoryItem[] {
+	// SSR環境では空配列を返す
+	if (typeof window === "undefined") return [];
 
 	try {
 		const history = getSearchHistory();
@@ -83,8 +84,10 @@ export function addToSearchHistory(
 		};
 
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+		return newHistory;
 	} catch (error) {
 		logger.error({ error }, "Failed to save search history");
+		return getSearchHistory();
 	}
 }
 
@@ -92,10 +95,11 @@ export function addToSearchHistory(
  * 特定の履歴を削除
  *
  * @param id - 削除する履歴のID
+ * @returns 更新後の検索履歴配列
  */
-export function removeFromSearchHistory(id: string): void {
-	// SSR環境では何もしない
-	if (typeof window === "undefined") return;
+export function removeFromSearchHistory(id: string): SearchHistoryItem[] {
+	// SSR環境では空配列を返す
+	if (typeof window === "undefined") return [];
 
 	try {
 		const history = getSearchHistory();
@@ -107,8 +111,10 @@ export function removeFromSearchHistory(id: string): void {
 		};
 
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+		return filtered;
 	} catch (error) {
 		logger.error({ error }, "Failed to remove search history");
+		return getSearchHistory();
 	}
 }
 

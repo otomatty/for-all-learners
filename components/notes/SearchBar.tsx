@@ -4,6 +4,7 @@ import { debounce } from "lodash";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchHistory } from "@/hooks/use-search-history";
+import logger from "@/lib/logger";
 import type { SearchHistoryItem } from "@/types/search";
 import { SearchHistoryDropdown } from "./SearchHistoryDropdown";
 
@@ -82,15 +83,13 @@ export function SearchBar({
 				const data: Suggestion[] = await res.json();
 				setSuggestions(data);
 				setActiveIndex(-1);
-			} catch {
-				// Silently fail for production
+			} catch (error) {
+				logger.error({ error }, "Failed to fetch suggestions");
 				setSuggestions([]);
 			}
 		}, 300),
 		[],
-	);
-
-	// query が変わったら候補取得を実行
+	); // query が変わったら候補取得を実行
 	useEffect(() => {
 		fetchSuggestions(query);
 	}, [query, fetchSuggestions]);

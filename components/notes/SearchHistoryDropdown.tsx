@@ -87,12 +87,12 @@ export function SearchHistoryDropdown({
 				{history.map((item) => (
 					<li
 						key={item.id}
-						className="group hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+						className="group flex items-center justify-between gap-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
 					>
 						<button
 							type="button"
 							onClick={() => onSelectHistory(item)}
-							className="w-full px-4 py-2 text-left flex items-center justify-between gap-2"
+							className="flex-1 min-w-0 py-2 text-left"
 						>
 							<div className="flex-1 min-w-0">
 								{/* クエリテキスト */}
@@ -102,7 +102,7 @@ export function SearchHistoryDropdown({
 								{/* メタ情報 */}
 								<div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
 									<span>
-										{formatDistanceToNow(item.timestamp, {
+										{formatDistanceToNow(new Date(item.timestamp), {
 											addSuffix: true,
 											locale: ja,
 										})}
@@ -117,18 +117,15 @@ export function SearchHistoryDropdown({
 									)}
 								</div>
 							</div>
-							{/* 削除ボタン */}
-							<button
-								type="button"
-								onClick={(e) => {
-									e.stopPropagation();
-									onRemoveHistory(item.id);
-								}}
-								className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
-								aria-label="この履歴を削除"
-							>
-								<X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-							</button>
+						</button>
+						{/* 削除ボタン */}
+						<button
+							type="button"
+							onClick={() => onRemoveHistory(item.id)}
+							className="opacity-0 group-hover:opacity-100 p-1 flex-shrink-0 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+							aria-label="この履歴を削除"
+						>
+							<X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
 						</button>
 					</li>
 				))}

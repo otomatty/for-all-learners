@@ -55,16 +55,14 @@ export function useSearchHistory() {
 	// 履歴に追加
 	const addToHistory = useCallback(
 		(item: Omit<SearchHistoryItem, "id" | "timestamp">) => {
-			addToSearchHistory(item);
-			setHistory(getSearchHistory());
+			setHistory(addToSearchHistory(item));
 		},
 		[],
 	);
 
 	// 履歴から削除
 	const removeFromHistory = useCallback((id: string) => {
-		removeFromSearchHistory(id);
-		setHistory(getSearchHistory());
+		setHistory(removeFromSearchHistory(id));
 	}, []);
 
 	// 履歴をクリア

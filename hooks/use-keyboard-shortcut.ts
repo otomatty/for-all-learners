@@ -89,10 +89,14 @@ export function useKeyboardShortcut({
 
 			// 修飾キーの確認
 			// metaKey と ctrlKey はプラットフォーム依存で OR 条件
+			// 他の修飾キーは、指定されている場合は押されている必要があり、
+			// 指定されていない場合は押されていない必要がある
 			const modifierMatches =
-				(metaKey || ctrlKey ? e.metaKey || e.ctrlKey : true) &&
-				(shiftKey ? e.shiftKey : true) &&
-				(altKey ? e.altKey : true);
+				(metaKey || ctrlKey
+					? e.metaKey || e.ctrlKey
+					: !e.metaKey && !e.ctrlKey) &&
+				(shiftKey ? e.shiftKey : !e.shiftKey) &&
+				(altKey ? e.altKey : !e.altKey);
 
 			if (keyMatches && modifierMatches) {
 				e.preventDefault();
