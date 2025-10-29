@@ -1,5 +1,7 @@
 import { Container } from "@/components/layouts/container";
 import { EmptySearchResults } from "@/components/notes/EmptySearchResults";
+import { SearchFiltersClient } from "@/components/notes/SearchFiltersClient";
+import { SearchPagination } from "@/components/notes/SearchPagination";
 import { SearchResultItem } from "@/components/notes/SearchResultItem";
 import { BackLink } from "@/components/ui/back-link";
 import { createAdminClient } from "@/lib/supabase/adminClient";
@@ -18,19 +20,39 @@ interface SuggestionRow {
 	excerpt: string;
 	/** 更新日時 */
 	updated_at?: string;
+	/** 作成日時 */
+	created_at?: string;
 }
 
 /**
  * 検索ページコンポーネント
  * @param searchParams.q 検索クエリ
+ * @param searchParams.type フィルタータイプ
+ * @param searchParams.sort ソート順
+ * @param searchParams.page ページ番号
  */
 export default async function SearchPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ q?: string }>;
+	searchParams: Promise<{
+		q?: string;
+		type?: string;
+		sort?: string;
+		page?: string;
+	}>;
 }) {
-	const { q } = await searchParams;
+	const { q, type, sort, page } = await searchParams;
 	const query = q?.trim() ?? "";
+	const filterType = (type === "card" || type === "page" ? type : "all") as
+		| "all"
+		| "card"
+		| "page";
+	const sortBy = (
+		sort === "updated" || sort === "created" ? sort : "relevance"
+	) as "relevance" | "updated" | "created";
+	const currentPage = Number(page) || 1;
+	const perPage = 20;
+
 	if (!query) {
 		return <div className="p-4">キーワードを入力してください。</div>;
 	}
@@ -51,38 +73,49 @@ export default async function SearchPage({
 
 	const rows = rpcData as SuggestionRow[];
 
-	// カード候補の deck_id と更新日時をまとめて取得
-	const cards = rows.filter((r) => r.type === "card");
+	// フィルター適用（タイプ別）
+	let filteredRows = rows;
+	if (filterType !== "all") {
+		filteredRows = rows.filter((r) => r.type === filterType);
+	}
+
+	// カード候補の deck_id と更新日時・作成日時をまとめて取得
+	const cards = filteredRows.filter((r) => r.type === "card");
 	const deckMap = new Map<string, string>();
 	const cardUpdates = new Map<string, string>();
+	const cardCreated = new Map<string, string>();
 
 	if (cards.length > 0) {
 		const { data: cardData, error: cardError } = await supabase
 			.from("cards")
-			.select("id, deck_id, updated_at")
+			.select("id, deck_id, updated_at, created_at")
 			.in(
 				"id",
 				cards.map((c) => c.id),
 			);
 		if (!cardError && cardData) {
-			// 1回のループで両方のMapを生成
+			// 1回のループで全Mapを生成
 			for (const card of cardData) {
 				deckMap.set(card.id, card.deck_id);
 				if (card.updated_at) {
 					cardUpdates.set(card.id, card.updated_at);
 				}
+				if (card.created_at) {
+					cardCreated.set(card.id, card.created_at);
+				}
 			}
 		}
 	}
 
-	// ページの更新日時を取得
-	const pages = rows.filter((r) => r.type === "page");
+	// ページの更新日時・作成日時を取得
+	const pages = filteredRows.filter((r) => r.type === "page");
 	const pageUpdates = new Map<string, string>();
+	const pageCreated = new Map<string, string>();
 
 	if (pages.length > 0) {
 		const { data: pageData, error: pageError } = await supabase
 			.from("pages")
-			.select("id, updated_at")
+			.select("id, updated_at, created_at")
 			.in(
 				"id",
 				pages.map((p) => p.id),
@@ -92,12 +125,49 @@ export default async function SearchPage({
 				if (page.updated_at) {
 					pageUpdates.set(page.id, page.updated_at);
 				}
+				if (page.created_at) {
+					pageCreated.set(page.id, page.created_at);
+				}
 			}
 		}
 	}
 
-	// 検索結果の総数
-	const totalResults = rows.length;
+	// ソート適用
+	const sortedRows = (() => {
+		const rows = [...filteredRows];
+		if (sortBy === "updated") {
+			rows.sort((a, b) => {
+				const aDate =
+					a.type === "card" ? cardUpdates.get(a.id) : pageUpdates.get(a.id);
+				const bDate =
+					b.type === "card" ? cardUpdates.get(b.id) : pageUpdates.get(b.id);
+				if (!aDate) return 1;
+				if (!bDate) return -1;
+				return new Date(bDate).getTime() - new Date(aDate).getTime();
+			});
+		} else if (sortBy === "created") {
+			rows.sort((a, b) => {
+				const aDate =
+					a.type === "card" ? cardCreated.get(a.id) : pageCreated.get(a.id);
+				const bDate =
+					b.type === "card" ? cardCreated.get(b.id) : pageCreated.get(b.id);
+				if (!aDate) return 1;
+				if (!bDate) return -1;
+				return new Date(bDate).getTime() - new Date(aDate).getTime();
+			});
+		}
+		// relevance の場合はRPCの順序のまま（rank DESC）
+		return rows;
+	})();
+
+	// ページネーション適用
+	const totalResults = sortedRows.length;
+	const totalPages = Math.ceil(totalResults / perPage);
+	const offset = (currentPage - 1) * perPage;
+	const paginatedRows = sortedRows.slice(offset, offset + perPage);
+
+	// ベースURL（ページネーション用）
+	const baseUrl = `/search?q=${encodeURIComponent(query)}&type=${filterType}&sort=${sortBy}`;
 
 	return (
 		<>
@@ -114,12 +184,20 @@ export default async function SearchPage({
 						</p>
 					</div>
 
+					{/* フィルター・ソート */}
+					{totalResults > 0 && (
+						<SearchFiltersClient
+							currentType={filterType}
+							currentSort={sortBy}
+						/>
+					)}
+
 					{/* 検索結果 */}
-					{rows.length === 0 ? (
+					{paginatedRows.length === 0 ? (
 						<EmptySearchResults query={query} />
 					) : (
 						<div className="space-y-4">
-							{rows.map((r) => {
+							{paginatedRows.map((r) => {
 								const href =
 									r.type === "card"
 										? `/decks/${encodeURIComponent(deckMap.get(r.id) ?? "")}`
@@ -142,6 +220,15 @@ export default async function SearchPage({
 								);
 							})}
 						</div>
+					)}
+
+					{/* ページネーション */}
+					{totalPages > 1 && (
+						<SearchPagination
+							currentPage={currentPage}
+							totalPages={totalPages}
+							baseUrl={baseUrl}
+						/>
 					)}
 				</div>
 			</Container>
