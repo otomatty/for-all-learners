@@ -137,7 +137,7 @@ class ResolverQueue {
 					state: "exists",
 					exists: true,
 					pageId: cachedPageId,
-					href: `/pages/${cachedPageId}`,
+					href: `/notes/default/${cachedPageId}`,
 				});
 				markResolved(markId);
 				markUnifiedResolved(markId);
@@ -188,7 +188,7 @@ class ResolverQueue {
 					state: "exists",
 					exists: true,
 					pageId: exact.id,
-					href: `/pages/${exact.id}`,
+					href: `/notes/default/${exact.id}`,
 				});
 				markResolved(markId);
 				markUnifiedResolved(markId);

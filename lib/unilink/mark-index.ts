@@ -147,7 +147,7 @@ export const createMarkIndex = (editor: Editor) => {
 				state: "exists",
 				exists: true,
 				pageId,
-				href: `/pages/${pageId}`,
+				href: `/notes/default/${pageId}`,
 			};
 
 			try {

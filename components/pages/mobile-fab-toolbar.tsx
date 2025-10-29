@@ -29,7 +29,7 @@ export default function MobileFabToolbar(props: MobileFabToolbarProps) {
 		if (props.noteSlug) {
 			window.location.href = `/notes/${encodeURIComponent(props.noteSlug)}/new`;
 		} else {
-			window.location.href = "/pages/new";
+			window.location.href = "/notes/default/new";
 		}
 		setIsSheetOpen(false);
 	};

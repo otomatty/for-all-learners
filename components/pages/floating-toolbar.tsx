@@ -25,7 +25,7 @@ export default function FloatingToolbar(props: FloatingToolbarProps) {
 		if (props.noteSlug) {
 			window.location.href = `/notes/${encodeURIComponent(props.noteSlug)}/new`;
 		} else {
-			window.location.href = "/pages/new";
+			window.location.href = "/notes/default/new";
 		}
 	};
 

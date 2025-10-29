@@ -99,7 +99,7 @@ export default function BacklinksGrid({ pageId }: BacklinksGridProps) {
 						<PageCard
 							key={page.id}
 							title={page.title}
-							href={`/pages/${page.id}`}
+							href={`/notes/default/${page.id}`}
 							thumbnailUrl={page.thumbnail_url}
 							contentPreview={text || undefined}
 						/>

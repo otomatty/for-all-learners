@@ -186,7 +186,7 @@ export default function EditPageForm({
 			if (error) throw error;
 			toast.dismiss(); // ローディング中のトーストを消す
 			toast.success(`ページ「${title}」を削除しました`);
-			router.push("/pages"); // ページ一覧などにリダイレクト
+			router.push("/notes/default"); // デフォルトノートのページ一覧にリダイレクト
 		} catch (error) {
 			logger.error({ error, pageId: page.id, title }, "ページ削除エラー");
 			toast.dismiss(); // ローディング中のトーストを消す
@@ -248,7 +248,7 @@ export default function EditPageForm({
 			if (isInNote) {
 				router.push(`/notes/${encodeURIComponent(noteSlug)}/${newPage.id}`);
 			} else {
-				router.push(`/pages/${newPage.id}`);
+				router.push(`/notes/default/${newPage.id}`);
 			}
 		} catch {
 			toast.dismiss();

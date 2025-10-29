@@ -22,7 +22,7 @@ interface GroupedPageCardProps {
 export function GroupedPageCard({ page, noteSlug }: GroupedPageCardProps) {
 	const href = noteSlug
 		? `/notes/${encodeURIComponent(noteSlug)}/${page.id}`
-		: `/pages/${page.id}`;
+		: `/notes/default/${page.id}`;
 
 	const text = extractTextFromTiptap(page.content_tiptap)
 		.replace(/\s+/g, " ")

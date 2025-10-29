@@ -62,7 +62,7 @@ export default function PageLinksGrid({
 			// 適切なURLにリダイレクト
 			const redirectUrl = noteSlug
 				? `/notes/${encodeURIComponent(noteSlug)}/${insertedPage.id}?newPage=true`
-				: `/pages/${insertedPage.id}?newPage=true`;
+				: `/notes/default/${insertedPage.id}?newPage=true`;
 			router.push(redirectUrl);
 		},
 		[router, noteSlug],

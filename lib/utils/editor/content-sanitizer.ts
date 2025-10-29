@@ -50,7 +50,7 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 									text: title,
 									key: title.toLowerCase(),
 									pageId: pageId || null,
-									href: pageId ? `/pages/${pageId}` : "#",
+									href: pageId ? `/notes/default/${pageId}` : "#",
 									state: pageId ? "exists" : "pending",
 									exists: !!pageId,
 									markId: `migrated-${Date.now()}-${Math.random()
@@ -63,12 +63,12 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 							return unilinkMark;
 						}
 
-						// Convert legacy link mark to unilink (if it's an internal link)
+						Py; // Convert legacy link mark to unilink (if it's an internal link)
 						if (mark.type === "link") {
 							legacyMarksFound++;
 							const href = String(mark.attrs?.href || "");
 
-							// Check if it's an internal page link
+							// Check if it's an internal page link (legacy /pages/ path)
 							if (href.startsWith("/pages/")) {
 								const pageId = href.replace("/pages/", "");
 								const text = String(textNode.text || "");
@@ -81,7 +81,7 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 										text: text,
 										key: text.toLowerCase(),
 										pageId,
-										href,
+										href: `/notes/default/${pageId}`, // Convert to new path
 										state: "exists",
 										exists: true,
 										markId: `migrated-${Date.now()}-${Math.random()

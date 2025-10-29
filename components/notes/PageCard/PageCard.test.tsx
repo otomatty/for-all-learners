@@ -182,13 +182,13 @@ describe("PageCard", () => {
 			<PageCard
 				title="Create Page"
 				variant="dashed"
-				href="/pages/new"
+				href="/notes/default/new"
 				icon={<PlusCircle data-testid="plus-icon" />}
 			/>,
 		);
 
 		const link = screen.getByRole("link");
-		expect(link).toHaveAttribute("href", "/pages/new");
+		expect(link).toHaveAttribute("href", "/notes/default/new");
 		expect(screen.getByTestId("plus-icon")).toBeInTheDocument();
 	});
 

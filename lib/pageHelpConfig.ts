@@ -49,11 +49,11 @@ export const pageHelpConfig: Record<string, PageHelpConfig> = {
 		mode: "walkthrough",
 		steps: ["OCR入力でカードを自動生成します。"],
 	},
-	"/pages": {
+	"/notes/default": {
 		mode: "walkthrough",
 		steps: ["作成済みのページ一覧を表示します。"],
 	},
-	"/pages/[pageId]": {
+	"/notes/[slug]/[pageId]": {
 		mode: "walkthrough",
 		steps: ["選択したページの詳細を表示します。"],
 	},

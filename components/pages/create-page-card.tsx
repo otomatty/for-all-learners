@@ -82,7 +82,7 @@ export function CreatePageCard({
 		// 4. Redirect to new page
 		const redirectUrl = noteSlug
 			? `/notes/${encodeURIComponent(noteSlug)}/${page.id}?newPage=true`
-			: `/pages/${page.id}?newPage=true`;
+			: `/notes/default/${page.id}?newPage=true`;
 
 		toast.success("ページを作成しました");
 		router.push(redirectUrl);

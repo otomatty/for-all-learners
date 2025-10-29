@@ -72,7 +72,7 @@ export async function resolveIconLink(
 		// 3. Generate URL based on noteSlug
 		const href = noteSlug
 			? `/notes/${encodeURIComponent(noteSlug)}/${page.id}`
-			: `/pages/${page.id}`;
+			: `/notes/default/${page.id}`;
 
 		return { pageId: page.id, href };
 	} catch (error) {

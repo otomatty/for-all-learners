@@ -121,7 +121,7 @@ describe("CreatePageCard", () => {
 		await user.click(button);
 
 		await waitFor(() => {
-			expect(mockRouter.push).toHaveBeenCalledWith("/pages/new-page-1");
+			expect(mockRouter.push).toHaveBeenCalledWith("/notes/default/new-page-1");
 		});
 	});
 
@@ -183,7 +183,9 @@ describe("CreatePageCard", () => {
 
 		await waitFor(() => {
 			expect(mockLinkInsert).toHaveBeenCalled();
-			expect(mockRouter.push).toHaveBeenCalledWith("/pages/new-page-2");
+			expect(mockRouter.push).toHaveBeenCalledWith(
+				"/notes/test-note/new-page-2",
+			);
 		});
 	});
 
