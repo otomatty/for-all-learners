@@ -61,9 +61,7 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 
 							legacyMarksConverted++;
 							return unilinkMark;
-						}
-
-						Py; // Convert legacy link mark to unilink (if it's an internal link)
+						} // Convert legacy link mark to unilink (if it's an internal link)
 						if (mark.type === "link") {
 							legacyMarksFound++;
 							const href = String(mark.attrs?.href || "");
