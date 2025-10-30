@@ -415,7 +415,7 @@ USING (
 - **調査レポート**: `docs/05_logs/2025_10/20251030/01_note-deletion-investigation.md`
 - **データベーススキーマ**: `database/notes_grouping.sql`
 - **デフォルトノートマイグレーション**: `database/migrations/20251028_add_default_note_flag.sql`
-- **RLSポリシー定義**: `database/notes_grouping.sql` (L137-L150)
+- **RLSポリシー定義**: `database/migrations/20251028_add_default_note_flag.sql` (lines 134-140)
 
 ---
 

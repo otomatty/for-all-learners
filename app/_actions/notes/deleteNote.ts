@@ -23,7 +23,7 @@ export async function deleteNote(id: string) {
 	// Check if the note is a default note
 	const { data: note, error: fetchError } = await supabase
 		.from("notes")
-		.select("is_default_note, title")
+		.select("is_default_note")
 		.eq("id", id)
 		.single();
 

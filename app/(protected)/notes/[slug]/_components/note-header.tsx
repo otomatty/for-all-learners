@@ -3,6 +3,7 @@
 import { BookOpen, Clock, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { deleteNote } from "@/app/_actions/notes";
 import { ShareSettingsModal } from "@/components/ShareSettingsModal";
 import {
@@ -115,62 +116,65 @@ export default function NoteHeader({
 			</CardContent>
 			<div className="px-4 pb-4 flex justify-between items-center">
 				<div className="flex gap-2">
-					{currentUserId === ownerId && !isDefaultNote && (
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button variant="destructive" disabled={isDeleting}>
-									<Trash2 className="h-4 w-4 mr-2" />
-									削除
-								</Button>
-							</AlertDialogTrigger>
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
-									<AlertDialogDescription>
-										「{title}」を削除します。
-										<br />
-										この操作は取り消せません。関連するページやデータも削除されます。
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel>キャンセル</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={async () => {
-											setIsDeleting(true);
-											try {
-												await deleteNote(id);
-												router.push("/notes");
-											} catch (error) {
-												alert(
-													error instanceof Error
-														? error.message
-														: "ノートの削除に失敗しました。",
-												);
-												setIsDeleting(false);
-											}
-										}}
-										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									>
-										{isDeleting ? "削除中..." : "削除"}
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-					)}
 					{currentUserId === ownerId && (
-						<ShareSettingsModal
-							note={{
-								id,
-								title,
-								slug,
-								description,
-								visibility,
-								pageCount,
-								participantCount,
-								updatedAt,
-								ownerId,
-							}}
-						/>
+						<>
+							{!isDefaultNote && (
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<Button variant="destructive" disabled={isDeleting}>
+											<Trash2 className="h-4 w-4 mr-2" />
+											削除
+										</Button>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
+											<AlertDialogDescription>
+												「{title}」を削除します。
+												<br />
+												この操作は取り消せません。ノートの共有設定は削除されますが、ページ自体は削除されません。
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel>キャンセル</AlertDialogCancel>
+											<AlertDialogAction
+												onClick={async () => {
+													setIsDeleting(true);
+													try {
+														await deleteNote(id);
+														toast.success("ノートを削除しました");
+														router.push("/notes");
+													} catch (error) {
+														toast.error(
+															error instanceof Error
+																? error.message
+																: "ノートの削除に失敗しました。",
+														);
+														setIsDeleting(false);
+													}
+												}}
+												className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+											>
+												{isDeleting ? "削除中..." : "削除"}
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
+							)}
+							<ShareSettingsModal
+								note={{
+									id,
+									title,
+									slug,
+									description,
+									visibility,
+									pageCount,
+									participantCount,
+									updatedAt,
+									ownerId,
+								}}
+							/>
+						</>
 					)}
 				</div>
 				<Badge variant={badgeVariant}>{visibilityLabel}</Badge>
