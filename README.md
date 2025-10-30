@@ -107,3 +107,4 @@ F.A.L(For All Learners)は、AIの力を最大限に活用し、学習効率と�
 追加コマンド:
 - コード整形と静的解析: `bun run lint`
 - 本番ビルド: `bun run build`
+# Testing CI with Secrets
