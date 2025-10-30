@@ -41,6 +41,22 @@ interface UsePageEditorLogicProps {
 	noteSlug?: string;
 }
 
+/**
+ * CodeBlockWithCopy
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import/use this constant):
+ *   └─ usePageEditorLogic (this file)
+ *
+ * Dependencies (External files that this constant imports/uses):
+ *   ├─ CustomCodeBlock (from @/lib/tiptap-extensions/code-block)
+ *   └─ CodeBlockComponent (from @/components/CodeBlockComponent)
+ *
+ * Related Documentation:
+ *   ├─ Migration Log: docs/05_logs/2025_10/20251030_01_prism-to-shiki-migration.md
+ *   └─ Issue: docs/01_issues/open/2025_10/20251030_01_prism-language-support.md
+ */
 // Create a Shiki-based code block extension with optional copy functionality
 // Shiki provides built-in syntax highlighting for all languages
 const CodeBlockWithCopy = CustomCodeBlock.extend({
