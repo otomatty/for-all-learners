@@ -9,7 +9,6 @@
 @import "./themes/blue.css";
 @import "./themes/yellow.css";
 @import "./themes/violet.css";
-@import "prismjs/themes/prism-tomorrow.css";
 
 @layer utilities {
 	.text-balance {

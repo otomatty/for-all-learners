@@ -92,26 +92,7 @@ export default function FlashcardQuiz({
 		setShowAnswer(true);
 	}, []);
 
-	// Keyboard navigation: Space/Enter to reveal or next when answer shown
-	useEffect(() => {
-		const handleKeyPress = (event: KeyboardEvent) => {
-			if (!showAnswer) {
-				if ([" ", "Enter"].includes(event.key)) {
-					event.preventDefault();
-					handleReveal();
-				}
-			} else {
-				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
-					event.preventDefault();
-					handleNext();
-				}
-			}
-		};
-		window.addEventListener("keydown", handleKeyPress);
-		return () => window.removeEventListener("keydown", handleKeyPress);
-	}, [showAnswer, handleReveal, handleNext]);
-
-	const handleNext = () => {
+	const handleNext = useCallback(() => {
 		// compute time until answer submission (excludes idle)
 		const spent = Math.floor(
 			((answerTimestamp ?? Date.now()) - questionStartTime) / 1000,
@@ -136,7 +117,34 @@ export default function FlashcardQuiz({
 		} else {
 			setCurrentIndex(total);
 		}
-	};
+	}, [
+		answerTimestamp,
+		questionStartTime,
+		current.question,
+		current.answer,
+		current.cardId,
+		currentIndex,
+		total,
+	]);
+
+	// Keyboard navigation: Space/Enter to reveal or next when answer shown
+	useEffect(() => {
+		const handleKeyPress = (event: KeyboardEvent) => {
+			if (!showAnswer) {
+				if ([" ", "Enter"].includes(event.key)) {
+					event.preventDefault();
+					handleReveal();
+				}
+			} else {
+				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
+					event.preventDefault();
+					handleNext();
+				}
+			}
+		};
+		window.addEventListener("keydown", handleKeyPress);
+		return () => window.removeEventListener("keydown", handleKeyPress);
+	}, [showAnswer, handleReveal, handleNext]);
 
 	if (finished) {
 		return (
