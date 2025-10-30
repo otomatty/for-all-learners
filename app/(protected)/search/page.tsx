@@ -71,7 +71,7 @@ export default async function SearchPage({
 
 	// RPC で検索候補を取得
 	const { data: rpcData, error: rpcError } = useFuzzySearch
-		? await supabase.rpc("search_suggestions_fuzzy" as "search_suggestions", {
+		? await supabase.rpc("search_suggestions_fuzzy", {
 				p_query: query,
 			})
 		: await supabase.rpc("search_suggestions", { p_query: query });

@@ -110,7 +110,7 @@ page_fuzzy AS (
     similarity(p.title, p_query) AS similarity
   FROM public.pages p
   WHERE similarity(p.title, p_query) > 0.3  -- 類似度閾値: 0.3
-    AND p.id NOT IN (SELECT id FROM page_exact)  -- 完全一致と重複しない
+    AND NOT EXISTS (SELECT 1 FROM page_exact pe WHERE pe.id = p.id)  -- 完全一致と重複しない
   ORDER BY similarity DESC
   LIMIT 3
 ),

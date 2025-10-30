@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
 	// サーバーサイド Service Role キーでのクライアント生成
 	const supabase = createAdminClient();
 
-	// ファジー検索を使用（タイポ対応）
+	// ファジー検索を使用(タイポ対応)
 	const useFuzzySearch = true;
 
 	// Use RPC for combined search
 	const { data: rpcData, error: rpcError } = useFuzzySearch
-		? await supabase.rpc("search_suggestions_fuzzy" as "search_suggestions", {
+		? await supabase.rpc("search_suggestions_fuzzy", {
 				p_query: q,
 			})
 		: await supabase.rpc("search_suggestions", { p_query: q });

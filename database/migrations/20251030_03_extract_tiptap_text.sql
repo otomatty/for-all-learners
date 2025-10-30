@@ -3,52 +3,34 @@
 -- 説明: TiptapのJSON形式から平文テキストを抽出する関数を作成
 
 -- TiptapのJSONコンテンツから平文テキストを抽出する関数
+-- 再帰的CTEを使用してすべての階層からテキストを抽出（heading, bulletList, listItem等に対応）
 CREATE OR REPLACE FUNCTION public.extract_tiptap_text(tiptap_json jsonb)
   RETURNS text
-  LANGUAGE plpgsql
+  LANGUAGE sql
   IMMUTABLE AS $$
-DECLARE
-  result text := '';
-  paragraph jsonb;
-  node jsonb;
-  text_content text;
-BEGIN
-  -- nullチェック
-  IF tiptap_json IS NULL THEN
-    RETURN '';
-  END IF;
-
-  -- contentノードを走査
-  FOR paragraph IN SELECT * FROM jsonb_array_elements(tiptap_json->'content')
-  LOOP
-    -- 各段落のcontentノードからテキストを抽出
-    FOR node IN SELECT * FROM jsonb_array_elements(paragraph->'content')
-    LOOP
-      text_content := node->>'text';
-      IF text_content IS NOT NULL AND text_content != '' THEN
-        -- スペースで区切って結合
-        IF result != '' THEN
-          result := result || ' ';
-        END IF;
-        result := result || text_content;
-      END IF;
-    END LOOP;
-  END LOOP;
-
-  RETURN result;
-END;
+  WITH RECURSIVE nodes AS (
+    SELECT tiptap_json AS node
+    UNION ALL
+    SELECT jsonb_array_elements(
+      CASE
+        WHEN jsonb_typeof(n.node->'content') = 'array'
+        THEN n.node->'content'
+        ELSE '[]'::jsonb
+      END
+    )
+    FROM nodes n
+    WHERE jsonb_typeof(n.node) = 'object' AND n.node ? 'content'
+  )
+  SELECT COALESCE(string_agg(node->>'text', ' '), '')
+  FROM nodes
+  WHERE jsonb_typeof(node) = 'object' AND node ? 'text' AND node->>'text' IS NOT NULL;
 $$;
 
 -- 関数のコメント
 COMMENT ON FUNCTION public.extract_tiptap_text(jsonb) IS 
-'TiptapエディタのJSON形式から平文テキストを抽出する。検索機能で使用。';
-
--- 既存関数を削除
-DROP FUNCTION IF EXISTS public.search_suggestions(text);
-DROP FUNCTION IF EXISTS public.search_suggestions_fuzzy(text);
+'TiptapエディタのJSON形式から平文テキストを抽出する。再帰的にすべての階層を走査。検索機能で使用。';
 
 -- 既存の検索関数を更新: search_suggestions
-DROP FUNCTION IF EXISTS public.search_suggestions(text);
 
 CREATE OR REPLACE FUNCTION public.search_suggestions(p_query text)
   RETURNS TABLE (
@@ -64,42 +46,23 @@ WITH card_cte AS (
   SELECT
     'card'::text AS type,
     c.id,
-    LEFT(
-      (
-        SELECT string_agg(node->>'text', ' ')
-        FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-             jsonb_array_elements(para->'content')            AS node
-        WHERE node->>'text' IS NOT NULL
-      ),
-      100
-    ) AS suggestion,
+    LEFT(extract_tiptap_text(c.front_content::jsonb), 100) AS suggestion,
     ts_headline(
       'simple',
-      (
-        SELECT string_agg(node->>'text', ' ')
-        FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-             jsonb_array_elements(para->'content')            AS node
-        WHERE node->>'text' IS NOT NULL
-      ),
+      extract_tiptap_text(c.front_content::jsonb),
       plainto_tsquery('simple', p_query),
       'StartSel=<mark>, StopSel=</mark>, MaxFragments=2, FragmentDelimiter=" ... "'
     ) AS excerpt,
     ts_rank(
       to_tsvector('simple', 
-        COALESCE(
-          (SELECT string_agg(node->>'text', ' ')
-           FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-                jsonb_array_elements(para->'content') AS node
-           WHERE node->>'text' IS NOT NULL),
-          ''
-        )
+        COALESCE(extract_tiptap_text(c.front_content::jsonb), '') || ' ' || 
+        COALESCE(extract_tiptap_text(c.back_content::jsonb), '')
       ),
       plainto_tsquery('simple', p_query)
     ) AS rank
   FROM public.cards c
-  WHERE (c.front_content::text ILIKE '%'||p_query||'%'
-         OR c.back_content::text ILIKE '%'||p_query||'%')
-  GROUP BY c.id
+  WHERE extract_tiptap_text(c.front_content::jsonb) ILIKE '%'||p_query||'%'
+     OR extract_tiptap_text(c.back_content::jsonb) ILIKE '%'||p_query||'%'
   ORDER BY rank DESC
   LIMIT 5
 ),
@@ -152,43 +115,24 @@ WITH card_cte AS (
   SELECT
     'card'::text AS type,
     c.id,
-    LEFT(
-      (
-        SELECT string_agg(node->>'text', ' ')
-        FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-             jsonb_array_elements(para->'content')            AS node
-        WHERE node->>'text' IS NOT NULL
-      ),
-      100
-    ) AS suggestion,
+    LEFT(extract_tiptap_text(c.front_content::jsonb), 100) AS suggestion,
     ts_headline(
       'simple',
-      (
-        SELECT string_agg(node->>'text', ' ')
-        FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-             jsonb_array_elements(para->'content')            AS node
-        WHERE node->>'text' IS NOT NULL
-      ),
+      extract_tiptap_text(c.front_content::jsonb),
       plainto_tsquery('simple', p_query),
       'StartSel=<mark>, StopSel=</mark>, MaxFragments=2, FragmentDelimiter=" ... "'
     ) AS excerpt,
     ts_rank(
       to_tsvector('simple', 
-        COALESCE(
-          (SELECT string_agg(node->>'text', ' ')
-           FROM jsonb_array_elements(c.front_content::jsonb->'content') AS para,
-                jsonb_array_elements(para->'content') AS node
-           WHERE node->>'text' IS NOT NULL),
-          ''
-        )
+        COALESCE(extract_tiptap_text(c.front_content::jsonb), '') || ' ' || 
+        COALESCE(extract_tiptap_text(c.back_content::jsonb), '')
       ),
       plainto_tsquery('simple', p_query)
     ) AS rank,
     0.0::real AS similarity
   FROM public.cards c
-  WHERE (c.front_content::text ILIKE '%'||p_query||'%'
-         OR c.back_content::text ILIKE '%'||p_query||'%')
-  GROUP BY c.id
+  WHERE extract_tiptap_text(c.front_content::jsonb) ILIKE '%'||p_query||'%'
+     OR extract_tiptap_text(c.back_content::jsonb) ILIKE '%'||p_query||'%'
   ORDER BY rank DESC
   LIMIT 5
 ),
@@ -230,24 +174,19 @@ page_fuzzy AS (
     similarity(p.title, p_query) AS similarity
   FROM public.pages p
   WHERE similarity(p.title, p_query) > 0.3
-    AND p.id NOT IN (SELECT id FROM page_exact)
+    AND NOT EXISTS (SELECT 1 FROM page_exact pe WHERE pe.id = p.id)
   ORDER BY similarity DESC
   LIMIT 3
 )
 SELECT type, id, suggestion, excerpt, rank, similarity
 FROM (
-  SELECT 
-    type, id, suggestion, excerpt, rank, similarity,
-    CASE WHEN similarity > 0.0 THEN similarity ELSE rank END AS sort_score
-  FROM (
     SELECT type, id, suggestion, excerpt, rank, similarity FROM card_cte
     UNION ALL
     SELECT type, id, suggestion, excerpt, rank, similarity FROM page_exact
     UNION ALL
     SELECT type, id, suggestion, excerpt, rank, similarity FROM page_fuzzy
-  ) all_results
-) sorted_results
-ORDER BY sort_score DESC;
+) all_results
+ORDER BY CASE WHEN similarity > 0.0 THEN similarity ELSE rank END DESC;
 $$;
 
 -- 関数のコメント
