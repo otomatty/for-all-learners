@@ -9,6 +9,11 @@ jobs:
     name: Production Build
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
     env:
       # Note: These should be set in GitHub Secrets
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

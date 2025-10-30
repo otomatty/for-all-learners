@@ -1,17 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-
-// Regular client（ユーザー認証用）
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/pdf-jobs - ユーザーのPDFジョブ一覧取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		// ユーザー認証確認
 		const {
 			data: { user },
@@ -138,6 +133,7 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,

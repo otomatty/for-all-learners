@@ -1,15 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
-
-const supabaseAdmin = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
-);
+import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/pdf-jobs/[jobId] - 特定のPDFジョブ詳細取得
@@ -19,6 +10,7 @@ export async function GET(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -136,6 +128,8 @@ export async function PATCH(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
+		const supabaseAdmin = createAdminClient();
 		const {
 			data: { user },
 			error: authError,
@@ -254,10 +248,16 @@ export async function PATCH(
 					);
 				}
 
+				// 処理オプションの型安全な取得
+				const processingOptions = originalJob.processing_options as {
+					chunkSize?: number;
+				} | null;
+				const chunkSize = processingOptions?.chunkSize ?? 5;
+
 				// 処理時間推定
 				const estimatedDuration = estimateProcessingTime(
 					originalJob.file_size_bytes,
-					originalJob.processing_options.chunkSize,
+					chunkSize,
 				);
 
 				// 新しいジョブ作成
@@ -319,6 +319,7 @@ export async function DELETE(
 	{ params }: { params: Promise<{ jobId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,

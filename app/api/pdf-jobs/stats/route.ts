@@ -1,16 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/pdf-jobs/stats - ユーザーのPDF処理統計取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -102,10 +98,10 @@ export async function GET(request: NextRequest) {
 function calculateStats(
 	jobs: Array<{
 		status: string;
-		created_at?: string;
-		actual_duration_seconds?: number;
-		generated_cards?: number;
-		file_size_bytes?: number;
+		created_at?: string | null;
+		actual_duration_seconds?: number | null;
+		generated_cards?: number | null;
+		file_size_bytes?: number | null;
 	}>,
 ) {
 	const total = jobs.length;
@@ -160,9 +156,9 @@ function calculateStats(
 function calculateDailyStats(
 	jobs: Array<{
 		status: string;
-		created_at: string;
-		actual_duration_seconds?: number;
-		generated_cards?: number;
+		created_at: string | null;
+		actual_duration_seconds?: number | null;
+		generated_cards?: number | null;
 	}>,
 	periodDays: number,
 ) {
@@ -194,6 +190,8 @@ function calculateDailyStats(
 
 	// ジョブデータを日別に集計
 	for (const job of jobs) {
+		if (!job.created_at) continue;
+
 		const createdDate = new Date(job.created_at).toISOString().split("T")[0];
 		const dayStats = dailyMap.get(createdDate);
 
@@ -217,7 +215,7 @@ function calculateDailyStats(
 function calculateProcessingTimeStats(
 	jobs: Array<{
 		status: string;
-		actual_duration_seconds?: number;
+		actual_duration_seconds?: number | null;
 	}>,
 ) {
 	const completedJobs = jobs.filter(
