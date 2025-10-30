@@ -2,7 +2,7 @@
 
 import imageCompression from "browser-image-compression";
 import { Loader2, PlusCircle, XCircle } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
@@ -39,6 +39,7 @@ export function ImageUploader({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [fileDetails, setFileDetails] = useState<FileDetail[]>([]);
 	const [isOverallProcessing, setIsOverallProcessing] = useState(false);
+	const fileInputId = useId();
 
 	const maxFileSizeBytes = maxFileSizeMB * MAX_FILE_SIZE_BYTES_FACTOR;
 
@@ -257,16 +258,18 @@ export function ImageUploader({
 				))}
 
 				{fileDetails.length < maxFiles && (
-					<div
+					<button
+						type="button"
 						onClick={triggerFileInput}
 						className={cn(
-							"cursor-pointer border-2 border-dashed border-muted-foreground/50 rounded-md aspect-square flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors",
+							"border-2 border-dashed border-muted-foreground/50 rounded-md aspect-square flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors",
 							(disabled || isOverallProcessing) &&
 								"cursor-not-allowed opacity-50 hover:border-muted-foreground/50 hover:text-muted-foreground",
+							!disabled && !isOverallProcessing && "cursor-pointer",
 						)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") triggerFileInput();
-						}}
+						disabled={
+							disabled || isOverallProcessing || fileDetails.length >= maxFiles
+						}
 						aria-label="画像を追加"
 					>
 						{isOverallProcessing ? (
@@ -279,12 +282,12 @@ export function ImageUploader({
 								? "処理中..."
 								: `画像を追加 (${fileDetails.length}/${maxFiles})`}
 						</p>
-					</div>
+					</button>
 				)}
 			</div>
 
 			<input
-				id="hidden-file-input" // id for label association if needed elsewhere
+				id={fileInputId}
 				ref={fileInputRef}
 				type="file"
 				accept="image/*"

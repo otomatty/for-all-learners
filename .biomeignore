@@ -1,0 +1,21 @@
+# Auto-generated files
+node_modules/
+.next/
+dist/
+build/
+public/
+
+# Service Worker and PWA files
+public/**/*.js
+public/**/*.mjs
+sw.js
+workbox-*.js
+
+# Other build artifacts
+*.min.js
+*.bundle.js
+
+# CSS files (Tailwind directives not supported by Biome)
+*.css
+app/**/*.css
+components/**/*.css
