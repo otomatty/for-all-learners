@@ -30,7 +30,7 @@ export async function getDefaultNote() {
 	const { data: defaultNote, error: fetchError } = await supabase
 		.from("notes")
 		.select(
-			"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id",
+			"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id, is_default_note",
 		)
 		.eq("owner_id", user.id)
 		.eq("is_default_note", true)
