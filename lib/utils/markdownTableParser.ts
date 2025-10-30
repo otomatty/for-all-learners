@@ -5,6 +5,8 @@
  * TiptapのJSONContent形式に変換する機能を提供
  */
 
+import logger from "@/lib/logger";
+
 export interface TableData {
 	headers: string[];
 	alignments: ("left" | "center" | "right")[];
@@ -100,7 +102,7 @@ export function parseMarkdownTable(markdown: string): TableData | null {
 			rows,
 		};
 	} catch (error) {
-		console.warn("Markdownテーブルのパースに失敗:", error);
+		logger.warn({ error }, "Markdownテーブルのパースに失敗");
 		return null;
 	}
 }

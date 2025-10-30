@@ -5,8 +5,8 @@ import { ReactNodeViewRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import CodeBlockPrism from "tiptap-extension-code-block-prism";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
+import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import {
 	CustomBulletList,
@@ -41,8 +41,25 @@ interface UsePageEditorLogicProps {
 	noteSlug?: string;
 }
 
-// Create a Prism-based code block extension with a React NodeView
-const CodeBlockWithCopy = CodeBlockPrism.extend({
+/**
+ * CodeBlockWithCopy
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import/use this constant):
+ *   └─ usePageEditorLogic (this file)
+ *
+ * Dependencies (External files that this constant imports/uses):
+ *   ├─ CustomCodeBlock (from @/lib/tiptap-extensions/code-block)
+ *   └─ CodeBlockComponent (from @/components/CodeBlockComponent)
+ *
+ * Related Documentation:
+ *   ├─ Migration Log: docs/05_logs/2025_10/20251030_01_prism-to-shiki-migration.md
+ *   └─ Issue: docs/01_issues/open/2025_10/20251030_01_prism-language-support.md
+ */
+// Create a Shiki-based code block extension with optional copy functionality
+// Shiki provides built-in syntax highlighting for all languages
+const CodeBlockWithCopy = CustomCodeBlock.extend({
 	addNodeView() {
 		return ReactNodeViewRenderer(CodeBlockComponent);
 	},
@@ -77,8 +94,11 @@ export function usePageEditorLogic({
 			GyazoImage,
 			LatexInlineNode,
 			Highlight,
+			// Shiki-based code block with copy functionality
+			// Automatically supports all programming languages with syntax highlighting
 			CodeBlockWithCopy.configure({
 				defaultLanguage: "javascript",
+				defaultTheme: "tokyo-night",
 			}),
 			// Table extensions for Markdown table support
 			...TableExtensions,
@@ -87,8 +107,6 @@ export function usePageEditorLogic({
 				enabled: true,
 				debug: false, // Set to true for development debugging
 			}),
-			// Code blocks highlighted via Prism
-			// Prism highlighting is applied on editor updates
 			Placeholder.configure({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,

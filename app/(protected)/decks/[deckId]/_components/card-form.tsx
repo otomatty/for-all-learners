@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
 import TiptapEditor from "@/components/tiptap-editor";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/logger";
 import {
 	Form,
 	FormControl,
@@ -115,7 +116,7 @@ export function CardForm({
 			}
 		} catch (err: unknown) {
 			const actionType = cardToEdit ? "更新" : "作成";
-			console.error(`カード${actionType}エラー:`, err);
+			logger.error({ error: err }, `カード${actionType}エラー`);
 			toast.error(
 				err instanceof Error
 					? err.message
@@ -147,7 +148,7 @@ export function CardForm({
 			}
 			frontTextContent = frontTextContent.trim();
 		} catch (e) {
-			console.error("フロントコンテンツのパースエラー:", e);
+			logger.error({ error: e }, "フロントコンテンツのパースエラー");
 			toast.error("表面のコンテンツ形式が正しくありません。");
 			return;
 		}
@@ -175,7 +176,7 @@ export function CardForm({
 				setIsGenerating(false);
 			}, 2000);
 		} catch (err: unknown) {
-			console.error("回答生成エラー:", err);
+			logger.error({ error: err }, "回答生成エラー");
 			toast.error(
 				err instanceof Error
 					? err.message
