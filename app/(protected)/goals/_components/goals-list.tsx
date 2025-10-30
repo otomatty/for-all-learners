@@ -174,7 +174,10 @@ export function GoalsList({ goals }: GoalsListProps) {
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
+								role="img"
+								aria-label="目標がありません"
 							>
+								<title>目標がありません</title>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"

@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Save, Trash } from "lucide-react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -247,11 +248,12 @@ export function ImageCardGenerator({
 					</div>
 					{imageUrl && (
 						<div className="flex justify-center">
-							<div className="w-full max-w-md overflow-hidden">
-								<img
+							<div className="w-full max-w-md overflow-hidden relative h-64">
+								<NextImage
 									src={imageUrl}
 									alt="preview"
-									className="w-full h-auto object-contain rounded"
+									fill
+									className="object-contain rounded"
 								/>
 							</div>
 						</div>
