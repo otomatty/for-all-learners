@@ -15,6 +15,7 @@ import {
 	ListOrdered,
 	Scissors,
 	Strikethrough,
+	Table,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -53,8 +54,6 @@ export function EditPageBubbleMenu({
 	wrapSelectionWithPageLink,
 	splitPage,
 }: EditPageBubbleMenuProps) {
-	if (!editor) return null;
-
 	const [isMac, setIsMac] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
 	const [isLinkSelected, setIsLinkSelected] = useState(false);
@@ -88,13 +87,16 @@ export function EditPageBubbleMenu({
 		};
 	}, [editor]);
 
+	if (!editor) return null;
+
 	return (
 		<TooltipProvider>
 			<BubbleMenu
 				editor={editor}
-				shouldShow={({ state }) => {
+				shouldShow={({ state, editor }) => {
 					const { from, to } = state.selection;
-					return from < to;
+					// テーブル内にいない場合のみ表示（テーブルは別のBubbleMenuで処理）
+					return from < to && !editor.isActive("table");
 				}}
 				tippyOptions={{
 					duration: 100,
@@ -450,6 +452,39 @@ export function EditPageBubbleMenu({
 								>
 									<Code className="w-5 h-5" />
 								</button>
+							)}
+
+							{/* Table - デスクトップのみ */}
+							{!isMobile && (
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											type="button"
+											onClick={() =>
+												editor
+													.chain()
+													.focus()
+													.insertTable({
+														rows: 3,
+														cols: 3,
+														withHeaderRow: true,
+													})
+													.run()
+											}
+											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+										>
+											<Table className="w-5 h-5" />
+										</button>
+									</TooltipTrigger>
+									<TooltipContent side="top">
+										<div className="flex items-center space-x-1">
+											<span>テーブル:</span>
+											<Badge variant="secondary">
+												{isMac ? "⌘+Shift+T" : "Ctrl+Shift+T"}
+											</Badge>
+										</div>
+									</TooltipContent>
+								</Tooltip>
 							)}
 						</>
 					)}

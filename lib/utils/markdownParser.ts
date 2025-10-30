@@ -6,6 +6,54 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
+import type { TableData } from "./markdownTableParser";
+import { parseMarkdownTable } from "./markdownTableParser";
+
+/**
+ * Convert TableData to TipTap JSONContent format
+ */
+function convertTableToJSON(tableData: TableData): JSONContent {
+	const { headers, alignments, rows } = tableData;
+
+	// Create header row
+	const headerRow: JSONContent = {
+		type: "tableRow",
+		content: headers.map((header, index) => ({
+			type: "tableHeader",
+			attrs: {
+				textAlign: alignments[index] || "left",
+			},
+			content: [
+				{
+					type: "paragraph",
+					content: header ? [{ type: "text", text: header }] : [],
+				},
+			],
+		})),
+	};
+
+	// Create data rows
+	const dataRows: JSONContent[] = rows.map((row) => ({
+		type: "tableRow",
+		content: row.map((cell, index) => ({
+			type: "tableCell",
+			attrs: {
+				textAlign: alignments[index] || "left",
+			},
+			content: [
+				{
+					type: "paragraph",
+					content: cell ? [{ type: "text", text: cell }] : [],
+				},
+			],
+		})),
+	}));
+
+	return {
+		type: "table",
+		content: [headerRow, ...dataRows],
+	};
+}
 
 /**
  * Parse Markdown text and convert to Tiptap JSONContent
@@ -14,6 +62,13 @@ import type { JSONContent } from "@tiptap/core";
  * @returns JSONContent array representing the parsed content
  */
 export function parseMarkdownToNodes(text: string): JSONContent[] {
+	// Check if text contains a Markdown table first
+	const tableData = parseMarkdownTable(text.trim());
+	if (tableData) {
+		// Convert table data to TipTap JSONContent
+		return [convertTableToJSON(tableData)];
+	}
+
 	const lines = text.split("\n");
 	const nodes: JSONContent[] = [];
 	let currentListItems: JSONContent[] = [];
@@ -348,6 +403,7 @@ export function containsMarkdownSyntax(text: string): boolean {
 		/`[^`]+`/, // Inline code
 		/\[[^\]]+\]\([^)]+\)/, // Links
 		/^(-{3,}|\*{3,}|_{3,})$/, // Horizontal rules
+		/^\|(.+\|.+)\s*\n\s*\|(:?-+:?\|:?-+:?.*)/, // Tables
 	];
 
 	return patterns.some((pattern) => pattern.test(text));

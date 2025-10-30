@@ -18,6 +18,7 @@ import { useSpeechControls } from "@/components/pages/_hooks/useSpeechControls";
 import BacklinksGrid from "@/components/pages/BacklinksGrid";
 import { ContentSkeleton } from "@/components/pages/content-skeleton";
 import { EditPageBubbleMenu } from "@/components/pages/edit-page-bubble-menu";
+import { TableBubbleMenu } from "@/components/pages/table-bubble-menu";
 import { LinkGroupsSection } from "@/components/pages/link-groups-section";
 import { PageHeader } from "@/components/pages/page-header";
 import PageLinksGrid from "@/components/pages/page-links-grid";
@@ -294,6 +295,7 @@ export default function EditPageForm({
 									wrapSelectionWithPageLink={wrapSelectionWithPageLink}
 									splitPage={splitPage}
 								/>
+								<TableBubbleMenu editor={editor} />
 								{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
 									<ContentSkeleton />
 								) : (
