@@ -47,9 +47,10 @@ export async function getNotesList() {
 				.in("id", sharedNoteIds)
 		: { data: [], error: null };
 	if (sharedNotesError) throw sharedNotesError;
-	// Combine and map to NoteSummary
+	// Combine and map to NoteSummary, removing duplicates by id
 	const allNotes = [...ownedNotes, ...sharedNotes];
-	return allNotes.map((n) => ({
+	const uniqueNotesMap = new Map(allNotes.map((note) => [note.id, note]));
+	return Array.from(uniqueNotesMap.values()).map((n) => ({
 		id: n.id,
 		slug: n.slug,
 		title: n.title,

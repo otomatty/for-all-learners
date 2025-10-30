@@ -57,6 +57,7 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 				participantCount={note.participant_count}
 				updatedAt={note.updated_at}
 				ownerId={note.owner_id}
+				isDefaultNote={note.is_default_note || false}
 			/>
 			<NotePagesClient
 				slug={slug}
