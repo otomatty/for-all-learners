@@ -25,8 +25,7 @@ export async function GET(
 			sortBy,
 		});
 		return NextResponse.json({ pages, totalCount });
-	} catch (err) {
-		console.error("[API /notes/:slug/pages] error", err);
+	} catch (_err) {
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 },

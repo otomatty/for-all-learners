@@ -98,10 +98,6 @@ export async function processAudioFilesBatch(
 					});
 
 				if (uploadError) {
-					console.error(
-						`音声 ${audio.audioName} アップロードエラー:`,
-						uploadError,
-					);
 					return null;
 				}
 
@@ -111,7 +107,6 @@ export async function processAudioFilesBatch(
 					.createSignedUrl(filePath, 60 * 30);
 
 				if (signedError || !signedData.signedUrl) {
-					console.error(`音声 ${audio.audioName} URL作成エラー:`, signedError);
 					return null;
 				}
 
@@ -122,8 +117,7 @@ export async function processAudioFilesBatch(
 					filePath, // クリーンアップ用
 					metadata: audio.metadata,
 				};
-			} catch (error) {
-				console.error(`音声 ${audio.audioName} 処理エラー:`, error);
+			} catch (_error) {
 				return null;
 			}
 		});
@@ -166,7 +160,7 @@ export async function processAudioFilesBatch(
 		for (let i = 0; i < validUploads.length; i += batchSize) {
 			const batch = validUploads.slice(i, i + batchSize);
 			const batchNumber = Math.floor(i / batchSize) + 1;
-			const totalBatches = Math.ceil(validUploads.length / batchSize);
+			const _totalBatches = Math.ceil(validUploads.length / batchSize);
 
 			try {
 				const batchResult = await executeWithQuotaCheck(
@@ -183,8 +177,6 @@ export async function processAudioFilesBatch(
 					await new Promise((resolve) => setTimeout(resolve, 500));
 				}
 			} catch (error) {
-				console.error(`音声バッチ ${batchNumber} 処理エラー:`, error);
-
 				// エラーの場合も結果に追加
 				const errorResults = batch.map((audio) => ({
 					audioId: audio.audioId,
@@ -217,8 +209,7 @@ export async function processAudioFilesBatch(
 						...result,
 						cards,
 					};
-				} catch (error) {
-					console.error(`音声 ${result.audioName} のカード生成エラー:`, error);
+				} catch (_error) {
 					return {
 						...result,
 						cards: [],
@@ -232,13 +223,9 @@ export async function processAudioFilesBatch(
 		const cleanupPromises = validUploads.map(async (upload) => {
 			try {
 				await supabase.storage.from("audio-files").remove([upload.filePath]);
-			} catch (error) {
-				console.warn(`音声ファイル削除エラー (${upload.filePath}):`, error);
-			}
+			} catch (_error) {}
 		});
-		Promise.all(cleanupPromises).catch((error) =>
-			console.warn("音声ファイル・クリーンアップエラー:", error),
-		);
+		Promise.all(cleanupPromises).catch((_error) => {});
 
 		const totalCards = finalResults.reduce(
 			(sum, result) => sum + (result.cards?.length || 0),
@@ -257,7 +244,6 @@ export async function processAudioFilesBatch(
 			apiRequestsUsed,
 		};
 	} catch (error) {
-		console.error("音声バッチ処理エラー:", error);
 		return {
 			success: false,
 			message: "音声バッチ処理中に致命的エラーが発生しました",
@@ -323,11 +309,7 @@ async function processBatchAudioTranscription(
 					uri,
 					mimeType: mimeType || audioBlob.type,
 				};
-			} catch (error) {
-				console.error(
-					`音声 ${audio.audioName} のGeminiアップロードエラー:`,
-					error,
-				);
+			} catch (_error) {
 				return null;
 			}
 		});
@@ -453,8 +435,6 @@ async function processBatchAudioTranscription(
 
 		return results;
 	} catch (error) {
-		console.error("バッチ音声文字起こしエラー:", error);
-
 		// エラーの場合は全ファイルを失敗として返す
 		return batch.map((audio) => ({
 			audioId: audio.audioId,

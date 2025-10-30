@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import React from "react";
 import {
 	type ChangeLogEntry,
 	getChangelogData,
@@ -24,7 +23,7 @@ export default async function ChangelogPage() {
 					{/* タイムラインの縦線 */}
 					<div className="absolute left-4 sm:left-5 top-0 bottom-0 w-0.5 bg-border -z-10" />
 
-					{changelogData.map((entry, entryIndex) => (
+					{changelogData.map((entry, _entryIndex) => (
 						<ChangelogEntry entry={entry} key={entry.version} />
 					))}
 				</div>

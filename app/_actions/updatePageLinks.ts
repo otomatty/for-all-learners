@@ -22,7 +22,6 @@ export async function updatePageLinks({
 			{ ignoreDuplicates: true },
 		);
 		if (upsertErr) {
-			console.error("Failed to upsert page links:", upsertErr);
 			throw upsertErr;
 		}
 	}

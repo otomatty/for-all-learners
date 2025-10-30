@@ -89,7 +89,7 @@ export function ChangelogForm({
 
 	// useFormState に渡すサーバーアクションをラップ
 	const createChangelogEntryWithChanges = async (
-		prevState: ActionResponse<ChangeLogEntry>,
+		_prevState: ActionResponse<ChangeLogEntry>,
 		formData: FormData,
 	): Promise<ActionResponse<ChangeLogEntry>> => {
 		// Ensure published_at is retrieved as string
@@ -221,7 +221,7 @@ export function ChangelogForm({
 				<legend className="text-sm font-medium leading-6 text-gray-900 dark:text-white">
 					変更点
 				</legend>
-				{changes.map((change, index) => (
+				{changes.map((change, _index) => (
 					<div
 						key={change.clientId}
 						className="p-4 border border-gray-200 dark:border-gray-700 rounded-md space-y-3"

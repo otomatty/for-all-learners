@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
 	deleteUserLlmSettings,
@@ -70,9 +70,7 @@ export default function LlmSettings() {
 					setEnabledProviders(data.provider ? [data.provider] : []);
 					setApiKeys({ [data.provider]: data.api_key_encrypted });
 				}
-			} catch (err) {
-				console.error(err);
-			}
+			} catch (_err) {}
 		})();
 	}, []);
 

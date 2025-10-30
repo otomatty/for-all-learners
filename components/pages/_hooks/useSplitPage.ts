@@ -44,7 +44,7 @@ export function useSplitPage(
 		titleText = titleText.trim() || "新規ページ";
 
 		try {
-			const newPage = await splitPageSelection({
+			const _newPage = await splitPageSelection({
 				originalPageId: pageId,
 				title: titleText,
 				content: selectedContent,
@@ -57,8 +57,7 @@ export function useSplitPage(
 				.run();
 			await savePage();
 			toast.success("ページを分割しました");
-		} catch (err) {
-			console.error("splitPageSelection error:", err);
+		} catch (_err) {
 			toast.error("ページ分割に失敗しました");
 		}
 	}, [editor, pageId, savePage]);

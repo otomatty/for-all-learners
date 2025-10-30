@@ -183,19 +183,10 @@ export namespace ClientOcr {
 				warnings: warnings.length > 0 ? warnings : undefined,
 			};
 
-			console.log("[ClientOCR] Processing completed:", {
-				textLength: cleanedText.length,
-				confidence: ocrResult.confidence,
-				processingTime: totalProcessingTime,
-				warnings: warnings.length,
-			});
-
 			return result;
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown OCR error";
-
-			console.error("[ClientOCR] Processing failed:", error);
 
 			if (onProgress) {
 				onProgress({
@@ -278,8 +269,7 @@ export namespace ClientOcr {
 				debug: false,
 				autoAdjustColumns: true,
 			});
-		} catch (error) {
-			console.warn("[OCR] テーブル変換でエラー:", error);
+		} catch (_error) {
 			// エラーが発生しても元のテキストを保持
 		}
 

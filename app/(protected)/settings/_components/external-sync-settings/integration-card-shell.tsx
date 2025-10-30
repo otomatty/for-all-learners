@@ -7,7 +7,7 @@ import {
 	ChevronUp,
 	LinkIcon,
 } from "lucide-react";
-import React, {
+import {
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -19,7 +19,6 @@ import {
 	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
-	AlertDialogDescription,
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,

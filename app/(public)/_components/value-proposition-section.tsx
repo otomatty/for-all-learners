@@ -1,5 +1,4 @@
 import { Brain, Clock, Users } from "lucide-react";
-import React from "react";
 import { Container } from "@/components/layouts/container";
 import { SectionHeader } from "@/components/SectionHeader";
 

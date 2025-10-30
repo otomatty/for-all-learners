@@ -3,15 +3,15 @@
 import type { Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react";
 import {
-	Columns3,
-	Rows3,
-	Trash2,
+	ArrowDownToLine,
 	ArrowLeftToLine,
 	ArrowRightToLine,
 	ArrowUpToLine,
-	ArrowDownToLine,
+	Columns3,
 	Merge,
+	Rows3,
 	Split,
+	Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, GitCommit } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface CommitLog {
 	hash: string;

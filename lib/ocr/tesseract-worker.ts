@@ -57,13 +57,10 @@ export class TesseractWorkerManager {
 		onProgress?: (progress: OcrProgress) => void,
 	): Promise<void> {
 		try {
-			console.log("[TesseractWorker] Initializing worker...");
-
 			// Workerを作成
 			const language = this.options.language ?? "jpn+eng";
 			this.worker = await createWorker(language, undefined, {
 				logger: (m) => {
-					console.log("[Tesseract]", m);
 					if (onProgress) {
 						onProgress({
 							status: m.status,
@@ -96,9 +93,7 @@ export class TesseractWorkerManager {
 			}
 
 			this.isInitialized = true;
-			console.log("[TesseractWorker] Worker initialized successfully");
 		} catch (error) {
-			console.error("[TesseractWorker] Initialization failed:", error);
 			this.worker = null;
 			this.isInitialized = false;
 			this.initializationPromise = null;
@@ -113,7 +108,7 @@ export class TesseractWorkerManager {
 	 */
 	async recognize(
 		image: Blob | string,
-		onProgress?: (progress: OcrProgress) => void,
+		_onProgress?: (progress: OcrProgress) => void,
 	): Promise<{
 		text: string;
 		confidence: number;
@@ -127,17 +122,9 @@ export class TesseractWorkerManager {
 		const startTime = Date.now();
 
 		try {
-			console.log("[TesseractWorker] Starting OCR recognition...");
-
 			const result = await this.worker.recognize(image);
 
 			const processingTime = Date.now() - startTime;
-
-			console.log("[TesseractWorker] OCR completed:", {
-				confidence: result.data.confidence,
-				textLength: result.data.text.length,
-				processingTime,
-			});
 
 			return {
 				text: result.data.text.trim(),
@@ -146,7 +133,6 @@ export class TesseractWorkerManager {
 				processingTime,
 			};
 		} catch (error) {
-			console.error("[TesseractWorker] Recognition failed:", error);
 			throw new Error(
 				`OCR recognition failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
@@ -159,15 +145,11 @@ export class TesseractWorkerManager {
 	async terminate(): Promise<void> {
 		if (this.worker) {
 			try {
-				console.log("[TesseractWorker] Terminating worker...");
 				await this.worker.terminate();
 				this.worker = null;
 				this.isInitialized = false;
 				this.initializationPromise = null;
-				console.log("[TesseractWorker] Worker terminated successfully");
-			} catch (error) {
-				console.error("[TesseractWorker] Termination failed:", error);
-			}
+			} catch (_error) {}
 		}
 	}
 
@@ -260,18 +242,12 @@ export async function recognizeText(
 	processingTime: number;
 }> {
 	const worker = workerPool.getWorker(language);
+	await worker.initialize(onProgress);
+	const result = await worker.recognize(image, onProgress);
 
-	try {
-		await worker.initialize(onProgress);
-		const result = await worker.recognize(image, onProgress);
-
-		return {
-			text: result.text,
-			confidence: result.confidence,
-			processingTime: result.processingTime,
-		};
-	} catch (error) {
-		console.error("[OCR] Recognition failed:", error);
-		throw error;
-	}
+	return {
+		text: result.text,
+		confidence: result.confidence,
+		processingTime: result.processingTime,
+	};
 }

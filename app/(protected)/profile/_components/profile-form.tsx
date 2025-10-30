@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { updateAccount, uploadAvatar } from "@/app/_actions/accounts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -88,7 +88,6 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 			setAccount(updated);
 			toast.success("プロフィールを保存しました");
 		} catch (error: unknown) {
-			console.error("[ProfileForm][handleSaveError]", error);
 			toast.error(
 				(error as Error).message ?? "プロフィールの保存に失敗しました",
 			);

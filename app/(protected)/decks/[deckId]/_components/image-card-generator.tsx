@@ -104,7 +104,7 @@ export function ImageCardGenerator({
 			const webpBlob = await convertImageToWebp(imageBlob, 0.8);
 			const timestamp = Date.now();
 			const filePath = `ocr-images/${userId}/${timestamp}.webp`;
-			const { data: uploadData, error: uploadError } = await supabase.storage
+			const { data: _uploadData, error: uploadError } = await supabase.storage
 				.from("ocr-images")
 				.upload(filePath, webpBlob, { metadata: { userId } });
 			if (uploadError) throw uploadError;
@@ -142,7 +142,6 @@ export function ImageCardGenerator({
 				description: `${cardsWithId.length}件の候補が生成されました。`,
 			});
 		} catch (error) {
-			console.error("Error processing image:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error
@@ -201,7 +200,6 @@ export function ImageCardGenerator({
 			});
 			router.push(`/decks/${deckId}`);
 		} catch (error) {
-			console.error("Error saving cards:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error

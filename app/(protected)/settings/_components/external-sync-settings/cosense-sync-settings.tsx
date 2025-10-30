@@ -2,7 +2,7 @@
 
 import { RefreshCwIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
 	addUserCosenseProject,
@@ -150,7 +150,6 @@ export default function CosenseSyncSettings({
 										setProjects((prev) => [...prev, newProj]);
 										setNewProjName("");
 									} catch (err: unknown) {
-										console.error("Error in Cosense sync:", err);
 										setAddError(
 											err instanceof Error ? err.message : "不明なエラー",
 										);
@@ -267,7 +266,6 @@ export default function CosenseSyncSettings({
 												setShowDeleteDialog(false);
 												setSelectedProject(null);
 											} catch (err: unknown) {
-												console.error(err);
 												setDeleteError(
 													err instanceof Error ? err.message : "不明なエラー",
 												);
@@ -347,7 +345,6 @@ export default function CosenseSyncSettings({
 											setShowSyncDialog(false);
 											setProjectToSync(null);
 										} catch (err: unknown) {
-											console.error("Sync error:", err);
 											setSyncError(
 												err instanceof Error ? err.message : "不明なエラー",
 											);

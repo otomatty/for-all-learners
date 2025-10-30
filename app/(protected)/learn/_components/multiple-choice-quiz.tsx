@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, CircleX } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
@@ -81,7 +81,7 @@ export default function MultipleChoiceQuiz({
 	// 残り時間を ms 単位で管理して滑らかに更新
 	const expireTimeRef = useRef<number>(Date.now() + timeLimit * 1000);
 	const [remainingMs, setRemainingMs] = useState<number>(timeLimit * 1000);
-	const remaining = Math.ceil(remainingMs / 1000);
+	const _remaining = Math.ceil(remainingMs / 1000);
 	// track when the user answered or time expired
 	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
 
@@ -106,7 +106,7 @@ export default function MultipleChoiceQuiz({
 		return () => {
 			window.removeEventListener("keydown", handleKeyPress);
 		};
-	}, [showAnswer, currentQuestion.options]);
+	}, [showAnswer, currentQuestion.options, handleNext, handleOptionClick]);
 
 	// Log learning duration when quiz finishes
 	useEffect(() => {
@@ -208,7 +208,7 @@ export default function MultipleChoiceQuiz({
 	// Retry wrong questions callback
 	const retryWrong = () => {
 		const wrongQuestions = quizQuestions.filter(
-			(q, idx) =>
+			(_q, idx) =>
 				questionSummaries[idx].yourAnswer !==
 				questionSummaries[idx].correctAnswer,
 		);

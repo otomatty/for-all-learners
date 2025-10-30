@@ -62,9 +62,7 @@ export function ThumbnailBatchUpdate() {
 		try {
 			const statsData = await getThumbnailStats(targetUserId || undefined);
 			setStats(statsData);
-			console.log("Thumbnail stats loaded:", statsData);
-		} catch (error) {
-			console.error("Failed to load thumbnail stats:", error);
+		} catch (_error) {
 			toast.error("統計情報の取得に失敗しました");
 		} finally {
 			setIsLoading(false);
@@ -107,8 +105,7 @@ export function ThumbnailBatchUpdate() {
 			if (!dryRun && result.successCount > 0) {
 				await loadStats();
 			}
-		} catch (error) {
-			console.error("Batch update failed:", error);
+		} catch (_error) {
 			toast.error("バッチ更新に失敗しました");
 		} finally {
 			setIsUpdating(false);

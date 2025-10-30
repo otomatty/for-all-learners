@@ -185,8 +185,7 @@ export function transformMarkdownTables(doc: JSONContent): JSONContent {
 		}
 
 		return clone;
-	} catch (error) {
-		console.error("Markdownテーブル変換でエラーが発生:", error);
+	} catch (_error) {
 		// エラー時は元のドキュメントを返す
 		return doc;
 	}

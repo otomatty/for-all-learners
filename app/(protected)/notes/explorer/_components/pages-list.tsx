@@ -44,8 +44,7 @@ export default function PagesList({
 					sortBy,
 				});
 				setPages(result.pages);
-			} catch (error) {
-				console.error("Failed to fetch pages:", error);
+			} catch (_error) {
 				setPages([]);
 			} finally {
 				setLoading(false);

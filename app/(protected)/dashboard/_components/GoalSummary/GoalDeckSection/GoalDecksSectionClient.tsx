@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useCallback, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 // actions
 import type { Deck as ServerDeck } from "@/app/_actions/goal-decks";
 import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
@@ -29,7 +29,7 @@ export default function ClientGoalDecksSection({
 	initialDecks,
 }: ClientGoalDecksSectionProps) {
 	const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+	const [_isPending, startTransition] = useTransition();
 	const router = useRouter();
 
 	const handleSuccess = useCallback(() => {

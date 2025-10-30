@@ -74,50 +74,44 @@ export class PagePreviewService {
 			this.cacheHits++;
 			return cached;
 		}
+		const supabase = createClient();
 
-		try {
-			const supabase = createClient();
+		// まず note関連情報なしでページ情報を取得
+		const { data: pageData, error: pageError } = await supabase
+			.from("pages")
+			.select("id, title, content_tiptap, thumbnail_url, updated_at")
+			.eq("id", pageId)
+			.single();
 
-			// まず note関連情報なしでページ情報を取得
-			const { data: pageData, error: pageError } = await supabase
-				.from("pages")
-				.select("id, title, content_tiptap, thumbnail_url, updated_at")
-				.eq("id", pageId)
-				.single();
+		if (pageError || !pageData) {
+			throw new Error("Page not found");
+		}
 
-			if (pageError || !pageData) {
-				throw new Error("Page not found");
-			}
+		// 基本プレビューを構築
+		const preview = this.buildPreviewFromPageData(pageData);
 
-			// 基本プレビューを構築
-			const preview = this.buildPreviewFromPageData(pageData);
-
-			// note関連情報を別途取得
-			const { data: linkData } = await supabase
-				.from("note_page_links")
-				.select(`
+		// note関連情報を別途取得
+		const { data: linkData } = await supabase
+			.from("note_page_links")
+			.select(`
 					notes(title, slug)
 				`)
-				.eq("page_id", pageId)
-				.limit(1)
-				.single();
+			.eq("page_id", pageId)
+			.limit(1)
+			.single();
 
-			// note情報があれば追加
-			if (linkData?.notes) {
-				preview.note_info = {
-					title: linkData.notes.title,
-					slug: linkData.notes.slug,
-				};
-			}
-
-			// キャッシュに保存
-			this.setCachedPreview(pageId, preview);
-
-			return preview;
-		} catch (error) {
-			console.error("Failed to fetch page preview:", error);
-			throw error;
+		// note情報があれば追加
+		if (linkData?.notes) {
+			preview.note_info = {
+				title: linkData.notes.title,
+				slug: linkData.notes.slug,
+			};
 		}
+
+		// キャッシュに保存
+		this.setCachedPreview(pageId, preview);
+
+		return preview;
 	}
 
 	/**

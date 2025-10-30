@@ -117,7 +117,6 @@ export function CreatePageDialog({
 				throw new Error("Page creation returned no ID");
 			}
 		} catch (error) {
-			console.error("Page creation failed:", error);
 			toast.error(
 				`ページの作成に失敗しました: ${
 					error instanceof Error ? error.message : "不明なエラー"

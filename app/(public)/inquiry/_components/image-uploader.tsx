@@ -1,12 +1,11 @@
 "use client";
 
 import imageCompression from "browser-image-compression";
-import { Image as ImageIcon, Loader2, PlusCircle, XCircle } from "lucide-react";
+import { Loader2, PlusCircle, XCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-import { Button } from "@/components/ui/button"; // Button for remove, if needed
 import { cn } from "@/lib/utils";
 
 export interface FileDetail {
@@ -104,7 +103,6 @@ export function ImageUploader({
 				);
 				// toast.success(`ファイル "${file.name}" の処理が完了しました。`); // Individual success can be noisy
 			} catch (error) {
-				console.error(`Image processing error for ${file.name}:`, error);
 				const errorMessage =
 					error instanceof Error ? error.message : "画像の処理に失敗しました。";
 				setFileDetails((prevDetails) =>

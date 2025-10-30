@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseCosenseLines } from "@/lib/utils/cosenseParser";
 
 export async function GET(
-	req: NextRequest,
+	_req: NextRequest,
 	{ params }: { params: Promise<{ cosenseProjectId: string; title: string }> },
 ) {
 	try {
@@ -16,7 +16,6 @@ export async function GET(
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			console.error("[Cosense Sync Page] Authentication failed", authError);
 			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
@@ -30,7 +29,6 @@ export async function GET(
 			.eq("cosense_projects.project_name", projectName)
 			.single();
 		if (relError || !relation) {
-			console.error("[Cosense Sync Page] Project relation not found", relError);
 			return NextResponse.json(
 				{ error: "Cosense project not found" },
 				{ status: 404 },
@@ -58,7 +56,6 @@ export async function GET(
 		)}/${encodeURIComponent(pageTitle)}`;
 		const res = await fetch(apiUrl, fetchOptions);
 		if (!res.ok) {
-			console.error("[Cosense Sync Page] API fetch failed status", res.status);
 			return NextResponse.json(
 				{ error: "Failed to fetch page from Cosense" },
 				{ status: 502 },
@@ -84,7 +81,6 @@ export async function GET(
 			.single();
 
 		if (updateError) {
-			console.error("[Cosense Sync Page] Update failed", updateError);
 			return NextResponse.json(
 				{ error: "Failed to update page" },
 				{ status: 500 },
@@ -95,9 +91,7 @@ export async function GET(
 			{ syncedAt: new Date().toISOString() },
 			{ status: 200 },
 		);
-	} catch (err) {
-		console.error("[Cosense Sync Page] Error caught:", err);
-		console.error("Cosense page sync error:", err);
+	} catch (_err) {
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 },

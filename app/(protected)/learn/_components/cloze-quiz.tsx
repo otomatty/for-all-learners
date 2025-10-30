@@ -64,15 +64,9 @@ export default function ClozeQuiz({
 	// Prepare safe data lists and log errors if data is invalid
 	const blanksList = Array.isArray(blanks) ? blanks : [];
 	if (!Array.isArray(blanks))
-		console.error("[ClozeQuiz] Invalid blanks for question:", current);
 	const answersList = Array.isArray(answers) ? answers : [];
 	if (!Array.isArray(answers))
-		console.error("[ClozeQuiz] Invalid answers for question:", current);
 	if (blanksList.length !== answersList.length)
-		console.error("[ClozeQuiz] Mismatch blanks/answers length:", {
-			blanksList,
-			answersList,
-		});
 
 	// Manage inputs: always call hooks unconditionally using safe lists
 	// const [inputs, setInputs] = useState<string[]>(() =>
@@ -212,11 +206,6 @@ export default function ClozeQuiz({
 		blanksList.forEach((blank, idx) => {
 			// Check blank existence in text
 			if (!remainingText.includes(blank)) {
-				console.error("[ClozeQuiz] Blank not found in text:", {
-					blank,
-					remainingText,
-					current,
-				});
 				throw new Error(`Blank "${blank}" not present in text at index ${idx}`);
 			}
 			const [before, after] = remainingText.split(blank);
@@ -230,10 +219,6 @@ export default function ClozeQuiz({
 			// 選択肢ボタンに変更
 			const blankOptions = options?.[idx] ?? [];
 			if (blankOptions.length === 0) {
-				console.warn(
-					`[ClozeQuiz] No options for blank ${idx} in question:`,
-					current,
-				);
 			}
 
 			parts.push(
@@ -285,7 +270,6 @@ export default function ClozeQuiz({
 			</span>,
 		);
 	} catch (error) {
-		console.error("[ClozeQuiz] Error rendering blanks:", error, current);
 		return (
 			<div className="p-4 text-center text-red-500">
 				クイズの表示中にエラーが発生しました:{" "}

@@ -128,10 +128,6 @@ export class GeminiQuotaManager {
 		this.checkAndResetIfNeeded();
 		this.quotaInfo.usedToday += requestCount;
 		this.quotaInfo.lastRequestTime = new Date();
-
-		console.log(
-			`[クォータ管理] リクエスト記録: ${this.quotaInfo.usedToday}/${this.quotaInfo.dailyLimit}`,
-		);
 	}
 
 	/**
@@ -139,7 +135,6 @@ export class GeminiQuotaManager {
 	 */
 	public async waitForRateLimit(waitTimeMs: number): Promise<void> {
 		if (waitTimeMs > 0) {
-			console.log(`[クォータ管理] ${waitTimeMs}ms待機中...`);
 			await new Promise((resolve) => setTimeout(resolve, waitTimeMs));
 		}
 	}
@@ -150,7 +145,6 @@ export class GeminiQuotaManager {
 	private checkAndResetIfNeeded(): void {
 		const now = new Date();
 		if (now >= this.quotaInfo.resetTime) {
-			console.log("[クォータ管理] 日次クォータをリセット");
 			this.quotaInfo = this.initializeQuota();
 		}
 	}
@@ -236,14 +230,10 @@ export async function executeWithQuotaCheck<T>(
 	}
 
 	try {
-		console.log(`[クォータ管理] ${description} 実行開始`);
 		const result = await operation();
 		quotaManager.recordRequest(requestCount);
-		console.log(`[クォータ管理] ${description} 成功`);
 		return result;
 	} catch (error) {
-		console.error(`[クォータ管理] ${description} エラー:`, error);
-
 		// クォータエラーの場合は記録（実際にリクエストが消費された可能性）
 		if (error instanceof Error && error.message.includes("429")) {
 			quotaManager.recordRequest(requestCount);

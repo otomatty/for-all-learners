@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
 		const { searchParams } = new URL(request.url);
 		const period = searchParams.get("period") || "30"; // デフォルト30日
-		const periodDays = Math.min(Math.max(Number.parseInt(period), 1), 365); // 1-365日の範囲
+		const periodDays = Math.min(Math.max(Number.parseInt(period, 10), 1), 365); // 1-365日の範囲
 
 		// 期間の開始日を計算
 		const startDate = new Date();
@@ -40,7 +40,6 @@ export async function GET(request: NextRequest) {
 			.gte("created_at", startDate.toISOString());
 
 		if (basicError) {
-			console.error("Get basic stats error:", basicError);
 			return NextResponse.json(
 				{ error: "Database error", message: "統計の取得に失敗しました" },
 				{ status: 500 },
@@ -56,7 +55,6 @@ export async function GET(request: NextRequest) {
 			.eq("user_id", user.id);
 
 		if (allTimeError) {
-			console.error("Get all time stats error:", allTimeError);
 			return NextResponse.json(
 				{ error: "Database error", message: "全期間統計の取得に失敗しました" },
 				{ status: 500 },
@@ -89,8 +87,7 @@ export async function GET(request: NextRequest) {
 				processing_time: processingTimeStats,
 			},
 		});
-	} catch (error) {
-		console.error("PDF jobs stats API error:", error);
+	} catch (_error) {
 		return NextResponse.json(
 			{
 				error: "Internal server error",

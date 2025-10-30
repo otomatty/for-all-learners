@@ -103,7 +103,6 @@ export async function getTrashItems({
 			hasMore: offset + limit < (count || 0),
 		};
 	} catch (error) {
-		console.error("Get trash items error:", error);
 		return {
 			success: false,
 			trashItems: [],

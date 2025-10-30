@@ -129,7 +129,6 @@ export async function analyzePdfContent(
 				analysisResult.recommendedProcessing || "single_basic",
 		};
 	} catch (error) {
-		console.error("PDF内容分析エラー:", error);
 		return {
 			success: false,
 			message: "PDF内容分析中にエラーが発生しました",

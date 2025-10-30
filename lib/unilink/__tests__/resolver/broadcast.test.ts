@@ -9,7 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock console.log to avoid cluttering test output
-const mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+const _mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
 
 describe("Broadcast Module", () => {
 	beforeEach(() => {

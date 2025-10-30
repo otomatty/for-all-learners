@@ -48,7 +48,6 @@ export async function getChangelogData(): Promise<ChangeLogEntry[]> {
 			.order("published_at", { ascending: false });
 
 		if (entriesError) {
-			console.error("Error fetching changelog entries:", entriesError.message);
 			// 本番環境ではより詳細なロギングやエラー通知を検討してください
 			return []; // エラー時は空配列を返す
 		}
@@ -68,10 +67,6 @@ export async function getChangelogData(): Promise<ChangeLogEntry[]> {
 
 			let changesForEntry: Change[] = [];
 			if (itemsError) {
-				console.error(
-					`Error fetching items for entry ${entry.version}:`,
-					itemsError.message,
-				);
 				// アイテム取得に失敗した場合、エントリ自体は表示し、変更点を空にする
 			} else if (items) {
 				changesForEntry = items.map((item) => ({
@@ -93,9 +88,8 @@ export async function getChangelogData(): Promise<ChangeLogEntry[]> {
 
 		return changelogData;
 	} catch (error) {
-		const errorMessage =
+		const _errorMessage =
 			error instanceof Error ? error.message : "An unknown error occurred";
-		console.error("Failed to get changelog data:", errorMessage);
 		return []; // 予期せぬエラー時も空配列を返す
 	}
 }
@@ -136,7 +130,6 @@ export async function createChangelogEntry(
 				.select()
 				.single();
 			if (updateError || !updatedEntry) {
-				console.error("Error updating existing entry:", updateError?.message);
 				return {
 					success: false,
 					error: updateError?.message || "Failed to update existing entry.",
@@ -150,10 +143,6 @@ export async function createChangelogEntry(
 				.delete()
 				.eq("entry_id", entry.id);
 			if (deleteError) {
-				console.error(
-					"Error deleting old changelog items:",
-					deleteError.message,
-				);
 				return {
 					success: false,
 					error: deleteError.message || "Failed to clear old items.",
@@ -171,7 +160,6 @@ export async function createChangelogEntry(
 				.select()
 				.single();
 			if (entryError || !newEntry) {
-				console.error("Error creating changelog entry:", entryError?.message);
 				return {
 					success: false,
 					error: entryError?.message || "Failed to create changelog entry.",
@@ -192,7 +180,6 @@ export async function createChangelogEntry(
 				.from("changelog_items")
 				.insert(itemsToInsert);
 			if (itemsError) {
-				console.error("Error creating changelog items:", itemsError.message);
 				return {
 					success: false,
 					error: itemsError.message || "Failed to create changelog items.",
@@ -219,7 +206,6 @@ export async function createChangelogEntry(
 			error instanceof Error
 				? error.message
 				: "An unknown error occurred during creation.";
-		console.error("Failed to create/update changelog entry:", errorMessage);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -252,7 +238,6 @@ export async function updateChangelogEntry(
 			.single();
 
 		if (entryError || !updatedEntry) {
-			console.error("Error updating changelog entry:", entryError?.message);
 			return {
 				success: false,
 				error: entryError?.message || "Failed to update changelog entry.",
@@ -266,10 +251,6 @@ export async function updateChangelogEntry(
 			.eq("entry_id", input.entryId);
 
 		if (deleteItemsError) {
-			console.error(
-				"Error deleting old changelog items:",
-				deleteItemsError.message,
-			);
 			return {
 				success: false,
 				error: deleteItemsError.message || "Failed to clear old items.",
@@ -289,10 +270,6 @@ export async function updateChangelogEntry(
 				.from("changelog_items")
 				.insert(itemsToInsert);
 			if (itemsError) {
-				console.error(
-					"Error inserting new changelog items:",
-					itemsError.message,
-				);
 				return {
 					success: false,
 					error: itemsError.message || "Failed to insert new items.",
@@ -319,7 +296,6 @@ export async function updateChangelogEntry(
 			error instanceof Error
 				? error.message
 				: "An unknown error occurred during update.";
-		console.error("Failed to update changelog entry:", errorMessage);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -335,7 +311,6 @@ export async function deleteChangelogEntry(
 			.eq("id", entryId);
 
 		if (error) {
-			console.error("Error deleting changelog entry:", error.message);
 			return {
 				success: false,
 				error: error.message || "Failed to delete changelog entry.",
@@ -349,7 +324,6 @@ export async function deleteChangelogEntry(
 			error instanceof Error
 				? error.message
 				: "An unknown error occurred during deletion.";
-		console.error("Failed to delete changelog entry:", errorMessage);
 		return { success: false, error: errorMessage };
 	}
 }

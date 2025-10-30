@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
@@ -109,7 +109,7 @@ export default function FlashcardQuiz({
 		};
 		window.addEventListener("keydown", handleKeyPress);
 		return () => window.removeEventListener("keydown", handleKeyPress);
-	}, [showAnswer, handleReveal]);
+	}, [showAnswer, handleReveal, handleNext]);
 
 	const handleNext = () => {
 		// compute time until answer submission (excludes idle)

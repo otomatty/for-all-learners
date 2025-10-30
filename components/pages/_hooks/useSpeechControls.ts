@@ -25,14 +25,12 @@ export function useSpeechControls({ editor }: UseSpeechControlsProps) {
 			utterance.onend = () => {
 				setIsPlaying(false);
 			};
-			utterance.onerror = (event) => {
-				console.error("SpeechSynthesisUtterance.onerror", event);
+			utterance.onerror = (_event) => {
 				toast.error("読み上げ中にエラーが発生しました");
 				setIsPlaying(false);
 			};
 			speechSynthesis.speak(utterance);
-		} catch (err) {
-			console.error("handleReadAloud error:", err);
+		} catch (_err) {
 			toast.error("読み上げ機能を利用できません");
 			setIsPlaying(false);
 		}
@@ -47,8 +45,7 @@ export function useSpeechControls({ editor }: UseSpeechControlsProps) {
 			} else {
 				toast.error("一時停止できる読み上げがありません");
 			}
-		} catch (err) {
-			console.error("handlePause error:", err);
+		} catch (_err) {
 			toast.error("一時停止に失敗しました");
 			setIsPlaying(false);
 		}
@@ -63,8 +60,7 @@ export function useSpeechControls({ editor }: UseSpeechControlsProps) {
 			} else {
 				toast.error("停止できる読み上げがありません");
 			}
-		} catch (err) {
-			console.error("handleReset error:", err);
+		} catch (_err) {
 			toast.error("停止に失敗しました");
 			setIsPlaying(false);
 		}

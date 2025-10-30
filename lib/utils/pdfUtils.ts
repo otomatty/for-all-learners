@@ -27,8 +27,8 @@ export interface PdfProblem {
 export function removeDuplicateProblems(problems: PdfProblem[]): PdfProblem[] {
 	const uniqueProblems: PdfProblem[] = [];
 	const seenTexts = new Set<string>();
-	let tooShortCount = 0;
-	let duplicateCount = 0;
+	let _tooShortCount = 0;
+	let _duplicateCount = 0;
 
 	for (const problem of problems) {
 		// 問題文の正規化（空白・改行を統一）
@@ -38,22 +38,18 @@ export function removeDuplicateProblems(problems: PdfProblem[]): PdfProblem[] {
 			.toLowerCase();
 
 		if (normalizedText.length <= 10) {
-			tooShortCount++;
+			_tooShortCount++;
 			continue;
 		}
 
 		if (seenTexts.has(normalizedText)) {
-			duplicateCount++;
+			_duplicateCount++;
 			continue;
 		}
 
 		seenTexts.add(normalizedText);
 		uniqueProblems.push(problem);
 	}
-
-	console.log(
-		`[重複除去] ${problems.length}個 → ${uniqueProblems.length}個（短すぎる: ${tooShortCount}個、重複: ${duplicateCount}個を除外）`,
-	);
 	return uniqueProblems;
 }
 

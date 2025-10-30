@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
 import TiptapEditor from "@/components/tiptap-editor";
 import { Button } from "@/components/ui/button";
-import logger from "@/lib/logger";
 import {
 	Form,
 	FormControl,
@@ -17,6 +16,7 @@ import {
 	FormLabel,
 	FormMessage, // FormMessageを追加
 } from "@/components/ui/form";
+import logger from "@/lib/logger";
 import type { Database } from "@/types/database.types"; // Database 型をインポート
 
 interface CardFormProps {

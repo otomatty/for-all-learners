@@ -17,7 +17,6 @@ export default async function InquiryPage() {
 	} = await getInquiryCategories();
 
 	if (!categoriesSuccess) {
-		console.error("Error fetching inquiry categories:", categoriesMessage);
 		// エラーハンドリング: カテゴリなしで進めるか、エラーページを表示するかなど
 		// ここでは categories が null または空配列になるので、フォーム側で適切に処理される想定
 	}

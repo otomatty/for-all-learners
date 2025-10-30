@@ -59,7 +59,6 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 	const insertOcrTextToEditor = useCallback(
 		(text: string) => {
 			if (!editor || !getPos) {
-				console.error("Editor or getPos function not available");
 				return;
 			}
 
@@ -67,7 +66,6 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 				// 現在のノードの正確な位置を取得
 				const currentPos = getPos();
 				if (typeof currentPos !== "number" || currentPos < 0) {
-					console.error("Invalid node position:", currentPos);
 					return;
 				}
 
@@ -80,26 +78,11 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 				// ドキュメントのサイズをチェック
 				const docSize = editor.state.doc.content.size;
 				if (insertPosition > docSize) {
-					console.warn(
-						"Insert position exceeds document size, using document end",
-						{
-							insertPosition,
-							docSize,
-						},
-					);
 				}
-
-				console.log("Inserting OCR text at position:", insertPosition, {
-					currentPos,
-					nodeSize,
-					nodeType: node.type.name,
-					docSize,
-				});
 
 				// OCR結果を整形
 				const formattedText = text.trim();
 				if (!formattedText) {
-					console.warn("OCR text is empty, skipping insertion");
 					return;
 				}
 
@@ -125,14 +108,9 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 					.run();
 
 				if (!insertResult) {
-					console.warn("Insert operation failed, trying fallback");
 					throw new Error("Insert operation returned false");
 				}
-
-				console.log("OCR text successfully inserted");
-			} catch (error) {
-				console.error("Failed to insert OCR text:", error);
-
+			} catch (_error) {
 				// フォールバック: カーソル位置に挿入
 				try {
 					const fallbackResult = editor
@@ -156,13 +134,9 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 						.run();
 
 					if (fallbackResult) {
-						console.log("OCR text inserted using fallback method");
 					} else {
-						console.error("Both insertion methods failed");
 					}
-				} catch (fallbackError) {
-					console.error("Fallback insertion also failed:", fallbackError);
-				}
+				} catch (_fallbackError) {}
 			}
 		},
 		[editor, getPos, node],
@@ -179,9 +153,7 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 		try {
 			await navigator.clipboard.writeText(rawUrl);
 			// トースト通知は useImageOcr 内で管理されているため、ここでは追加しない
-		} catch (err) {
-			console.error("Failed to copy image URL:", err);
-		}
+		} catch (_err) {}
 	}, [rawUrl]);
 
 	return (

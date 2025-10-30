@@ -2,7 +2,6 @@
 
 import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import { linkPageToNote } from "./notes/linkPageToNote";
 import { createPage } from "./pages";
 
@@ -111,87 +110,68 @@ export async function ensureUserPageInNote(
 	params: UserPageParams,
 ): Promise<UserPageResult> {
 	const { userId, userSlug, noteId, avatarUrl, fullName } = params;
+	// 1. ページ存在確認
+	const { exists, pageId: existingPageId } = await checkUserPageExists(
+		userId,
+		userSlug,
+	);
 
-	try {
-		// 1. ページ存在確認
-		const { exists, pageId: existingPageId } = await checkUserPageExists(
-			userId,
+	let pageId: string;
+	let pageCreated = false;
+	let iconSet = false;
+
+	if (exists && existingPageId) {
+		// 既存ページを使用
+		pageId = existingPageId;
+	} else {
+		// 新規ページ作成
+		const pageContent = await generateUserPageContent(
 			userSlug,
+			avatarUrl,
+			fullName,
 		);
 
-		let pageId: string;
-		let pageCreated = false;
-		let iconSet = false;
+		const newPage = await createPage(
+			{
+				user_id: userId,
+				title: userSlug,
+				content_tiptap: pageContent,
+				is_public: false, // ユーザーページは基本的に非公開
+			},
+			true,
+		); // 自動サムネイル生成を有効
 
-		if (exists && existingPageId) {
-			// 既存ページを使用
-			pageId = existingPageId;
-			console.log(
-				`[ensureUserPageInNote] 既存ユーザーページを使用: ${userSlug} (${pageId})`,
-			);
-		} else {
-			// 新規ページ作成
-			const pageContent = await generateUserPageContent(
-				userSlug,
-				avatarUrl,
-				fullName,
-			);
-
-			const newPage = await createPage(
-				{
-					user_id: userId,
-					title: userSlug,
-					content_tiptap: pageContent,
-					is_public: false, // ユーザーページは基本的に非公開
-				},
-				true,
-			); // 自動サムネイル生成を有効
-
-			pageId = newPage.id;
-			pageCreated = true;
-			iconSet = Boolean(avatarUrl); // アバターがあればアイコンが設定された
-
-			console.log(
-				`[ensureUserPageInNote] 新規ユーザーページを作成: ${userSlug} (${pageId})`,
-			);
-		}
-
-		// 2. ノートとの紐付け確認・実行
-		let linkedToNote = false;
-		try {
-			await linkPageToNote(noteId, pageId);
-			linkedToNote = true;
-			console.log(
-				`[ensureUserPageInNote] ノートに紐付け完了: ${noteId} - ${pageId}`,
-			);
-		} catch (linkError: unknown) {
-			// 既に紐付け済みの場合はエラーを無視
-			if (
-				linkError &&
-				typeof linkError === "object" &&
-				"code" in linkError &&
-				linkError.code === "23505"
-			) {
-				// unique constraint violation
-				linkedToNote = true;
-				console.log(
-					`[ensureUserPageInNote] 既に紐付け済み: ${noteId} - ${pageId}`,
-				);
-			} else {
-				throw linkError;
-			}
-		}
-
-		return {
-			pageId,
-			pageCreated,
-			iconSet,
-			linkedToNote,
-		};
-	} catch (error) {
-		console.error("[ensureUserPageInNote] エラー:", error);
-		throw error;
+		pageId = newPage.id;
+		pageCreated = true;
+		iconSet = Boolean(avatarUrl); // アバターがあればアイコンが設定された
 	}
+
+	// 2. ノートとの紐付け確認・実行
+	let linkedToNote = false;
+	try {
+		await linkPageToNote(noteId, pageId);
+		linkedToNote = true;
+	} catch (linkError: unknown) {
+		// 既に紐付け済みの場合はエラーを無視
+		if (
+			linkError &&
+			typeof linkError === "object" &&
+			"code" in linkError &&
+			linkError.code === "23505"
+		) {
+			// unique constraint violation
+			linkedToNote = true;
+		} else {
+			throw linkError;
+		}
+	}
+
+	return {
+		pageId,
+		pageCreated,
+		iconSet,
+		linkedToNote,
+	};
 }
 
 /**

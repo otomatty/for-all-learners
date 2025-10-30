@@ -101,11 +101,9 @@ export default async function LoginPage({
 							/>
 						</div>
 						<Button type="submit" variant="default">
-							<>
-								<Mail className="mr-2 h-4 w-4" />{" "}
-								{/* アイコンにマージンとサイズを追加 */}
-								メールアドレスでログイン
-							</>
+							<Mail className="mr-2 h-4 w-4" />{" "}
+							{/* アイコンにマージンとサイズを追加 */}
+							メールアドレスでログイン
 						</Button>
 					</form>
 
@@ -123,14 +121,12 @@ export default async function LoginPage({
 					{/* Google ログインフォーム */}
 					<form action={loginWithGoogle} className="grid gap-6">
 						<Button type="submit" variant="outline">
-							<>
-								<img
-									src="/images/google-logo.svg"
-									alt="Google Logo"
-									className="w-5 h-5 mr-2"
-								/>
-								<span>Googleでログイン</span>
-							</>
+							<img
+								src="/images/google-logo.svg"
+								alt="Google Logo"
+								className="w-5 h-5 mr-2"
+							/>
+							<span>Googleでログイン</span>
 						</Button>
 					</form>
 				</div>

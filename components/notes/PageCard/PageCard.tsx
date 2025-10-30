@@ -102,7 +102,6 @@ function getVariantClasses(variant: PageCardVariant): string {
 			return "ring-2 ring-primary/20";
 		case "dashed":
 			return "border-dashed border-2 hover:border-primary hover:bg-accent cursor-pointer";
-		case "default":
 		default:
 			return "";
 	}

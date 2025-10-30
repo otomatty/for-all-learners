@@ -1,4 +1,3 @@
-import { Brain, Clock, Users } from "lucide-react";
 import CTASection from "./_components/cta-section";
 import FAQSection from "./_components/faq-section";
 import FeatureSection from "./_components/feature-section";

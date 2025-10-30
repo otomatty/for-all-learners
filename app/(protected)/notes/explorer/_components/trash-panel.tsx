@@ -48,9 +48,8 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message || "ゴミ箱の読み込みに失敗しました");
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("ゴミ箱の読み込みに失敗しました");
-			console.error("Load trash error:", error);
 		}
 		setLoading(false);
 	}, []);
@@ -101,10 +100,9 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("復元に失敗しました");
-			console.error("Restore error:", error);
 		}
 	};
 
@@ -134,10 +132,9 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("完全削除に失敗しました");
-			console.error("Permanent delete error:", error);
 		}
 	};
 

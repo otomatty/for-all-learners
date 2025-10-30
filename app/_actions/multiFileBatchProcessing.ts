@@ -6,10 +6,7 @@ import {
 	getGeminiQuotaManager,
 } from "@/lib/utils/geminiQuotaManager";
 import { type EnhancedPdfCard, processPdfToCards } from "./pdfProcessing";
-import {
-	type BatchOcrPage,
-	transcribeImagesBatch,
-} from "./transcribeImageBatch";
+import { transcribeImagesBatch } from "./transcribeImageBatch";
 // PDF画像抽出は一時的にコメントアウト（未実装）
 // import { extractPdfPagesAsImages } from "@/lib/utils/pdfClientUtils";
 
@@ -59,8 +56,6 @@ export async function processMultiFilesBatch(
 	const startTime = Date.now();
 
 	try {
-		console.log(`[マルチファイル処理] ${files.length}ファイルの一括処理開始`);
-
 		// 事前クォータチェック
 		const quotaManager = getGeminiQuotaManager();
 		const estimatedPages = files.length * 10; // ファイルあたり平均10ページと仮定
@@ -76,15 +71,12 @@ export async function processMultiFilesBatch(
 				apiRequestsUsed: 0,
 			};
 		}
-
-		// 1. 全PDFを画像に変換（並列処理）
-		console.log("[マルチファイル処理] 1. PDF→画像変換開始");
 		const imageExtractionPromises = files
 			.filter((file) => file.fileType === "pdf")
 			.map(async (file) => {
 				try {
 					// BlobをFileに変換
-					const pdfFile = new File([file.fileBlob], file.fileName, {
+					const _pdfFile = new File([file.fileBlob], file.fileName, {
 						type: file.fileBlob.type || "application/pdf",
 					});
 					// 一時的に空の配列を返す（PDF画像抽出機能は未実装）
@@ -103,7 +95,6 @@ export async function processMultiFilesBatch(
 						metadata: file.metadata,
 					};
 				} catch (error) {
-					console.error(`ファイル ${file.fileName} の画像変換エラー:`, error);
 					return {
 						fileId: file.fileId,
 						fileName: file.fileName,
@@ -117,9 +108,6 @@ export async function processMultiFilesBatch(
 		const totalImageCount = extractedImages.reduce(
 			(sum, file) => sum + file.imagePages.length,
 			0,
-		);
-		console.log(
-			`[マルチファイル処理] 1. 完了: ${totalImageCount}ページの画像を抽出`,
 		);
 
 		if (totalImageCount === 0) {
@@ -137,9 +125,6 @@ export async function processMultiFilesBatch(
 				apiRequestsUsed: 0,
 			};
 		}
-
-		// 2. クロスファイル・メガバッチOCR処理
-		console.log("[マルチファイル処理] 2. メガバッチOCR処理開始");
 		const allBatchPages: Array<{
 			pageNumber: number;
 			imageUrl: string;
@@ -176,10 +161,6 @@ export async function processMultiFilesBatch(
 									});
 
 							if (uploadError) {
-								console.error(
-									`${fileData.fileName} ページ${page.pageNumber} アップロードエラー:`,
-									uploadError,
-								);
 								return null;
 							}
 
@@ -190,10 +171,6 @@ export async function processMultiFilesBatch(
 									.createSignedUrl(filePath, 60 * 15); // 15分間有効
 
 							if (signedError || !signedData.signedUrl) {
-								console.error(
-									`${fileData.fileName} ページ${page.pageNumber} URL作成エラー:`,
-									signedError,
-								);
 								return null;
 							}
 
@@ -204,11 +181,7 @@ export async function processMultiFilesBatch(
 								fileName: fileData.fileName,
 								filePath, // クリーンアップ用
 							};
-						} catch (error) {
-							console.error(
-								`${fileData.fileName} ページ${page.pageNumber} 処理エラー:`,
-								error,
-							);
+						} catch (_error) {
 							return null;
 						}
 					},
@@ -224,10 +197,6 @@ export async function processMultiFilesBatch(
 				allBatchPages.push(...validUploads);
 			}
 		}
-
-		console.log(
-			`[マルチファイル処理] 2. アップロード完了: ${allBatchPages.length}ページ`,
-		);
 
 		// 3. 超大規模バッチOCR実行（ファイル横断）
 		let allExtractedText: Array<{
@@ -246,26 +215,16 @@ export async function processMultiFilesBatch(
 			);
 
 			allExtractedText = megaBatchResult;
-			console.log(
-				`[マルチファイル処理] 3. メガバッチOCR完了: ${allExtractedText.length}ページのテキスト抽出`,
-			);
 
 			// 一時ファイルクリーンアップ
 			const supabase = await createClient();
 			const cleanupPromises = allBatchPages.map(async (page) => {
 				try {
 					await supabase.storage.from("ocr-images").remove([page.filePath]);
-				} catch (error) {
-					console.warn(`ファイル削除エラー (${page.filePath}):`, error);
-				}
+				} catch (_error) {}
 			});
-			Promise.all(cleanupPromises).catch((error) =>
-				console.warn("マルチファイル・クリーンアップエラー:", error),
-			);
+			Promise.all(cleanupPromises).catch((_error) => {});
 		}
-
-		// 4. ファイル別にテキストを再分類してカード生成
-		console.log("[マルチファイル処理] 4. ファイル別カード生成開始");
 		const fileProcessingPromises = files.map(async (file) => {
 			const fileStartTime = Date.now();
 
@@ -304,7 +263,6 @@ export async function processMultiFilesBatch(
 					processingTimeMs: Date.now() - fileStartTime,
 				};
 			} catch (error) {
-				console.error(`ファイル ${file.fileName} のカード生成エラー:`, error);
 				return {
 					fileId: file.fileId,
 					fileName: file.fileName,
@@ -322,10 +280,6 @@ export async function processMultiFilesBatch(
 		);
 		const successfulFiles = processedFiles.filter((file) => file.success);
 
-		console.log(
-			`[マルチファイル処理] 完了: ${successfulFiles.length}/${files.length}ファイル成功、${totalCards}カード生成`,
-		);
-
 		return {
 			success: successfulFiles.length > 0,
 			message: `マルチファイル処理完了: ${successfulFiles.length}/${files.length}ファイル成功、${totalCards}カード生成`,
@@ -335,7 +289,6 @@ export async function processMultiFilesBatch(
 			apiRequestsUsed: Math.ceil(allBatchPages.length / 8), // 実際のAPI使用量
 		};
 	} catch (error) {
-		console.error("マルチファイル処理エラー:", error);
 		return {
 			success: false,
 			message: "マルチファイル処理中に致命的エラーが発生しました",
@@ -407,11 +360,7 @@ async function processCrossFilesBatchOcr(
 			if (i + batchSize < allPages.length) {
 				await new Promise((resolve) => setTimeout(resolve, 300));
 			}
-		} catch (error) {
-			console.error(
-				`メガバッチ ${Math.floor(i / batchSize) + 1} 処理エラー:`,
-				error,
-			);
+		} catch (_error) {
 			// エラーでも続行
 		}
 	}
@@ -426,7 +375,7 @@ async function processCrossFilesBatchOcr(
  * より関連性の高いカードを生成
  */
 export async function generateCrossFileCards(
-	extractedTexts: Array<{
+	_extractedTexts: Array<{
 		fileId: string;
 		fileName: string;
 		text: Array<{ pageNumber: number; text: string }>;

@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { EnhancedPdfCard, PdfProcessingResult } from "./pdfProcessing";
+import type { EnhancedPdfCard } from "./pdfProcessing";
 import { processPdfToCards, savePdfProcessingResult } from "./pdfProcessing";
 
 export interface PdfUploadResult {
@@ -63,7 +63,6 @@ export async function uploadPdfToStorage(
 			});
 
 		if (uploadError) {
-			console.error("PDF upload error:", uploadError);
 			return {
 				success: false,
 				message: `アップロードに失敗しました: ${uploadError.message}`,
@@ -76,7 +75,6 @@ export async function uploadPdfToStorage(
 			.createSignedUrl(filePath, 60 * 60 * 24); // 24時間
 
 		if (signedError || !signedData.signedUrl) {
-			console.error("Signed URL creation error:", signedError);
 			return {
 				success: false,
 				message: "ファイルURLの生成に失敗しました",
@@ -89,7 +87,6 @@ export async function uploadPdfToStorage(
 			pdfUrl: signedData.signedUrl,
 		};
 	} catch (error) {
-		console.error("PDF upload error:", error);
 		return {
 			success: false,
 			message: "アップロード中にエラーが発生しました",
@@ -112,8 +109,6 @@ export async function processExtractedText(
 	chunkSize = 4000,
 ): Promise<PdfCardGenerationResult> {
 	try {
-		// PDF処理を実行（統一された高品質処理）
-		console.log("[PDF処理] シングルPDF処理を実行");
 		const result = await processPdfToCards(
 			extractedText,
 			"", // PDFファイルのURLは不要
@@ -135,7 +130,6 @@ export async function processExtractedText(
 			processingTimeMs: result.processingResult.processingTimeMs,
 		};
 	} catch (error) {
-		console.error("Text processing workflow error:", error);
 		return {
 			success: false,
 			message: "テキスト処理中にエラーが発生しました",
@@ -149,9 +143,9 @@ export async function processExtractedText(
  * 新しい実装では processExtractedText を使用してください
  */
 export async function processPdfFile(
-	file: File,
-	userId: string,
-	chunkSize = 4000,
+	_file: File,
+	_userId: string,
+	_chunkSize = 4000,
 ): Promise<PdfCardGenerationResult> {
 	return {
 		success: false,
@@ -188,7 +182,6 @@ export async function savePdfCardsToDeck(
 			.select("id");
 
 		if (error) {
-			console.error("Cards insertion error:", error);
 			return {
 				success: false,
 				message: `カードの保存に失敗しました: ${error.message}`,
@@ -200,8 +193,7 @@ export async function savePdfCardsToDeck(
 			message: `${data?.length || 0}個のカードを保存しました`,
 			savedCount: data?.length || 0,
 		};
-	} catch (error) {
-		console.error("Save cards error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			message: "カード保存中にエラーが発生しました",

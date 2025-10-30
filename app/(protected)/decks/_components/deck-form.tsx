@@ -65,8 +65,6 @@ export function DeckForm({
 				router.push(`/decks/${data[0].id}`);
 			}
 		} catch (err) {
-			// Log detailed error for debugging
-			console.error("DeckForm handleSubmit error:", err);
 			// Determine user-friendly message
 			let message = "デッキの作成中にエラーが発生しました。";
 			if (err instanceof Error && err.message) {

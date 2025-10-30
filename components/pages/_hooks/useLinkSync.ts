@@ -198,7 +198,12 @@ export function useLinkSync(
 				clearTimeout(syncTimeoutRef.current);
 			}
 		};
-	}, [editor, pageId]);
+	}, [
+		editor,
+		pageId,
+		debug, // Perform initial sync immediately
+		syncLinks,
+	]);
 
 	return {
 		syncLinks,

@@ -80,7 +80,6 @@ export function useImageOcr(
 	const processImage = useCallback(
 		async (imageUrl: string): Promise<OcrResult | null> => {
 			if (isProcessing) {
-				console.warn("[useImageOcr] OCR is already in progress");
 				return null;
 			}
 
@@ -105,8 +104,6 @@ export function useImageOcr(
 				setProgress(10);
 				setCurrentStage("画像を取得中...");
 
-				console.log("[useImageOcr] Starting OCR processing for:", imageUrl);
-
 				// 処理中の進捗表示
 				const progressInterval = setInterval(() => {
 					setProgress((prev) => {
@@ -122,7 +119,6 @@ export function useImageOcr(
 				clearInterval(progressInterval);
 
 				if (cancelRequested) {
-					console.log("[useImageOcr] OCR was cancelled");
 					return null;
 				}
 
@@ -167,11 +163,6 @@ export function useImageOcr(
 					if (onComplete) {
 						onComplete(result);
 					}
-
-					console.log("[useImageOcr] OCR completed successfully:", {
-						textLength: result.text.length,
-						confidence: result.confidence,
-					});
 				} else {
 					// エラー処理
 					const errorMessage = result.error || "OCR処理に失敗しました";
@@ -188,8 +179,6 @@ export function useImageOcr(
 					if (onError) {
 						onError(errorMessage);
 					}
-
-					console.error("[useImageOcr] OCR failed:", errorMessage);
 				}
 
 				return result;
@@ -214,8 +203,6 @@ export function useImageOcr(
 				if (onError) {
 					onError(errorMessage);
 				}
-
-				console.error("[useImageOcr] Unexpected error:", err);
 				return null;
 			} finally {
 				setIsProcessing(false);

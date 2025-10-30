@@ -61,9 +61,7 @@ export async function createCard(
 				});
 			}
 		}
-	} catch (err) {
-		console.error("enqueue background generation failed:", err);
-	}
+	} catch (_err) {}
 
 	return data;
 }
@@ -104,9 +102,7 @@ export async function updateCard(
 				});
 			}
 		}
-	} catch (err) {
-		console.error("enqueue background generation failed:", err);
-	}
+	} catch (_err) {}
 
 	return data;
 }

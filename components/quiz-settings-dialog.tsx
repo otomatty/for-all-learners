@@ -33,7 +33,7 @@ export function QuizSettingsDialog({
 	open: controlledOpen,
 	onOpenChange: onControlledOpenChange,
 }: QuizSettingsDialogProps) {
-	const router = useRouter();
+	const _router = useRouter();
 	const [internalOpen, setInternalOpen] = useState(false);
 
 	// Determine open state: controlled or internal
@@ -63,7 +63,7 @@ export function QuizSettingsDialog({
 			? `${triggerText} (${reviewCount})`
 			: triggerText;
 
-	const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleFormSubmit = (_event: React.FormEvent<HTMLFormElement>) => {
 		// フォームのデフォルト送信を止めずに、ダイアログを閉じる
 		// 実際の送信は form の action で行われる
 		// 送信成功・失敗に関わらずダイアログは閉じることになるが、

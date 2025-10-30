@@ -1,7 +1,6 @@
 import { InputRule, mergeAttributes, Node } from "@tiptap/core";
 import katex from "katex";
-import { Fragment } from "prosemirror-model"; // Required for paste rule manipulation
-import { type EditorState, Plugin, type Transaction } from "prosemirror-state";
+import { type EditorState, Plugin } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
 export interface LatexInlineNodeOptions {
@@ -64,19 +63,7 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 			});
 		} catch (error: unknown) {
 			if (error instanceof Error) {
-				console.error(
-					"KaTeX rendering error:",
-					error.message,
-					"for content:",
-					latexContent,
-				);
 			} else {
-				console.error(
-					"KaTeX rendering error:",
-					error,
-					"for content:",
-					latexContent,
-				);
 			}
 			// Return the original content or an error message if KaTeX fails
 			return [
@@ -151,8 +138,8 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 					transformPastedText(
 						this: Plugin<EditorState>,
 						text: string,
-						plain: boolean,
-						view: EditorView,
+						_plain: boolean,
+						_view: EditorView,
 					): string {
 						return text;
 					},

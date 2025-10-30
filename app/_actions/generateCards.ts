@@ -66,8 +66,7 @@ export async function generateCardsFromTranscript(
 	let parsed: { front_content: string; back_content: string }[];
 	try {
 		parsed = JSON.parse(jsonString);
-	} catch (e) {
-		console.error("JSON解析エラー:", e, jsonString);
+	} catch (_e) {
 		throw new Error("カード生成結果の解析に失敗しました");
 	}
 

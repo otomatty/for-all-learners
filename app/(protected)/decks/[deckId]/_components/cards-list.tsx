@@ -4,12 +4,10 @@ import type { JSONContent } from "@tiptap/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialog をインポート
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -48,7 +46,7 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 	// Add state to track hovered card for focus blur
 	const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
-	const [isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
+	const [_isCreateCardDialogOpen, setIsCreateCardDialogOpen] = useState(false);
 
 	// Prop 'cards' が変更されたら localCards を更新する
 	useEffect(() => {
@@ -146,7 +144,6 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 				setSelectionCardId(null);
 			}
 		} catch (err: unknown) {
-			console.error("リンク設定エラー:", err);
 			toast.error(
 				err instanceof Error
 					? err.message
@@ -251,7 +248,7 @@ export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
 		router.refresh(); // データの整合性を保つためにバックグラウンドで再フェッチ
 	};
 
-	const handleCreateCardSuccess = (
+	const _handleCreateCardSuccess = (
 		newCard: Database["public"]["Tables"]["cards"]["Row"],
 	) => {
 		setLocalCards((prevCards) => [newCard, ...prevCards]); // 新しいカードをリストの先頭に追加

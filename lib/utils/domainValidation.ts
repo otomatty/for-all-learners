@@ -29,7 +29,7 @@ export function isAllowedImageDomain(url: string): boolean {
 		);
 
 		return isAllowed;
-	} catch (error) {
+	} catch (_error) {
 		return false;
 	}
 }

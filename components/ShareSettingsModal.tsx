@@ -101,9 +101,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 					setShares(s || []);
 					const l = await getNoteShareLinks(note.id);
 					setLinks(l || []);
-				} catch (err) {
-					console.error(err);
-				}
+				} catch (_err) {}
 			})();
 		}
 	}, [open, note.id]);

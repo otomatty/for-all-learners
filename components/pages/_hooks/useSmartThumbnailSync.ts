@@ -7,8 +7,6 @@ import type { JSONContent } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
 import { updatePage } from "@/app/_actions/updatePage";
-import { hasFirstImageChanged } from "@/lib/utils/smartThumbnailUpdater";
-import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 
 interface UseSmartThumbnailSyncOptions {
 	/** エディターインスタンス */
@@ -53,12 +51,7 @@ export function useSmartThumbnailSync({
 
 				// 前回コンテンツを更新
 				lastContentRef.current = structuredClone(currentContent);
-			} catch (error) {
-				console.error(
-					`[SmartThumbnailSync] ページ ${pageId}: 同期エラー`,
-					error,
-				);
-			}
+			} catch (_error) {}
 		},
 		[pageId, title],
 	);

@@ -1,4 +1,3 @@
-import React from "react";
 import { getCardsByUser } from "@/app/_actions/cards";
 import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
 

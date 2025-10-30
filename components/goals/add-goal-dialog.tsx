@@ -66,9 +66,7 @@ export function AddGoalDialog({
 				const limits = await getUserGoalLimits(user.id);
 				setGoalLimits(limits);
 			}
-		} catch (error) {
-			console.error("目標制限の取得に失敗しました:", error);
-		}
+		} catch (_error) {}
 	}, []);
 
 	// 初期読み込み時に制限情報を取得

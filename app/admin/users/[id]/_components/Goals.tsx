@@ -1,4 +1,3 @@
-import React from "react";
 import { getGoalDecks } from "@/app/_actions/goal-decks";
 import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
 

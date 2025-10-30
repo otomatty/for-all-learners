@@ -92,7 +92,7 @@ export function DeckActions({ deckId }: DeckActionsProps) {
 
 			setEmail("");
 			setShowShareDialog(false);
-		} catch (error) {
+		} catch (_error) {
 			toast.error("デッキの共有中にエラーが発生しました。");
 		} finally {
 			setIsLoading(false);
@@ -119,7 +119,7 @@ export function DeckActions({ deckId }: DeckActionsProps) {
 			toast.success("デッキを削除しました。");
 
 			router.push("/decks");
-		} catch (error) {
+		} catch (_error) {
 			toast.error("デッキの削除中にエラーが発生しました。");
 		} finally {
 			setIsLoading(false);

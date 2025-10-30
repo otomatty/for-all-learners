@@ -1,10 +1,8 @@
 import {
 	BarChart,
-	BookOpen,
 	Brain,
 	FileText,
 	ImageIcon,
-	Layers,
 	LinkIcon,
 	Mic,
 	Share2,

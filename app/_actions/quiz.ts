@@ -76,7 +76,6 @@ export async function getQuizQuestions(
 	// Use due cards if available, otherwise fallback to all cards (reducing question count accordingly)
 	let cards = initialCards ?? [];
 	if (cards.length === 0) {
-		console.warn("No due cards found, falling back to all cards");
 		let fallbackQuery = supabase
 			.from("cards")
 			.select("id, front_content, back_content");
@@ -173,8 +172,7 @@ export async function getQuizQuestions(
 				questionId: inserted[idx].id,
 				cardId: inserted[idx].card_id,
 			}));
-		} catch (genError: unknown) {
-			console.error("Error generating new questions:", genError);
+		} catch (_genError: unknown) {
 			// フォールバック: Flashcard 形式で生成
 			const fallbackRecords = newItems.map((item) => ({
 				card_id: item.id,
