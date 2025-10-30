@@ -198,19 +198,17 @@ describe("markdownParser", () => {
 		it("should parse mixed content", () => {
 			const text = "## Heading\n\nParagraph text\n\n- List item";
 			const result = parseMarkdownToNodes(text);
-			// heading, 2 empty paragraphs, paragraph, bulletList
-			expect(result.length).toBe(5);
+			// heading, paragraph, bulletList (empty lines are just separators)
+			expect(result.length).toBe(3);
 			expect(result[0].type).toBe("heading");
 			expect(result[1].type).toBe("paragraph");
-			expect(result[2].type).toBe("paragraph");
-			expect(result[3].type).toBe("paragraph");
-			expect(result[4].type).toBe("bulletList");
+			expect(result[2].type).toBe("bulletList");
 		});
 
 		it("should handle empty lines", () => {
 			const text = "Text\n\nMore text";
 			const result = parseMarkdownToNodes(text);
-			expect(result.length).toBe(3); // paragraph, empty paragraph, paragraph
+			expect(result.length).toBe(2); // paragraph, paragraph (empty line is just a separator)
 		});
 
 		it("should parse paragraphs with inline formatting", () => {
@@ -240,9 +238,9 @@ describe("markdownParser", () => {
 		it("should handle multiple list types", () => {
 			const text = "- Bullet 1\n- Bullet 2\n\n1. Ordered 1\n2. Ordered 2";
 			const result = parseMarkdownToNodes(text);
-			expect(result.length).toBe(3); // bulletList, empty paragraph, orderedList
+			expect(result.length).toBe(2); // bulletList, orderedList (empty line is just a separator)
 			expect(result[0].type).toBe("bulletList");
-			expect(result[2].type).toBe("orderedList");
+			expect(result[1].type).toBe("orderedList");
 		});
 	});
 });

@@ -155,13 +155,8 @@ export function parseMarkdownToNodes(text: string): JSONContent[] {
 		// Handle empty lines
 		if (line.trim() === "") {
 			flushList();
-			// Add empty paragraph to preserve spacing
-			if (nodes.length > 0) {
-				nodes.push({
-					type: "paragraph",
-					content: [],
-				});
-			}
+			// Skip empty lines - they're just separators between blocks
+			// Don't create empty paragraphs to avoid extra spacing
 			continue;
 		}
 
