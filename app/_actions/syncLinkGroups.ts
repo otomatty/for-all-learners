@@ -32,7 +32,7 @@ export async function syncLinkGroupsForPage(
 		// Extract all links from content
 		const links = extractLinksFromContent(contentTiptap);
 
-		logger.info(
+		logger.debug(
 			{ pageId, linkCount: links.length, links: links.slice(0, 3) },
 			"[SYNC] Syncing link groups for page",
 		);
@@ -42,7 +42,7 @@ export async function syncLinkGroupsForPage(
 
 		// Process each link
 		for (const link of links) {
-			logger.info(
+			logger.debug(
 				{ pageId, linkKey: link.key, linkText: link.text },
 				"[SYNC] Processing link",
 			);
@@ -54,7 +54,7 @@ export async function syncLinkGroupsForPage(
 				pageId: link.pageId,
 			});
 
-			logger.info(
+			logger.debug(
 				{ linkGroupId: linkGroup.id, linkKey: link.key },
 				"[SYNC] Link group upserted",
 			);
@@ -67,13 +67,13 @@ export async function syncLinkGroupsForPage(
 				position: link.position,
 			});
 
-			logger.info(
+			logger.debug(
 				{ linkGroupId: linkGroup.id, sourcePageId: pageId },
 				"[SYNC] Link occurrence created",
 			);
 		}
 
-		logger.info(
+		logger.debug(
 			{ pageId, linkCount: links.length },
 			"[SYNC] Link groups synced successfully",
 		);
@@ -100,13 +100,13 @@ export async function deleteLinkGroupsForPage(
 	try {
 		const supabase = await createClient();
 
-		logger.info({ pageId }, "Deleting link groups for page");
+		logger.debug({ pageId }, "Deleting link groups for page");
 
 		// Delete all occurrences for this page
 		// The trigger will automatically update link_count in link_groups
 		await deleteLinkOccurrencesByPage(supabase, pageId);
 
-		logger.info({ pageId }, "Link groups deleted");
+		logger.debug({ pageId }, "Link groups deleted");
 
 		return { success: true };
 	} catch (error) {
@@ -132,7 +132,7 @@ export async function connectLinkGroupToPage(
 	try {
 		const supabase = await createClient();
 
-		logger.info({ pageKey, pageId }, "Connecting link group to page");
+		logger.debug({ pageKey, pageId }, "Connecting link group to page");
 
 		// Update link group to point to the new page
 		const { error } = await supabase
@@ -144,7 +144,7 @@ export async function connectLinkGroupToPage(
 			throw error;
 		}
 
-		logger.info({ pageKey, pageId }, "Link group connected to page");
+		logger.debug({ pageKey, pageId }, "Link group connected to page");
 
 		return { success: true };
 	} catch (error) {

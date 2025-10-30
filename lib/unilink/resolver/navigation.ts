@@ -16,7 +16,7 @@ export function navigateToPage(pageId: string): void {
 	try {
 		// Client-side navigation in Next.js App Router
 		if (typeof window !== "undefined") {
-			window.location.href = `/pages/${pageId}`;
+			window.location.href = `/notes/default/${pageId}`;
 		}
 	} catch (error) {
 		logger.error({ pageId, error }, "Navigation failed");
@@ -44,7 +44,7 @@ export function navigateToPageWithContext(
 
 			const href = noteSlug
 				? `/notes/${encodeURIComponent(noteSlug)}/${pageId}${queryParam}`
-				: `/pages/${pageId}${queryParam}`;
+				: `/notes/default/${pageId}${queryParam}`;
 
 			window.location.href = href;
 		}

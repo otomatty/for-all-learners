@@ -1,13 +1,13 @@
 import type { JSONContent } from "@tiptap/core";
 import { notFound, redirect } from "next/navigation";
-import { getPagesByUser, getSharedPagesByUser } from "@/app/_actions/pages";
+import { getAllUserPages } from "@/app/_actions/notes";
+import { getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/layouts/container";
+import EditPageForm from "@/components/pages/EditPageForm";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 import { transformPageLinks } from "@/lib/utils/transformPageLinks";
-
-import EditPageForm from "../../../pages/[id]/_components/EditPageForm";
 
 interface PageDetailProps {
 	params: Promise<{ slug: string; id: string }>;
@@ -47,11 +47,11 @@ export default async function PageDetail({ params }: PageDetailProps) {
 	const cosenseProjectName = relation?.cosense_projects.project_name ?? null;
 
 	const [myPages, sharedPageShares] = await Promise.all([
-		getPagesByUser(user.id),
+		getAllUserPages(user.id),
 		getSharedPagesByUser(user.id),
 	]);
 	const sharedPages = sharedPageShares.map((share) => share.pages);
-	const allPages = [...(myPages?.pages ?? []), ...(sharedPages ?? [])];
+	const allPages = [...myPages, ...sharedPages];
 	const pagesMap = new Map<string, string>(
 		allPages.map((p) => [p.title, p.id]),
 	);

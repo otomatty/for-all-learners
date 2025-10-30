@@ -29,6 +29,29 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.next();
 	}
 
+	// Redirect old /pages routes to /notes/default
+	if (pathname === "/pages") {
+		return NextResponse.redirect(new URL("/notes/default", req.url));
+	}
+
+	if (pathname === "/pages/new") {
+		return NextResponse.redirect(new URL("/notes/default/new", req.url));
+	}
+
+	// Redirect /pages/[id] to /notes/default/[id]
+	if (pathname.startsWith("/pages/")) {
+		const pageId = pathname.replace("/pages/", "");
+		// Handle generate-cards route
+		if (pageId.includes("/generate-cards")) {
+			const id = pageId.replace("/generate-cards", "");
+			return NextResponse.redirect(
+				new URL(`/notes/default/${id}/generate-cards`, req.url),
+			);
+		}
+		// Regular page route
+		return NextResponse.redirect(new URL(`/notes/default/${pageId}`, req.url));
+	}
+
 	// Initialize Supabase auth client with SSR helper
 	const res = NextResponse.next();
 	const supabase = createServerClient<Database>(

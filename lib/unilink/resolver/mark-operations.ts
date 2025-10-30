@@ -36,7 +36,7 @@ export async function updateMarkToExists(
 						state: "exists",
 						exists: true,
 						pageId,
-						href: `/pages/${pageId}`,
+						href: `/notes/default/${pageId}`,
 						created: true, // Flag indicating newly created page
 					} as UnifiedLinkAttributes;
 

@@ -22,10 +22,10 @@ export function MainNav() {
 					デッキ
 				</Link>
 				<Link
-					href="/pages"
+					href="/notes"
 					className={cn(
 						"transition-colors hover:text-foreground/80",
-						pathname?.startsWith("/pages")
+						pathname?.startsWith("/notes") || pathname?.startsWith("/pages")
 							? "text-foreground"
 							: "text-foreground/60",
 					)}

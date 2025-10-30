@@ -22,14 +22,15 @@ export { TableRow, TableHeader, TableCell };
 
 /**
  * カスタムTableRow拡張
- * スタイリングを適用
+ * shadcn/uiのスタイルに合わせたスタイリング
  */
 export const CustomTableRow = TableRow.extend({
 	renderHTML({ HTMLAttributes }) {
 		return [
 			"tr",
 			mergeAttributes(HTMLAttributes, {
-				class: "border-b border-border",
+				class:
+					"border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
 			}),
 			0,
 		];
@@ -38,7 +39,7 @@ export const CustomTableRow = TableRow.extend({
 
 /**
  * カスタムTableHeader拡張
- * スタイリングとアライメント対応
+ * shadcn/uiのスタイルに合わせたスタイリングとアライメント対応
  */
 export const CustomTableHeader = TableHeader.extend({
 	addAttributes() {
@@ -67,7 +68,7 @@ export const CustomTableHeader = TableHeader.extend({
 		return [
 			"th",
 			mergeAttributes(HTMLAttributes, {
-				class: `px-4 py-2 font-medium text-muted-foreground border-r border-border last:border-r-0 ${finalAlignClass}`,
+				class: `h-12 px-4 align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${finalAlignClass}`,
 			}),
 			0,
 		];
@@ -76,7 +77,7 @@ export const CustomTableHeader = TableHeader.extend({
 
 /**
  * カスタムTableCell拡張
- * スタイリングとアライメント対応
+ * shadcn/uiのスタイルに合わせたスタイリングとアライメント対応
  */
 export const CustomTableCell = TableCell.extend({
 	addAttributes() {
@@ -105,7 +106,7 @@ export const CustomTableCell = TableCell.extend({
 		return [
 			"td",
 			mergeAttributes(HTMLAttributes, {
-				class: `px-4 py-2 border-r border-border last:border-r-0 ${finalAlignClass}`,
+				class: `p-4 align-middle [&:has([role=checkbox])]:pr-0 ${finalAlignClass}`,
 			}),
 			0,
 		];
@@ -182,7 +183,7 @@ export const CustomTable = Table.extend({
 					const tableData = parseMarkdownTable(markdownText);
 					if (!tableData) return false;
 
-					const { headers, alignments, rows } = tableData;
+					const { headers, rows } = tableData;
 
 					// テーブルを作成
 					return commands.insertTable({
@@ -207,12 +208,15 @@ export const CustomTable = Table.extend({
 
 	renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
 		return [
-			"table",
-			mergeAttributes(HTMLAttributes, {
-				class:
-					"w-full border-collapse border border-border rounded-md overflow-hidden",
-			}),
-			["tbody", 0],
+			"div",
+			{ class: "relative w-full overflow-auto my-4" },
+			[
+				"table",
+				mergeAttributes(HTMLAttributes, {
+					class: "w-full caption-bottom text-sm border-collapse",
+				}),
+				["tbody", 0],
+			],
 		];
 	},
 

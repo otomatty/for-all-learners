@@ -37,7 +37,8 @@ export function renderUserIcons() {
 									return;
 								}
 							}
-							window.location.href = `/pages/${pageId}`;
+
+							window.location.href = `/notes/default/${pageId}`;
 						}
 					: undefined,
 			}),

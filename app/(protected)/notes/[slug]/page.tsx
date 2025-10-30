@@ -1,14 +1,12 @@
 import { redirect } from "next/navigation";
-import React from "react";
 import {
 	getAvailableDecksForNote,
 	getDecksLinkedToNote,
 } from "@/app/_actions/note-deck-links";
-import { getNoteDetail } from "@/app/_actions/notes";
+import { getDefaultNote, getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import { NoteDeckManager } from "./_components/note-deck-manager";
 import NoteHeader from "./_components/note-header";
 import NotePagesClient from "./page-client";
 
@@ -27,7 +25,16 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 		redirect("/auth/login");
 	}
 
-	const { note } = await getNoteDetail(slug);
+	// Handle special "default" slug
+	let note: Awaited<ReturnType<typeof getDefaultNote>>;
+	if (slug === "default") {
+		// Get user's default note (with is_default_note flag)
+		note = await getDefaultNote();
+	} else {
+		// Get note by slug
+		const result = await getNoteDetail(slug);
+		note = result.note;
+	}
 
 	// Note-Deck Links データ取得
 	const [linkedDecks, availableDecks] = await Promise.all([
@@ -50,19 +57,15 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 				participantCount={note.participant_count}
 				updatedAt={note.updated_at}
 				ownerId={note.owner_id}
+				isDefaultNote={note.is_default_note || false}
 			/>
-			<div className="flex flex-col lg:flex-row gap-6">
-				<div className="flex-1">
-					<NotePagesClient slug={slug} totalCount={note.page_count} />
-				</div>
-				<div className="lg:w-80 lg:shrink-0">
-					<NoteDeckManager
-						noteId={note.id}
-						linkedDecks={linkedDecks}
-						availableDecks={availableDecks}
-					/>
-				</div>
-			</div>
+			<NotePagesClient
+				slug={slug}
+				totalCount={note.page_count}
+				noteId={note.id}
+				linkedDecks={linkedDecks}
+				availableDecks={availableDecks}
+			/>
 		</Container>
 	);
 }

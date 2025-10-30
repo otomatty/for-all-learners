@@ -16,6 +16,7 @@ import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
+import { MarkdownPaste } from "@/lib/tiptap-extensions/markdown-paste";
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 
@@ -63,6 +64,11 @@ const TiptapEditor = ({
 			Typography, // タイポグラフィ関連のショートカット（例: (c) -> ©）
 			Highlight,
 			UnifiedLinkMark, // Handles both [Title] and #tag syntax
+			// Markdown Paste - automatically converts Markdown syntax on paste
+			MarkdownPaste.configure({
+				enabled: true,
+				debug: false, // Set to true for development debugging
+			}),
 		],
 		content: content ? JSON.parse(content) : undefined, // JSON文字列をパース
 		onUpdate: ({ editor }) => {

@@ -52,6 +52,22 @@
 	.preview-content-fade.loaded {
 		opacity: 1;
 	}
+
+	/* Activity Calendar - スライドインアニメーション */
+	@keyframes slide-in-right {
+		from {
+			transform: translateX(100%);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+
+	.animate-slide-in-right {
+		animation: slide-in-right 0.3s ease-out;
+	}
 }
 
 @layer base {
@@ -536,3 +552,47 @@ a.page-link-mark[data-state="pending"]::before {
 	background: rgba(127, 29, 29, 0.4); /* red-900 40% */
 }
 /* --- End UnifiedLinkMark state styles --- */
+
+/* --- Tiptap Table Styles (shadcn/ui compatible) --- */
+.ProseMirror table {
+	border-collapse: collapse;
+	margin: 1rem 0;
+	overflow: hidden;
+	table-layout: fixed;
+	width: 100%;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+	border: 1px solid hsl(var(--border));
+	box-sizing: border-box;
+	min-width: 1em;
+	padding: 0.75rem 1rem;
+	position: relative;
+	vertical-align: top;
+}
+
+.ProseMirror table th {
+	background-color: hsl(var(--muted) / 0.5);
+	font-weight: 600;
+	text-align: left;
+}
+
+.ProseMirror table .selectedCell {
+	background-color: hsl(var(--accent));
+}
+
+.ProseMirror table .column-resize-handle {
+	background-color: hsl(var(--primary));
+	bottom: -2px;
+	pointer-events: none;
+	position: absolute;
+	right: -2px;
+	top: 0;
+	width: 4px;
+}
+
+.ProseMirror table p {
+	margin: 0;
+}
+/* --- End Tiptap Table Styles --- */

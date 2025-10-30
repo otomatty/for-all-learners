@@ -41,22 +41,39 @@ export async function getNotePages({
 	pages: Database["public"]["Tables"]["pages"]["Row"][];
 	totalCount: number;
 }> {
-	console.log("Debug [getNotePages]: args", { slug, limit, offset, sortBy });
 	const supabase = await getSupabaseClient();
-	// Fetch note ID by slug
-	const { data: note, error: noteError } = await supabase
-		.from("notes")
-		.select("id")
-		.eq("slug", slug)
-		.single();
-	console.log("Debug [getNotePages]: note result", { note, noteError });
-	if (noteError || !note) throw new Error("Note not found");
 
-	const { data: npl, error: nplError } = await supabase
-		.from("note_page_links")
-		.select("page_id")
-		.eq("note_id", note.id);
-	console.log("Debug [getNotePages]: note_page_links", npl, nplError);
+	// Handle special "default" slug
+	let note: { id: string } | null = null;
+	let noteError: Error | null = null;
+
+	if (slug === "default") {
+		// Get user's default note by is_default_note flag
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+		if (!user) throw new Error("User not authenticated");
+
+		const result = await supabase
+			.from("notes")
+			.select("id")
+			.eq("owner_id", user.id)
+			.eq("is_default_note", true)
+			.maybeSingle();
+		note = result.data;
+		noteError = result.error;
+	} else {
+		// Fetch note ID by slug
+		const result = await supabase
+			.from("notes")
+			.select("id")
+			.eq("slug", slug)
+			.single();
+		note = result.data;
+		noteError = result.error;
+	}
+
+	if (noteError || !note) throw new Error("Note not found");
 
 	// Fetch pages via RPC
 	const { data: rpcData, error: rpcError } = await supabase.rpc(
@@ -69,10 +86,8 @@ export async function getNotePages({
 		},
 	);
 	if (rpcError) throw rpcError;
-	console.log("Debug [getNotePages]: rpcData", rpcData);
 	const pages = (rpcData?.[0]?.pages ??
 		[]) as Database["public"]["Tables"]["pages"]["Row"][];
 	const totalCount = rpcData?.[0]?.total_count ?? 0;
-	console.log("Debug [getNotePages]: pages", pages, "totalCount", totalCount);
 	return { pages, totalCount };
 }
