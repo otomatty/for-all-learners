@@ -231,8 +231,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
-      - run: bun add -D madge
+      - run: bun install  # madgeはdevDependenciesに含まれる
       - run: bunx madge --circular src/
       - name: Generate Dependency Graph
         run: bunx madge --image deps.svg src/

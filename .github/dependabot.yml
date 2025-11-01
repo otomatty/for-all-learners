@@ -47,6 +47,8 @@ updates:
     open-pull-requests-limit: 3
     reviewers:
       - "otomatty"
+    assignees:
+      - "otomatty"
     labels:
       - "github-actions"
       - "automated"

@@ -200,6 +200,14 @@ interface ContextData {
   recentPages?: PageSummary[];
 }
 
+// PageSummary型定義
+interface PageSummary {
+  id: string;
+  title: string;
+  excerpt?: string;
+  updatedAt?: Date;
+}
+
 // システムプロンプト例
 const systemPrompts = {
   'note-list': `あなたは学習支援AIアシスタントです。
@@ -379,6 +387,8 @@ components/ai-command-bar/
 **設計要件:**
 ```typescript
 // tool.types.ts
+import { FileText, Search } from 'lucide-react';
+
 interface Tool {
   id: string;
   name: string;
@@ -388,6 +398,17 @@ interface Tool {
   category: 'content' | 'navigation' | 'integration' | 'settings';
   action: () => void | Promise<void>;
 }
+
+// ハンドラー関数のシグネチャ
+const handleSummarize = async (): Promise<void> => {
+  // ページ要約ロジック
+  // summarizePages Server Action を呼び出し
+};
+
+const handleSearch = async (): Promise<void> => {
+  // セマンティック検索ロジック
+  // semanticSearch Server Action を呼び出し
+};
 
 // 組み込みツール例
 const builtInTools: Tool[] = [
@@ -605,14 +626,87 @@ interface MCPResponse {
   };
 }
 
+// MCPサービスの基底インターフェース
+interface MCPService {
+  name: string;
+  version: string;
+  initialize(): Promise<void>;
+  execute(method: string, params: Record<string, unknown>): Promise<MCPResponse>;
+}
+
+// カレンダーイベント型定義
+interface CalendarEvent {
+  id?: string;
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+  location?: string;
+  attendees?: string[];
+}
+
 // mcp/services/calendar.ts
 class CalendarService implements MCPService {
+  name = 'calendar';
+  version = '1.0.0';
+
+  async initialize(): Promise<void> {
+    // Google Calendar API初期化処理
+  }
+
   async addEvent(event: CalendarEvent): Promise<MCPResponse> {
-    // Google Calendar API 連携
+    try {
+      // Google Calendar API 連携
+      // const result = await googleCalendar.events.insert({ ... });
+      return {
+        success: true,
+        data: event
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: 'ADD_EVENT_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to add event'
+        }
+      };
+    }
   }
   
   async getUpcomingEvents(): Promise<MCPResponse> {
-    // イベント取得
+    try {
+      // イベント取得
+      // const events = await googleCalendar.events.list({ ... });
+      return {
+        success: true,
+        data: [] // events
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: 'GET_EVENTS_FAILED',
+          message: error instanceof Error ? error.message : 'Failed to get events'
+        }
+      };
+    }
+  }
+
+  async execute(method: string, params: Record<string, unknown>): Promise<MCPResponse> {
+    switch (method) {
+      case 'addEvent':
+        return this.addEvent(params as CalendarEvent);
+      case 'getUpcomingEvents':
+        return this.getUpcomingEvents();
+      default:
+        return {
+          success: false,
+          error: {
+            code: 'UNKNOWN_METHOD',
+            message: `Method ${method} not found`
+          }
+        };
+    }
   }
 }
 ```
