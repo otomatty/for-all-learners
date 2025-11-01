@@ -172,13 +172,14 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 						<div className="relative inline-block">
 							<Dialog>
 								<DialogTrigger asChild>
-									<div
+									<button
+										type="button"
 										onMouseDown={(e) => {
 											e.preventDefault();
 											e.stopPropagation();
 										}}
-										className={`relative inline-block cursor-pointer h-[300px] ${fullWidth ? "w-full" : "w-auto"}`}
-										contentEditable={false}
+										className={`relative inline-block cursor-pointer h-[300px] ${fullWidth ? "w-full" : "w-auto"} border-0 bg-transparent p-0`}
+										aria-label="Open image dialog"
 									>
 										<Image
 											src={rawUrl}
@@ -219,7 +220,7 @@ export const GyazoImageNodeView: React.FC<NodeViewProps> = ({
 												</div>
 											</div>
 										)}
-									</div>
+									</button>
 								</DialogTrigger>
 								<DialogContent className="md:!max-w-[90vw]">
 									<DialogTitle className="sr-only">Gyazo Image</DialogTitle>

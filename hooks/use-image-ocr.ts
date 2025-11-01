@@ -61,10 +61,10 @@ export function useImageOcr(
 	options: UseImageOcrOptions = {},
 ): UseImageOcrReturn {
 	const {
-		language = "jpn+eng",
-		maxImageSize = 1024,
-		imageQuality = 0.9,
-		enableProgress = true,
+		language: _language = "jpn+eng",
+		maxImageSize: _maxImageSize = 1024,
+		imageQuality: _imageQuality = 0.9,
+		enableProgress: _enableProgress = true,
 		showToasts = true,
 		onComplete,
 		onError,

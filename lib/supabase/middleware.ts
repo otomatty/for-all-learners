@@ -18,7 +18,7 @@ export const createClient = (request: NextRequest) => {
 					return request.cookies.getAll();
 				},
 				setAll(cookiesToSet) {
-					for (const { name, value, options } of cookiesToSet) {
+					for (const { name, value, options: _options } of cookiesToSet) {
 						request.cookies.set(name, value);
 					}
 					supabaseResponse = NextResponse.next({

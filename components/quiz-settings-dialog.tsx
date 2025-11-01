@@ -23,9 +23,9 @@ interface QuizSettingsDialogProps {
 
 export function QuizSettingsDialog({
 	deckId,
-	deckTitle,
+	deckTitle: _deckTitle,
 	goalId,
-	goalTitle,
+	goalTitle: _goalTitle,
 	triggerText = "学習を開始する",
 	reviewMode = false,
 	disabled = false,

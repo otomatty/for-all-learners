@@ -54,12 +54,12 @@ vi.mock("tesseract.js", () => {
 	};
 });
 
-interface MockImage extends Partial<HTMLImageElement> {
-	addEventListener: MockedFunction<HTMLImageElement["addEventListener"]>;
-	removeEventListener: MockedFunction<HTMLImageElement["removeEventListener"]>;
-	onload: (() => void) | null;
-	onerror: OnErrorEventHandler;
-}
+// interface MockImage extends Partial<HTMLImageElement> {
+// 	addEventListener: MockedFunction<HTMLImageElement["addEventListener"]>;
+// 	removeEventListener: MockedFunction<HTMLImageElement["removeEventListener"]>;
+// 	onload: (() => void) | null;
+// 	onerror: OnErrorEventHandler;
+// }
 
 type MockFetch = MockedFunction<typeof fetch> & {
 	mockResolvedValueOnce: (value: unknown) => MockFetch;

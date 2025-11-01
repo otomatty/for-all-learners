@@ -41,7 +41,7 @@ export function CreatePageDialog({
 	initialTitle,
 	onPageCreated,
 	userId,
-	noteSlug,
+	noteSlug: _noteSlug,
 }: CreatePageDialogProps) {
 	const [formState, setFormState] = useState<FormState>({
 		title: initialTitle,

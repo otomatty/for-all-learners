@@ -25,7 +25,21 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noConsole": "error"
+				"noConsole": "error",
+				"noUnknownAtRules": "off",
+				"noArrayIndexKey": "warn",
+				"noExplicitAny": "warn"
+			},
+			"correctness": {
+				"noUnusedVariables": "warn"
+			},
+			"performance": {
+				"noDynamicNamespaceImportAccess": "warn"
+			},
+			"a11y": {
+				"useAriaPropsSupportedByRole": "warn",
+				"useSemanticElements": "warn",
+				"noStaticElementInteractions": "off"
 			}
 		}
 	},

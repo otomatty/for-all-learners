@@ -30,7 +30,7 @@ export function useSmartThumbnailSync({
 	editor,
 	pageId,
 	title,
-	currentThumbnailUrl,
+	currentThumbnailUrl: _currentThumbnailUrl,
 	enabled = true,
 	debounceMs = 1000,
 }: UseSmartThumbnailSyncOptions) {
