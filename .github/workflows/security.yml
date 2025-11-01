@@ -14,6 +14,9 @@ jobs:
   security-audit:
     name: Dependency Security Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     
     steps:
       - name: Checkout code
