@@ -102,7 +102,7 @@ export async function getQuizQuestions(
 	const userId = user.id;
 
 	// Get user locale from settings (fallback to 'ja')
-	const { data: settings, error: settingsError } = await supabase
+	const { data: settings } = await supabase
 		.from("user_settings")
 		.select("locale")
 		.eq("user_id", userId)

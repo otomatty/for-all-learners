@@ -2,6 +2,7 @@
 
 import imageCompression from "browser-image-compression";
 import { Loader2, PlusCircle, XCircle } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -209,11 +210,15 @@ export function ImageUploader({
 						key={detail.id}
 						className="relative group border rounded-md p-2 space-y-1 text-xs aspect-square flex flex-col items-center justify-center"
 					>
-						<img
-							src={detail.previewUrl}
-							alt={`プレビュー ${detail.originalFile.name}`}
-							className="max-w-full max-h-20 object-contain rounded-md mb-1"
-						/>
+						<div className="relative w-full h-20 mb-1">
+							<Image
+								src={detail.previewUrl}
+								alt={`プレビュー ${detail.originalFile.name}`}
+								fill
+								className="object-contain rounded-md"
+								unoptimized
+							/>
+						</div>
 						<button
 							type="button"
 							onClick={() => removeFile(detail.id)}

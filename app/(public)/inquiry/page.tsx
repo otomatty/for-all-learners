@@ -10,11 +10,8 @@ export default async function InquiryPage() {
 	} = await supabase.auth.getUser();
 
 	// お問い合わせカテゴリのデータをサーバーアクション経由で取得
-	const {
-		categories,
-		message: categoriesMessage,
-		success: categoriesSuccess,
-	} = await getInquiryCategories();
+	const { categories, success: categoriesSuccess } =
+		await getInquiryCategories();
 
 	if (!categoriesSuccess) {
 		// エラーハンドリング: カテゴリなしで進めるか、エラーページを表示するかなど

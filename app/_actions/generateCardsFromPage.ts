@@ -5,12 +5,13 @@ import { geminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
-interface TiptapNode {
-	type: string;
-	content?: TiptapNode[];
-	text?: string;
-	// attrs など他のプロパティも存在しうる
-}
+// Interface for Tiptap node structure (currently unused, kept for reference)
+// interface TiptapNode {
+// 	type: string;
+// 	content?: TiptapNode[];
+// 	text?: string;
+// 	// attrs など他のプロパティも存在しうる
+// }
 
 // TiptapのJSONBからテキストを抽出するヘルパー関数
 // node の型を Json に変更し、内部で TiptapNode ライクなオブジェクトかチェックする

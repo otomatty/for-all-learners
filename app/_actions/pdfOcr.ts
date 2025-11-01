@@ -41,7 +41,7 @@ export async function processPdfPagesWithOcr(
 				const timestamp = Date.now();
 				const filePath = `pdf-ocr-images/${userId}/${timestamp}-page${pageNumber}.png`;
 
-				const { data: uploadData, error: uploadError } = await supabase.storage
+				const { error: uploadError } = await supabase.storage
 					.from("ocr-images")
 					.upload(filePath, imageBlob, {
 						metadata: { userId, pageNumber: pageNumber.toString() },
@@ -162,7 +162,7 @@ export async function processSinglePageOcr(
 		const filePath = `pdf-ocr-images/${userId}/${timestamp}-page${pageNumber}.png`;
 
 		const _uploadStart = Date.now();
-		const { data: uploadData, error: uploadError } = await supabase.storage
+		const { error: uploadError } = await supabase.storage
 			.from("ocr-images")
 			.upload(filePath, imageBlob, {
 				metadata: { userId, pageNumber: pageNumber.toString() },

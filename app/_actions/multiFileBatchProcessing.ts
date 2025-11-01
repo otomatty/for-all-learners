@@ -148,17 +148,16 @@ export async function processMultiFilesBatch(
 							const timestamp = Date.now();
 							const filePath = `multi-file-ocr/${userId}/${timestamp}-${fileData.fileId}-page${page.pageNumber}.png`;
 
-							const { data: uploadData, error: uploadError } =
-								await supabase.storage
-									.from("ocr-images")
-									.upload(filePath, page.imageBlob, {
-										metadata: {
-											userId,
-											fileId: fileData.fileId,
-											fileName: fileData.fileName,
-											pageNumber: page.pageNumber.toString(),
-										},
-									});
+							const { error: uploadError } = await supabase.storage
+								.from("ocr-images")
+								.upload(filePath, page.imageBlob, {
+									metadata: {
+										userId,
+										fileId: fileData.fileId,
+										fileName: fileData.fileName,
+										pageNumber: page.pageNumber.toString(),
+									},
+								});
 
 							if (uploadError) {
 								return null;

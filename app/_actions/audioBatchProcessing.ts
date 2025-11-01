@@ -86,7 +86,7 @@ export async function processAudioFilesBatch(
 					: "wav";
 				const filePath = `audio-batch/${userId}/${timestamp}-${audio.audioId}.${fileExtension}`;
 
-				const { data: uploadData, error: uploadError } = await supabase.storage
+				const { error: uploadError } = await supabase.storage
 					.from("audio-files")
 					.upload(filePath, audio.audioBlob, {
 						metadata: {

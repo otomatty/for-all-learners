@@ -21,7 +21,6 @@ interface PagesListProps {
 }
 
 export default function PagesList({
-	noteId,
 	noteSlug,
 	selectedPageIds,
 	onSelectPages,

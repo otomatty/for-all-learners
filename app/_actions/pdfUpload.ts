@@ -52,7 +52,7 @@ export async function uploadPdfToStorage(
 		const filePath = `pdf-uploads/${userId}/${timestamp}-${file.name}`;
 
 		// Supabase Storageにアップロード
-		const { data: uploadData, error: uploadError } = await supabase.storage
+		const { error: uploadError } = await supabase.storage
 			.from("pdf-files") // バケット名（事前に作成が必要）
 			.upload(filePath, file, {
 				metadata: {

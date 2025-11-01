@@ -406,7 +406,7 @@ async function uploadPdfToStorage(
 		const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.name}`;
 		const filePath = `pdf-processing/${userId}/${fileName}`;
 
-		const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+		const { error: uploadError } = await supabaseAdmin.storage
 			.from("documents")
 			.upload(filePath, file, {
 				cacheControl: "3600",
