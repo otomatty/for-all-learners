@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import {
 	Select,
 	SelectContent,

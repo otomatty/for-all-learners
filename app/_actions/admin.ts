@@ -14,7 +14,6 @@ export async function isAdmin(): Promise<boolean> {
 		error: userErr,
 	} = await supabase.auth.getUser();
 	if (userErr || !user) {
-		console.error("Authenticated user retrieval error:", userErr);
 		return false;
 	}
 
@@ -26,7 +25,6 @@ export async function isAdmin(): Promise<boolean> {
 		.maybeSingle();
 
 	if (error) {
-		console.error("Admin user check unexpected error:", error);
 		return false;
 	}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Save, Trash } from "lucide-react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -104,7 +105,7 @@ export function ImageCardGenerator({
 			const webpBlob = await convertImageToWebp(imageBlob, 0.8);
 			const timestamp = Date.now();
 			const filePath = `ocr-images/${userId}/${timestamp}.webp`;
-			const { data: uploadData, error: uploadError } = await supabase.storage
+			const { data: _uploadData, error: uploadError } = await supabase.storage
 				.from("ocr-images")
 				.upload(filePath, webpBlob, { metadata: { userId } });
 			if (uploadError) throw uploadError;
@@ -142,7 +143,6 @@ export function ImageCardGenerator({
 				description: `${cardsWithId.length}件の候補が生成されました。`,
 			});
 		} catch (error) {
-			console.error("Error processing image:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error
@@ -201,7 +201,6 @@ export function ImageCardGenerator({
 			});
 			router.push(`/decks/${deckId}`);
 		} catch (error) {
-			console.error("Error saving cards:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error
@@ -249,11 +248,12 @@ export function ImageCardGenerator({
 					</div>
 					{imageUrl && (
 						<div className="flex justify-center">
-							<div className="w-full max-w-md overflow-hidden">
-								<img
+							<div className="w-full max-w-md overflow-hidden relative h-64">
+								<NextImage
 									src={imageUrl}
 									alt="preview"
-									className="w-full h-auto object-contain rounded"
+									fill
+									className="object-contain rounded"
 								/>
 							</div>
 						</div>

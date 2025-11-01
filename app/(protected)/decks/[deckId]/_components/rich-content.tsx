@@ -7,11 +7,6 @@ import TextAlign from "@tiptap/extension-text-align"; // TextAlignをインポ�
 import Typography from "@tiptap/extension-typography"; // Typographyをインポート
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-/**
- * RichContent component: renders Tiptap JSON content with Link, PageLink, and Highlight extensions,
- * and applies the Highlight mark to occurrences of a given keyword.
- */
-import React from "react";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 

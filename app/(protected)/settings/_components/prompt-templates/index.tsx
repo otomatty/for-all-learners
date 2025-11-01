@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { generatePageInfo } from "@/app/_actions/generatePageInfo";
 import {
@@ -37,8 +37,7 @@ export default function PromptTemplates() {
 					setTemplate(rows[0].template);
 				}
 			})
-			.catch((e) => {
-				console.error(e);
+			.catch((_e) => {
 				toast.error("プロンプト一覧の読み込みに失敗しました");
 			})
 			.finally(() => setPromptsLoading(false));
@@ -60,8 +59,7 @@ export default function PromptTemplates() {
 			try {
 				await updateUserPromptTemplate(selectedKey, template);
 				toast.success("プロンプトを保存しました");
-			} catch (e) {
-				console.error(e);
+			} catch (_e) {
 				toast.error("保存に失敗しました");
 			}
 		});
@@ -72,8 +70,7 @@ export default function PromptTemplates() {
 			try {
 				const result = await generatePageInfo(title);
 				setPreview(result);
-			} catch (e) {
-				console.error(e);
+			} catch (_e) {
 				toast.error("生成に失敗しました");
 			}
 		});

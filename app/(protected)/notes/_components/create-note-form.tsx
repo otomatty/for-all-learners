@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Loader2, X } from "lucide-react";
-import React, { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import {
 	type CreateNotePayload,
@@ -97,7 +97,6 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 					if (!error && data) {
 						setUsers(data as { id: string; email: string }[]);
 					} else {
-						console.error("ユーザーリスト取得エラー:", error);
 					}
 				});
 		}
@@ -109,9 +108,7 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 				const note = await createNote(data);
 				setCreatedNoteId(note.id);
 				setStep("share");
-			} catch (err) {
-				console.error("ノート作成エラー:", err);
-			}
+			} catch (_err) {}
 		});
 	};
 
@@ -281,8 +278,7 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 				await shareNote(createdNoteId, userId, "viewer");
 			}
 			onSuccess();
-		} catch (err) {
-			console.error("ノート共有エラー:", err);
+		} catch (_err) {
 		} finally {
 			setIsSharing(false);
 		}

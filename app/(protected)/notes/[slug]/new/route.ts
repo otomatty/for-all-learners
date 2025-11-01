@@ -23,7 +23,6 @@ export async function GET(
 		.eq("slug", slug)
 		.single();
 	if (noteError || !note) {
-		console.error("Note not found:", noteError);
 		return NextResponse.json({ error: "Note not found" }, { status: 404 });
 	}
 
@@ -45,7 +44,6 @@ export async function GET(
 		.select("id")
 		.single();
 	if (pageError || !page) {
-		console.error("Page creation error:", pageError);
 		throw pageError;
 	}
 
@@ -54,7 +52,6 @@ export async function GET(
 		.from("note_page_links")
 		.insert({ note_id: note.id, page_id: page.id });
 	if (linkError) {
-		console.error("Linking page to note error:", linkError);
 		throw linkError;
 	}
 

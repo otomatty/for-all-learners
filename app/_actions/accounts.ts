@@ -66,7 +66,6 @@ export async function uploadAvatar(
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !authUser) {
-		console.error("[uploadAvatar][AuthError]", authError);
 		throw new Error(
 			`[uploadAvatar][AuthError] ${authError?.message ?? "Not authenticated"}`,
 		);
@@ -84,10 +83,8 @@ export async function uploadAvatar(
 			.from("avatars")
 			.remove([filePath]);
 		if (removeError) {
-			console.warn("[uploadAvatar][RemoveOldAvatarWarning]", removeError);
 		}
-	} catch (e) {
-		console.error("[uploadAvatar][RemoveOldAvatarException]", e);
+	} catch (_e) {
 		// 削除失敗でもアップロード処理は継続
 	}
 
@@ -98,7 +95,6 @@ export async function uploadAvatar(
 			.upload(filePath, file, { upsert: true });
 		if (uploadError) throw uploadError;
 	} catch (e) {
-		console.error("[uploadAvatar][UploadException]", e);
 		throw new Error(
 			`[uploadAvatar][UploadException] ${e instanceof Error ? e.message : e}`,
 		);
@@ -115,7 +111,6 @@ export async function uploadAvatar(
 		}
 		publicUrl = urlData.publicUrl;
 	} catch (e) {
-		console.error("[uploadAvatar][GetPublicUrlException]", e);
 		throw new Error(
 			`[uploadAvatar][GetPublicUrlException] ${e instanceof Error ? e.message : e}`,
 		);
@@ -128,7 +123,6 @@ export async function uploadAvatar(
 		});
 		return updatedAccount;
 	} catch (e) {
-		console.error("[uploadAvatar][UpdateAccountException]", e);
 		throw new Error(
 			`[uploadAvatar][UpdateAccountException] ${e instanceof Error ? e.message : e}`,
 		);

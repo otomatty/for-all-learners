@@ -46,9 +46,6 @@ async function callGeminiWithRetry<T>(
 
 				if (attempt < maxRetries && retryDelayStr) {
 					const delayMs = parseRetryDelay(retryDelayStr);
-					console.warn(
-						`[リトライ] Gemini APIクォータ制限: ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-					);
 					await new Promise((resolve) => setTimeout(resolve, delayMs));
 					continue;
 				}
@@ -61,9 +58,6 @@ async function callGeminiWithRetry<T>(
 			// その他のエラーの場合は指数バックオフでリトライ
 			if (attempt < maxRetries) {
 				const delayMs = baseDelayMs * 2 ** (attempt - 1);
-				console.warn(
-					`[リトライ] APIエラー (${(error as Error).message}): ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-				);
 				await new Promise((resolve) => setTimeout(resolve, delayMs));
 				continue;
 			}
@@ -109,13 +103,9 @@ export async function transcribeImagesBatch(
 	batchSize = 4, // Geminiの同時画像処理制限を考慮
 ): Promise<BatchOcrResult> {
 	try {
-		console.log(
-			`[バッチOCR] ${pages.length}ページを${batchSize}ページずつ処理開始`,
-		);
-
 		// 事前クォータチェック
 		const quotaManager = getGeminiQuotaManager();
-		const estimatedRequests = Math.ceil(pages.length / batchSize);
+		const _estimatedRequests = Math.ceil(pages.length / batchSize);
 		const quotaCheck = quotaManager.validatePdfProcessing(pages.length);
 
 		if (!quotaCheck.canProcess) {
@@ -127,9 +117,6 @@ export async function transcribeImagesBatch(
 		}
 
 		if (quotaCheck.suggestion) {
-			console.warn(
-				`[バッチOCR] 警告: ${quotaCheck.message} - ${quotaCheck.suggestion}`,
-			);
 		}
 
 		const extractedPages: Array<{ pageNumber: number; text: string }> = [];
@@ -140,11 +127,7 @@ export async function transcribeImagesBatch(
 		for (let i = 0; i < pages.length; i += batchSize) {
 			const batch = pages.slice(i, i + batchSize);
 			const batchNumber = Math.floor(i / batchSize) + 1;
-			const totalBatches = Math.ceil(pages.length / batchSize);
-
-			console.log(
-				`[バッチOCR] バッチ ${batchNumber}/${totalBatches}: ${batch.length}ページ処理中...`,
-			);
+			const _totalBatches = Math.ceil(pages.length / batchSize);
 
 			try {
 				const batchResult = await executeWithQuotaCheck(
@@ -156,21 +139,15 @@ export async function transcribeImagesBatch(
 				extractedPages.push(...batchResult);
 				processedCount += batchResult.length;
 
-				console.log(
-					`[バッチOCR] バッチ処理完了: ${batchResult.length}/${batch.length}ページ成功`,
-				);
-
 				// レート制限回避のため、バッチ間に小さな待機
 				if (i + batchSize < pages.length) {
 					await new Promise((resolve) => setTimeout(resolve, 500));
 				}
 			} catch (error: unknown) {
-				console.error("[バッチOCR] バッチ処理エラー:", error);
 				skippedCount += batch.length;
 
 				// クォータエラーの場合は即座に停止
 				if (error instanceof Error && error.message.includes("クォータ")) {
-					console.error("[バッチOCR] クォータ制限により処理停止");
 					break;
 				}
 
@@ -196,7 +173,6 @@ export async function transcribeImagesBatch(
 			skippedCount,
 		};
 	} catch (error) {
-		console.error("[バッチOCR] 致命的エラー:", error);
 		return {
 			success: false,
 			message: "バッチOCR処理中に致命的エラーが発生しました",
@@ -236,8 +212,7 @@ async function processBatchWithRetry(
 				uri,
 				mimeType: mimeType ?? blob.type,
 			};
-		} catch (error) {
-			console.error(`ページ${page.pageNumber}のアップロードエラー:`, error);
+		} catch (_error) {
 			return null;
 		}
 	});
@@ -343,12 +318,7 @@ async function processBatchWithRetry(
 				text: item.extractedText.trim(),
 			}))
 			.filter((item) => item.text.length > 0); // 空文字は除外
-	} catch (parseError) {
-		console.error("JSON解析エラー:", parseError);
-		console.error("問題のあるJSON:", jsonString);
-
-		// フォールバック: 個別処理
-		console.warn("バッチ処理失敗、個別処理にフォールバック");
+	} catch (_parseError) {
 		return await processPagesIndividually(validUploads);
 	}
 }
@@ -404,8 +374,7 @@ async function processPagesIndividually(
 
 			// 個別処理時は少し待機
 			await new Promise((resolve) => setTimeout(resolve, 200));
-		} catch (error) {
-			console.error(`ページ${upload.pageNumber}の個別処理エラー:`, error);
+		} catch (_error) {
 			// エラーでも続行
 		}
 	}

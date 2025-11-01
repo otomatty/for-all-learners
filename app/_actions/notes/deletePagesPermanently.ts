@@ -76,7 +76,6 @@ export async function deletePagesPermanently({
 			message: `${pages.length}件のページを完全に削除しました`,
 		};
 	} catch (error) {
-		console.error("Permanent delete error:", error);
 		return {
 			success: false,
 			deletedCount: 0,

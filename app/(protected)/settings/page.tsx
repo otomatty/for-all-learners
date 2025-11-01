@@ -1,4 +1,3 @@
-import React from "react";
 import { getUserCosenseProjects } from "@/app/_actions/cosense";
 import { getUserSettings } from "@/app/_actions/user_settings";
 import { Container } from "@/components/layouts/container";

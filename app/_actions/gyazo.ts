@@ -128,12 +128,6 @@ export async function uploadImageToGyazo(
 
 	if (!response.ok) {
 		const errorText = await response.text();
-		console.error(
-			"DEBUG Gyazo upload failed status:",
-			response.status,
-			"body:",
-			errorText,
-		);
 		throw new Error(
 			`Gyazo へのアップロードに失敗しました: ${response.status} ${errorText}`,
 		);

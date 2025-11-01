@@ -82,7 +82,6 @@ export async function moveToTrash({
 			message: `${pages.length}件のページをゴミ箱に移動しました`,
 		};
 	} catch (error) {
-		console.error("Move to trash error:", error);
 		return {
 			success: false,
 			deletedCount: 0,

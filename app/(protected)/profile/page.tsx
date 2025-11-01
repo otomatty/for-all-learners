@@ -1,4 +1,3 @@
-import React from "react";
 import { createAccount, getAccountById } from "@/app/_actions/accounts";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";

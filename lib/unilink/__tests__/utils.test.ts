@@ -5,7 +5,7 @@
  * @fileoverview lib/unilink/utils.ts の機能をテスト
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	clearCache,
 	getCachedPageId,

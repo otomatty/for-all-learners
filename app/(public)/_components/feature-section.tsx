@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FeatureSection() {
 	return (
+		// biome-ignore lint/correctness/useUniqueElementIds: Page anchor for navigation
 		<section className="w-full py-12 md:py-24 lg:py-32" id="features">
 			<Container>
 				<SectionHeader

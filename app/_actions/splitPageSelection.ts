@@ -1,7 +1,6 @@
 "use server";
 import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 
 export type SplitPageSelectionParams = {
 	originalPageId: string;

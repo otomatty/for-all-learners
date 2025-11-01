@@ -21,7 +21,6 @@ export async function getUserSubscription(
 
 	// データが見つからない場合はnullを返す（エラーではない）
 	if (error) {
-		console.error("getUserSubscription error:", error);
 		return null;
 	}
 	return data;
@@ -34,7 +33,6 @@ export async function getUserSubscription(
 export async function isUserPaid(userId: string): Promise<boolean> {
 	// ユーザーID検証
 	if (!userId || userId.trim() === "") {
-		console.error("isUserPaid: 無効なユーザーID", { userId });
 		return false;
 	}
 
@@ -64,7 +62,6 @@ export async function getUserPlanFeatures(
 		.eq("id", subscription.plan_id)
 		.maybeSingle();
 	if (error) {
-		console.error("getUserPlanFeatures error:", error);
 		return null;
 	}
 	return plan?.features || null;
@@ -86,7 +83,6 @@ export async function getUserPlan(
 		.eq("id", subscription.plan_id)
 		.maybeSingle();
 	if (error) {
-		console.error("getUserPlan error:", error);
 		return null;
 	}
 	return plan;

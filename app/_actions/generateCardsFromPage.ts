@@ -5,12 +5,13 @@ import { geminiClient } from "@/lib/gemini/client";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
-interface TiptapNode {
-	type: string;
-	content?: TiptapNode[];
-	text?: string;
-	// attrs など他のプロパティも存在しうる
-}
+// Interface for Tiptap node structure (currently unused, kept for reference)
+// interface TiptapNode {
+// 	type: string;
+// 	content?: TiptapNode[];
+// 	text?: string;
+// 	// attrs など他のプロパティも存在しうる
+// }
 
 // TiptapのJSONBからテキストを抽出するヘルパー関数
 // node の型を Json に変更し、内部で TiptapNode ライクなオブジェクトかチェックする
@@ -167,7 +168,6 @@ export async function generateRawCardsFromPageContent(
 		}
 		generatedRawCards = JSON.parse(jsonString);
 	} catch (error: unknown) {
-		console.error("AIによるカード生成エラー:", error);
 		if (error instanceof Error) {
 			return {
 				error: `AIによるカード生成に失敗しました: ${error.message}`,
@@ -196,7 +196,7 @@ interface CardToSave extends InsertableCard {
 
 export async function saveGeneratedCards(
 	cardsToSave: CardToSave[],
-	userId: string, // 念のためuser_idも引数で受け取り、cardsToSave内のものと一致確認しても良い
+	_userId: string, // 念のためuser_idも引数で受け取り、cardsToSave内のものと一致確認しても良い
 ): Promise<{ savedCardsCount: number; error?: string }> {
 	if (!cardsToSave || cardsToSave.length === 0) {
 		return { savedCardsCount: 0, error: "保存するカードがありません。" };
@@ -219,7 +219,6 @@ export async function saveGeneratedCards(
 		.select("id");
 
 	if (insertCardsError) {
-		console.error("カードのDB保存エラー:", insertCardsError);
 		return {
 			savedCardsCount: 0,
 			error: `カードのDB保存に失敗しました: ${insertCardsError.message}`,
@@ -243,7 +242,6 @@ export async function saveGeneratedCards(
 		.insert(cardPageLinksToInsert);
 
 	if (insertLinksError) {
-		console.error("カードとページのリンク作成エラー:", insertLinksError);
 		// カード自体は作成されているので、エラーメッセージは出すが、成功したカード数を返す
 		return {
 			savedCardsCount: insertedCards.length,

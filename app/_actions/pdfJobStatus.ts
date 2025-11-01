@@ -98,7 +98,6 @@ export async function getUserPdfJobs(
 		const { data: jobs, error } = await query;
 
 		if (error) {
-			console.error("Get PDF jobs error:", error);
 			return {
 				success: false,
 				jobs: [],
@@ -112,8 +111,7 @@ export async function getUserPdfJobs(
 		}));
 
 		return { success: true, jobs: formattedJobs };
-	} catch (error) {
-		console.error("Get user PDF jobs error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			jobs: [],
@@ -171,7 +169,6 @@ export async function getPdfJobDetail(
 			.single();
 
 		if (error) {
-			console.error("Get PDF job detail error:", error);
 			return { success: false, message: "ジョブが見つかりません" };
 		}
 
@@ -181,8 +178,7 @@ export async function getPdfJobDetail(
 		};
 
 		return { success: true, job: formattedJob };
-	} catch (error) {
-		console.error("Get PDF job detail error:", error);
+	} catch (_error) {
 		return { success: false, message: "予期しないエラーが発生しました" };
 	}
 }
@@ -228,7 +224,6 @@ export async function getActivePdfJobs(): Promise<PdfJobListResult> {
 			.order("created_at", { ascending: false });
 
 		if (error) {
-			console.error("Get active PDF jobs error:", error);
 			return {
 				success: false,
 				jobs: [],
@@ -242,8 +237,7 @@ export async function getActivePdfJobs(): Promise<PdfJobListResult> {
 		}));
 
 		return { success: true, jobs: formattedJobs };
-	} catch (error) {
-		console.error("Get active PDF jobs error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			jobs: [],
@@ -303,7 +297,6 @@ export async function getDeckPdfJobs(
 			.order("created_at", { ascending: false });
 
 		if (error) {
-			console.error("Get deck PDF jobs error:", error);
 			return {
 				success: false,
 				jobs: [],
@@ -312,8 +305,7 @@ export async function getDeckPdfJobs(
 		}
 
 		return { success: true, jobs: jobs as PdfJobStatus[] };
-	} catch (error) {
-		console.error("Get deck PDF jobs error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			jobs: [],
@@ -354,8 +346,7 @@ export async function refreshJobStatus(
 		revalidatePath("/decks");
 
 		return { success: true, message: "ステータスを更新しました" };
-	} catch (error) {
-		console.error("Refresh job status error:", error);
+	} catch (_error) {
 		return { success: false, message: "更新に失敗しました" };
 	}
 }
@@ -410,7 +401,6 @@ export async function getJobGeneratedCards(jobId: string) {
 			.order("source_page", { ascending: true });
 
 		if (cardsError) {
-			console.error("Get job cards error:", cardsError);
 			return {
 				success: false,
 				cards: [],
@@ -423,8 +413,7 @@ export async function getJobGeneratedCards(jobId: string) {
 			cards,
 			message: `${cards.length}枚のカードが見つかりました`,
 		};
-	} catch (error) {
-		console.error("Get job generated cards error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			cards: [],
@@ -463,13 +452,11 @@ export async function getSystemPdfStats() {
 			.single();
 
 		if (error) {
-			console.error("Get system stats error:", error);
 			return null;
 		}
 
 		return stats;
-	} catch (error) {
-		console.error("Get system PDF stats error:", error);
+	} catch (_error) {
 		return null;
 	}
 }
@@ -507,7 +494,6 @@ export async function runJobMaintenance(): Promise<{
 			await supabaseAdmin.rpc("maintain_pdf_jobs");
 
 		if (error) {
-			console.error("Job maintenance error:", error);
 			return { success: false, message: "メンテナンス処理に失敗しました" };
 		}
 
@@ -516,8 +502,7 @@ export async function runJobMaintenance(): Promise<{
 			result,
 			message: "メンテナンス処理が完了しました",
 		};
-	} catch (error) {
-		console.error("Run job maintenance error:", error);
+	} catch (_error) {
 		return { success: false, message: "予期しないエラーが発生しました" };
 	}
 }

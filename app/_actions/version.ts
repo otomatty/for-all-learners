@@ -102,9 +102,9 @@ ${commitListText}`;
 		throw new Error("No content returned from AI");
 	}
 	// JSONパース
-	let parsed: ReleaseNotesJSON;
+	let _parsed: ReleaseNotesJSON;
 	try {
-		parsed = JSON.parse(jsonString) as ReleaseNotesJSON;
+		_parsed = JSON.parse(jsonString) as ReleaseNotesJSON;
 	} catch (e) {
 		throw new Error(`Failed to parse release notes JSON: ${e}`);
 	}

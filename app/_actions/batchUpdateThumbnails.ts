@@ -65,7 +65,6 @@ export async function batchUpdateMissingThumbnails(
 	const { data: pages, error: fetchError } = await query;
 
 	if (fetchError) {
-		console.error("Failed to fetch pages for batch update:", fetchError);
 		throw fetchError;
 	}
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { getCardsByDeck } from "@/app/_actions/cards";
 import { getDeckById, getDecksByUser } from "@/app/_actions/decks";
 import {

@@ -37,7 +37,6 @@ export async function addStudyGoal({
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.error("addStudyGoal auth error:", authError);
 		return { success: false, error: authError?.message ?? "Not authenticated" };
 	}
 
@@ -81,7 +80,6 @@ export async function addStudyGoal({
 		.select()
 		.single();
 	if (error || !data) {
-		console.error("addStudyGoal insert error:", error);
 		return {
 			success: false,
 			error: error?.message || "Failed to add study goal",
@@ -96,7 +94,6 @@ export async function addStudyGoal({
 export async function getUserGoalLimits(userId: string) {
 	// ユーザーID検証
 	if (!userId || userId.trim() === "") {
-		console.error("getUserGoalLimits: 無効なユーザーID", { userId });
 		return {
 			currentCount: 0,
 			maxGoals: 3,
@@ -124,8 +121,7 @@ export async function getUserGoalLimits(userId: string) {
 			remainingGoals: maxGoals - currentCount,
 		};
 		return result;
-	} catch (error) {
-		console.error("getUserGoalLimits error:", error);
+	} catch (_error) {
 		// エラーが発生した場合は無料プランとして扱う
 		const currentGoals = await getStudyGoalsByUser(userId);
 		const fallbackResult = {
@@ -178,7 +174,6 @@ export async function updateStudyGoal({
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("updateStudyGoal auth error:", authError);
 		return { success: false, error: authError?.message ?? "Not authenticated" };
 	}
 
@@ -207,7 +202,6 @@ export async function updateStudyGoal({
 		.single();
 
 	if (error || !data) {
-		console.error("updateStudyGoal error:", error);
 		return {
 			success: false,
 			error: error?.message || "Failed to update study goal",
@@ -232,7 +226,6 @@ export async function deleteStudyGoal(
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("deleteStudyGoal auth error:", authError);
 		return { success: false, error: authError?.message ?? "Not authenticated" };
 	}
 
@@ -246,7 +239,6 @@ export async function deleteStudyGoal(
 		.eq("user_id", user.id);
 
 	if (error) {
-		console.error("deleteStudyGoal error:", error);
 		return {
 			success: false,
 			error: error.message || "Failed to delete study goal",
@@ -283,7 +275,6 @@ export async function updateGoalsPriority(
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("updateGoalsPriority auth error:", authError);
 		return { success: false, error: authError?.message ?? "Not authenticated" };
 	}
 
@@ -301,7 +292,6 @@ export async function updateGoalsPriority(
 
 		return { success: true };
 	} catch (error) {
-		console.error("updateGoalsPriority error:", error);
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Unknown error",

@@ -1,0 +1,78 @@
+name: Security Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM JST (0:00 UTC)
+    - cron: '0 0 * * 1'
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'bun.lockb'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  security-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run security audit
+        id: audit
+        continue-on-error: true
+        run: |
+          echo "Running bun audit..."
+          bun audit || echo "audit_failed=true" >> $GITHUB_OUTPUT
+
+      - name: Create issue on vulnerability found
+        if: steps.audit.outputs.audit_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔒 Security Vulnerability Detected';
+            const body = `## Security Alert
+            
+            A security vulnerability has been detected in the dependencies.
+            
+            **Action Required:**
+            1. Run \`bun audit\` locally to see details
+            2. Update vulnerable dependencies
+            3. Test the application thoroughly
+            4. Create a PR with the fixes
+            
+            **Detection Date:** ${new Date().toISOString()}
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            `;
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security'
+            });
+            
+            const existingIssue = issues.data.find(issue => issue.title === title);
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security', 'dependencies']
+              });
+            }

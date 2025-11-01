@@ -206,7 +206,7 @@ describe("isInCodeContext", () => {
 			if (codeEndPositions.length >= 2) {
 				// Start searching after first code ends
 				let betweenPos: number | undefined;
-				editor.state.doc.descendants((node, pos) => {
+				editor.state.doc.descendants((_node, pos) => {
 					// Find text node that's between the two code sections
 					if (pos > codeEndPositions[0] && pos < codePositions[1]) {
 						betweenPos = pos + 1; // cursor in regular text

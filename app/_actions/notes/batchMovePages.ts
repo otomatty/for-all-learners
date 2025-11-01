@@ -160,7 +160,6 @@ export async function batchMovePages({
 
 				result.movedPages.push(page.id);
 			} catch (error) {
-				console.error(`Error processing page ${page.id}:`, error);
 				result.errors.push({
 					pageId: page.id,
 					error: error instanceof Error ? error.message : "Unknown error",
@@ -169,7 +168,6 @@ export async function batchMovePages({
 			}
 		}
 	} catch (error) {
-		console.error("Batch move error:", error);
 		result.success = false;
 		result.errors.push({
 			pageId: "batch",

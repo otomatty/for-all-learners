@@ -50,21 +50,16 @@ export default function DroppableNoteItem({
 	};
 
 	return (
-		<div
+		<button
+			type="button"
 			ref={setNodeRef}
 			className={cn(
-				"p-3 rounded-md cursor-pointer transition-colors",
+				"w-full p-3 rounded-md cursor-pointer transition-colors text-left",
 				"hover:bg-accent/50 border border-transparent",
 				isSelected && "bg-accent border-border shadow-sm",
 				isOver && "bg-primary/10 border-primary border-dashed",
 			)}
 			onClick={() => onSelect(note.id)}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					onSelect(note.id);
-				}
-			}}
 		>
 			<div className="flex items-center gap-2 mb-2">
 				{isSelected ? (
@@ -109,6 +104,6 @@ export default function DroppableNoteItem({
 					</span>
 				</div>
 			)}
-		</div>
+		</button>
 	);
 }

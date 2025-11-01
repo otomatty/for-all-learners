@@ -1,17 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-
-// Regular client（ユーザー認証用）
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/pdf-jobs - ユーザーのPDFジョブ一覧取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		// ユーザー認証確認
 		const {
 			data: { user },
@@ -28,11 +23,11 @@ export async function GET(request: NextRequest) {
 		const { searchParams } = new URL(request.url);
 		const status = searchParams.get("status");
 		const limit = Math.min(
-			Number.parseInt(searchParams.get("limit") || "10"),
+			Number.parseInt(searchParams.get("limit") || "10", 10),
 			100,
 		); // 最大100件
 		const offset = Math.max(
-			Number.parseInt(searchParams.get("offset") || "0"),
+			Number.parseInt(searchParams.get("offset") || "0", 10),
 			0,
 		);
 		const deckId = searchParams.get("deck_id");
@@ -86,7 +81,6 @@ export async function GET(request: NextRequest) {
 		const { data: jobs, error, count } = await query;
 
 		if (error) {
-			console.error("Get PDF jobs error:", error);
 			return NextResponse.json(
 				{ error: "Database error", message: "ジョブの取得に失敗しました" },
 				{ status: 500 },
@@ -123,8 +117,7 @@ export async function GET(request: NextRequest) {
 				total: count || jobs.length,
 			},
 		});
-	} catch (error) {
-		console.error("PDF jobs API error:", error);
+	} catch (_error) {
 		return NextResponse.json(
 			{
 				error: "Internal server error",
@@ -140,6 +133,7 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -180,7 +174,6 @@ export async function DELETE(request: NextRequest) {
 		const { error, count } = await deleteQuery;
 
 		if (error) {
-			console.error("Delete PDF jobs error:", error);
 			return NextResponse.json(
 				{ error: "Database error", message: "ジョブの削除に失敗しました" },
 				{ status: 500 },
@@ -192,8 +185,7 @@ export async function DELETE(request: NextRequest) {
 			message: `${count || 0}件のジョブを削除しました`,
 			deletedCount: count || 0,
 		});
-	} catch (error) {
-		console.error("Delete PDF jobs API error:", error);
+	} catch (_error) {
 		return NextResponse.json(
 			{
 				error: "Internal server error",

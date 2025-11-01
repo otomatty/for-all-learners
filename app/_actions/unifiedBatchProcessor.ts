@@ -55,17 +55,11 @@ export async function processUnifiedBatch(
 
 	// 事前クォータ確認
 	const quotaManager = getGeminiQuotaManager();
-	const quotaStatus = quotaManager.getQuotaStatus();
+	const _quotaStatus = quotaManager.getQuotaStatus();
 
 	try {
-		console.log(`[統合バッチ処理] ${batchInput.type} 処理開始`);
-
 		switch (batchInput.type) {
 			case "multi-file": {
-				console.log(
-					`[統合バッチ処理] マルチファイル処理: ${batchInput.files.length}ファイル`,
-				);
-
 				const result = await processMultiFilesBatch(userId, batchInput.files);
 
 				return {
@@ -80,10 +74,6 @@ export async function processUnifiedBatch(
 			}
 
 			case "audio-batch": {
-				console.log(
-					`[統合バッチ処理] 音声バッチ処理: ${batchInput.audioFiles.length}ファイル`,
-				);
-
 				const result = await processAudioFilesBatch(
 					userId,
 					batchInput.audioFiles,
@@ -101,10 +91,6 @@ export async function processUnifiedBatch(
 			}
 
 			case "image-batch": {
-				console.log(
-					`[統合バッチ処理] 画像バッチ処理: ${batchInput.pages.length}ページ`,
-				);
-
 				const result = await transcribeImagesBatch(batchInput.pages);
 				const apiRequestsUsed = Math.ceil(batchInput.pages.length / 4);
 
@@ -125,8 +111,6 @@ export async function processUnifiedBatch(
 				);
 		}
 	} catch (error) {
-		console.error("統合バッチ処理エラー:", error);
-
 		return {
 			success: false,
 			message: `統合バッチ処理でエラーが発生しました: ${error instanceof Error ? error.message : "不明なエラー"}`,

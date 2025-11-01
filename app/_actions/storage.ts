@@ -17,7 +17,6 @@ export async function uploadImageToCardImages(
 		.upload(fileName, file);
 
 	if (error) {
-		console.error("Error uploading image to Supabase Storage:", error);
 		return { publicUrl: "", error: error.message };
 	}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, CircleX } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
@@ -81,32 +81,9 @@ export default function MultipleChoiceQuiz({
 	// 残り時間を ms 単位で管理して滑らかに更新
 	const expireTimeRef = useRef<number>(Date.now() + timeLimit * 1000);
 	const [remainingMs, setRemainingMs] = useState<number>(timeLimit * 1000);
-	const remaining = Math.ceil(remainingMs / 1000);
+	const _remaining = Math.ceil(remainingMs / 1000);
 	// track when the user answered or time expired
 	const [answerTimestamp, setAnswerTimestamp] = useState<number | null>(null);
-
-	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
-	useEffect(() => {
-		const handleKeyPress = (event: KeyboardEvent) => {
-			if (!showAnswer) {
-				// option selection via number keys
-				const keyNum = Number.parseInt(event.key, 10);
-				if (keyNum >= 1 && keyNum <= currentQuestion.options.length) {
-					handleOptionClick(keyNum - 1);
-				}
-			} else {
-				// proceed to next question
-				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
-					event.preventDefault();
-					handleNext();
-				}
-			}
-		};
-		window.addEventListener("keydown", handleKeyPress);
-		return () => {
-			window.removeEventListener("keydown", handleKeyPress);
-		};
-	}, [showAnswer, currentQuestion.options]);
 
 	// Log learning duration when quiz finishes
 	useEffect(() => {
@@ -143,20 +120,23 @@ export default function MultipleChoiceQuiz({
 		return () => cancelAnimationFrame(frame);
 	}, [showAnswer, isFinished]);
 
-	const handleOptionClick = (index: number) => {
-		if (showAnswer) return;
-		setSelectedIndex(index);
-		const isCorrect = index === currentQuestion.correctAnswerIndex;
-		if (isCorrect) {
-			setScore((prev) => prev + 1);
-		}
-		// record when user answered
-		const now = Date.now();
-		setAnswerTimestamp(now);
-		setShowAnswer(true);
-	};
+	const handleOptionClick = useCallback(
+		(index: number) => {
+			if (showAnswer) return;
+			setSelectedIndex(index);
+			const isCorrect = index === currentQuestion.correctAnswerIndex;
+			if (isCorrect) {
+				setScore((prev) => prev + 1);
+			}
+			// record when user answered
+			const now = Date.now();
+			setAnswerTimestamp(now);
+			setShowAnswer(true);
+		},
+		[showAnswer, currentQuestion.correctAnswerIndex],
+	);
 
-	function handleNext() {
+	const handleNext = useCallback(() => {
 		// compute time until answer submission (excludes idle)
 		const spent = Math.floor(
 			((answerTimestamp ?? Date.now()) - questionStartTime) / 1000,
@@ -190,7 +170,18 @@ export default function MultipleChoiceQuiz({
 		} else {
 			setIsFinished(true);
 		}
-	}
+	}, [
+		answerTimestamp,
+		questionStartTime,
+		currentQuestion.question,
+		currentQuestion.options,
+		currentQuestion.correctAnswerIndex,
+		currentQuestion.cardId,
+		selectedIndex,
+		currentIndex,
+		total,
+		timeLimit,
+	]);
 
 	// On finish, perform review and render summary
 	useEffect(() => {
@@ -205,10 +196,33 @@ export default function MultipleChoiceQuiz({
 		}
 	}, [isFinished, results]);
 
+	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
+	useEffect(() => {
+		const handleKeyPress = (event: KeyboardEvent) => {
+			if (!showAnswer) {
+				// option selection via number keys
+				const keyNum = Number.parseInt(event.key, 10);
+				if (keyNum >= 1 && keyNum <= currentQuestion.options.length) {
+					handleOptionClick(keyNum - 1);
+				}
+			} else {
+				// proceed to next question
+				if ([" ", "Enter", "ArrowRight"].includes(event.key)) {
+					event.preventDefault();
+					handleNext();
+				}
+			}
+		};
+		window.addEventListener("keydown", handleKeyPress);
+		return () => {
+			window.removeEventListener("keydown", handleKeyPress);
+		};
+	}, [showAnswer, currentQuestion.options, handleNext, handleOptionClick]);
+
 	// Retry wrong questions callback
 	const retryWrong = () => {
 		const wrongQuestions = quizQuestions.filter(
-			(q, idx) =>
+			(_q, idx) =>
 				questionSummaries[idx].yourAnswer !==
 				questionSummaries[idx].correctAnswer,
 		);

@@ -12,11 +12,6 @@ export async function GET(request: Request) {
 
 	// Handle OAuth errors
 	if (errorParam) {
-		console.error(
-			"OAuth error:",
-			errorParam,
-			requestUrl.searchParams.get("error_description"),
-		);
 		return NextResponse.redirect(
 			`${requestUrl.origin}/auth/login?error=${encodeURIComponent(errorParam)}&error_description=${encodeURIComponent(requestUrl.searchParams.get("error_description") || "Unknown OAuth error")}`,
 		);
@@ -34,10 +29,9 @@ export async function GET(request: Request) {
 		});
 	} else if (code) {
 		// Exchange authorization code for session
-		const { data, error: exchangeError } =
+		const { error: exchangeError } =
 			await supabase.auth.exchangeCodeForSession(code);
 		if (exchangeError) {
-			console.error("Error exchanging code for session:", exchangeError);
 			return NextResponse.redirect(
 				`${requestUrl.origin}/auth/login?error=auth_exchange_failed&error_description=${encodeURIComponent(exchangeError.message)}`,
 			);
@@ -50,7 +44,6 @@ export async function GET(request: Request) {
 		error: userError,
 	} = await supabase.auth.getUser();
 	if (!user) {
-		console.error("Error retrieving user:", userError);
 		return NextResponse.redirect(
 			`${requestUrl.origin}/auth/login?error=user_retrieval_failed${userError ? `&error_description=${encodeURIComponent(userError.message)}` : ""}`,
 		);
@@ -59,7 +52,6 @@ export async function GET(request: Request) {
 	const account = await getAccountById(user.id);
 	if (!account) {
 		if (!user.email) {
-			console.error("ユーザーにメールアドレスがありません");
 			return NextResponse.redirect(
 				`${requestUrl.origin}/auth/login?error=no_email_for_account`,
 			);

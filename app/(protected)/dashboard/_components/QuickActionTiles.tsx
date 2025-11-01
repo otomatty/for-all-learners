@@ -38,7 +38,7 @@ export const QuickActionTiles: React.FC<QuickActionTilesProps> = ({
 		reviewMode: boolean;
 		reviewCount?: number;
 	} | null>(null);
-	const router = useRouter();
+	const _router = useRouter();
 
 	return (
 		<>

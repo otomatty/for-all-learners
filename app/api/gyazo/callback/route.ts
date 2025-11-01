@@ -15,8 +15,7 @@ export async function GET(req: Request) {
 		await handleGyazoCallback(code);
 		// 認証後、設定ページへリダイレクト
 		return NextResponse.redirect(new URL("/settings", req.url));
-	} catch (error) {
-		console.error("Gyazo callback error:", error);
+	} catch (_error) {
 		// エラー時も設定ページにリダイレクト（クエリで状態を示せる）
 		return NextResponse.redirect(new URL("/settings?error=gyazo", req.url));
 	}

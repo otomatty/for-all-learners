@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
 	generateRawCardsFromPageContent,
@@ -46,6 +46,8 @@ export function GenerateCardsForm({
 	>(null);
 	const [isGenerating, startGenerating] = useTransition();
 	const [isSaving, startSaving] = useTransition();
+
+	const deckSelectId = useId();
 
 	const handleGenerateCards = async (
 		event: React.FormEvent<HTMLFormElement>,
@@ -162,7 +164,7 @@ export function GenerateCardsForm({
 			{!rawGeneratedCards ? (
 				<form onSubmit={handleGenerateCards} className="space-y-6">
 					<div className="w-fit">
-						<Label htmlFor="deck-select" className="mb-2 block">
+						<Label htmlFor={deckSelectId} className="mb-2 block">
 							保存先のデッキ
 						</Label>
 						{decks.length > 0 ? (
@@ -171,7 +173,7 @@ export function GenerateCardsForm({
 								onValueChange={setSelectedDeckId}
 								disabled={isGenerating}
 							>
-								<SelectTrigger id="deck-select" className="w-full">
+								<SelectTrigger id={deckSelectId} className="w-full">
 									<SelectValue placeholder="デッキを選択してください" />
 								</SelectTrigger>
 								<SelectContent>

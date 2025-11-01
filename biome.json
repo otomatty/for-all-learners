@@ -3,10 +3,18 @@
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
-		"useIgnoreFile": false
+		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"experimentalScannerIgnores": [
+			"node_modules",
+			".next",
+			"dist",
+			"build",
+			"public",
+			"app/globals.css"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -17,7 +25,21 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noConsole": "error"
+				"noConsole": "error",
+				"noUnknownAtRules": "off",
+				"noArrayIndexKey": "warn",
+				"noExplicitAny": "warn"
+			},
+			"correctness": {
+				"noUnusedVariables": "warn"
+			},
+			"performance": {
+				"noDynamicNamespaceImportAccess": "warn"
+			},
+			"a11y": {
+				"useAriaPropsSupportedByRole": "warn",
+				"useSemanticElements": "warn",
+				"noStaticElementInteractions": "off"
 			}
 		}
 	},

@@ -7,7 +7,7 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createChangelogEntry } from "@/app/_actions/changelog";
 import {
 	createVersionCommitStaging,
@@ -73,7 +73,7 @@ export function CommitHistorySection() {
 		fetch("/api/commit-history")
 			.then((res) => res.json())
 			.then((data: VersionGroup[]) => setGroups(data))
-			.catch((e) => console.error("Failed to fetch commit history", e));
+			.catch((_e) => {});
 	}, []);
 
 	// 初期選択を設定
@@ -96,9 +96,7 @@ export function CommitHistorySection() {
 						setStagingStatus("idle");
 						setStagingId(undefined);
 					}
-				} catch (e) {
-					console.error("ステージング取得エラー", e);
-				}
+				} catch (_e) {}
 			})();
 		}
 	}, [selectedVersion]);
@@ -166,10 +164,6 @@ export function CommitHistorySection() {
 				commits: selectedGroup?.commits ?? [],
 			});
 			if (!staging || staging.id == null) {
-				console.error(
-					"ステージング作成失敗: レコードが返されませんでした",
-					staging,
-				);
 				return;
 			}
 			setStagingId(staging.id);
@@ -177,8 +171,7 @@ export function CommitHistorySection() {
 			const processed = await processVersionCommitStaging(staging.id);
 			setStagingStatus(processed.status);
 			setSummaryText(processed.summary ?? "");
-		} catch (e) {
-			console.error("要約作成エラー", e);
+		} catch (_e) {
 		} finally {
 			setLoadingSummary(false);
 		}
@@ -199,10 +192,8 @@ export function CommitHistorySection() {
 			if (result.success) {
 				setStagingStatus("confirmed");
 			} else {
-				console.error("Changelog entry creation failed", result.error);
 			}
-		} catch (e) {
-			console.error("登録エラー", e);
+		} catch (_e) {
 		} finally {
 			setLoadingConfirm(false);
 		}

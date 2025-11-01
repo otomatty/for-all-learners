@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { deleteDeck } from "@/app/_actions/decks";
 import { duplicateDeck } from "@/app/_actions/duplicateDeck";
@@ -63,8 +63,7 @@ export default function ActionMenu({
 			await deleteDeck(deckId);
 			toast.success("デッキを削除しました");
 			router.push("/decks");
-		} catch (err) {
-			console.error("[ActionMenu] デッキ削除エラー:", err);
+		} catch (_err) {
 			toast.error("デッキの削除に失敗しました");
 		} finally {
 			setShowDelete(false);
@@ -81,8 +80,7 @@ export default function ActionMenu({
 			toast.dismiss();
 			toast.success(`デッキ「${deckTitle}」を複製しました`);
 			router.push(`/decks/${newDeck.id}`);
-		} catch (err) {
-			console.error("[ActionMenu] デッキ複製エラー:", err);
+		} catch (_err) {
 			toast.dismiss();
 			toast.error("デッキの複製に失敗しました");
 		}

@@ -9,6 +9,7 @@ import {
 
 export default function FAQSection() {
 	return (
+		// biome-ignore lint/correctness/useUniqueElementIds: Page anchor for navigation
 		<section
 			className="w-full py-12 md:py-24 lg:py-32 bg-slate-50 dark:bg-gray-900"
 			id="faq"

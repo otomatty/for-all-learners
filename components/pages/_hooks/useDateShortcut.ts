@@ -11,7 +11,7 @@ export function useDateShortcut(editor: Editor | null) {
 	const lastRangeRef = useRef<{ from: number; to: number } | null>(null);
 	const handleDateShortcut = useCallback(() => {
 		if (!editor) return;
-		const { from, to, empty } = editor.state.selection;
+		const { from, to: _to, empty } = editor.state.selection;
 		const formatted = dateFormatters[formatIndex](new Date());
 		if (empty && lastRangeRef.current && lastRangeRef.current.to === from) {
 			// Replace previous insertion

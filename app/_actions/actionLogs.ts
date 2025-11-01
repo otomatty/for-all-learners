@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 
 /**
  * Record a user's action duration in action_logs.

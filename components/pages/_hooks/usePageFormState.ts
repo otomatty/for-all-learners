@@ -6,7 +6,10 @@ interface UsePageFormStateProps {
 	isNewPage: boolean;
 }
 
-export function usePageFormState({ page, isNewPage }: UsePageFormStateProps) {
+export function usePageFormState({
+	page,
+	isNewPage: _isNewPage,
+}: UsePageFormStateProps) {
 	const [title, setTitleInternal] = useState(page.title);
 	const [isLoading, setIsLoading] = useState(false);
 	// isDirty は、タイトルまたはコンテンツが変更されたかどうかを示す

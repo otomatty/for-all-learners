@@ -48,9 +48,8 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message || "ゴミ箱の読み込みに失敗しました");
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("ゴミ箱の読み込みに失敗しました");
-			console.error("Load trash error:", error);
 		}
 		setLoading(false);
 	}, []);
@@ -101,10 +100,9 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("復元に失敗しました");
-			console.error("Restore error:", error);
 		}
 	};
 
@@ -134,10 +132,9 @@ export function TrashPanel({
 			} else {
 				toast.error(result.message);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("完全削除に失敗しました");
-			console.error("Permanent delete error:", error);
 		}
 	};
 
@@ -234,19 +231,14 @@ export function TrashPanel({
 
 									return (
 										<div key={item.id}>
-											<div
-												className={`p-3 rounded-md cursor-pointer transition-colors ${
+											<button
+												type="button"
+												className={`w-full p-3 rounded-md cursor-pointer transition-colors text-left ${
 													selectedTrashIds.includes(item.id)
 														? "bg-primary/10 border border-primary/20"
 														: "hover:bg-muted/50"
 												}`}
 												onClick={() => toggleSelection(item.id)}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" || e.key === " ") {
-														e.preventDefault();
-														toggleSelection(item.id);
-													}
-												}}
 											>
 												<div className="flex items-start gap-3">
 													<input
@@ -279,7 +271,7 @@ export function TrashPanel({
 														)}
 													</div>
 												</div>
-											</div>
+											</button>
 											{index < trashItems.length - 1 && (
 												<Separator className="my-1" />
 											)}

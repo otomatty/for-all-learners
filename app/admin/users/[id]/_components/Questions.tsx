@@ -1,4 +1,3 @@
-import React from "react";
 import { getQuestionsByUser } from "@/app/_actions/questions";
 
 interface QuestionsProps {

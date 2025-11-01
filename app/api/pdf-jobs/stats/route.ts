@@ -1,16 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-);
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/pdf-jobs/stats - ユーザーのPDF処理統計取得
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
 		const {
 			data: { user },
 			error: authError,
@@ -24,7 +20,7 @@ export async function GET(request: NextRequest) {
 
 		const { searchParams } = new URL(request.url);
 		const period = searchParams.get("period") || "30"; // デフォルト30日
-		const periodDays = Math.min(Math.max(Number.parseInt(period), 1), 365); // 1-365日の範囲
+		const periodDays = Math.min(Math.max(Number.parseInt(period, 10), 1), 365); // 1-365日の範囲
 
 		// 期間の開始日を計算
 		const startDate = new Date();
@@ -40,7 +36,6 @@ export async function GET(request: NextRequest) {
 			.gte("created_at", startDate.toISOString());
 
 		if (basicError) {
-			console.error("Get basic stats error:", basicError);
 			return NextResponse.json(
 				{ error: "Database error", message: "統計の取得に失敗しました" },
 				{ status: 500 },
@@ -56,7 +51,6 @@ export async function GET(request: NextRequest) {
 			.eq("user_id", user.id);
 
 		if (allTimeError) {
-			console.error("Get all time stats error:", allTimeError);
 			return NextResponse.json(
 				{ error: "Database error", message: "全期間統計の取得に失敗しました" },
 				{ status: 500 },
@@ -89,8 +83,7 @@ export async function GET(request: NextRequest) {
 				processing_time: processingTimeStats,
 			},
 		});
-	} catch (error) {
-		console.error("PDF jobs stats API error:", error);
+	} catch (_error) {
 		return NextResponse.json(
 			{
 				error: "Internal server error",
@@ -105,10 +98,10 @@ export async function GET(request: NextRequest) {
 function calculateStats(
 	jobs: Array<{
 		status: string;
-		created_at?: string;
-		actual_duration_seconds?: number;
-		generated_cards?: number;
-		file_size_bytes?: number;
+		created_at?: string | null;
+		actual_duration_seconds?: number | null;
+		generated_cards?: number | null;
+		file_size_bytes?: number | null;
 	}>,
 ) {
 	const total = jobs.length;
@@ -163,9 +156,9 @@ function calculateStats(
 function calculateDailyStats(
 	jobs: Array<{
 		status: string;
-		created_at: string;
-		actual_duration_seconds?: number;
-		generated_cards?: number;
+		created_at: string | null;
+		actual_duration_seconds?: number | null;
+		generated_cards?: number | null;
 	}>,
 	periodDays: number,
 ) {
@@ -197,6 +190,8 @@ function calculateDailyStats(
 
 	// ジョブデータを日別に集計
 	for (const job of jobs) {
+		if (!job.created_at) continue;
+
 		const createdDate = new Date(job.created_at).toISOString().split("T")[0];
 		const dayStats = dailyMap.get(createdDate);
 
@@ -220,7 +215,7 @@ function calculateDailyStats(
 function calculateProcessingTimeStats(
 	jobs: Array<{
 		status: string;
-		actual_duration_seconds?: number;
+		actual_duration_seconds?: number | null;
 	}>,
 ) {
 	const completedJobs = jobs.filter(

@@ -26,8 +26,7 @@ export function useGenerateContent(
 			const html = marked.parse(markdown);
 			editor.commands.setContent(html);
 			await savePage();
-		} catch (error) {
-			console.error("generatePageInfo error:", error);
+		} catch (_error) {
 			toast.error("生成に失敗しました");
 		} finally {
 			setIsGenerating(false);

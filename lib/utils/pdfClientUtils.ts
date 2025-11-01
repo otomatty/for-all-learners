@@ -80,9 +80,7 @@ export class PdfProcessingTracker {
 		for (const callback of this.onProgressCallbacks) {
 			try {
 				callback(progress);
-			} catch (error) {
-				console.error("Progress callback error:", error);
-			}
+			} catch (_error) {}
 		}
 	}
 
@@ -133,7 +131,6 @@ export class PdfProcessingTracker {
 					this.stopTracking();
 				}
 			} catch (error) {
-				console.error("Polling error:", error);
 				this.notifyProgress({
 					stage: "error",
 					percentage: 0,
@@ -364,8 +361,7 @@ export async function extractPdfBasicInfo(file: File): Promise<{
 			title: file.name.replace(".pdf", ""),
 			// 他のメタデータは実際のPDF.js実装で取得
 		};
-	} catch (error) {
-		console.error("PDF info extraction error:", error);
+	} catch (_error) {
 		return {
 			error: "PDFの情報を取得できませんでした",
 		};
@@ -381,9 +377,7 @@ export const PdfOptionsStorage = {
 	save(options: PdfProcessingOptions) {
 		try {
 			localStorage.setItem(this.STORAGE_KEY, JSON.stringify(options));
-		} catch (error) {
-			console.warn("Failed to save PDF options:", error);
-		}
+		} catch (_error) {}
 	},
 
 	load(): PdfProcessingOptions | null {
@@ -392,18 +386,14 @@ export const PdfOptionsStorage = {
 			if (stored) {
 				return JSON.parse(stored);
 			}
-		} catch (error) {
-			console.warn("Failed to load PDF options:", error);
-		}
+		} catch (_error) {}
 		return null;
 	},
 
 	clear() {
 		try {
 			localStorage.removeItem(this.STORAGE_KEY);
-		} catch (error) {
-			console.warn("Failed to clear PDF options:", error);
-		}
+		} catch (_error) {}
 	},
 
 	getDefault(): PdfProcessingOptions {
@@ -421,7 +411,7 @@ export const PdfOptionsStorage = {
 export function showPdfProcessingNotification(
 	title: string,
 	message: string,
-	type: "success" | "error" | "info" = "info",
+	_type: "success" | "error" | "info" = "info",
 ) {
 	// ブラウザ通知が許可されている場合
 	if ("Notification" in window && Notification.permission === "granted") {

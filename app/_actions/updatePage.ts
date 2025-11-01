@@ -35,12 +35,7 @@ export async function updatePage({
 }: UpdatePageParams) {
 	// content is received as a JSON string; parse to JSONContent
 	let parsedContent: JSONContent;
-	try {
-		parsedContent = JSON.parse(content) as JSONContent;
-	} catch (err) {
-		console.error("Failed to parse content JSON in updatePage:", err);
-		throw err;
-	}
+	parsedContent = JSON.parse(content) as JSONContent;
 
 	const supabase = await createClient();
 
@@ -52,10 +47,6 @@ export async function updatePage({
 		.single();
 
 	if (fetchErr) {
-		console.error(
-			"Failed to fetch current page for thumbnail check:",
-			fetchErr,
-		);
 		throw fetchErr;
 	}
 
@@ -77,11 +68,9 @@ export async function updatePage({
 
 			if (decision.shouldUpdate) {
 				thumbnailUrl = decision.newThumbnailUrl;
-				const logMessage = generateThumbnailUpdateLog(id, decision);
-				console.log(logMessage);
+				const _logMessage = generateThumbnailUpdateLog(id, decision);
 			} else {
-				const logMessage = generateThumbnailUpdateLog(id, decision);
-				console.log(logMessage);
+				const _logMessage = generateThumbnailUpdateLog(id, decision);
 			}
 		} else {
 			// 従来のロジック（後方互換性のため保持）
@@ -89,20 +78,11 @@ export async function updatePage({
 				const extractedThumbnail = extractFirstImageUrl(parsedContent);
 				if (extractedThumbnail) {
 					thumbnailUrl = extractedThumbnail;
-					const action = forceRegenerateThumbnail ? "強制再生成" : "新規生成";
-					console.log(
-						`[updatePage] ページ ${id}: サムネイル${action} = ${extractedThumbnail}`,
-					);
+					const _action = forceRegenerateThumbnail ? "強制再生成" : "新規生成";
 				} else if (forceRegenerateThumbnail) {
 					thumbnailUrl = null;
-					console.log(
-						`[updatePage] ページ ${id}: 画像なしのためサムネイルをクリア`,
-					);
 				}
 			} else {
-				console.log(
-					`[updatePage] ページ ${id}: 既存サムネイル保持 = ${currentPage.thumbnail_url}`,
-				);
 			}
 		}
 	}

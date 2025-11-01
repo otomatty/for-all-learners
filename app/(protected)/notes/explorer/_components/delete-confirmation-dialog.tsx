@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangleIcon, FileIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ export function DeleteConfirmationDialog({
 	onCancel,
 }: DeleteConfirmationDialogProps) {
 	const [deleteType, setDeleteType] = useState<"trash" | "permanent">("trash");
+	const trashId = useId();
+	const permanentId = useId();
 
 	const handleConfirm = () => {
 		onConfirm(deleteType);
@@ -88,9 +90,9 @@ export function DeleteConfirmationDialog({
 						>
 							{/* ゴミ箱に移動 */}
 							<div className="flex items-start space-x-3">
-								<RadioGroupItem value="trash" id="trash" className="mt-1" />
+								<RadioGroupItem value="trash" id={trashId} className="mt-1" />
 								<div className="flex-1">
-									<Label htmlFor="trash" className="text-base font-medium">
+									<Label htmlFor={trashId} className="text-base font-medium">
 										ゴミ箱に移動（推奨）
 									</Label>
 									<p className="text-sm text-muted-foreground mt-1">
@@ -103,12 +105,12 @@ export function DeleteConfirmationDialog({
 							<div className="flex items-start space-x-3">
 								<RadioGroupItem
 									value="permanent"
-									id="permanent"
+									id={permanentId}
 									className="mt-1"
 								/>
 								<div className="flex-1">
 									<Label
-										htmlFor="permanent"
+										htmlFor={permanentId}
 										className="text-base font-medium text-destructive"
 									>
 										完全削除

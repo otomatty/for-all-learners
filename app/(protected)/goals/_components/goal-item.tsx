@@ -80,7 +80,7 @@ export function GoalItem({ goal }: GoalItemProps) {
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("目標の完了に失敗しました");
 		} finally {
 			setIsCompleting(false);

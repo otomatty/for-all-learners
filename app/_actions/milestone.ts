@@ -51,7 +51,6 @@ export async function getMilestones(): Promise<MilestoneEntry[]> {
 		.order("created_at", { ascending: false }); // 次に作成日時の降順 (新しいものが優先されるように)
 
 	if (error) {
-		console.error("Error fetching milestones from Supabase:", error.message);
 		return []; // エラー時は空配列を返す (本番環境ではより堅牢なエラー処理を検討)
 	}
 
@@ -75,12 +74,10 @@ export async function createMilestone(
 		.single();
 
 	if (error) {
-		console.error("Error creating milestone in Supabase:", error.message);
 		return null;
 	}
 
 	if (!data) {
-		console.error("No data returned after creating milestone.");
 		return null;
 	}
 
@@ -102,12 +99,10 @@ export async function updateMilestone(
 		.single();
 
 	if (error) {
-		console.error(`Error updating milestone ${id} in Supabase:`, error.message);
 		return null;
 	}
 
 	if (!data) {
-		console.error(`No data returned after updating milestone ${id}.`);
 		return null;
 	}
 
@@ -123,10 +118,6 @@ export async function deleteMilestone(
 	const { error } = await supabase.from("milestones").delete().eq("id", id);
 
 	if (error) {
-		console.error(
-			`Error deleting milestone ${id} from Supabase:`,
-			error.message,
-		);
 		return { success: false, error: error.message };
 	}
 

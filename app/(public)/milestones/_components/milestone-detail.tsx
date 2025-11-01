@@ -1,7 +1,8 @@
 "use client";
 
 import { CalendarClockIcon } from "lucide-react"; // XIconなどはResponsiveDialog側で持つため削除
-import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -89,7 +90,7 @@ export default function MilestoneDetail({
 				<section>
 					<h2 className="text-lg font-semibold mb-2">主なポイント</h2>
 					<ul className="list-disc list-inside text-muted-foreground space-y-1">
-						{features.map((feature, index) => (
+						{features.map((feature, _index) => (
 							<li key={feature}>{feature}</li>
 						))}
 					</ul>
@@ -102,17 +103,17 @@ export default function MilestoneDetail({
 							{imageLoading && (
 								<div className="absolute inset-0 w-full h-full bg-secondary animate-pulse" />
 							)}
-							<img
+							<Image
 								src={milestone.imageUrl}
 								alt={
 									milestone.title
 										? `${milestone.title} のイメージ`
 										: "マイルストーンイメージ"
 								}
-								className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"}`}
+								fill
+								className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"}`}
 								onLoad={() => setImageLoading(false)}
 								onError={() => {
-									console.error("Failed to load image:", milestone.imageUrl);
 									setImageLoading(false); // エラー時もスケルトンを非表示
 								}}
 							/>
@@ -123,7 +124,7 @@ export default function MilestoneDetail({
 				<section>
 					<h2 className="text-lg font-semibold mb-2">関連情報</h2>
 					<ul className="space-y-1">
-						{relatedLinks.map((link, index) => (
+						{relatedLinks.map((link, _index) => (
 							<li key={link.url}>
 								<a
 									href={link.url}

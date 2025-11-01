@@ -71,7 +71,6 @@ export default function MilestoneAdminView({
 			try {
 				processedValue = value ? JSON.parse(value) : null;
 			} catch {
-				console.warn("Related links JSON is invalid");
 				// エラー時は元の値を維持するか、エラー表示する
 				return; // 不正なJSONの場合は更新しない
 			}
@@ -99,13 +98,13 @@ export default function MilestoneAdminView({
 			// revalidatePathがサーバーアクション内で行われるため、router.refresh()でUIを更新
 			router.refresh();
 			closeForm();
-		} catch (err: any) {
+		} catch (err) {
+			const errorMessage = err instanceof Error ? err.message : "Unknown error";
 			setError(
 				editingMilestone
-					? `マイルストーンの更新に失敗しました: ${err.message}`
-					: `マイルストーンの作成に失敗しました: ${err.message}`,
+					? `マイルストーンの更新に失敗しました: ${errorMessage}`
+					: `マイルストーンの作成に失敗しました: ${errorMessage}`,
 			);
-			console.error(err);
 		} finally {
 			setIsLoading(false);
 		}
@@ -135,14 +134,13 @@ export default function MilestoneAdminView({
 			const result = await deleteMilestone(id);
 			if (!result.success) throw new Error(result.error || "Delete failed");
 			router.refresh(); // UIを更新
-		} catch (err: any) {
-			setError(`マイルストーンの削除に失敗しました: ${err.message}`);
-			console.error(err);
+		} catch (err) {
+			const errorMessage = err instanceof Error ? err.message : "Unknown error";
+			setError(`マイルストーンの削除に失敗しました: ${errorMessage}`);
 		} finally {
 			setIsLoading(false);
 		}
 	};
-
 	const openForm = () => {
 		setEditingMilestone(null);
 		setFormData(initialFormData);

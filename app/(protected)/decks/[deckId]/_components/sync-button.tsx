@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { syncDeckLinks } from "@/app/_actions/decks";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ export function SyncButton({ deckId }: SyncButtonProps) {
 			toast.success("リンクの同期が完了しました");
 			router.refresh();
 		} catch (err: unknown) {
-			console.error("同期エラー:", err);
 			toast.error(
 				err instanceof Error ? err.message : "リンクの同期に失敗しました",
 			);

@@ -10,13 +10,7 @@ import {
 	PauseCircleIcon,
 	RocketIcon,
 } from "lucide-react";
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialogをインポート
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

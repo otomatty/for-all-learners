@@ -53,7 +53,6 @@ export async function checkPageConflict({
 	const { data: conflictPages, error } = await query;
 
 	if (error) {
-		console.error("Conflict check error:", error);
 		throw error;
 	}
 

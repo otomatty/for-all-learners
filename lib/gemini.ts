@@ -121,10 +121,6 @@ Back: ${back}`;
 			const clozeQuestion = parsed as ClozeQuestion;
 			if (!clozeQuestion.blanks || !Array.isArray(clozeQuestion.blanks)) {
 				clozeQuestion.blanks = [];
-				console.warn(
-					"[gemini.ts] generateQuestions: 'blanks' field was missing or not an array, defaulted to []. Problematic parsed data:",
-					JSON.stringify(parsed),
-				);
 			}
 		}
 		return { type, ...parsed } as QuestionData;
@@ -153,7 +149,7 @@ export async function generateBulkQuestions(
 	// Difficulty and language prompts
 	const languagePrompt = ` (Language: ${locale})`;
 	// Question descriptor
-	const typeName =
+	const _typeName =
 		type === "multiple_choice"
 			? "multiple-choice"
 			: type === "cloze"
@@ -229,10 +225,6 @@ Use valid JSON array only.\n`;
 				const clozeQuestion = q as ClozeQuestion;
 				if (!clozeQuestion.blanks || !Array.isArray(clozeQuestion.blanks)) {
 					clozeQuestion.blanks = [];
-					console.warn(
-						"[gemini.ts] generateBulkQuestions: 'blanks' field was missing or not an array in an item, defaulted to []. Problematic item:",
-						JSON.stringify(q),
-					);
 				}
 			}
 			return q;

@@ -45,8 +45,7 @@ export function PageHeader({
 				);
 				if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
 				router.refresh();
-			} catch (err) {
-				console.error("Auto Cosense content sync error:", err);
+			} catch (_err) {
 				toast.error("自動同期に失敗しました");
 			} finally {
 				setIsSyncingContent(false);
@@ -91,8 +90,7 @@ export function PageHeader({
 							if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
 							toast.success("コンテンツ同期完了");
 							router.refresh();
-						} catch (err) {
-							console.error("Cosense content sync error:", err);
+						} catch (_err) {
 							toast.error("コンテンツ同期に失敗しました");
 						} finally {
 							setIsSyncingContent(false);

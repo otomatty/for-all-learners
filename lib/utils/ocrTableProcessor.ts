@@ -52,14 +52,12 @@ export function processOcrTable(
 	const warnings: string[] = [];
 
 	if (opts.debug) {
-		console.log("[OCR Table] 入力テキスト:", ocrText);
 	}
 
 	try {
 		// 1. テキストの前処理
 		const preprocessed = preprocessOcrText(ocrText, opts);
 		if (opts.debug) {
-			console.log("[OCR Table] 前処理後:", preprocessed);
 		}
 
 		// 2. テーブル行の検出
@@ -86,7 +84,6 @@ export function processOcrTable(
 		const tableData = parseMarkdownTable(markdownTable);
 
 		if (opts.debug) {
-			console.log("[OCR Table] 最終結果:", markdownTable);
 		}
 
 		return {
@@ -97,7 +94,6 @@ export function processOcrTable(
 			originalText: ocrText,
 		};
 	} catch (error) {
-		console.error("[OCR Table] 処理エラー:", error);
 		return {
 			success: false,
 			warnings: [
@@ -113,7 +109,7 @@ export function processOcrTable(
  */
 function preprocessOcrText(
 	text: string,
-	options: Required<OcrTableProcessingOptions>,
+	_options: Required<OcrTableProcessingOptions>,
 ): string {
 	return (
 		text
@@ -254,7 +250,7 @@ function unifyColumnCount(
  */
 function convertToMarkdownTable(
 	lines: string[],
-	options: Required<OcrTableProcessingOptions>,
+	_options: Required<OcrTableProcessingOptions>,
 ): string {
 	if (lines.length === 0) {
 		throw new Error("変換する行がありません");

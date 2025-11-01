@@ -13,6 +13,7 @@ import {
 
 export default function PricingSection() {
 	return (
+		// biome-ignore lint/correctness/useUniqueElementIds: Page anchor for navigation
 		<section className="w-full py-12 md:py-24 lg:py-32" id="pricing">
 			<Container>
 				<SectionHeader

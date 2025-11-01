@@ -1,6 +1,4 @@
 @import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 @import "tailwindcss";
 @import "./themes/red.css";
 @import "./themes/rose.css";
@@ -9,7 +7,8 @@
 @import "./themes/blue.css";
 @import "./themes/yellow.css";
 @import "./themes/violet.css";
-@import "prismjs/themes/prism-tomorrow.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @layer utilities {
 	.text-balance {

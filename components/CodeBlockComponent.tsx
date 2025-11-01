@@ -8,7 +8,7 @@ import React from "react";
 /**
  * React component for rendering code blocks with a copy button.
  */
-export default function CodeBlockComponent({ node }: NodeViewProps) {
+export default function CodeBlockComponent({ node: _node }: NodeViewProps) {
 	const wrapperRef = React.useRef<HTMLDivElement>(null);
 
 	const handleCopy = () => {
