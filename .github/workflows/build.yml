@@ -18,6 +18,10 @@ jobs:
       # Note: These should be set in GitHub Secrets
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Optional: Set defaults for non-critical env vars
+      GEMINI_MODEL: "gemini-2.5-flash"
     
     steps:
       - name: Checkout code
