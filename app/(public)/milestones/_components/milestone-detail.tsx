@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClockIcon } from "lucide-react"; // XIconなどはResponsiveDialog側で持つため削除
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,14 +103,15 @@ export default function MilestoneDetail({
 							{imageLoading && (
 								<div className="absolute inset-0 w-full h-full bg-secondary animate-pulse" />
 							)}
-							<img
+							<Image
 								src={milestone.imageUrl}
 								alt={
 									milestone.title
 										? `${milestone.title} のイメージ`
 										: "マイルストーンイメージ"
 								}
-								className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"}`}
+								fill
+								className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"}`}
 								onLoad={() => setImageLoading(false)}
 								onError={() => {
 									setImageLoading(false); // エラー時もスケルトンを非表示

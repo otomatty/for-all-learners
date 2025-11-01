@@ -69,7 +69,7 @@ export async function GET(
 		);
 		const json: JSONContent = parseCosenseLines(filteredLines);
 
-		const { data: updatedPage, error: updateError } = await supabase
+		const { error: updateError } = await supabase
 			.from("pages")
 			.update({
 				content_tiptap: json,
@@ -79,7 +79,6 @@ export async function GET(
 			.eq("title", pageTitle)
 			.select()
 			.single();
-
 		if (updateError) {
 			return NextResponse.json(
 				{ error: "Failed to update page" },

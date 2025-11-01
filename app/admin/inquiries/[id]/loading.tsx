@@ -28,9 +28,9 @@ export default function AdminInquiryDetailLoading() {
 				</CardHeader>
 				<CardContent className="space-y-6">
 					<div className="space-y-3">
-						{[...Array(4)].map((_, i) => (
+						{Array.from({ length: 4 }, (_, i) => `skeleton-${i}`).map((key) => (
 							<div
-								key={i}
+								key={key}
 								className="grid grid-cols-3 gap-2 py-2 border-b last:border-b-0"
 							>
 								<Skeleton className="h-5 w-24" />
@@ -40,7 +40,6 @@ export default function AdminInquiryDetailLoading() {
 							</div>
 						))}
 					</div>
-
 					<div>
 						<Skeleton className="h-5 w-32 mb-2" />
 						<div className="p-4 border rounded-md bg-muted/50">

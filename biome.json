@@ -12,7 +12,8 @@
 			".next",
 			"dist",
 			"build",
-			"public"
+			"public",
+			"app/globals.css"
 		]
 	},
 	"formatter": {

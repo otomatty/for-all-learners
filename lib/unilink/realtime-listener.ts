@@ -12,12 +12,12 @@ export interface RealtimePageEvent {
 	new?: {
 		id: string;
 		title: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 	old?: {
 		id: string;
 		title: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 }
 

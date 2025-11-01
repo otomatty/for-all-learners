@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 		});
 	} else if (code) {
 		// Exchange authorization code for session
-		const { data, error: exchangeError } =
+		const { error: exchangeError } =
 			await supabase.auth.exchangeCodeForSession(code);
 		if (exchangeError) {
 			return NextResponse.redirect(

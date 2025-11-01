@@ -161,14 +161,13 @@ describe("thumbnailExtractor", () => {
 		});
 
 		it("不正なコンテンツの場合はnullを返す", () => {
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input types
 			expect(extractFirstImageUrl(null as any)).toBeNull();
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input types
 			expect(extractFirstImageUrl(undefined as any)).toBeNull();
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input types
 			expect(extractFirstImageUrl("invalid" as any)).toBeNull();
 		});
-
 		it("ネストされた構造でも画像を見つけられる", () => {
 			const content: JSONContent = {
 				type: "doc",
@@ -273,9 +272,9 @@ describe("thumbnailExtractor", () => {
 			expect(isValidImageUrl("https://example.com/image.jpg")).toBe(false);
 			expect(isValidImageUrl("invalid-url")).toBe(false);
 			expect(isValidImageUrl("")).toBe(false);
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input types
 			expect(isValidImageUrl(null as any)).toBe(false);
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input types
 			expect(isValidImageUrl(undefined as any)).toBe(false);
 		});
 	});
