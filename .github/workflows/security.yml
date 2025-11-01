@@ -39,7 +39,7 @@ jobs:
 
       - name: Create issue on vulnerability found
         if: steps.audit.outputs.audit_failed == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '🔒 Security Vulnerability Detected';
