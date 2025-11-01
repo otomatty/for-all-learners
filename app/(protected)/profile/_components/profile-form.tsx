@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { updateAccount, uploadAvatar } from "@/app/_actions/accounts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +66,11 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 	const [isPending, setIsPending] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
+	const fullNameId = useId();
+	const emailId = useId();
+	const genderId = useId();
+	const birthdateId = useId();
+
 	const handleSave = async () => {
 		setIsPending(true);
 		try {
@@ -100,14 +105,10 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 		<Card className="p-4">
 			<CardContent className="space-y-6 p-4">
 				<div className="flex flex-col items-center justify-center gap-2">
-					<div
-						className="relative group w-32 h-32 cursor-pointer m-0"
+					<button
+						type="button"
+						className="relative group w-32 h-32 cursor-pointer m-0 bg-transparent border-0 p-0"
 						onClick={() => fileInputRef.current?.click()}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								fileInputRef.current?.click();
-							}
-						}}
 					>
 						<Avatar className="w-full h-full rounded-full">
 							{previewUrl || account.avatar_url ? (
@@ -123,7 +124,7 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 						<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white rounded-full">
 							画像を変更
 						</div>
-					</div>
+					</button>
 
 					<input
 						ref={fileInputRef}
@@ -143,9 +144,9 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 					</p>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="full_name">名前</Label>
+					<Label htmlFor={fullNameId}>名前</Label>
 					<Input
-						id="full_name"
+						id={fullNameId}
 						value={account.full_name ?? ""}
 						onChange={(e) =>
 							setAccount({ ...account, full_name: e.target.value })
@@ -153,19 +154,19 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="email">メールアドレス</Label>
-					<Input id="email" value={account.email ?? ""} readOnly />
+					<Label htmlFor={emailId}>メールアドレス</Label>
+					<Input id={emailId} value={account.email ?? ""} readOnly />
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="gender">性別</Label>
+					<Label htmlFor={genderId}>性別</Label>
 					<Select
 						value={account.gender ?? ""}
 						onValueChange={(value) =>
 							setAccount({ ...account, gender: value as Account["gender"] })
 						}
 					>
-						<SelectTrigger id="gender">
+						<SelectTrigger id={genderId}>
 							<SelectValue placeholder="選択してください" />
 						</SelectTrigger>
 						<SelectContent>
@@ -177,9 +178,9 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 					</Select>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="birthdate">生年月日</Label>
+					<Label htmlFor={birthdateId}>生年月日</Label>
 					<Input
-						id="birthdate"
+						id={birthdateId}
 						type="date"
 						value={account.birthdate ?? ""}
 						onChange={(e) =>

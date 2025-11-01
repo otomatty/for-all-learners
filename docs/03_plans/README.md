@@ -7,6 +7,8 @@
 ```
 plans/
 ├── README.md                    # このファイル
+├── lint-accessibility-improvements/  # Lint/アクセシビリティ改善
+│   └── 20251101_01_implementation-plan.md
 └── unified-link-mark/          # 統合リンク機能関連
     ├── 20250925_01_implementation-plan.md
     ├── 20250929_02_p2-implementation-plan.md
@@ -36,6 +38,23 @@ plans/
 ```
 
 ## 機能別ディレクトリ
+
+### lint-accessibility-improvements/
+
+Biome lint エラー修正とアクセシビリティ改善に関する計画。
+
+**目的**:
+- Biome lint エラーの段階的修正（51エラー → 0エラー）
+- アクセシビリティ標準（WCAG 2.1）への準拠
+- CI/CDパイプラインの強化
+
+**現在の状況**:
+- **完了**: 7ファイル修正、11エラー削減（51 → 40）
+- **進行中**: Phase 1（緊急対応、残り4エラー）
+
+**関連ドキュメント**:
+- 作業ログ: `docs/05_logs/2025_11/20251101_01_lint-accessibility-fixes.md`
+- Issue: `docs/01_issues/open/2025_11/20251101_01_lint-errors-reduction.md`
 
 ### unified-link-mark/
 

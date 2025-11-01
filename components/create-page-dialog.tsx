@@ -1,7 +1,7 @@
 "use client";
 
 import type { Editor } from "@tiptap/core";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { createPage } from "@/app/_actions/pages";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
@@ -49,6 +49,10 @@ export function CreatePageDialog({
 		isPublic: false,
 		isSubmitting: false,
 	});
+
+	const titleId = useId();
+	const descriptionId = useId();
+	const publicId = useId();
 
 	// Reset form when dialog opens with new title
 	useEffect(() => {
@@ -141,9 +145,9 @@ export function CreatePageDialog({
 		>
 			<form onSubmit={handleSubmit} className="space-y-4">
 				<div className="space-y-2">
-					<Label htmlFor="page-title">タイトル</Label>
+					<Label htmlFor={titleId}>タイトル</Label>
 					<Input
-						id="page-title"
+						id={titleId}
 						value={formState.title}
 						onChange={(e) =>
 							setFormState((prev) => ({ ...prev, title: e.target.value }))
@@ -155,9 +159,9 @@ export function CreatePageDialog({
 				</div>
 
 				<div className="space-y-2">
-					<Label htmlFor="page-description">説明（オプション）</Label>
+					<Label htmlFor={descriptionId}>説明（オプション）</Label>
 					<Textarea
-						id="page-description"
+						id={descriptionId}
 						value={formState.description}
 						onChange={(e) =>
 							setFormState((prev) => ({ ...prev, description: e.target.value }))
@@ -170,14 +174,14 @@ export function CreatePageDialog({
 
 				<div className="flex items-center space-x-2">
 					<Switch
-						id="page-public"
+						id={publicId}
 						checked={formState.isPublic}
 						onCheckedChange={(checked) =>
 							setFormState((prev) => ({ ...prev, isPublic: checked }))
 						}
 						disabled={formState.isSubmitting}
 					/>
-					<Label htmlFor="page-public" className="cursor-pointer">
+					<Label htmlFor={publicId} className="cursor-pointer">
 						公開ページとして作成
 					</Label>
 				</div>

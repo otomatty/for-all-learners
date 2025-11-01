@@ -2,7 +2,7 @@
 
 import { XIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,11 @@ export function InquiryFilters({
 	);
 	const [categoryId, setCategoryId] = useState(initialFilters.categoryId || "");
 
+	const searchQueryId = useId();
+	const statusId = useId();
+	const priorityId = useId();
+	const categoryIdInput = useId();
+
 	const handleFilterChange = () => {
 		const params = new URLSearchParams(searchParams);
 		if (searchQuery) params.set("q", searchQuery);
@@ -97,9 +102,9 @@ export function InquiryFilters({
 		<div className="mb-6 p-4 border rounded-lg bg-card text-card-foreground">
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 				<div>
-					<Label htmlFor="searchQuery">キーワード</Label>
+					<Label htmlFor={searchQueryId}>キーワード</Label>
 					<Input
-						id="searchQuery"
+						id={searchQueryId}
 						placeholder="件名、内容、Emailなどで検索..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
@@ -107,7 +112,7 @@ export function InquiryFilters({
 					/>
 				</div>
 				<div>
-					<Label htmlFor="status">ステータス</Label>
+					<Label htmlFor={statusId}>ステータス</Label>
 					<Select
 						value={status}
 						onValueChange={(value) =>
@@ -116,7 +121,7 @@ export function InquiryFilters({
 							)
 						}
 					>
-						<SelectTrigger id="status">
+						<SelectTrigger id={statusId}>
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>
@@ -130,7 +135,7 @@ export function InquiryFilters({
 					</Select>
 				</div>
 				<div>
-					<Label htmlFor="priority">優先度</Label>
+					<Label htmlFor={priorityId}>優先度</Label>
 					<Select
 						value={priority}
 						onValueChange={(value) => {
@@ -139,7 +144,7 @@ export function InquiryFilters({
 							);
 						}}
 					>
-						<SelectTrigger id="priority">
+						<SelectTrigger id={priorityId}>
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>
@@ -153,14 +158,14 @@ export function InquiryFilters({
 					</Select>
 				</div>
 				<div>
-					<Label htmlFor="category">カテゴリ</Label>
+					<Label htmlFor={categoryIdInput}>カテゴリ</Label>
 					<Select
 						value={categoryId}
 						onValueChange={(value) =>
 							setCategoryId(value === ALL_ITEMS_VALUE ? "" : value)
 						}
 					>
-						<SelectTrigger id="category">
+						<SelectTrigger id={categoryIdInput}>
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>

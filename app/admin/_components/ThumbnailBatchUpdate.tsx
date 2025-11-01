@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { toast } from "sonner";
 import {
 	type BatchUpdateResult,
@@ -53,6 +53,10 @@ export function ThumbnailBatchUpdate() {
 	const [batchLimit, setBatchLimit] = useState(100);
 	const [lastResult, setLastResult] = useState<BatchUpdateResult | null>(null);
 	const [progress, setProgress] = useState(0);
+
+	const userIdInputId = useId();
+	const dryRunId = useId();
+	const batchLimitId = useId();
 
 	/**
 	 * 統計情報の取得
@@ -123,11 +127,11 @@ export function ThumbnailBatchUpdate() {
 				<CardContent>
 					<div className="flex items-center gap-4 mb-4">
 						<div className="flex-1">
-							<Label htmlFor="stats-user-id">
+							<Label htmlFor={userIdInputId}>
 								対象ユーザーID (空白で全ユーザー)
 							</Label>
 							<Input
-								id="stats-user-id"
+								id={userIdInputId}
 								placeholder="ユーザーIDを入力..."
 								value={targetUserId}
 								onChange={(e) => setTargetUserId(e.target.value)}
@@ -183,17 +187,21 @@ export function ThumbnailBatchUpdate() {
 				<CardContent className="space-y-4">
 					{/* テスト実行モード */}
 					<div className="flex items-center space-x-2">
-						<Switch id="dry-run" checked={dryRun} onCheckedChange={setDryRun} />
-						<Label htmlFor="dry-run">
+						<Switch
+							id={dryRunId}
+							checked={dryRun}
+							onCheckedChange={setDryRun}
+						/>
+						<Label htmlFor={dryRunId}>
 							テスト実行モード (実際には更新しない)
 						</Label>
 					</div>
 
 					{/* 処理件数制限 */}
 					<div>
-						<Label htmlFor="batch-limit">処理対象の最大件数</Label>
+						<Label htmlFor={batchLimitId}>処理対象の最大件数</Label>
 						<Input
-							id="batch-limit"
+							id={batchLimitId}
 							type="number"
 							min="1"
 							max="1000"

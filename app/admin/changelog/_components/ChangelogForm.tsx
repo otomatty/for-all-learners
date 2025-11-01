@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react"; // useFormState を削除し、useActionState を react からインポート
+import { useActionState, useEffect, useId, useState } from "react"; // useFormState を削除し、useActionState を react からインポート
 import { useFormStatus } from "react-dom"; // useFormState を削除
 import {
 	type ActionResponse,
@@ -121,6 +121,10 @@ export function ChangelogForm({
 		initialState,
 	);
 
+	const versionId = useId();
+	const titleId = useId();
+	const publishedAtId = useId();
+
 	useEffect(() => {
 		if (state.success) {
 			if (!isEditMode) {
@@ -166,7 +170,7 @@ export function ChangelogForm({
 		<form action={formAction} className="space-y-6">
 			<div>
 				<label
-					htmlFor="version"
+					htmlFor={versionId}
 					className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
 				>
 					バージョン (例: 1.0.0)
@@ -174,7 +178,7 @@ export function ChangelogForm({
 				<input
 					type="text"
 					name="version"
-					id="version"
+					id={versionId}
 					required
 					value={version}
 					onChange={(e) => setVersion(e.target.value)}
@@ -184,7 +188,7 @@ export function ChangelogForm({
 
 			<div>
 				<label
-					htmlFor="title"
+					htmlFor={titleId}
 					className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
 				>
 					タイトル (任意)
@@ -192,7 +196,7 @@ export function ChangelogForm({
 				<input
 					type="text"
 					name="title"
-					id="title"
+					id={titleId}
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
 					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm p-2"
@@ -201,7 +205,7 @@ export function ChangelogForm({
 
 			<div>
 				<label
-					htmlFor="published_at"
+					htmlFor={publishedAtId}
 					className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
 				>
 					公開日
@@ -209,7 +213,7 @@ export function ChangelogForm({
 				<input
 					type="date"
 					name="published_at"
-					id="published_at"
+					id={publishedAtId}
 					required
 					value={publishedAt}
 					onChange={(e) => setPublishedAt(e.target.value)}

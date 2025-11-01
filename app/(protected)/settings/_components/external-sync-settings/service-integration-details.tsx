@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, HelpCircle } from "lucide-react";
+import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,9 @@ export default function ServiceIntegrationDetails({
 	onSave,
 	onCancel,
 }: ServiceIntegrationDetailsProps) {
+	const apiKeyId = useId();
+	const syncFrequencyId = useId();
+
 	return (
 		<>
 			{errorMessage && (
@@ -69,7 +73,7 @@ export default function ServiceIntegrationDetails({
 			{apiKeyRequired && (
 				<div className="mb-4">
 					<div className="flex items-center">
-						<Label htmlFor="api-key" className="text-sm font-medium">
+						<Label htmlFor={apiKeyId} className="text-sm font-medium">
 							APIトークン
 						</Label>
 						<div className="relative ml-2 group">
@@ -86,7 +90,7 @@ export default function ServiceIntegrationDetails({
 						</div>
 					</div>
 					<Input
-						id="api-key"
+						id={apiKeyId}
 						type="password"
 						placeholder="APIトークンを入力"
 						value={apiKey}
@@ -120,13 +124,13 @@ export default function ServiceIntegrationDetails({
 			{syncFrequencyOptions.length > 0 && (
 				<div className="mb-4">
 					<Label
-						htmlFor="sync-frequency"
+						htmlFor={syncFrequencyId}
 						className="text-sm font-medium mb-2 block"
 					>
 						同期頻度
 					</Label>
 					<Select value={syncFrequency} onValueChange={onSyncFrequencyChange}>
-						<SelectTrigger id="sync-frequency" className="w-full">
+						<SelectTrigger id={syncFrequencyId} className="w-full">
 							<SelectValue placeholder="同期頻度を選択" />
 						</SelectTrigger>
 						<SelectContent>

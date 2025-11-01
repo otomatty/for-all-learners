@@ -7,6 +7,7 @@ import {
 	ChevronUp,
 	LinkIcon,
 } from "lucide-react";
+import Image from "next/image";
 import {
 	type ReactNode,
 	useCallback,
@@ -116,20 +117,17 @@ export default function IntegrationCardShell({
 			}`}
 		>
 			<CardContent>
-				<div
+				<button
+					type="button"
 					className="flex items-start cursor-pointer w-full bg-transparent border-0 p-0 text-left"
 					onClick={toggleExpand}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							toggleExpand();
-						}
-					}}
 				>
-					<img
+					<Image
 						src={logoSrc}
 						alt={`${name} logo`}
-						className="w-10 h-10 rounded mr-3"
+						width={40}
+						height={40}
+						className="rounded mr-3"
 					/>
 					<div className="flex-1">
 						<div className="flex items-center justify-between">
@@ -165,7 +163,7 @@ export default function IntegrationCardShell({
 							</div>
 						</div>
 					</div>
-				</div>
+				</button>
 				<div
 					className={`overflow-hidden transition-all duration-300 ease-in-out my-4 ${
 						isExpanded ? "opacity-100" : "opacity-0"
