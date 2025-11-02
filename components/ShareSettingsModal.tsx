@@ -53,10 +53,19 @@ interface ShareSettingsModalProps {
 		updatedAt: string;
 		ownerId: string;
 	};
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
-export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
-	const [open, setOpen] = useState(false);
+export function ShareSettingsModal({
+	note,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+}: ShareSettingsModalProps) {
+	const [internalOpen, setInternalOpen] = useState(false);
+	// Use controlled state if provided, otherwise use internal state
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = controlledOnOpenChange ?? setInternalOpen;
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 	const [shares, setShares] = useState<
 		Array<{
@@ -178,9 +187,12 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">共有設定</Button>
-			</DialogTrigger>
+			{/* DialogTrigger は制御されていない場合のみ表示 */}
+			{controlledOpen === undefined && (
+				<DialogTrigger asChild>
+					<Button variant="outline">共有設定</Button>
+				</DialogTrigger>
+			)}
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>共有設定</DialogTitle>
