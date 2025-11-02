@@ -266,11 +266,21 @@ Phase 0.5: APIキー管理UI実装
 
 ---
 
-## 📋 次回の作業計画
+## ✅ 完了報告
 
-### Phase 0.5 残りのタスク
+**Phase 0.5は完了しました！**
 
-#### 1. APIKeySettings コンポーネント (2-3時間)
+詳細は以下のドキュメントを参照：
+- `docs/05_logs/2025_11/20251102/08_phase05-day1-complete.md`
+- `docs/05_logs/2025_11/20251102/09_phase05-complete.md`
+
+---
+
+## 📋 次回の作業計画（参考）
+
+### Phase 0.5 残りのタスク（完了済み）
+
+#### 1. APIKeySettings コンポーネント (2-3時間) ✅
 **ファイル:** `components/settings/APIKeySettings.tsx`
 
 **機能:**
