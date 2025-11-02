@@ -7,8 +7,7 @@ import { getDefaultNote, getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import NoteHeader from "./_components/note-header";
-import NotePagesClient from "./page-client";
+import NotePageWrapper from "./_components/note-page-wrapper";
 
 interface NoteDetailPageProps {
 	params: Promise<{ slug: string }>;
@@ -45,24 +44,23 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 	return (
 		<Container className="max-w-7xl">
 			<BackLink path="/notes" title="Notes一覧へ戻る" />
-			<NoteHeader
-				id={note.id}
-				title={note.title}
-				slug={note.slug}
-				description={note.description}
-				visibility={
-					note.visibility as "public" | "unlisted" | "invite" | "private"
-				}
-				pageCount={note.page_count}
-				participantCount={note.participant_count}
-				updatedAt={note.updated_at}
-				ownerId={note.owner_id}
-				isDefaultNote={note.is_default_note || false}
-			/>
-			<NotePagesClient
-				slug={slug}
-				totalCount={note.page_count}
-				noteId={note.id}
+			<NotePageWrapper
+				note={{
+					id: note.id,
+					title: note.title,
+					slug: note.slug,
+					description: note.description,
+					visibility: note.visibility as
+						| "public"
+						| "unlisted"
+						| "invite"
+						| "private",
+					pageCount: note.page_count,
+					participantCount: note.participant_count,
+					updatedAt: note.updated_at,
+					ownerId: note.owner_id,
+					isDefaultNote: note.is_default_note || false,
+				}}
 				linkedDecks={linkedDecks}
 				availableDecks={availableDecks}
 			/>
