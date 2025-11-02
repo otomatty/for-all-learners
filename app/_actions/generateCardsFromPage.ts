@@ -1,7 +1,30 @@
+/**
+ * generateCardsFromPage - Generate flashcards from page content (Tiptap JSON)
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (使用先):
+ *   └─ components/pages/generate-cards/generate-cards-form.tsx
+ *
+ * Dependencies (依存先):
+ *   ├─ app/_actions/ai/getUserAPIKey.ts
+ *   ├─ lib/gemini/client.ts
+ *   ├─ lib/logger.ts
+ *   └─ lib/supabase/server.ts
+ *
+ * Related Files:
+ *   ├─ Spec: ./generateCardsFromPage.spec.md
+ *   ├─ Tests: ./__tests__/generateCardsFromPage.test.ts
+ *   └─ Related: ./generateCards.ts (音声トランスクリプト用)
+ */
+
 "use server";
 
 import { createUserContent } from "@google/genai";
+import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { geminiClient } from "@/lib/gemini/client";
+import type { LLMProvider } from "@/lib/llm/client";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
@@ -66,6 +89,12 @@ function extractTextFromTiptap(tiptapContent: Json | null | undefined): string {
 		.trim();
 }
 
+// Options for card generation
+interface GenerateCardsOptions {
+	provider?: LLMProvider;
+	model?: string;
+}
+
 // 生成されたカードの型
 interface GeneratedRawCard {
 	front_content: string;
@@ -110,6 +139,7 @@ export async function wrapTextInTiptapJson(text: string): Promise<Json> {
 
 export async function generateRawCardsFromPageContent(
 	pageContentTiptap: Json | null,
+	options?: GenerateCardsOptions,
 ): Promise<{
 	generatedRawCards: GeneratedRawCard[];
 	error?: string;
@@ -125,7 +155,23 @@ export async function generateRawCardsFromPageContent(
 		};
 	}
 
-	// 2. AIモデルを呼び出してカードを生成
+	// 2. Provider を決定
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	logger.info(
+		{ provider, pageTextLength: pageText.length },
+		"Starting card generation from page content",
+	);
+
+	// 3. ユーザーAPIキーを取得
+	const apiKey = await getUserAPIKey(provider);
+
+	logger.info(
+		{ provider, hasApiKey: !!apiKey },
+		"API key retrieved for card generation from page",
+	);
+
+	// 4. AIモデルを呼び出してカードを生成
 	const systemPrompt =
 		"以下のテキストから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。各ペアは独立した暗記カードとして機能するようにしてください。";
 
@@ -133,8 +179,15 @@ export async function generateRawCardsFromPageContent(
 
 	let generatedRawCards: GeneratedRawCard[];
 	try {
+		const model = options?.model || "gemini-2.5-flash";
+
+		logger.info(
+			{ provider, model },
+			"Calling LLM API for card generation from page",
+		);
+
 		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash", // モデル名は適宜調整してください
+			model,
 			contents,
 		});
 
@@ -168,6 +221,14 @@ export async function generateRawCardsFromPageContent(
 		}
 		generatedRawCards = JSON.parse(jsonString);
 	} catch (error: unknown) {
+		logger.error(
+			{
+				provider,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			"Failed to generate cards from page content",
+		);
+
 		if (error instanceof Error) {
 			return {
 				error: `AIによるカード生成に失敗しました: ${error.message}`,
