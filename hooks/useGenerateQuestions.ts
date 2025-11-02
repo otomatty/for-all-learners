@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLLMProvider } from "@/lib/contexts/LLMProviderContext";
 import type { QuestionData, QuestionType } from "@/lib/gemini";
 
 /**
@@ -22,15 +23,26 @@ interface UseGenerateQuestionsResult {
 }
 
 /**
+ * Optional parameters for overriding LLM provider settings.
+ */
+interface GenerateQuestionsOptions {
+	provider?: "google" | "openai" | "anthropic";
+	model?: string;
+}
+
+/**
  * Custom hook to generate practice questions via the API.
  * @param cardIds - Array of card IDs to generate questions for.
  * @param type - The format of questions to generate (flashcard, multiple_choice, cloze).
+ * @param options - Optional override for provider and model selection.
  * @returns An object containing questions, loading state, and any error.
  */
 export function useGenerateQuestions(
 	cardIds: string[] | null,
 	type: QuestionType,
+	options?: GenerateQuestionsOptions,
 ): UseGenerateQuestionsResult {
+	const { config } = useLLMProvider();
 	const [questions, setQuestions] = useState<QuestionResponse[] | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
@@ -45,10 +57,14 @@ export function useGenerateQuestions(
 		setIsLoading(true);
 		setError(null);
 
+		// Use options if provided, otherwise fall back to context config
+		const provider = options?.provider || config.provider;
+		const model = options?.model || config.model;
+
 		fetch("/api/practice/generate", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ cardIds, type }),
+			body: JSON.stringify({ cardIds, type, provider, model }),
 		})
 			.then(async (res) => {
 				const data = await res.json();
@@ -66,7 +82,14 @@ export function useGenerateQuestions(
 			.finally(() => {
 				setIsLoading(false);
 			});
-	}, [cardIds, type]);
+	}, [
+		cardIds,
+		type,
+		options?.provider,
+		options?.model,
+		config.provider,
+		config.model,
+	]);
 
 	return { questions, isLoading, error };
 }

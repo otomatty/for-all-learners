@@ -20,6 +20,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { APIKeySettings } from "@/components/settings/APIKeySettings";
+import { LLMProviderSettings } from "@/components/settings/LLMProviderSettings";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -55,6 +56,8 @@ export default async function APIKeysPage() {
 				</div>
 
 				<APIKeySettings />
+
+				<LLMProviderSettings />
 			</div>
 		</div>
 	);
