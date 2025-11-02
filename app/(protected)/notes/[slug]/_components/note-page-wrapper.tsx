@@ -33,10 +33,7 @@ export default function NotePageWrapper({
 
 	return (
 		<>
-			<NoteHeader
-				{...note}
-				onOpenDeckDialog={() => setDeckDialogOpen(true)}
-			/>
+			<NoteHeader {...note} onOpenDeckDialog={() => setDeckDialogOpen(true)} />
 			<NotePagesClient
 				slug={note.slug}
 				totalCount={note.pageCount}
