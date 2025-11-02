@@ -32,10 +32,10 @@ vi.mock("@/lib/gemini/client", () => ({
 vi.mock("@/app/_actions/ai/getUserAPIKey");
 vi.mock("@/lib/logger");
 
-// Import the function after mocks
-import { generateRawCardsFromPageContent } from "../generateCardsFromPage";
 import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { geminiClient } from "@/lib/gemini/client";
+// Import the function after mocks
+import { generateRawCardsFromPageContent } from "../generateCardsFromPage";
 
 // Helper: Create Tiptap JSON mock
 function createMockTiptapContent(text: string): Json {

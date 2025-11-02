@@ -31,10 +31,10 @@ vi.mock("@/lib/gemini/client", () => ({
 vi.mock("@/app/_actions/ai/getUserAPIKey");
 vi.mock("@/lib/logger");
 
-// Import the function after mocks
-import { generateQuestions, generateBulkQuestions } from "../gemini";
 import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { geminiClient } from "@/lib/gemini/client";
+// Import the function after mocks
+import { generateBulkQuestions, generateQuestions } from "../gemini";
 
 // Helper: Create Gemini API response mock
 function createMockGeminiResponse(content: string) {
