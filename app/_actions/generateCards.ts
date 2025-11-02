@@ -1,7 +1,29 @@
 "use server";
 
 import { createUserContent } from "@google/genai";
+import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { geminiClient } from "@/lib/gemini/client";
+import type { LLMProvider } from "@/lib/llm/client";
+import logger from "@/lib/logger";
+
+/**
+ * DEPENDENCY MAP:
+ *
+ * Parents (使用先):
+ *   ├─ app/_actions/audioBatchProcessing.ts
+ *   ├─ app/(protected)/decks/[deckId]/_components/audio-card-generator.tsx
+ *   └─ app/(protected)/decks/[deckId]/_components/image-card-generator.tsx
+ *
+ * Dependencies (依存先):
+ *   ├─ app/_actions/ai/getUserAPIKey.ts
+ *   ├─ lib/gemini/client.ts
+ *   └─ lib/logger.ts
+ *
+ * Related Files:
+ *   ├─ Spec: ./generateCards.spec.md
+ *   ├─ Tests: ./__tests__/generateCards.test.ts
+ *   └─ Plan: docs/03_plans/phase-1-ai-integration/20251102_02_day3-generatecards-integration-plan.md
+ */
 
 export interface GeneratedCard {
 	front_content: string;
@@ -9,13 +31,57 @@ export interface GeneratedCard {
 	source_audio_url: string;
 }
 
+interface GenerateCardsOptions {
+	provider?: LLMProvider;
+	model?: string;
+}
+
 /**
  * Server action to generate flashcard Q&A pairs from a transcript.
+ *
+ * @param transcript - Audio transcription text
+ * @param sourceAudioUrl - Audio file URL
+ * @param options - Generation options
+ * @param options.provider - LLM provider ("google" | "openai" | "anthropic", default: "google")
+ * @param options.model - Custom model name (optional)
+ * @returns Array of generated flashcards
+ * @throws Error if transcript is empty
+ * @throws Error if API key is not configured
+ *
+ * @example
+ * ```typescript
+ * // Google Gemini でカード生成
+ * const cards = await generateCardsFromTranscript(transcript, audioUrl);
+ *
+ * // OpenAI でカード生成
+ * const cards = await generateCardsFromTranscript(transcript, audioUrl, { provider: "openai" });
+ * ```
  */
 export async function generateCardsFromTranscript(
 	transcript: string,
 	sourceAudioUrl: string,
+	options?: GenerateCardsOptions,
 ): Promise<GeneratedCard[]> {
+	// Input validation
+	if (!transcript.trim()) {
+		throw new Error("トランスクリプトが空です");
+	}
+
+	// Determine provider
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	// Get API key
+	logger.info(
+		{ provider, transcriptLength: transcript.length },
+		"Starting card generation from transcript",
+	);
+
+	const apiKey = await getUserAPIKey(provider);
+
+	logger.info(
+		{ provider, hasApiKey: !!apiKey },
+		"API key retrieved for card generation",
+	);
 	// System prompt guiding the model to output JSON array of cards
 	const systemPrompt =
 		"以下の文字起こしから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。";
@@ -23,9 +89,14 @@ export async function generateCardsFromTranscript(
 	// Build contents for Gemini
 	const contents = createUserContent([systemPrompt, transcript]);
 
-	// Call Gemini API
+	// Call Gemini API (currently Google Gemini only, future: multi-provider support)
+	logger.info(
+		{ provider, model: options?.model || "gemini-2.5-flash" },
+		"Calling LLM for card generation",
+	);
+
 	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash",
+		model: options?.model || "gemini-2.5-flash",
 		contents,
 	});
 
