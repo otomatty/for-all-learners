@@ -10,7 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { deleteNote } from "@/app/_actions/notes";
 import { ShareSettingsModal } from "@/components/ShareSettingsModal";
@@ -66,7 +66,7 @@ export default function NoteHeader({
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-	const shareModalId = useId();
+	const [showShareModal, setShowShareModal] = useState(false);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -167,14 +167,7 @@ export default function NoteHeader({
 							<>
 								<DropdownMenuSeparator />
 								<DropdownMenuLabel>アクション</DropdownMenuLabel>
-								<DropdownMenuItem
-									onClick={() => {
-										const button = document.querySelector(
-											`#${CSS.escape(shareModalId)} button`,
-										) as HTMLButtonElement;
-										button?.click();
-									}}
-								>
+								<DropdownMenuItem onClick={() => setShowShareModal(true)}>
 									<Share2 className="mr-2 h-4 w-4" />
 									共有設定
 								</DropdownMenuItem>
@@ -199,25 +192,23 @@ export default function NoteHeader({
 				</DropdownMenu>
 			</header>
 
-			{/* 共有設定モーダル - 非表示のトリガー */}
+			{/* 共有設定モーダル */}
 			{currentUserId === ownerId && (
-				<div className="hidden">
-					<div id={shareModalId}>
-						<ShareSettingsModal
-							note={{
-								id,
-								title,
-								slug,
-								description,
-								visibility,
-								pageCount,
-								participantCount,
-								updatedAt,
-								ownerId,
-							}}
-						/>
-					</div>
-				</div>
+				<ShareSettingsModal
+					note={{
+						id,
+						title,
+						slug,
+						description,
+						visibility,
+						pageCount,
+						participantCount,
+						updatedAt,
+						ownerId,
+					}}
+					open={showShareModal}
+					onOpenChange={setShowShareModal}
+				/>
 			)}
 
 			{/* 削除確認ダイアログ */}

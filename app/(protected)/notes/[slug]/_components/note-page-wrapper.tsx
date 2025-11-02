@@ -34,16 +34,7 @@ export default function NotePageWrapper({
 	return (
 		<>
 			<NoteHeader
-				id={note.id}
-				title={note.title}
-				slug={note.slug}
-				description={note.description}
-				visibility={note.visibility}
-				pageCount={note.pageCount}
-				participantCount={note.participantCount}
-				updatedAt={note.updatedAt}
-				ownerId={note.ownerId}
-				isDefaultNote={note.isDefaultNote}
+				{...note}
 				onOpenDeckDialog={() => setDeckDialogOpen(true)}
 			/>
 			<NotePagesClient
