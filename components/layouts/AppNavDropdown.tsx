@@ -1,12 +1,26 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import * as Icons from "lucide-react";
+import {
+	BarChart,
+	BookOpen,
+	Grip,
+	LayoutList,
+	type LucideIcon,
+	Target,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { NavItem } from "@/lib/navigation/types";
 import { cn } from "@/lib/utils";
+
+// アイコン名とコンポーネントのマッピング
+const iconMap: Record<string, LucideIcon> = {
+	LayoutList,
+	Target,
+	BookOpen,
+	BarChart,
+};
 
 interface AppNavDropdownProps {
 	items: NavItem[];
@@ -47,7 +61,7 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 			`}</style>
 			<div className="relative" ref={containerRef}>
 				<Button onClick={() => setOpen(!open)} variant="ghost" size="icon">
-					<Icons.Grip className="w-4 h-4" />
+					<Grip className="w-4 h-4" />
 				</Button>
 
 				{open && (
@@ -56,7 +70,7 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 							{items.map((item) => {
 								const isDisabled =
 									item.status === "disabled" || item.status === "coming-soon";
-								const IconComponent = Icons[item.icon] as LucideIcon;
+								const IconComponent = iconMap[item.icon] as LucideIcon;
 								return (
 									<Link
 										key={item.href}

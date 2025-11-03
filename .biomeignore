@@ -19,3 +19,4 @@ workbox-*.js
 *.css
 app/**/*.css
 components/**/*.css
+app/globals.css

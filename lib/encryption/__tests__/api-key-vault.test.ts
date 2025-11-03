@@ -61,7 +61,7 @@ describe("API Key Vault", () => {
 
 	// TC-007: 長い文字列の暗号化
 	test("TC-007: Should handle long strings", async () => {
-		const longKey = "sk-" + "a".repeat(1000);
+		const longKey = `sk-${"a".repeat(1000)}`;
 		const encrypted = await encryptAPIKey(longKey);
 		const decrypted = await decryptAPIKey(encrypted);
 

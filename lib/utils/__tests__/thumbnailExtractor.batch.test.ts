@@ -132,7 +132,6 @@ describe("Batch Thumbnail Update Logic", () => {
 			}).not.toThrow();
 
 			expect(() => {
-				// biome-ignore lint/suspicious/noExplicitAny: テスト用の不正データ
 				extractFirstImageUrl(null as any);
 			}).not.toThrow();
 		});

@@ -1,27 +1,13 @@
 /**
- import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
-import { Editor } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
-import { UnifiedLinkMark } from "../../index";
-import { findMarksByState, updateMarkState } from "../../state-manager";
-
-// Setup jsdom environment for this test
-setupJSDOMEnvironment();ified-link.ts のユニットテスト
+ * insertUnifiedLink.ts のユニットテスト
  * insertUnifiedLink コマンドのテスト
  */
 
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { JSDOM } from "jsdom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { UnifiedLinkMark } from "../../index";
 import { findMarksByState } from "../../state-manager";
-
-// Setup jsdom environment for this test
-const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
-global.document = dom.window.document as unknown as Document;
-global.window = dom.window as unknown as Window & typeof globalThis;
 
 describe("insertUnifiedLink Command", () => {
 	let editor: Editor;

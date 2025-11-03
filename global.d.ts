@@ -4,6 +4,7 @@ declare module "shiki/themes/*.json";
 // TipTap custom commands
 import "@tiptap/core";
 import type { UnifiedLinkAttributes } from "./lib/tiptap-extensions/unified-link-mark";
+import type { ResolverQueueItem } from "./lib/tiptap-extensions/unified-link-mark/types";
 
 declare module "@tiptap/core" {
 	interface Commands<ReturnType> {
@@ -26,6 +27,14 @@ declare module "@tiptap/core" {
 			 * Converts [text] back to text
 			 */
 			unwrapBrackets: () => ReturnType;
+		};
+	}
+
+	interface Storage {
+		unilink?: {
+			resolverQueue?: {
+				add: (item: ResolverQueueItem) => void;
+			};
 		};
 	}
 }

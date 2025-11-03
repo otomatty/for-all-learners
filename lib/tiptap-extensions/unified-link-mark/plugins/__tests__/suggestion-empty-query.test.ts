@@ -19,7 +19,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
 	createMinimalMockEditor,
 	createMockOptions,
-	setupJSDOMEnvironment,
 } from "@/lib/__tests__/helpers";
 import {
 	createSuggestionPlugin,
@@ -27,8 +26,7 @@ import {
 	type UnifiedLinkSuggestionState,
 } from "../suggestion-plugin";
 
-// Setup jsdom environment for this test
-setupJSDOMEnvironment();
+// Note: happy-dom environment is already set up in vitest.config.mts
 
 // TODO: Fix suggestion plugin tests - current implementation may have changed
 describe.skip("Suggestion Plugin - Empty Query Behavior", () => {

@@ -40,7 +40,6 @@ export const createUnilinkRealtimeListener = () => {
 	/**
 	 * Handle page insert event from Realtime
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: Supabase payload type
 	const handlePageInsert = (payload: any): void => {
 		try {
 			const newRecord = payload.new;

@@ -323,7 +323,6 @@ export default function ClozeQuiz({
 				<h3 className="text-xl font-semibold mb-2">{current.question}</h3>
 				<div className="mt-2 text-lg leading-loose">
 					{parts.map((part, i) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: parts array is stable and index-based keys are safe
 						<React.Fragment key={i}>{part}</React.Fragment>
 					))}
 				</div>

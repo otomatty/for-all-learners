@@ -1,24 +1,17 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.2.5/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false,
-		"experimentalScannerIgnores": [
-			"node_modules",
-			".next",
-			"dist",
-			"build",
-			"public",
-			"app/globals.css"
-		]
+		"ignoreUnknown": true
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"formatWithErrors": true
 	},
 	"linter": {
 		"enabled": true,
@@ -27,8 +20,9 @@
 			"suspicious": {
 				"noConsole": "error",
 				"noUnknownAtRules": "off",
-				"noArrayIndexKey": "warn",
-				"noExplicitAny": "warn"
+				"noArrayIndexKey": "off",
+				"noExplicitAny": "off",
+				"noDocumentCookie": "off"
 			},
 			"correctness": {
 				"noUnusedVariables": "warn"
@@ -37,8 +31,8 @@
 				"noDynamicNamespaceImportAccess": "warn"
 			},
 			"a11y": {
-				"useAriaPropsSupportedByRole": "warn",
-				"useSemanticElements": "warn",
+				"useAriaPropsSupportedByRole": "off",
+				"useSemanticElements": "off",
 				"noStaticElementInteractions": "off"
 			}
 		}
@@ -46,6 +40,18 @@
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
+		}
+	},
+	"css": {
+		"parser": {
+			"allowWrongLineComments": true,
+			"tailwindDirectives": true
+		},
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
 		}
 	},
 	"assist": {

@@ -93,19 +93,25 @@ export const LatexInlineNode = Node.create<LatexInlineNodeOptions>({
 
 	// Return the original LaTeX string when editor.getText() is called
 	// or when content is serialized to text.
-	toPredictedText({ node }: { node: { attrs: { content: string } } }): string {
-		return node.attrs.content;
+	renderText({ node }) {
+		const content = node.attrs.content;
+		if (typeof content === "string") {
+			return content;
+		}
+		return "";
 	},
 
 	addCommands() {
 		return {
 			setLatexInlineNode:
 				(options) =>
-				({ commands }) => {
-					return commands.insertContent({
-						type: this.name,
-						attrs: options,
-					});
+				({ chain }) => {
+					return chain()
+						.insertContent({
+							type: this.name,
+							attrs: options,
+						})
+						.run();
 				},
 		};
 	},
