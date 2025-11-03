@@ -7,8 +7,8 @@
  *   └─ components/pages/generate-cards/generate-cards-form.tsx
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/ai/getUserAPIKey.ts
- *   ├─ lib/gemini/client.ts
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
  *   ├─ lib/logger.ts
  *   └─ lib/supabase/server.ts
  *
@@ -20,9 +20,8 @@
 
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
@@ -159,54 +158,37 @@ export async function generateRawCardsFromPageContent(
 	const provider = (options?.provider || "google") as LLMProvider;
 
 	logger.info(
-		{ provider, pageTextLength: pageText.length },
+		{ provider, pageTextLength: pageText.length, model: options?.model },
 		"Starting card generation from page content",
 	);
 
-	// 3. ユーザーAPIキーを取得
-	const apiKey = await getUserAPIKey(provider);
-
-	logger.info(
-		{ provider, hasApiKey: !!apiKey },
-		"API key retrieved for card generation from page",
-	);
-
-	// 4. AIモデルを呼び出してカードを生成
+	// 3. プロンプトを構築
 	const systemPrompt =
 		"以下のテキストから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。各ペアは独立した暗記カードとして機能するようにしてください。";
 
-	const contents = createUserContent([systemPrompt, pageText]);
+	const prompt = buildPrompt([systemPrompt, pageText]);
 
+	// 4. 動的にLLMクライアントを作成してカードを生成
 	let generatedRawCards: GeneratedRawCard[];
 	try {
-		const model = options?.model || "gemini-2.5-flash";
+		const client = await createClientWithUserKey({
+			provider,
+			model: options?.model,
+		});
 
 		logger.info(
-			{ provider, model },
+			{ provider, model: options?.model },
 			"Calling LLM API for card generation from page",
 		);
 
-		const response = await geminiClient.models.generateContent({
-			model,
-			contents,
-		});
+		// LLM APIを呼び出し（プロバイダー非依存）
+		const response = await client.generate(prompt);
 
-		const { candidates } = response as unknown as {
-			candidates?: { content: { parts: { text: string }[] } }[];
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
+		if (!response || response.trim().length === 0) {
 			throw new Error("AIからの応答が空です。");
 		}
 
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (typeof raw === "object" && Array.isArray(raw.parts)) {
-			jsonString = raw.parts.map((p: { text: string }) => p.text).join("");
-		} else {
-			jsonString = String(raw);
-		}
+		let jsonString = response;
 
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
 		const fenceMatch = jsonString.match(fencePattern);

@@ -19,23 +19,40 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Json } from "@/types/database.types";
 
-// Mock geminiClient before importing
-vi.mock("@/lib/gemini/client", () => ({
-	geminiClient: {
-		models: {
-			generateContent: vi.fn(),
-		},
+// Mock dependencies BEFORE imports
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
+}));
+
+vi.mock("@/lib/llm/prompt-builder", () => ({
+	buildPrompt: vi.fn(),
+}));
+
+vi.mock("@/lib/logger", () => ({
+	default: {
+		info: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-// Import other mocked modules
-vi.mock("@/app/_actions/ai/getUserAPIKey");
-vi.mock("@/lib/logger");
-
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+import type { LLMClient } from "@/lib/llm/client";
 // Import the function after mocks
 import { generateRawCardsFromPageContent } from "../generateCardsFromPage";
+
+/**
+ * Mock LLMClient implementation
+ */
+class MockLLMClient implements LLMClient {
+	async generate(prompt: string): Promise<string> {
+		return `Mock response for: ${prompt}`;
+	}
+
+	async *generateStream(prompt: string): AsyncGenerator<string> {
+		yield `Mock stream: ${prompt}`;
+	}
+}
 
 // Helper: Create Tiptap JSON mock
 function createMockTiptapContent(text: string): Json {
@@ -50,25 +67,17 @@ function createMockTiptapContent(text: string): Json {
 	};
 }
 
-// Helper: Create Gemini API response mock
-function createMockGeminiResponse(
-	cards: Array<{ front_content: string; back_content: string }>,
-) {
-	const jsonString = JSON.stringify(cards, null, 2);
-	return {
-		candidates: [
-			{
-				content: {
-					parts: [{ text: `\`\`\`json\n${jsonString}\n\`\`\`` }],
-				},
-			},
-		],
-	};
-}
-
 describe("generateRawCardsFromPageContent", () => {
+	const mockClient: LLMClient = new MockLLMClient();
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		// Default mock implementations
+		vi.mocked(buildPrompt).mockImplementation((parts) => {
+			return Array.isArray(parts) ? parts.join("\n\n") : "";
+		});
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockClient);
 	});
 
 	// ========================================
@@ -87,16 +96,19 @@ describe("generateRawCardsFromPageContent", () => {
 				},
 			];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-google-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
 				provider: "google",
 			});
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 			expect(result.generatedRawCards).toHaveLength(1);
 			expect(result.generatedRawCards[0]).toEqual(mockCards[0]);
@@ -106,14 +118,17 @@ describe("generateRawCardsFromPageContent", () => {
 			const mockPageContent = createMockTiptapContent("テストテキスト");
 			const mockCards = [{ front_content: "Q1", back_content: "A1" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 		});
 	});
@@ -122,20 +137,23 @@ describe("generateRawCardsFromPageContent", () => {
 	// TC-002: OpenAIプロバイダーを使用したカード生成
 	// ========================================
 	describe("TC-002: Card generation with OpenAI provider", () => {
-		it("should call getUserAPIKey with openai provider", async () => {
+		it("should call createClientWithUserKey with openai provider", async () => {
 			const mockPageContent = createMockTiptapContent("OpenAI test text");
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-openai-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
 				provider: "openai",
 			});
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("openai");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "openai",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 			expect(result.generatedRawCards).toHaveLength(1);
 		});
@@ -145,20 +163,23 @@ describe("generateRawCardsFromPageContent", () => {
 	// TC-003: Anthropicプロバイダーを使用したカード生成
 	// ========================================
 	describe("TC-003: Card generation with Anthropic provider", () => {
-		it("should call getUserAPIKey with anthropic provider", async () => {
+		it("should call createClientWithUserKey with anthropic provider", async () => {
 			const mockPageContent = createMockTiptapContent("Anthropic test text");
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-anthropic-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
 				provider: "anthropic",
 			});
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("anthropic");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "anthropic",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 		});
 	});
@@ -174,7 +195,7 @@ describe("generateRawCardsFromPageContent", () => {
 				"ページに抽出可能なテキストコンテンツがありません。",
 			);
 			expect(result.generatedRawCards).toEqual([]);
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 
 		it("should return error when Tiptap content has no text", async () => {
@@ -189,7 +210,7 @@ describe("generateRawCardsFromPageContent", () => {
 				"ページに抽出可能なテキストコンテンツがありません。",
 			);
 			expect(result.generatedRawCards).toEqual([]);
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -201,17 +222,19 @@ describe("generateRawCardsFromPageContent", () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			// getUserAPIKey は内部でユーザーキーを優先
-			vi.mocked(getUserAPIKey).mockResolvedValue("user-custom-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
 				provider: "google",
 			});
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 		});
 	});
@@ -220,22 +243,24 @@ describe("generateRawCardsFromPageContent", () => {
 	// TC-006: APIキー未設定エラー
 	// ========================================
 	describe("TC-006: API key not configured error", () => {
-		it("should throw error when API key is not configured", async () => {
+		it("should return error when API key is not configured", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error(
 					"API key not configured for provider: openai. Please set it in Settings.",
 				),
 			);
 
-			await expect(
-				generateRawCardsFromPageContent(mockPageContent, {
-					provider: "openai",
-				}),
-			).rejects.toThrow(
+			const result = await generateRawCardsFromPageContent(mockPageContent, {
+				provider: "openai",
+			});
+
+			expect(result.error).toContain("AIによるカード生成に失敗しました");
+			expect(result.error).toContain(
 				"API key not configured for provider: openai. Please set it in Settings.",
 			);
+			expect(result.generatedRawCards).toEqual([]);
 		});
 	});
 
@@ -243,19 +268,21 @@ describe("generateRawCardsFromPageContent", () => {
 	// TC-007: 不正なプロバイダーエラー
 	// ========================================
 	describe("TC-007: Invalid provider error", () => {
-		it("should throw error for invalid provider", async () => {
+		it("should return error for invalid provider", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("Invalid provider: invalid_provider"),
 			);
 
-			await expect(
-				generateRawCardsFromPageContent(mockPageContent, {
-					// biome-ignore lint/suspicious/noExplicitAny: Testing invalid provider
-					provider: "invalid_provider" as any,
-				}),
-			).rejects.toThrow();
+			const result = await generateRawCardsFromPageContent(mockPageContent, {
+				// biome-ignore lint/suspicious/noExplicitAny: Testing invalid provider
+				provider: "invalid_provider" as any,
+			});
+
+			expect(result.error).toContain("AIによるカード生成に失敗しました");
+			expect(result.error).toContain("Invalid provider: invalid_provider");
+			expect(result.generatedRawCards).toEqual([]);
 		});
 	});
 
@@ -266,8 +293,7 @@ describe("generateRawCardsFromPageContent", () => {
 		it("should handle API timeout error", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockRejectedValue(
+			vi.spyOn(mockClient, "generate").mockRejectedValue(
 				new Error("Request timeout"),
 			);
 
@@ -281,8 +307,7 @@ describe("generateRawCardsFromPageContent", () => {
 		it("should handle network error", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockRejectedValue(
+			vi.spyOn(mockClient, "generate").mockRejectedValue(
 				new Error("Network error"),
 			);
 
@@ -300,17 +325,9 @@ describe("generateRawCardsFromPageContent", () => {
 		it("should handle invalid JSON response", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [{ text: "これは正しいJSONではありません { invalid }" }],
-						},
-					},
-				],
-				// biome-ignore lint/suspicious/noExplicitAny: Mock response
-			} as any);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				"これは正しいJSONではありません { invalid }",
+			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
@@ -332,9 +349,9 @@ describe("generateRawCardsFromPageContent", () => {
 				},
 			];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
@@ -353,21 +370,8 @@ describe("generateRawCardsFromPageContent", () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 			const mockCards = [{ front_content: "質問1", back_content: "回答1" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [
-								{
-									text: `以下のようなカードを生成しました:\n${JSON.stringify(mockCards)}\nよろしくお願いします。`,
-								},
-							],
-						},
-					},
-				],
-				// biome-ignore lint/suspicious/noExplicitAny: Mock response
-			} as any);
+			const responseText = `以下のようなカードを生成しました:\n${JSON.stringify(mockCards)}\nよろしくお願いします。`;
+			vi.spyOn(mockClient, "generate").mockResolvedValue(responseText);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
@@ -381,14 +385,10 @@ describe("generateRawCardsFromPageContent", () => {
 	// TC-012: 空の候補エラー
 	// ========================================
 	describe("TC-012: Empty candidates error", () => {
-		it("should handle empty candidates response", async () => {
+		it("should handle empty response", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [],
-				// biome-ignore lint/suspicious/noExplicitAny: Mock response
-			} as any);
+			vi.spyOn(mockClient, "generate").mockResolvedValue("");
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
@@ -405,17 +405,7 @@ describe("generateRawCardsFromPageContent", () => {
 		it("should return error when LLM returns empty array", async () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [{ text: "```json\n[]\n```" }],
-						},
-					},
-				],
-				// biome-ignore lint/suspicious/noExplicitAny: Mock response
-			} as any);
+			vi.spyOn(mockClient, "generate").mockResolvedValue("```json\n[]\n```");
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
@@ -432,9 +422,9 @@ describe("generateRawCardsFromPageContent", () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
@@ -442,11 +432,10 @@ describe("generateRawCardsFromPageContent", () => {
 				model: "gemini-2.0-pro",
 			});
 
-			expect(geminiClient.models.generateContent).toHaveBeenCalledWith(
-				expect.objectContaining({
-					model: "gemini-2.0-pro",
-				}),
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: "gemini-2.0-pro",
+			});
 			expect(result.error).toBeUndefined();
 		});
 
@@ -454,18 +443,17 @@ describe("generateRawCardsFromPageContent", () => {
 			const mockPageContent = createMockTiptapContent("Test text");
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent);
 
-			expect(geminiClient.models.generateContent).toHaveBeenCalledWith(
-				expect.objectContaining({
-					model: "gemini-2.5-flash",
-				}),
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.error).toBeUndefined();
 		});
 	});
@@ -495,9 +483,9 @@ describe("generateRawCardsFromPageContent", () => {
 
 			const mockCards = [{ front_content: "Q", back_content: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards) as never,
+			const jsonString = JSON.stringify(mockCards, null, 2);
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				`\`\`\`json\n${jsonString}\n\`\`\``,
 			);
 
 			const result = await generateRawCardsFromPageContent(complexContent);

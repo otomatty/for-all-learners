@@ -1,8 +1,7 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 
@@ -15,8 +14,8 @@ import logger from "@/lib/logger";
  *   └─ app/(protected)/decks/[deckId]/_components/image-card-generator.tsx
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/ai/getUserAPIKey.ts
- *   ├─ lib/gemini/client.ts
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
  *   └─ lib/logger.ts
  *
  * Related Files:
@@ -70,54 +69,38 @@ export async function generateCardsFromTranscript(
 	// Determine provider
 	const provider = (options?.provider || "google") as LLMProvider;
 
-	// Get API key
 	logger.info(
-		{ provider, transcriptLength: transcript.length },
+		{ provider, transcriptLength: transcript.length, model: options?.model },
 		"Starting card generation from transcript",
 	);
 
-	const apiKey = await getUserAPIKey(provider);
-
-	logger.info(
-		{ provider, hasApiKey: !!apiKey },
-		"API key retrieved for card generation",
-	);
 	// System prompt guiding the model to output JSON array of cards
 	const systemPrompt =
 		"以下の文字起こしから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。";
 
-	// Build contents for Gemini
-	const contents = createUserContent([systemPrompt, transcript]);
+	// Build prompt string
+	const prompt = buildPrompt([systemPrompt, transcript]);
 
-	// Call Gemini API (currently Google Gemini only, future: multi-provider support)
+	// Create LLM client dynamically (auto-fetches user API key)
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
+	});
+
 	logger.info(
-		{ provider, model: options?.model || "gemini-2.5-flash" },
+		{ provider, model: options?.model },
 		"Calling LLM for card generation",
 	);
 
-	const response = await geminiClient.models.generateContent({
-		model: options?.model || "gemini-2.5-flash",
-		contents,
-	});
+	// Call LLM API (provider-agnostic)
+	const response = await client.generate(prompt);
 
-	// Extract raw content
-	const { candidates } = response as unknown as {
-		candidates?: { content: { parts: { text: string }[] } }[];
-	};
-	const raw = candidates?.[0]?.content;
-	if (!raw) {
+	// Response is already a simple string
+	if (!response || response.trim().length === 0) {
 		throw new Error("カード生成に失敗しました: 内容が空です");
 	}
 
-	// Combine parts if needed
-	let jsonString: string;
-	if (typeof raw === "string") {
-		jsonString = raw;
-	} else if (typeof raw === "object" && Array.isArray(raw.parts)) {
-		jsonString = raw.parts.map((p: { text: string }) => p.text).join("");
-	} else {
-		jsonString = String(raw);
-	}
+	let jsonString = response;
 
 	// Attempt to extract JSON block between code fences
 	const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;

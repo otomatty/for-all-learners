@@ -1,5 +1,5 @@
 /**
- * Tests for generateCardsFromTranscript with getUserAPIKey integration
+ * Tests for generateCardsFromTranscript with dynamic LLM client integration
  */
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -9,16 +9,12 @@ process.env.ENCRYPTION_KEY =
 	"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/ai/getUserAPIKey", () => ({
-	getUserAPIKey: vi.fn(),
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
 }));
 
-vi.mock("@/lib/gemini/client", () => ({
-	geminiClient: {
-		models: {
-			generateContent: vi.fn(),
-		},
-	},
+vi.mock("@/lib/llm/prompt-builder", () => ({
+	buildPrompt: vi.fn(),
 }));
 
 vi.mock("@/lib/logger", () => ({
@@ -28,46 +24,40 @@ vi.mock("@/lib/logger", () => ({
 	},
 }));
 
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+import type { LLMClient } from "@/lib/llm/client";
 // Import AFTER mocks
 import { generateCardsFromTranscript } from "../generateCards";
 
 /**
- * Helper: Create mock Gemini response for card generation
- * @param cards - Array of card objects
- * @returns Mock response object
+ * Mock LLMClient implementation
  */
-function createMockGeminiResponse(
-	cards: Array<{ front_content: string; back_content: string }>,
-) {
-	const text = JSON.stringify(cards);
-	return {
-		candidates: [
-			{
-				content: {
-					parts: [{ text }],
-				},
-			},
-		],
-		text,
-		data: undefined,
-		functionCalls: undefined,
-		executableCode: undefined,
-		codeExecutionResult: undefined,
-	};
+class MockLLMClient implements LLMClient {
+	async generate(prompt: string): Promise<string> {
+		return `Mock response for: ${prompt}`;
+	}
+
+	async *generateStream(prompt: string): AsyncGenerator<string> {
+		yield `Mock stream: ${prompt}`;
+	}
 }
 
-describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
+describe("generateCardsFromTranscript - Dynamic LLM Client Integration", () => {
+	const mockClient: LLMClient = new MockLLMClient();
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 
 		// Default mock implementations
-		vi.mocked(getUserAPIKey).mockResolvedValue("test-api-key");
+		vi.mocked(buildPrompt).mockImplementation((parts) => {
+			return Array.isArray(parts) ? parts.join("\n\n") : "";
+		});
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockClient);
 	});
 
 	describe("TC-001: 基本的なカード生成（Google Gemini）", () => {
-		test("should generate cards and call getUserAPIKey with google", async () => {
+		test("should generate cards and call createClientWithUserKey with google", async () => {
 			// Arrange
 			const transcript =
 				"React Hooks とは、関数コンポーネントで状態管理を行う機能です。";
@@ -81,8 +71,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 				},
 			];
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards),
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			// Act
@@ -93,7 +83,11 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			);
 
 			// Assert
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider,
+				model: undefined,
+			});
+			expect(buildPrompt).toHaveBeenCalled();
 			expect(result).toHaveLength(1);
 			expect(result[0].front_content).toBe("React Hooksとは？");
 			expect(result[0].back_content).toBe(
@@ -118,8 +112,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 				},
 			];
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards),
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			// Act
@@ -130,7 +124,10 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			);
 
 			// Assert
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider,
+				model: undefined,
+			});
 			expect(result).toHaveLength(1);
 			expect(result[0].front_content).toBe("TypeScriptとは？");
 		});
@@ -151,8 +148,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 				},
 			];
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards),
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			// Act
@@ -163,7 +160,10 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			);
 
 			// Assert
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider,
+				model: undefined,
+			});
 			expect(result).toHaveLength(1);
 		});
 	});
@@ -179,8 +179,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 				generateCardsFromTranscript(transcript, sourceAudioUrl),
 			).rejects.toThrow("トランスクリプトが空です");
 
-			// getUserAPIKey should not be called (early return)
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			// createClientWithUserKey should not be called (early return)
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 
 		test("should throw error when transcript is whitespace only", async () => {
@@ -196,19 +196,16 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 	});
 
 	describe("TC-005: ユーザーAPIキー優先", () => {
-		test("should prioritize user API key over environment variables", async () => {
+		test("should prioritize user-configured API key", async () => {
 			// Arrange
 			const transcript = "テストトランスクリプト";
 			const sourceAudioUrl = "https://example.com/audio.mp3";
 			const provider = "google";
 
-			// Mock user API key
-			vi.mocked(getUserAPIKey).mockResolvedValue("user-custom-api-key");
-
 			const mockCards = [{ front_content: "質問", back_content: "回答" }];
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockCards),
+			vi.spyOn(mockClient, "generate").mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			// Act
@@ -217,8 +214,10 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			});
 
 			// Assert
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
-			// API key is retrieved (implementation detail verified in getUserAPIKey tests)
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider,
+				model: undefined,
+			});
 		});
 	});
 
@@ -229,8 +228,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			const sourceAudioUrl = "https://example.com/audio.mp3";
 			const provider = "openai";
 
-			// Mock getUserAPIKey to throw error
-			vi.mocked(getUserAPIKey).mockRejectedValue(
+			// Mock createClientWithUserKey to throw error
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error(
 					"API key not configured for provider: openai. Please set it in Settings.",
 				),
@@ -253,8 +252,8 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid provider type
 			const provider = "invalid_provider" as any;
 
-			// Mock getUserAPIKey to throw validation error
-			vi.mocked(getUserAPIKey).mockRejectedValue(
+			// Mock createClientWithUserKey to throw validation error
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("Invalid provider: invalid_provider"),
 			);
 
@@ -272,7 +271,7 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 			const sourceAudioUrl = "https://example.com/audio.mp3";
 
 			// Mock API failure
-			vi.mocked(geminiClient.models.generateContent).mockRejectedValue(
+			vi.spyOn(mockClient, "generate").mockRejectedValue(
 				new Error("API request timeout"),
 			);
 
@@ -291,20 +290,7 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 
 			// Mock invalid JSON response
 			const invalidJson = "これは正しいJSONではありません { invalid }";
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [{ text: invalidJson }],
-						},
-					},
-				],
-				text: invalidJson,
-				data: undefined,
-				functionCalls: undefined,
-				executableCode: undefined,
-				codeExecutionResult: undefined,
-			});
+			vi.spyOn(mockClient, "generate").mockResolvedValue(invalidJson);
 
 			// Act & Assert
 			await expect(
@@ -330,20 +316,7 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 ${JSON.stringify(mockCards)}
 \`\`\``;
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [{ text: responseWithFence }],
-						},
-					},
-				],
-				text: responseWithFence,
-				data: undefined,
-				functionCalls: undefined,
-				executableCode: undefined,
-				codeExecutionResult: undefined,
-			});
+			vi.spyOn(mockClient, "generate").mockResolvedValue(responseWithFence);
 
 			// Act
 			const result = await generateCardsFromTranscript(
@@ -374,20 +347,7 @@ ${JSON.stringify(mockCards)}
 よろしくお願いします。
 `;
 
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						content: {
-							parts: [{ text: responseWithoutFence }],
-						},
-					},
-				],
-				text: responseWithoutFence,
-				data: undefined,
-				functionCalls: undefined,
-				executableCode: undefined,
-				codeExecutionResult: undefined,
-			});
+			vi.spyOn(mockClient, "generate").mockResolvedValue(responseWithoutFence);
 
 			// Act
 			const result = await generateCardsFromTranscript(
@@ -403,46 +363,13 @@ ${JSON.stringify(mockCards)}
 	});
 
 	describe("TC-012: 空の候補エラー", () => {
-		test("should throw error when candidates are empty", async () => {
+		test("should throw error when response is empty", async () => {
 			// Arrange
 			const transcript = "テストトランスクリプト";
 			const sourceAudioUrl = "https://example.com/audio.mp3";
 
-			// Mock empty candidates
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [],
-				text: "",
-				data: undefined,
-				functionCalls: undefined,
-				executableCode: undefined,
-				codeExecutionResult: undefined,
-			});
-
-			// Act & Assert
-			await expect(
-				generateCardsFromTranscript(transcript, sourceAudioUrl),
-			).rejects.toThrow("カード生成に失敗しました: 内容が空です");
-		});
-
-		test("should throw error when content is null", async () => {
-			// Arrange
-			const transcript = "テストトランスクリプト";
-			const sourceAudioUrl = "https://example.com/audio.mp3";
-
-			// Mock null content
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				candidates: [
-					{
-						// biome-ignore lint/suspicious/noExplicitAny: Testing null content edge case
-						content: null as any,
-					},
-				],
-				text: "",
-				data: undefined,
-				functionCalls: undefined,
-				executableCode: undefined,
-				codeExecutionResult: undefined,
-			});
+			// Mock empty response
+			vi.spyOn(mockClient, "generate").mockResolvedValue("");
 
 			// Act & Assert
 			await expect(

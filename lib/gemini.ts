@@ -6,8 +6,7 @@
  *   └─ app/_actions/quiz.ts (generateBulkQuestions)
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/ai/getUserAPIKey.ts
- *   ├─ lib/gemini/client.ts
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
  *   └─ lib/logger.ts
  *
  * Related Files:
@@ -15,8 +14,7 @@
  *   └─ Tests: ./__tests__/generateQuestions.test.ts
  */
 
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 
@@ -88,16 +86,9 @@ export async function generateQuestions(
 			difficulty,
 			frontLength: front.length,
 			backLength: back.length,
+			model: options?.model,
 		},
 		"Starting question generation",
-	);
-
-	// Get API key
-	const apiKey = await getUserAPIKey(provider);
-
-	logger.info(
-		{ provider, hasApiKey: !!apiKey },
-		"API key retrieved for question generation",
 	);
 
 	// Add difficulty info to the prompt
@@ -142,22 +133,21 @@ Back: ${back}`;
 			break;
 	}
 
-	// Use Google GenAI SDK client to generate content
-	const model =
-		options?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash";
+	// Create LLM client dynamically (auto-fetches user API key)
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
+	});
 
 	logger.info(
-		{ provider, model, type },
+		{ provider, model: options?.model, type },
 		"Calling LLM API for question generation",
 	);
 
-	const apiResponse = await geminiClient.models.generateContent({
-		model,
-		contents: prompt,
-	});
-	const content = apiResponse.text;
+	// Call LLM API (provider-agnostic)
+	const content = await client.generate(prompt);
 	if (!content) {
-		throw new Error("Empty response from Gemini client");
+		throw new Error("Empty response from LLM client");
 	}
 
 	// Clean up content: extract JSON inside markdown fences if present
@@ -220,16 +210,9 @@ export async function generateBulkQuestions(
 			type,
 			locale,
 			pairCount: pairs.length,
+			model: options?.model,
 		},
 		"Starting bulk question generation",
-	);
-
-	// Get API key
-	const apiKey = await getUserAPIKey(provider);
-
-	logger.info(
-		{ provider, hasApiKey: !!apiKey },
-		"API key retrieved for bulk question generation",
 	);
 
 	// Prefix to enforce pure JSON output
@@ -282,21 +265,20 @@ Use valid JSON array only.\n`;
 		.join("\n\n");
 	const prompt = `${header}${contentText}`;
 
-	// Call Gemini once for all cards
-	const model =
-		options?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash";
+	// Create LLM client dynamically and call API
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
+	});
 
 	logger.info(
-		{ provider, model, type, pairCount: pairs.length },
+		{ provider, model: options?.model, type, pairCount: pairs.length },
 		"Calling LLM API for bulk question generation",
 	);
 
-	const apiResponse = await geminiClient.models.generateContent({
-		model,
-		contents: prompt,
-	});
-	const raw = apiResponse.text;
-	if (!raw) throw new Error("Empty response from Gemini client");
+	// Call LLM API (provider-agnostic)
+	const raw = await client.generate(prompt);
+	if (!raw) throw new Error("Empty response from LLM client");
 
 	// Extract JSON array
 	let jsonStr: string;

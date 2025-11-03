@@ -21,7 +21,16 @@
 
 "use client";
 
-import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+	Bot,
+	ExternalLink,
+	EyeIcon,
+	EyeOffIcon,
+	Loader2,
+	Sparkles,
+	Zap,
+} from "lucide-react";
 import { useEffect, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
@@ -40,6 +49,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLLMProvider } from "@/lib/contexts/LLMProviderContext";
 import type { LLMProvider } from "@/lib/llm/client";
 
@@ -130,6 +145,18 @@ const PROVIDER_LABELS: Record<LLMProvider, string> = {
 	google: "Google Gemini",
 	openai: "OpenAI GPT",
 	anthropic: "Anthropic Claude",
+};
+
+const PROVIDER_ICONS: Record<LLMProvider, LucideIcon> = {
+	google: Sparkles,
+	openai: Zap,
+	anthropic: Bot,
+};
+
+const PROVIDER_DOCS_URLS: Record<LLMProvider, string> = {
+	google: "https://ai.google.dev/app/apikey",
+	openai: "https://platform.openai.com/api-keys",
+	anthropic: "https://console.anthropic.com/settings/keys",
 };
 
 // ============================================================================
@@ -288,11 +315,16 @@ export function LLMSettingsIntegrated() {
 		const isSaving = savingProvider === provider;
 		const apiKeyInputId = `${apiKeyInputIdPrefix}-${provider}`;
 
+		const ProviderIcon = PROVIDER_ICONS[provider];
+
 		return (
 			<AccordionItem key={provider} value={provider}>
 				<AccordionTrigger className="hover:no-underline">
 					<div className="flex items-center justify-between w-full pr-4">
-						<span className="font-medium">{PROVIDER_LABELS[provider]}</span>
+						<div className="flex items-center gap-3">
+							<ProviderIcon className="h-5 w-5 text-primary" />
+							<span className="font-medium">{PROVIDER_LABELS[provider]}</span>
+						</div>
 						{isConfigured ? (
 							<span className="text-xs text-green-600 dark:text-green-400">
 								設定済み ✓
@@ -308,7 +340,27 @@ export function LLMSettingsIntegrated() {
 					<div className="space-y-4 pt-4">
 						{/* API Key Input */}
 						<div className="space-y-2">
-							<Label htmlFor={apiKeyInputId}>APIキー</Label>
+							<div className="flex items-center justify-between">
+								<Label htmlFor={apiKeyInputId}>APIキー</Label>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<a
+												href={PROVIDER_DOCS_URLS[provider]}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+											>
+												APIキーの取得方法
+												<ExternalLink className="h-3 w-3" />
+											</a>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>新しいタブでAPIキーの取得ページを開きます</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
 							<div className="flex space-x-2">
 								<Input
 									id={apiKeyInputId}

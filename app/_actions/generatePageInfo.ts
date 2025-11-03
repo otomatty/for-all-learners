@@ -1,9 +1,8 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { getPromptTemplate } from "@/app/_actions/promptService";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 
@@ -15,9 +14,9 @@ import logger from "@/lib/logger";
  *   └─ app/api/practice/generate (検討中)
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/ai/getUserAPIKey.ts
  *   ├─ app/_actions/promptService.ts
- *   ├─ lib/gemini/client.ts
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
  *   └─ lib/logger.ts
  *
  * Related Files:
@@ -62,60 +61,44 @@ export async function generatePageInfo(
 
 	const provider = (options?.provider || "google") as LLMProvider;
 
-	// ユーザーAPIキー取得
-	logger.info({ provider, title }, "generatePageInfo: Getting API key");
-	const apiKey = await getUserAPIKey(provider);
 	logger.info(
-		{ provider, hasApiKey: !!apiKey },
-		"generatePageInfo: API key retrieved",
+		{ provider, title, model: options?.model },
+		"generatePageInfo: Starting generation",
 	);
 
 	// プロンプトテンプレートを取得
 	const promptTemplate = await getPromptTemplate("page_info");
-	// モデルへのプロンプトとタイトルを設定
-	const contents = createUserContent([promptTemplate, title]);
 
-	// Gemini APIを呼び出し（現在はGemini固定、将来的に他のLLM対応）
-	logger.info(
-		{ provider, model: options?.model || "gemini-2.5-flash" },
-		"generatePageInfo: Calling LLM",
-	);
-	const response = await geminiClient.models.generateContent({
-		model: options?.model || "gemini-2.5-flash",
-		contents,
+	// プロンプト文字列を構築
+	const prompt = buildPrompt([promptTemplate, title]);
+
+	// 動的にLLMクライアントを作成（ユーザーAPIキー自動取得）
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
 	});
 
-	// レスポンス候補の抽出
-	/**
-	 * Geminiからのレスポンス候補型
-	 */
-	interface GeminiCandidate {
-		content?: string | { parts: { text: string }[] };
-	}
-	const { candidates } = response as unknown as {
-		candidates?: GeminiCandidate[];
-	};
-	const candidate = candidates?.[0];
-	if (!candidate || !candidate.content) {
-		logger.error({ provider }, "generatePageInfo: No content in response");
-		throw new Error("コンテンツ生成に失敗しました");
-	}
+	logger.info(
+		{ provider, model: options?.model },
+		"generatePageInfo: Calling LLM",
+	);
 
-	// Markdown文字列として結合
-	let markdown: string;
-	if (typeof candidate.content === "string") {
-		markdown = candidate.content;
-	} else {
-		markdown = candidate.content.parts.map((p) => p.text).join("");
-	}
+	// LLM APIを呼び出し（プロバイダー非依存）
+	const markdown = await client.generate(prompt);
 	// コードフェンスがある場合は中身を抽出
 	const fenceMatch = markdown.match(/```(?:md|markdown)?\s*([\s\S]*?)```/i);
 	let result = fenceMatch ? fenceMatch[1].trim() : markdown.trim();
+
 	// Remove leading H1 heading if present, since title is already provided
 	const lines = result.split("\n");
 	if (lines[0].startsWith("# ")) {
 		result = lines.slice(1).join("\n").trim();
 	}
+
+	logger.info(
+		{ provider, resultLength: result.length },
+		"generatePageInfo: Generation completed",
+	);
 
 	return result;
 }
