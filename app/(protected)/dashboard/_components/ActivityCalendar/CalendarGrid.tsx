@@ -31,7 +31,7 @@ export function CalendarGrid({
 	return (
 		<div className="border rounded-lg overflow-hidden shadow-sm">
 			{/* 曜日ヘッダー */}
-			<div className="grid grid-cols-7 bg-gray-50 border-b">
+			<div className="grid grid-cols-7 bg-muted border-b">
 				{WEEKDAY_LABELS.map((day, index) => (
 					<div
 						key={day}
@@ -39,7 +39,7 @@ export function CalendarGrid({
 							"text-center py-3 text-sm font-medium",
 							index === 0 && "text-red-600", // 日曜日
 							index === 6 && "text-blue-600", // 土曜日
-							index !== 0 && index !== 6 && "text-gray-700",
+							index !== 0 && index !== 6 && "text-foreground",
 						)}
 					>
 						{day}

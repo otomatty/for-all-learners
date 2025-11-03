@@ -116,7 +116,7 @@ export function EditPageBubbleMenu({
 							<button
 								type="button"
 								onClick={wrapSelectionWithPageLink}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								{isLinkSelected ? (
 									<Link2Off className="w-6 h-6" />
@@ -132,7 +132,7 @@ export function EditPageBubbleMenu({
 									editor.view.focus();
 									editor.chain().toggleBold().run();
 								}}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								<Bold className="w-6 h-6" />
 							</button>
@@ -144,7 +144,7 @@ export function EditPageBubbleMenu({
 									editor.view.focus();
 									editor.chain().toggleCodeBlock().run();
 								}}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								<Code className="w-6 h-6" />
 							</button>
@@ -160,7 +160,7 @@ export function EditPageBubbleMenu({
 											<DropdownMenuTrigger asChild>
 												<button
 													type="button"
-													className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+													className="px-2 py-1 hover:bg-accent"
 												>
 													<Hash className="w-5 h-5" />
 												</button>
@@ -188,7 +188,7 @@ export function EditPageBubbleMenu({
 									<DropdownMenuTrigger asChild>
 										<button
 											type="button"
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Hash className="w-5 h-5" />
 										</button>
@@ -232,7 +232,7 @@ export function EditPageBubbleMenu({
 												editor.view.focus();
 												editor.chain().toggleBold().run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Bold className="w-5 h-5" />
 										</button>
@@ -253,7 +253,7 @@ export function EditPageBubbleMenu({
 										editor.view.focus();
 										editor.chain().toggleBold().run();
 									}}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Bold className="w-5 h-5" />
 								</button>
@@ -269,7 +269,7 @@ export function EditPageBubbleMenu({
 												editor.view.focus();
 												editor.chain().toggleStrike().run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Strikethrough className="w-5 h-5" />
 										</button>
@@ -290,7 +290,7 @@ export function EditPageBubbleMenu({
 										editor.view.focus();
 										editor.chain().toggleStrike().run();
 									}}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Strikethrough className="w-5 h-5" />
 								</button>
@@ -306,7 +306,7 @@ export function EditPageBubbleMenu({
 												editor.view.focus();
 												editor.chain().toggleOrderedList().run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<ListOrdered className="w-5 h-5" />
 										</button>
@@ -327,7 +327,7 @@ export function EditPageBubbleMenu({
 										editor.view.focus();
 										editor.chain().toggleOrderedList().run();
 									}}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<ListOrdered className="w-5 h-5" />
 								</button>
@@ -343,7 +343,7 @@ export function EditPageBubbleMenu({
 												editor.view.focus();
 												editor.chain().toggleBulletList().run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<List className="w-5 h-5" />
 										</button>
@@ -364,7 +364,7 @@ export function EditPageBubbleMenu({
 										editor.view.focus();
 										editor.chain().toggleBulletList().run();
 									}}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<List className="w-5 h-5" />
 								</button>
@@ -377,7 +377,7 @@ export function EditPageBubbleMenu({
 										<button
 											type="button"
 											onClick={wrapSelectionWithPageLink}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											{isLinkSelected ? (
 												<Link2Off className="w-5 h-5" />
@@ -399,7 +399,7 @@ export function EditPageBubbleMenu({
 								<button
 									type="button"
 									onClick={wrapSelectionWithPageLink}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									{isLinkSelected ? (
 										<Link2Off className="w-5 h-5" />
@@ -416,7 +416,7 @@ export function EditPageBubbleMenu({
 										<button
 											type="button"
 											onClick={splitPage}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Scissors className="w-5 h-5" />
 										</button>
@@ -434,7 +434,7 @@ export function EditPageBubbleMenu({
 								<button
 									type="button"
 									onClick={splitPage}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Scissors className="w-5 h-5" />
 								</button>
@@ -450,7 +450,7 @@ export function EditPageBubbleMenu({
 												editor.view.focus();
 												editor.chain().toggleCodeBlock().run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Code className="w-5 h-5" />
 										</button>
@@ -471,7 +471,7 @@ export function EditPageBubbleMenu({
 										editor.view.focus();
 										editor.chain().toggleCodeBlock().run();
 									}}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Code className="w-5 h-5" />
 								</button>
@@ -494,7 +494,7 @@ export function EditPageBubbleMenu({
 													})
 													.run();
 											}}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Table className="w-5 h-5" />
 										</button>

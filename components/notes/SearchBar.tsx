@@ -193,7 +193,7 @@ export function SearchBar({
 			<input
 				ref={inputRef}
 				type="text"
-				className="w-full border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring focus:border-blue-300"
+				className="w-full border border-border rounded px-3 py-1 focus:outline-none focus:ring focus:border-blue-300"
 				placeholder={placeholder}
 				value={query}
 				onChange={handleChange}
@@ -203,12 +203,12 @@ export function SearchBar({
 
 			{/* サジェスト候補（入力時） */}
 			{suggestions.length > 0 && (
-				<ul className="absolute z-10 w-full bg-white border border-gray-200 rounded mt-1 max-h-60 overflow-auto shadow-md">
+				<ul className="absolute z-10 w-full bg-background border border-border rounded mt-1 max-h-60 overflow-auto shadow-md">
 					{suggestions.map((s, idx) => (
 						<li
 							key={`${s.type}-${s.id}`}
 							className={`px-3 py-2 cursor-pointer ${
-								idx === activeIndex ? "bg-blue-100" : "hover:bg-gray-100"
+								idx === activeIndex ? "bg-blue-100" : "hover:bg-accent"
 							}`}
 							onMouseEnter={() => setActiveIndex(idx)}
 							onClick={() => handleSuggestionClick(s.href)}

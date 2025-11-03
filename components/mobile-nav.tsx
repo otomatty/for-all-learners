@@ -53,7 +53,7 @@ export function MobileNav({ isAdmin, account, plan }: MobileNavProps) {
 								<Link
 									href={item.href}
 									className={cn(
-										"block px-4 py-2 text-sm transition-colors hover:bg-gray-100",
+										"block px-4 py-2 text-sm transition-colors hover:bg-accent",
 										activeItem === item.href
 											? "font-semibold text-foreground"
 											: "text-foreground/60",

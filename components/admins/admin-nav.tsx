@@ -101,7 +101,7 @@ export function AdminNav() {
 			</Button>
 
 			{open && (
-				<div className="p-4 absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto bg-white rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
+				<div className="p-4 absolute right-0 mt-2 w-64 max-h-96 overflow-y-auto bg-background rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
 					<div className="p-2 grid grid-cols-2 gap-2">
 						{navItems.map((item) => {
 							const IconComponent = getIconComponent(item.icon);
@@ -114,8 +114,8 @@ export function AdminNav() {
 									title={item.label}
 									className={cn(
 										"group flex flex-col items-center justify-center p-3 text-sm rounded-md w-full aspect-square",
-										"hover:bg-gray-100 text-gray-700",
-										isActive ? "bg-gray-100 font-semibold" : "",
+										"hover:bg-accent text-foreground",
+										isActive ? "bg-accent font-semibold" : "",
 									)}
 									onClick={() => setOpen(false)}
 								>
