@@ -4,7 +4,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (このファイルを import している場所):
- *   └─ app/(protected)/settings/api-keys/page.tsx
+ *   └─ components/settings/LLMSettingsIntegrated.tsx
  *
  * Dependencies (このファイルが import している外部ファイル):
  *   ├─ components/settings/ProviderCard.tsx
@@ -17,7 +17,7 @@
  * Related Files:
  *   ├─ Spec: ./APIKeySettings.spec.md
  *   ├─ Tests: ./__tests__/APIKeySettings.test.tsx
- *   └─ Page: ../../app/(protected)/settings/api-keys/page.tsx
+ *   └─ Integrated: ./LLMSettingsIntegrated.tsx
  */
 
 "use client";

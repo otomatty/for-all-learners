@@ -452,24 +452,6 @@ CREATE TABLE user_quizlet_sets (
   UNIQUE(user_id, quizlet_set_id)
 );
 
--- ユーザーごとのLLM設定テーブル
-CREATE TABLE user_llm_settings (
-  id                uuid              PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id           uuid              NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  provider          text              NOT NULL CHECK (provider IN ('gemini','openai','claude','deepseek')),
-  api_key_encrypted text              NOT NULL,
-  created_at        timestamptz       NOT NULL DEFAULT now(),
-  updated_at        timestamptz       NOT NULL DEFAULT now(),
-  UNIQUE(user_id, provider)
-);
-
-ALTER TABLE user_llm_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own llm settings"
-  ON user_llm_settings
-  FOR ALL
-  USING ( auth.uid() = user_id )
-  WITH CHECK ( auth.uid() = user_id );
-
 -- RPC wrapper functions for pgcrypto
 CREATE OR REPLACE FUNCTION encrypt_user_llm_api_key(
   data TEXT,

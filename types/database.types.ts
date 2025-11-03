@@ -1898,33 +1898,6 @@ export type Database = {
 					},
 				];
 			};
-			user_llm_settings: {
-				Row: {
-					api_key_encrypted: string;
-					created_at: string;
-					id: string;
-					provider: string;
-					updated_at: string;
-					user_id: string;
-				};
-				Insert: {
-					api_key_encrypted: string;
-					created_at?: string;
-					id?: string;
-					provider: string;
-					updated_at?: string;
-					user_id: string;
-				};
-				Update: {
-					api_key_encrypted?: string;
-					created_at?: string;
-					id?: string;
-					provider?: string;
-					updated_at?: string;
-					user_id?: string;
-				};
-				Relationships: [];
-			};
 			user_page_prompts: {
 				Row: {
 					created_at: string;

@@ -4,7 +4,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (使用先):
- *   └─ app/(protected)/settings/api-keys/page.tsx
+ *   └─ [DEPRECATED] Use LLMSettingsIntegrated instead
  *
  * Dependencies (依存先):
  *   ├─ lib/contexts/LLMProviderContext.tsx (useLLMProvider)
@@ -16,7 +16,8 @@
  *
  * Related Files:
  *   ├─ Spec: docs/03_plans/ai-integration/20251103_01_phase14-ui-spec.md
- *   └─ Context: lib/contexts/LLMProviderContext.tsx
+ *   ├─ Context: lib/contexts/LLMProviderContext.tsx
+ *   └─ Integrated: ./LLMSettingsIntegrated.tsx (現在の推奨)
  */
 
 "use client";
