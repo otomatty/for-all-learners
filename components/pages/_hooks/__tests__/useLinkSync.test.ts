@@ -11,17 +11,14 @@
  * - Debounce behavior
  * - Duplicate request prevention
  * - Error handling
- * @vitest-environment jsdom
  */
 
 import { renderHook } from "@testing-library/react";
 import type { Editor } from "@tiptap/react";
 import { describe, expect, it } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { useLinkSync } from "../useLinkSync";
 
-// Setup jsdom environment for this test file
-setupJSDOMEnvironment();
+// Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("useLinkSync", () => {
 	describe("Hook API", () => {

@@ -3,7 +3,7 @@
  * Tests for TipTap mark manipulations
  *
  * @fileoverview Tests for lib/unilink/resolver/mark-operations.ts
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import type { Editor } from "@tiptap/core";

@@ -276,7 +276,6 @@ describe("generateRawCardsFromPageContent", () => {
 			);
 
 			const result = await generateRawCardsFromPageContent(mockPageContent, {
-				// biome-ignore lint/suspicious/noExplicitAny: Testing invalid provider
 				provider: "invalid_provider" as any,
 			});
 

@@ -15,7 +15,6 @@ export function CardsListSkeleton({
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{Array.from({ length: count }).map((_, index) => (
 				<CardItem
-					// biome-ignore lint/suspicious/noArrayIndexKey: スケルトン要素であり、順序変更や要素の追加削除がないため、indexをkeyに含めても安全です。
 					key={`skeleton-${index}`}
 					isLoading={true}
 					deckId={deckId}

@@ -4,12 +4,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { unifiedLinkAttributes } from "../attributes";
 import type { UnifiedLinkAttributes } from "../types";
 
-// Setup jsdom environment for this test
-setupJSDOMEnvironment();
+// Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("UnifiedLinkMark Attributes", () => {
 	describe("attribute definitions", () => {

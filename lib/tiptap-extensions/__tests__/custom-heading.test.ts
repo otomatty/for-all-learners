@@ -8,10 +8,7 @@ import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { CustomHeading } from "../custom-heading";
-
-setupJSDOMEnvironment();
 
 describe("CustomHeading", () => {
 	let editor: Editor;

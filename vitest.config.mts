@@ -14,6 +14,7 @@ export default defineConfig({
 		exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/build/**"],
 		deps: {
 			inline: ["@testing-library/react"],
+			external: ["jsdom"],
 		},
 		coverage: {
 			provider: "v8",

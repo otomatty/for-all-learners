@@ -249,7 +249,6 @@ describe("generateCardsFromTranscript - Dynamic LLM Client Integration", () => {
 			// Arrange
 			const transcript = "テストトランスクリプト";
 			const sourceAudioUrl = "https://example.com/audio.mp3";
-			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid provider type
 			const provider = "invalid_provider" as any;
 
 			// Mock createClientWithUserKey to throw validation error

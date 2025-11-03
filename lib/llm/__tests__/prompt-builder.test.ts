@@ -175,11 +175,7 @@ describe("buildPrompt", () => {
 
 		test("should handle unknown object types by stringifying", () => {
 			// Arrange
-			const parts: PromptPart[] = [
-				"Text",
-				// biome-ignore lint/suspicious/noExplicitAny: Testing unknown type
-				{ unknown: "property" } as any,
-			];
+			const parts: PromptPart[] = ["Text", { unknown: "property" } as any];
 
 			// Act
 			const result = buildPrompt(parts);
@@ -207,7 +203,6 @@ describe("buildPrompt", () => {
 
 		test("should return empty string for null/undefined (edge case)", () => {
 			// Arrange
-			// biome-ignore lint/suspicious/noExplicitAny: Testing edge case
 			const parts: PromptPart[] = null as any;
 
 			// Act
@@ -420,7 +415,6 @@ describe("buildPromptFromGeminiContents", () => {
 	describe("TC-003: Edge cases", () => {
 		test("should handle null/undefined contents", () => {
 			// Arrange
-			// biome-ignore lint/suspicious/noExplicitAny: Testing edge case
 			const contents: any = null;
 
 			// Act

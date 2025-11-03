@@ -48,7 +48,6 @@ describe("getUserAPIKey", () => {
 		delete process.env.ANTHROPIC_API_KEY;
 
 		// Default mock setup
-		// biome-ignore lint/suspicious/noExplicitAny: Test mock
 		vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
 	});
 
@@ -235,7 +234,6 @@ describe("getUserAPIKey", () => {
 	describe("TC-005: 不正なプロバイダー", () => {
 		test("should throw error for invalid provider", async () => {
 			// Arrange
-			// biome-ignore lint/suspicious/noExplicitAny: Testing invalid input
 			const invalidProvider = "invalid" as any;
 
 			// Act & Assert
@@ -298,7 +296,6 @@ describe("getUserAPIKey", () => {
 
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: null },
-				// biome-ignore lint/suspicious/noExplicitAny: Test mock
 				error: { message: "Not authenticated" } as any,
 			});
 
@@ -331,7 +328,6 @@ describe("getUserAPIKey", () => {
 
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: null },
-				// biome-ignore lint/suspicious/noExplicitAny: Test mock
 				error: { message: "Not authenticated" } as any,
 			});
 
