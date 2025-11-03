@@ -2,7 +2,7 @@
  * CreatePageDialog のテストスイート
  * ページ作成ダイアログコンポーネントの包括的なテスト
  *
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";

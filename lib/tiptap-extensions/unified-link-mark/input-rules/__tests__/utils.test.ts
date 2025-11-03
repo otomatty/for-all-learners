@@ -8,6 +8,18 @@ import StarterKit from "@tiptap/starter-kit";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { isInCodeContext } from "../utils";
 
+// Type extension for setContent command
+declare module "@tiptap/core" {
+	interface Commands<ReturnType> {
+		setContent: {
+			setContent: (content: string | Record<string, unknown>) => ReturnType;
+		};
+		setTextSelection: {
+			setTextSelection: (props: { from: number; to: number }) => ReturnType;
+		};
+	}
+}
+
 // Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("isInCodeContext", () => {
@@ -26,8 +38,7 @@ describe("isInCodeContext", () => {
 	describe("Code block detection", () => {
 		it("should return true when cursor is in code block", () => {
 			// Create a proper code block using TipTap commands
-			editor.commands.setCodeBlock();
-			editor.commands.insertContent("const x = 1;");
+			editor.commands.setContent("<pre><code>const x = 1;</code></pre>");
 
 			const { state } = editor;
 			const nodeType = state.selection.$from.parent.type.name;
@@ -63,15 +74,37 @@ describe("isInCodeContext", () => {
 		});
 
 		it("should return true at the end of code block", () => {
-			editor.commands.setCodeBlock();
-			editor.commands.insertContent("const x = 1;");
+			editor.commands.setContent("<pre><code>const x = 1;</code></pre>");
 
-			// Move cursor to the end
-			const lastPos = editor.state.doc.content.size - 1;
-			editor.commands.setTextSelection({ from: lastPos, to: lastPos });
-
+			// Move cursor to the end of code block content
+			// ProseMirrorの位置計算を使用
 			const { state } = editor;
-			expect(isInCodeContext(state)).toBe(true);
+			const { doc } = state;
+
+			// コードブロックノードを探す
+			let codeBlockPos: number | undefined;
+			doc.descendants((node, pos) => {
+				if (node.type.name === "codeBlock" && codeBlockPos === undefined) {
+					codeBlockPos = pos;
+				}
+			});
+
+			if (codeBlockPos !== undefined) {
+				// コードブロックの終端位置を計算
+				const codeBlockNode = doc.nodeAt(codeBlockPos);
+				if (codeBlockNode) {
+					// コードブロック内の最後の位置 = 開始位置 + ノードサイズ - 2 (終了タグの前)
+					const endPos = codeBlockPos + codeBlockNode.nodeSize - 2;
+					editor.commands.setTextSelection({ from: endPos, to: endPos });
+				}
+			} else {
+				// フォールバック: ドキュメントの最後の位置
+				const lastPos = editor.state.doc.content.size - 1;
+				editor.commands.setTextSelection({ from: lastPos, to: lastPos });
+			}
+
+			const finalState = editor.state;
+			expect(isInCodeContext(finalState)).toBe(true);
 		});
 	});
 

@@ -3,7 +3,7 @@
  * Tests for BroadcastChannel management and page event notifications
  *
  * @fileoverview Tests for lib/unilink/resolver/broadcast.ts
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";

@@ -17,6 +17,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { LLMClient } from "@/lib/llm/client";
 
 // Mock createClientWithUserKey and LLMClient
 vi.mock("@/lib/llm/factory", () => ({
@@ -40,11 +41,14 @@ describe("generateQuestions", () => {
 		vi.clearAllMocks();
 		// Setup mock client for each test
 		mockGenerate = vi.fn();
-		const mockClient = {
-			generate: mockGenerate,
+		const mockClient: LLMClient = {
+			generate: mockGenerate as (
+				prompt: string,
+				options?: unknown,
+			) => Promise<string>,
 			generateStream: vi.fn(async function* () {
 				yield "";
-			}),
+			}) as (prompt: string, options?: unknown) => AsyncGenerator<string>,
 		};
 		vi.mocked(createClientWithUserKey).mockResolvedValue(mockClient);
 	});

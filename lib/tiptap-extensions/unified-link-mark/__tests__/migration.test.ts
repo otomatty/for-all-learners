@@ -15,7 +15,12 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 
 	beforeEach(() => {
 		editor = new Editor({
-			extensions: [StarterKit, UnifiedLinkMark],
+			extensions: [
+				StarterKit.configure({
+					link: false, // StarterKitのLink拡張を無効化してUnifiedLinkMarkが優先されるようにする
+				}),
+				UnifiedLinkMark,
+			],
 		});
 	});
 
@@ -34,9 +39,9 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			// Mark should be recognized as unilink
 			const mark = json.content?.[0]?.content?.[0]?.marks?.[0];
 			expect(mark?.type).toBe("unilink");
-			expect(mark?.attrs.variant).toBe("bracket");
-			expect(mark?.attrs.pageId).toBe("abc-123");
-			expect(mark?.attrs.state).toBe("exists");
+			expect(mark?.attrs?.variant).toBe("bracket");
+			expect(mark?.attrs?.pageId).toBe("abc-123");
+			expect(mark?.attrs?.state).toBe("exists");
 		});
 
 		it("should migrate data-page-title links (missing pages)", () => {
@@ -48,10 +53,10 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 
 			const mark = json.content?.[0]?.content?.[0]?.marks?.[0];
 			expect(mark?.type).toBe("unilink");
-			expect(mark?.attrs.variant).toBe("bracket");
-			expect(mark?.attrs.raw).toBe("New Page"); // raw comes from data-page-title
-			expect(mark?.attrs.state).toBe("missing");
-			expect(mark?.attrs.exists).toBe(false);
+			expect(mark?.attrs?.variant).toBe("bracket");
+			expect(mark?.attrs?.raw).toBe("New Page"); // raw comes from data-page-title
+			expect(mark?.attrs?.state).toBe("missing");
+			expect(mark?.attrs?.exists).toBe(false);
 		});
 
 		it("should preserve href attribute during migration", () => {
@@ -61,7 +66,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.href).toBe("/pages/xyz");
+			expect(mark?.attrs?.href).toBe("/pages/xyz");
 		});
 
 		it("should not migrate links with data-variant (already migrated)", () => {
@@ -73,7 +78,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 
 			// data-variant がある場合は通常のパースロジック
 			expect(mark?.type).toBe("unilink");
-			expect(mark?.attrs.variant).toBe("bracket");
+			expect(mark?.attrs?.variant).toBe("bracket");
 		});
 
 		it("should generate unique markId for migrated links", () => {
@@ -99,7 +104,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.exists).toBe(true);
+			expect(mark?.attrs?.exists).toBe(true);
 		});
 
 		it("should handle data-exists=false correctly", () => {
@@ -109,7 +114,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.exists).toBe(false);
+			expect(mark?.attrs?.exists).toBe(false);
 		});
 	});
 
@@ -120,7 +125,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.state).toBe("pending"); // Default value
+			expect(mark?.attrs?.state).toBe("pending"); // Default value
 		});
 
 		it("should handle links without exists attribute", () => {
@@ -130,7 +135,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.exists).toBe(false); // data-exists がなければ false
+			expect(mark?.attrs?.exists).toBe(false); // data-exists がなければ false
 		});
 
 		it("should skip external links (not yet supported)", () => {
@@ -163,8 +168,8 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
 			expect(mark?.type).toBe("unilink");
-			expect(mark?.attrs.raw).toBe("Only Title");
-			expect(mark?.attrs.pageId).toBeNull();
+			expect(mark?.attrs?.raw).toBe("Only Title");
+			expect(mark?.attrs?.pageId).toBeNull();
 		});
 
 		it("should set href to # for missing page links", () => {
@@ -173,7 +178,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.href).toBe("#");
+			expect(mark?.attrs?.href).toBe("#");
 		});
 	});
 
@@ -187,7 +192,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 
 			// Text content is stored in the text node, not mark attributes
 			expect(textNode?.text).toBe("Display Text");
-			expect(mark?.attrs.raw).toBe("Display Text");
+			expect(mark?.attrs?.raw).toBe("Display Text");
 		});
 
 		it("should set variant to bracket for all migrated links", () => {
@@ -200,8 +205,8 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			const mark1 = json.content?.[0]?.content?.[0]?.marks?.[0];
 			const mark2 = json.content?.[1]?.content?.[0]?.marks?.[0];
 
-			expect(mark1?.attrs.variant).toBe("bracket");
-			expect(mark2?.attrs.variant).toBe("bracket");
+			expect(mark1?.attrs?.variant).toBe("bracket");
+			expect(mark2?.attrs?.variant).toBe("bracket");
 		});
 
 		it("should set created to false for migrated links", () => {
@@ -210,7 +215,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.created).toBe(false);
+			expect(mark?.attrs?.created).toBe(false);
 		});
 
 		it("should set key to empty string for data-page-id links", () => {
@@ -219,7 +224,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
-			expect(mark?.attrs.key).toBe("");
+			expect(mark?.attrs?.key).toBe("");
 		});
 
 		it("should set key to lowercase title for data-page-title links", () => {
@@ -229,7 +234,7 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
 
 			// key is set from the pageTitle attribute value
-			expect(mark?.attrs.key).toBe("new page");
+			expect(mark?.attrs?.key).toBe("new page");
 		});
 	});
 });

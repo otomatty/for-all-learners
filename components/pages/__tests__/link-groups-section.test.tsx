@@ -1,6 +1,6 @@
 /**
  * Tests for LinkGroupsSection component
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import { render, screen } from "@testing-library/react";
