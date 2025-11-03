@@ -125,12 +125,9 @@ export async function getUserAPIKey(provider: LLMProvider): Promise<string> {
 		);
 
 		// If decryption fails, try environment variable as fallback
-		try {
-			return getEnvironmentAPIKey(provider);
-		} catch {
-			// If both user key and environment key fail, throw original error
-			throw new Error("Failed to decrypt API key");
-		}
+		// Note: getEnvironmentAPIKey will throw a more specific error message
+		// if the environment key is also not configured
+		return getEnvironmentAPIKey(provider);
 	}
 }
 
