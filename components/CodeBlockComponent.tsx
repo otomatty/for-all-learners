@@ -20,7 +20,7 @@ export default function CodeBlockComponent({ node: _node }: NodeViewProps) {
 	return (
 		<NodeViewWrapper ref={wrapperRef} className="relative group">
 			<pre className="p-4 overflow-auto bg-gray-100 dark:bg-gray-800 rounded">
-				<NodeViewContent as="code" />
+				<NodeViewContent<"code"> as="code" />
 			</pre>
 			<button
 				type="button"

@@ -12,14 +12,14 @@ export const GyazoImage = Image.extend({
 
 	addAttributes() {
 		return {
-			...this.parent?.(),
+			...Image.config.addAttributes,
 			fullWidth: { default: false },
 		};
 	},
 
 	addOptions() {
 		return {
-			...this.parent?.(),
+			...Image.config.addOptions,
 			HTMLAttributes: {
 				class: "image",
 			},
