@@ -87,11 +87,11 @@ export default function PageLinksGrid({
 									</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-2 px-2 md:px-4">
-									<div className="h-4 bg-gray-200 rounded w-full" />
-									<div className="h-4 bg-gray-200 rounded w-full" />
-									<div className="h-4 bg-gray-200 rounded w-full" />
-									<div className="h-4 bg-gray-200 rounded w-full" />
-									<div className="h-4 bg-gray-200 rounded w-3/4" />
+									<div className="h-4 bg-muted rounded w-full" />
+									<div className="h-4 bg-muted rounded w-full" />
+									<div className="h-4 bg-muted rounded w-full" />
+									<div className="h-4 bg-muted rounded w-full" />
+									<div className="h-4 bg-muted rounded w-3/4" />
 								</CardContent>
 							</Card>
 						))}

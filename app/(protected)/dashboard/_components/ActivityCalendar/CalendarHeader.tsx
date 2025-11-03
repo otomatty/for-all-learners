@@ -27,7 +27,7 @@ export function CalendarHeader({
 		<div className="flex items-center justify-between mb-4">
 			<div className="flex items-center gap-2">
 				<Calendar className="h-6 w-6 text-blue-600" />
-				<h2 className="text-2xl font-bold text-gray-900">
+				<h2 className="text-2xl font-bold text-foreground">
 					{getMonthDisplayName(year, month)}
 				</h2>
 			</div>

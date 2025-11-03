@@ -228,7 +228,7 @@ export function ShareSettingsModal({
 							{/* 非公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "private" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "private" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("private")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -249,7 +249,7 @@ export function ShareSettingsModal({
 							{/* 招待 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "invite" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "invite" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("invite")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -270,7 +270,7 @@ export function ShareSettingsModal({
 							{/* 限定公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "unlisted" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "unlisted" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("unlisted")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -291,7 +291,7 @@ export function ShareSettingsModal({
 							{/* 公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "public" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "public" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("public")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {

@@ -28,7 +28,7 @@ export function GoalAchievementSection({
 				<h3 className="text-lg font-semibold flex items-center gap-2">
 					{ACTIVITY_ICONS.goal} 目標達成状況
 				</h3>
-				<div className="text-sm text-gray-600">
+				<div className="text-sm text-muted-foreground">
 					{achievedCount}/{totalCount} 達成
 				</div>
 			</div>
@@ -39,29 +39,29 @@ export function GoalAchievementSection({
 						key={`${goal.goalTitle}-${goal.targetValue}`}
 						className={`p-4 rounded-lg border ${
 							goal.achieved
-								? "bg-green-50 border-green-200"
-								: "bg-gray-50 border-gray-200"
+								? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+								: "bg-muted border-border"
 						}`}
 					>
 						<div className="flex items-start gap-3">
 							{goal.achieved ? (
-								<CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+								<CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
 							) : (
-								<XCircle className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+								<XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
 							)}
 
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center justify-between gap-2 mb-1">
 									<span
 										className={`font-medium ${
-											goal.achieved ? "text-green-900" : "text-gray-700"
+											goal.achieved ? "text-green-900 dark:text-green-100" : "text-foreground"
 										}`}
 									>
 										{goal.goalTitle}
 									</span>
 									<span
 										className={`text-sm font-medium ${
-											goal.achieved ? "text-green-700" : "text-gray-500"
+											goal.achieved ? "text-green-700 dark:text-green-300" : "text-muted-foreground"
 										}`}
 									>
 										{goal.actualValue}/{goal.targetValue}
@@ -70,7 +70,7 @@ export function GoalAchievementSection({
 								</div>
 
 								{/* プログレスバー */}
-								<div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+								<div className="w-full bg-muted rounded-full h-2 overflow-hidden">
 									<div
 										className={`h-full rounded-full transition-all ${
 											goal.achieved ? "bg-green-500" : "bg-blue-500"

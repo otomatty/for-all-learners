@@ -120,7 +120,7 @@ export default function NotePagesClient({
 			</div>
 			{isError && <div className="text-red-500">Error: {error?.message}</div>}
 			{isLoading ? (
-				<PagesListSkeleton />
+				<PagesListSkeleton count={Math.min(totalCount, 48)} />
 			) : (
 				<PagesList pages={pages} slug={slug} />
 			)}

@@ -65,7 +65,7 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 				</Button>
 
 				{open && (
-					<div className="p-4 absolute right-0 mt-2 w-xs max-h-96 overflow-y-auto bg-white rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
+					<div className="p-4 absolute right-0 mt-2 w-xs max-h-96 overflow-y-auto bg-background rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
 						<div className="p-2 grid grid-cols-3 gap-2">
 							{items.map((item) => {
 								const isDisabled =
@@ -79,8 +79,8 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 										className={cn(
 											"relative group flex flex-col items-center justify-center p-2 text-sm rounded-md w-full aspect-square",
 											isDisabled
-												? "cursor-not-allowed text-gray-400"
-												: "hover:bg-gray-100 text-gray-700",
+												? "cursor-not-allowed text-muted-foreground"
+												: "hover:bg-accent text-foreground",
 										)}
 										onClick={(e) => {
 											if (isDisabled) e.preventDefault();
