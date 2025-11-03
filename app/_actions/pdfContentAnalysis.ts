@@ -1,7 +1,6 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 
 /**
  * PDF内容分析結果の型
@@ -70,37 +69,12 @@ export async function analyzePdfContent(
 - 解答関連: "解答", "答え", "正解", "解", "A:", "答:", "解答例"
 - 解説関連: "解説", "説明", "理由", "根拠", "なぜなら", "ポイント"`;
 
-		const contents = createUserContent([systemPrompt, sampleText]);
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
 
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("内容分析に失敗しました: レスポンスが空です");
-		}
-
-		// レスポンス解析
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
-		}
+		// Generate content analysis
+		const prompt = `${systemPrompt}\n\n${sampleText}`;
+		let jsonString = await client.generate(prompt);
 
 		// JSON抽出
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;

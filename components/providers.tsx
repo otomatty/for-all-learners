@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LLMProviderProvider } from "@/lib/contexts/LLMProviderContext";
 
 interface ProvidersProps {
 	children: React.ReactNode;
@@ -22,8 +23,10 @@ export function Providers({ children, theme, mode }: ProvidersProps) {
 				enableSystem={mode === "system"}
 				disableTransitionOnChange
 			>
-				{children}
-				<Toaster />
+				<LLMProviderProvider>
+					{children}
+					<Toaster />
+				</LLMProviderProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	);

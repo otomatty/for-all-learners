@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Save, Trash } from "lucide-react";
-import NextImage from "next/image";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ type CardWithId = GeneratedCard & { id: string };
 // Function to convert image Blob to WebP format
 async function convertImageToWebp(blob: Blob, quality = 0.8): Promise<Blob> {
 	return new Promise<Blob>((resolve, reject) => {
-		const img = new Image();
+		const img = new window.Image();
 		img.onload = () => {
 			const canvas = document.createElement("canvas");
 			canvas.width = img.width;
@@ -249,7 +249,7 @@ export function ImageCardGenerator({
 					{imageUrl && (
 						<div className="flex justify-center">
 							<div className="w-full max-w-md overflow-hidden relative h-64">
-								<NextImage
+								<Image
 									src={imageUrl}
 									alt="preview"
 									fill

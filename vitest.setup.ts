@@ -10,6 +10,10 @@ import React from "react";
 // Make React available globally for JSX
 global.React = React;
 
+// Set up required environment variables for tests
+process.env.ENCRYPTION_KEY =
+	"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"; // 64 hex chars (32 bytes)
+
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
 	default: ({

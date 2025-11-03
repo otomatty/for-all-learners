@@ -1,4 +1,22 @@
-import { geminiClient } from "@/lib/gemini/client";
+/**
+ * DEPENDENCY MAP:
+ *
+ * Parents (使用先):
+ *   ├─ app/api/practice/generate/route.ts
+ *   └─ app/_actions/quiz.ts (generateBulkQuestions)
+ *
+ * Dependencies (依存先):
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   └─ lib/logger.ts
+ *
+ * Related Files:
+ *   ├─ Spec: ./gemini.spec.md
+ *   └─ Tests: ./__tests__/generateQuestions.test.ts
+ */
+
+import type { LLMProvider } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import logger from "@/lib/logger";
 
 export type QuestionType = "flashcard" | "multiple_choice" | "cloze";
 
@@ -36,12 +54,19 @@ export type QuestionData =
 	| MultipleChoiceQuestion
 	| ClozeQuestion;
 
+// Options for question generation
+interface GenerateQuestionsOptions {
+	provider?: LLMProvider;
+	model?: string;
+}
+
 /**
  * Generate question data using the Google GenAI client.
  * @param front - The front content of the flashcard.
  * @param back - The back content of the flashcard.
  * @param type - The type of question to generate (flashcard, multiple_choice, cloze).
  * @param difficulty - The difficulty of the question (easy, normal, hard).
+ * @param options - Generation options (provider, model)
  * @returns Parsed JSON object representing the generated question data.
  */
 export async function generateQuestions(
@@ -49,7 +74,23 @@ export async function generateQuestions(
 	back: string,
 	type: QuestionType,
 	difficulty: "easy" | "normal" | "hard" = "normal",
+	options?: GenerateQuestionsOptions,
 ): Promise<QuestionData> {
+	// Determine provider
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	logger.info(
+		{
+			provider,
+			type,
+			difficulty,
+			frontLength: front.length,
+			backLength: back.length,
+			model: options?.model,
+		},
+		"Starting question generation",
+	);
+
 	// Add difficulty info to the prompt
 	const difficultyPrompt = ` (Difficulty: ${difficulty})`;
 
@@ -92,14 +133,21 @@ Back: ${back}`;
 			break;
 	}
 
-	// Use Google GenAI SDK client to generate content
-	const apiResponse = await geminiClient.models.generateContent({
-		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-		contents: prompt,
+	// Create LLM client dynamically (auto-fetches user API key)
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
 	});
-	const content = apiResponse.text;
+
+	logger.info(
+		{ provider, model: options?.model, type },
+		"Calling LLM API for question generation",
+	);
+
+	// Call LLM API (provider-agnostic)
+	const content = await client.generate(prompt);
 	if (!content) {
-		throw new Error("Empty response from Gemini client");
+		throw new Error("Empty response from LLM client");
 	}
 
 	// Clean up content: extract JSON inside markdown fences if present
@@ -109,7 +157,7 @@ Back: ${back}`;
 		jsonStr = fenceMatch[1].trim();
 	} else {
 		// Fallback: extract between first { and last }
-		const match = content.match(/\{[\s\S]*\}$/);
+		const match = content.match(/\{[\s\S]*\}/);
 		jsonStr = match ? match[0].trim() : content.trim();
 	}
 	// Remove any trailing commas before closing braces/brackets
@@ -125,6 +173,15 @@ Back: ${back}`;
 		}
 		return { type, ...parsed } as QuestionData;
 	} catch (error: unknown) {
+		logger.error(
+			{
+				provider,
+				type,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			"Failed to generate question",
+		);
+
 		const msg = error instanceof Error ? error.message : String(error);
 		throw new Error(`Failed to parse Gemini response JSON: ${msg}`);
 	}
@@ -134,15 +191,30 @@ Back: ${back}`;
  * Generate multiple questions in batch using Google GenAI client in specified locale.
  * @param pairs - Array of objects containing front and back text.
  * @param type - Question type (flashcard, multiple_choice, cloze).
- * @param difficulty - Difficulty (easy, normal, hard).
  * @param locale - Locale code for language (e.g., 'en', 'ja'). Defaults to 'en'.
+ * @param options - Generation options (provider, model)
  * @returns Array of parsed question data.
  */
 export async function generateBulkQuestions(
 	pairs: { front: string; back: string }[],
 	type: QuestionType,
 	locale = "en",
+	options?: GenerateQuestionsOptions,
 ): Promise<QuestionData[]> {
+	// Determine provider
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	logger.info(
+		{
+			provider,
+			type,
+			locale,
+			pairCount: pairs.length,
+			model: options?.model,
+		},
+		"Starting bulk question generation",
+	);
+
 	// Prefix to enforce pure JSON output
 	const JSON_ONLY_PREFIX =
 		"Respond with ONLY a valid JSON array including commas between objects. No markdown fences or extra text.\n";
@@ -193,13 +265,20 @@ Use valid JSON array only.\n`;
 		.join("\n\n");
 	const prompt = `${header}${contentText}`;
 
-	// Call Gemini once for all cards
-	const apiResponse = await geminiClient.models.generateContent({
-		model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-		contents: prompt,
+	// Create LLM client dynamically and call API
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
 	});
-	const raw = apiResponse.text;
-	if (!raw) throw new Error("Empty response from Gemini client");
+
+	logger.info(
+		{ provider, model: options?.model, type, pairCount: pairs.length },
+		"Calling LLM API for bulk question generation",
+	);
+
+	// Call LLM API (provider-agnostic)
+	const raw = await client.generate(prompt);
+	if (!raw) throw new Error("Empty response from LLM client");
 
 	// Extract JSON array
 	let jsonStr: string;
@@ -231,6 +310,15 @@ Use valid JSON array only.\n`;
 		});
 		return processedArr.map((q) => ({ type, ...q }) as QuestionData);
 	} catch (err: unknown) {
+		logger.error(
+			{
+				provider,
+				type,
+				error: err instanceof Error ? err.message : String(err),
+			},
+			"Failed to generate bulk questions",
+		);
+
 		const msg = err instanceof Error ? err.message : String(err);
 		throw new Error(`Failed to parse bulk response JSON: ${msg}`);
 	}

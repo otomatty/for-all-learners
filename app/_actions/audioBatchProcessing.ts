@@ -1,7 +1,6 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { createClient } from "@/lib/supabase/server";
 import {
 	executeWithQuotaCheck,
@@ -287,6 +286,13 @@ async function processBatchAudioTranscription(
 	const startTime = Date.now();
 
 	try {
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
+		if (!client.uploadFile || !client.generateWithFiles) {
+			throw new Error("File upload is not supported by this provider");
+		}
+
 		// 各音声ファイルをGemini Files APIにアップロード
 		const uploadPromises = batch.map(async (audio) => {
 			try {
@@ -296,18 +302,19 @@ async function processBatchAudioTranscription(
 				}
 
 				const audioBlob = await response.blob();
-				const { uri, mimeType } = await geminiClient.files.upload({
-					file: audioBlob,
-					config: { mimeType: audioBlob.type },
+				const uploadResult = await client.uploadFile?.(audioBlob, {
+					mimeType: audioBlob.type,
 				});
 
-				if (!uri) throw new Error("Gemini Files APIアップロード失敗");
+				if (!uploadResult) {
+					throw new Error(`File upload failed for audio: ${audio.audioName}`);
+				}
 
 				return {
 					audioId: audio.audioId,
 					audioName: audio.audioName,
-					uri,
-					mimeType: mimeType || audioBlob.type,
+					uri: uploadResult.uri,
+					mimeType: uploadResult.mimeType,
 				};
 			} catch (_error) {
 				return null;
@@ -342,56 +349,34 @@ async function processBatchAudioTranscription(
 - 音声の順序は入力順と同じにしてください
 - 話者の区別が可能な場合は適切に区分してください`;
 
-		// 音声パーツを作成
-		const audioParts = validUploads.map((upload) =>
-			createPartFromUri(upload.uri, upload.mimeType),
-		);
+		// 音声ファイルURIの配列を作成
+		const fileUris = validUploads.map((upload) => ({
+			uri: upload.uri,
+			mimeType: upload.mimeType,
+		}));
 
-		const contents = createUserContent([systemPrompt, ...audioParts]);
+		// Gemini API呼び出し（ファイル付きコンテンツ生成）
+		const jsonString = await client.generateWithFiles?.(systemPrompt, fileUris);
 
-		// Gemini API呼び出し
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		// レスポンス解析
-		const { candidates } = response as { candidates?: { content: unknown }[] };
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("文字起こしレスポンスが空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: { text: string }[] }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
+		if (!jsonString) {
+			throw new Error("Batch transcription failed: no response from LLM");
 		}
 
 		// JSON抽出
+		let extractedJson = jsonString;
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
-		const fenceMatch = jsonString.match(fencePattern);
+		const fenceMatch = extractedJson.match(fencePattern);
 		if (fenceMatch) {
-			jsonString = fenceMatch[1].trim();
+			extractedJson = fenceMatch[1].trim();
 		} else {
-			const start = jsonString.indexOf("[");
-			const end = jsonString.lastIndexOf("]");
+			const start = extractedJson.indexOf("[");
+			const end = extractedJson.lastIndexOf("]");
 			if (start !== -1 && end !== -1 && end > start) {
-				jsonString = jsonString.slice(start, end + 1);
+				extractedJson = extractedJson.slice(start, end + 1);
 			}
 		}
 
-		const parsed = JSON.parse(jsonString);
+		const parsed = JSON.parse(extractedJson);
 		if (!Array.isArray(parsed)) {
 			throw new Error("文字起こしレスポンスが配列ではありません");
 		}

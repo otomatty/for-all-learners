@@ -1,11 +1,6 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
-
-interface GenerateTitleResponse {
-	candidates?: { content: string }[];
-}
+import { createClientWithUserKey } from "@/lib/llm/factory";
 
 /**
  * Generate a concise Japanese title (5-20 characters) from a transcript text
@@ -16,16 +11,15 @@ export async function generateTitleFromTranscript(
 ): Promise<string> {
 	const systemPrompt =
 		"この文章を5文字〜20文字程度の日本語タイトルに要約してください。";
-	const contents = createUserContent([systemPrompt, transcript]);
-	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash",
-		contents,
-	});
-	// Extract raw content
-	const { candidates } = response as unknown as GenerateTitleResponse;
-	const raw = candidates?.[0]?.content ?? "";
-	let title = typeof raw === "string" ? raw : String(raw);
+
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	// Generate title using LLM
+	const prompt = `${systemPrompt}\n\n${transcript}`;
+	const response = await client.generate(prompt);
+
 	// Remove code fences or extra formatting
-	title = title.replace(/```(?:json)?[\s\S]*?```/g, "").trim();
+	const title = response.replace(/```(?:json)?[\s\S]*?```/g, "").trim();
 	return title;
 }
