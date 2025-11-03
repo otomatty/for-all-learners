@@ -8,7 +8,7 @@
  *
  * Dependencies (Mocks):
  *   ├─ app/_actions/ai/getUserAPIKey.ts (mocked)
- *   ├─ lib/gemini/client.ts (mocked)
+ *   ├─ lib/llm/factory.ts (mocked - createClientWithUserKey)
  *   └─ lib/logger.ts (mocked)
  *
  * Related Files:
@@ -18,13 +18,9 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock geminiClient before importing
-vi.mock("@/lib/gemini/client", () => ({
-	geminiClient: {
-		models: {
-			generateContent: vi.fn(),
-		},
-	},
+// Mock createClientWithUserKey and LLMClient
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
 }));
 
 // Import other mocked modules
@@ -32,27 +28,25 @@ vi.mock("@/app/_actions/ai/getUserAPIKey");
 vi.mock("@/lib/logger");
 
 import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 // Import the function after mocks
 import { generateBulkQuestions, generateQuestions } from "../gemini";
 
-// Helper: Create Gemini API response mock
-function createMockGeminiResponse(content: string) {
-	return {
-		text: content,
-		candidates: [
-			{
-				content: {
-					parts: [{ text: content }],
-				},
-			},
-		],
-	};
-}
+// Global mock generate function
+let mockGenerate: ReturnType<typeof vi.fn>;
 
 describe("generateQuestions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Setup mock client for each test
+		mockGenerate = vi.fn();
+		const mockClient = {
+			generate: mockGenerate,
+			generateStream: vi.fn(async function* () {
+				yield "";
+			}),
+		};
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockClient);
 	});
 
 	// ========================================
@@ -69,9 +63,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-google-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -83,7 +75,13 @@ describe("generateQuestions", () => {
 				},
 			);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
+			expect(mockGenerate).toHaveBeenCalledWith(
+				expect.stringContaining(mockFront),
+			);
 			expect(result.type).toBe("flashcard");
 			expect(result).toHaveProperty("question");
 			expect(result).toHaveProperty("answer");
@@ -99,13 +97,14 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -132,9 +131,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -175,9 +172,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -212,9 +207,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-openai-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -226,7 +219,10 @@ describe("generateQuestions", () => {
 				},
 			);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("openai");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "openai",
+				model: undefined,
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -245,9 +241,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-anthropic-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -259,7 +253,10 @@ describe("generateQuestions", () => {
 				},
 			);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("anthropic");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "anthropic",
+				model: undefined,
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -278,9 +275,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("user-custom-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -292,7 +287,10 @@ describe("generateQuestions", () => {
 				},
 			);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -306,6 +304,12 @@ describe("generateQuestions", () => {
 			const mockBack = "Test";
 
 			vi.mocked(getUserAPIKey).mockRejectedValue(
+				new Error(
+					"API key not configured for provider: openai. Please set it in Settings.",
+				),
+			);
+			// createClientWithUserKey will throw the error before creating a client
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error(
 					"API key not configured for provider: openai. Please set it in Settings.",
 				),
@@ -330,9 +334,7 @@ describe("generateQuestions", () => {
 			const mockBack = "Test";
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockRejectedValue(
-				new Error("Request timeout"),
-			);
+			mockGenerate.mockRejectedValue(new Error("Request timeout"));
 
 			await expect(
 				generateQuestions(mockFront, mockBack, "flashcard"),
@@ -349,10 +351,8 @@ describe("generateQuestions", () => {
 			const mockBack = "Test";
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(
-					"これは正しいJSONではありません { invalid }",
-				) as never,
+			mockGenerate.mockResolvedValue(
+				"これは正しいJSONではありません { invalid }",
 			);
 
 			await expect(
@@ -377,9 +377,7 @@ describe("generateQuestions", () => {
 			const mockResponse = `\`\`\`json\n${JSON.stringify(mockQuestion)}\n\`\`\``;
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
 
@@ -402,9 +400,7 @@ describe("generateQuestions", () => {
 			const mockResponse = `以下のような問題を生成しました:\n${JSON.stringify(mockQuestion)}\nよろしくお願いします。`;
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
 
@@ -424,14 +420,11 @@ describe("generateQuestions", () => {
 			const mockBack = "Test";
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue({
-				text: "",
-				// biome-ignore lint/suspicious/noExplicitAny: Mock response
-			} as any);
+			mockGenerate.mockResolvedValue("");
 
 			await expect(
 				generateQuestions(mockFront, mockBack, "flashcard"),
-			).rejects.toThrow("Empty response from Gemini client");
+			).rejects.toThrow("Empty response from LLM client");
 		});
 	});
 
@@ -449,9 +442,7 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
 				mockFront,
@@ -464,11 +455,10 @@ describe("generateQuestions", () => {
 				},
 			);
 
-			expect(geminiClient.models.generateContent).toHaveBeenCalledWith(
-				expect.objectContaining({
-					model: "gemini-2.0-pro",
-				}),
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: "gemini-2.0-pro",
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -487,17 +477,14 @@ describe("generateQuestions", () => {
 			});
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
 
-			expect(geminiClient.models.generateContent).toHaveBeenCalledWith(
-				expect.objectContaining({
-					model: "gemini-2.5-flash",
-				}),
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.type).toBe("flashcard");
 		});
 	});
@@ -529,15 +516,16 @@ describe("generateBulkQuestions", () => {
 			const mockResponse = JSON.stringify(mockQuestions);
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(mockResponse) as never,
-			);
+			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateBulkQuestions(mockPairs, "flashcard", "ja", {
 				provider: "google",
 			});
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(Array.isArray(result)).toBe(true);
 			expect(result.length).toBe(2);
 			expect(result[0].type).toBe("flashcard");
@@ -548,13 +536,14 @@ describe("generateBulkQuestions", () => {
 			const mockQuestions = [{ question: "Q", answer: "A" }];
 
 			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
-			vi.mocked(geminiClient.models.generateContent).mockResolvedValue(
-				createMockGeminiResponse(JSON.stringify(mockQuestions)) as never,
-			);
+			mockGenerate.mockResolvedValue(JSON.stringify(mockQuestions));
 
 			const result = await generateBulkQuestions(mockPairs, "flashcard", "ja");
 
-			expect(getUserAPIKey).toHaveBeenCalledWith("google");
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 			expect(result.length).toBe(1);
 		});
 	});
