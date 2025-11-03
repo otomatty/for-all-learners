@@ -20,7 +20,12 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-describe("user_api_keys Migration", () => {
+// Skip tests if Supabase environment variables are not set
+const hasSupabaseEnv =
+	process.env.NEXT_PUBLIC_SUPABASE_URL &&
+	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+describe.skipIf(!hasSupabaseEnv)("user_api_keys Migration", () => {
 	let supabase: SupabaseClient;
 	let testUserId: string;
 	let testUserEmail: string;

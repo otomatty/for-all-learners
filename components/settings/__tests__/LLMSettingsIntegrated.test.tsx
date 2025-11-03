@@ -39,10 +39,29 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+// Create mock state that can be updated and tracked
+let mockSelectedModels = {
+	google: ["gemini-2.5-flash"],
+	openai: ["gpt-4o"],
+	anthropic: ["claude-3-5-sonnet-20241022"],
+};
+
+const mockSetSelectedModels = vi.fn((newModels) => {
+	if (typeof newModels === "function") {
+		mockSelectedModels = newModels(mockSelectedModels);
+	} else {
+		mockSelectedModels = newModels;
+	}
+});
+
 vi.mock("@/lib/contexts/LLMProviderContext", () => ({
 	useLLMProvider: vi.fn(() => ({
 		config: { provider: "google", model: "gemini-2.5-flash" },
 		setConfig: vi.fn(),
+		get selectedModels() {
+			return mockSelectedModels;
+		},
+		setSelectedModels: mockSetSelectedModels,
 	})),
 }));
 
@@ -63,6 +82,12 @@ describe("LLMSettingsIntegrated", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Reset mock state
+		mockSelectedModels = {
+			google: ["gemini-2.5-flash"],
+			openai: ["gpt-4o"],
+			anthropic: ["claude-3-5-sonnet-20241022"],
+		};
 		mockGetAPIKeyStatus.mockResolvedValue({
 			success: true,
 			data: mockAPIKeyStatus as Record<string, APIKeyStatus>,
@@ -261,15 +286,24 @@ describe("LLMSettingsIntegrated", () => {
 
 		const checkboxes = screen.getAllByRole("checkbox");
 
-		// Try to uncheck the first (and only) checked checkbox
-		fireEvent.click(checkboxes[0]);
+		// Find the checked checkbox (first model should be checked by default)
+		// Radix UI Checkbox uses data-state="checked" attribute, not checked property
+		const checkedCheckbox = checkboxes.find(
+			(cb) => cb.getAttribute("data-state") === "checked",
+		);
+		expect(checkedCheckbox).toBeDefined();
 
-		// Should show error toast
-		await waitFor(() => {
-			expect(mockToast.error).toHaveBeenCalledWith(
-				"少なくとも1つのモデルを選択してください",
-			);
-		});
+		// Try to uncheck the checked checkbox (should be the only one)
+		if (checkedCheckbox) {
+			fireEvent.click(checkedCheckbox);
+
+			// Should show error toast
+			await waitFor(() => {
+				expect(mockToast.error).toHaveBeenCalledWith(
+					"少なくとも1つのモデルを選択してください",
+				);
+			});
+		}
 	});
 
 	// ========================================================================
@@ -384,20 +418,26 @@ describe("LLMSettingsIntegrated", () => {
 		fireEvent.click(screen.getByText("Google Gemini"));
 
 		await waitFor(() => {
-			const input = screen.getByPlaceholderText("APIキーを入力");
-			expect(input).toHaveAttribute("type", "password");
+			expect(screen.getByPlaceholderText("APIキーを入力")).toBeInTheDocument();
 		});
 
-		// Click eye icon to show password
-		const eyeButtons = screen.getAllByRole("button");
-		const toggleButton = eyeButtons.find((btn) => btn.querySelector("svg"));
+		const input = screen.getByPlaceholderText("APIキーを入力");
+		expect(input).toHaveAttribute("type", "password");
 
-		if (toggleButton) {
-			fireEvent.click(toggleButton);
+		// Find the eye icon button (visibility toggle button)
+		// It should be near the input field
+		const eyeIconButton = screen
+			.getByPlaceholderText("APIキーを入力")
+			.parentElement?.querySelector("button[type='button']");
+
+		expect(eyeIconButton).toBeDefined();
+
+		if (eyeIconButton) {
+			fireEvent.click(eyeIconButton);
 
 			await waitFor(() => {
-				const input = screen.getByPlaceholderText("APIキーを入力");
-				expect(input).toHaveAttribute("type", "text");
+				const updatedInput = screen.getByPlaceholderText("APIキーを入力");
+				expect(updatedInput).toHaveAttribute("type", "text");
 			});
 		}
 	});
