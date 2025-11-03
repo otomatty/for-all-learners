@@ -9,12 +9,13 @@ Phase 1.0で、ユーザーが設定したAPIキーまたは環境変数のAPI�
 ## Related Files
 
 - Implementation: `app/_actions/generatePageInfo.ts`
-- Tests: `app/_actions/__tests__/generatePageInfo.test.ts` (新規作成)
+- Tests: `app/_actions/__tests__/generatePageInfo.test.ts`
 - Spec: `app/_actions/generatePageInfo.spec.md` (このファイル)
 - Dependencies:
-  - `app/_actions/ai/getUserAPIKey.ts` - APIキー取得
-  - `lib/llm/client.ts` - LLM統合クライアント
+  - `lib/llm/factory.ts` (createClientWithUserKey) - LLMクライアントファクトリー
+  - `lib/llm/prompt-builder.ts` (buildPrompt) - プロンプト変換
   - `app/_actions/promptService.ts` - プロンプト管理
+  - `lib/logger.ts` - ロギング
 
 ## Requirements
 
@@ -54,8 +55,9 @@ Promise<string>;  // Markdown形式の解説ドキュメント
 
 **Behavior:**
 1. `provider`が指定されていない場合、デフォルトは`"google"`
-2. `getUserAPIKey(provider)`でAPIキーを取得
-3. 指定されたプロバイダーのクライアントを使用
+2. `createClientWithUserKey({ provider, model })`でクライアントを生成
+3. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+4. 指定されたプロバイダーのクライアントを使用
 
 **Success Criteria:**
 - Google、OpenAI、Anthropicすべてのプロバイダーで生成可能
@@ -68,14 +70,16 @@ Promise<string>;  // Markdown形式の解説ドキュメント
 **Description:** ユーザーが設定したAPIキーを使用して生成を行う
 
 **Behavior:**
-1. `getUserAPIKey(provider)`を呼び出し
-2. ユーザー設定キー → 環境変数キー の順でフォールバック
-3. キーが存在しない場合、エラーをスロー
+1. `createClientWithUserKey({ provider, model })`を呼び出し
+2. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+3. ユーザー設定キー → 環境変数キー の順でフォールバック
+4. キーが存在しない場合、エラーをスロー
 
 **Success Criteria:**
 - ユーザーが設定したAPIキーが優先される
 - 環境変数へのフォールバックが正常に動作
 - キー未設定時に適切なエラーメッセージが出力
+- `createClientWithUserKey`経由で統一インターフェースを使用
 
 ---
 
@@ -95,17 +99,19 @@ Promise<string>;  // Markdown形式の解説ドキュメント
 
 ---
 
-### R-005: プロンプト管理
+### R-005: プロンプト管理と変換
 
-**Description:** プロバイダーごとに最適化されたプロンプトテンプレートを使用する
+**Description:** プロンプトテンプレートを取得し、統一形式に変換する
 
 **Behavior:**
-1. `getPromptTemplate("page_info", provider)`でプロバイダー固有のテンプレートを取得
-2. 各プロバイダーの性質に最適化されたプロンプト（例：トークン制限対応）
+1. `getPromptTemplate("page_info")`でプロンプトテンプレートを取得
+2. `buildPrompt([promptTemplate, title])`でプロンプト文字列を構築
+3. 様々な形式（文字列、オブジェクト、Gemini形式）を統一文字列に変換
 
 **Success Criteria:**
-- Google、OpenAI、Anthropicそれぞれの最適なプロンプトが使用される
-- プロンプトのバージョン管理が可能
+- プロンプトテンプレートが正しく取得される
+- `buildPrompt`で統一形式に変換される
+- プロバイダー非依存のシンプルな文字列プロンプトが生成される
 
 ---
 
@@ -126,6 +132,9 @@ provider = "google"  // またはデフォルト
 
 **Acceptance:**
 ```typescript
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
+✅ buildPrompt([promptTemplate, title]) が呼び出された
+✅ client.generate(prompt) が呼び出された
 ✅ 返り値がstring型
 ✅ Markdownの妥当性が確認できる（# や ## が含まれる）
 ✅ 最初の行がH1ヘッディングでない
@@ -147,9 +156,9 @@ provider = "openai"
 
 **Acceptance:**
 ```typescript
-✅ OpenAI APIが呼び出された
+✅ createClientWithUserKey({ provider: "openai" }) が呼び出された
+✅ client.generate(prompt) が呼び出された（統一インターフェース）
 ✅ Markdown形式のコンテンツが返される
-✅ プロバイダーごとの最適化プロンプトが使用されている
 ```
 
 ---
@@ -168,7 +177,8 @@ provider = "anthropic"
 
 **Acceptance:**
 ```typescript
-✅ Anthropic APIが呼び出された
+✅ createClientWithUserKey({ provider: "anthropic" }) が呼び出された
+✅ client.generate(prompt) が呼び出された（統一インターフェース）
 ✅ Markdown形式のコンテンツが返される
 ```
 
@@ -209,7 +219,8 @@ provider = "google"
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
+✅ createClientWithUserKey 内部で getUserAPIKey が呼び出された
 ✅ ユーザー設定キーが優先される
 ✅ ログに確認可能
 ```
@@ -232,7 +243,8 @@ provider = "openai"
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey からエラーが伝播
+✅ createClientWithUserKey からエラーが伝播
+✅ getUserAPIKey 内部のエラーが適切に伝播される
 ✅ 適切なエラーメッセージ
 ```
 
@@ -310,23 +322,27 @@ response = `
 ### Key Considerations
 
 1. **API キー管理**
-   - `getUserAPIKey` で自動的にフォールバック処理
+   - `createClientWithUserKey` 経由で自動的にAPIキー解決
+   - ユーザー設定キー → 環境変数キー の順でフォールバック
    - ユーザーが未設定の場合はエラー
 
 2. **プロバイダーバリデーション**
    - "google" | "openai" | "anthropic" のみ許可
-   - その他は TypeError を throw
+   - `createClientWithUserKey` 内部でバリデーション
 
-3. **プロンプト最適化**
-   - Google Gemini: 長いコンテキストに対応
-   - OpenAI: JSON形式の構造化出力可能
-   - Anthropic: 論理的で詳細な説明が強み
+3. **プロンプト変換**
+   - `buildPrompt` で様々な形式を統一文字列に変換
+   - Gemini固有の構造化contentsから文字列への変換
 
-4. **パフォーマンス**
+4. **統一インターフェース**
+   - `client.generate(prompt: string)` の統一インターフェースを使用
+   - プロバイダー非依存のコード
+
+5. **パフォーマンス**
    - LLM呼び出しは非同期（await 必須）
-   - キャッシング可能性は検討中
+   - クライアント生成は軽量（毎回生成でも問題なし）
 
-5. **セキュリティ**
+6. **セキュリティ**
    - APIキーはメモリ内のみ
    - ログに出力しない
    - ユーザー認証確認済み
@@ -337,12 +353,10 @@ response = `
 
 | 依存先 | 用途 | 必須度 |
 |--------|------|--------|
-| `getUserAPIKey` | APIキー取得 | 🔴 Critical |
-| `lib/llm/client` | LLM統合 | 🔴 Critical |
-| `promptService` | プロンプト取得 | 🟡 High |
-| `@google/genai` | Google API | 🟡 High |
-| `openai` | OpenAI API | 🟡 High |
-| `@anthropic-ai/sdk` | Anthropic API | 🟡 High |
+| `lib/llm/factory.ts` (createClientWithUserKey) | LLMクライアント生成 | 🔴 Critical |
+| `lib/llm/prompt-builder.ts` (buildPrompt) | プロンプト変換 | 🔴 Critical |
+| `app/_actions/promptService.ts` | プロンプト取得 | 🟡 High |
+| `lib/logger.ts` | ロギング | 🟢 Medium |
 
 ---
 
@@ -356,4 +370,5 @@ response = `
 
 ---
 
-**Last Updated:** 2025-11-02
+**Last Updated:** 2025-11-03  
+**更新内容:** 動的LLMクライアント実装に対応（createClientWithUserKey, buildPrompt使用）

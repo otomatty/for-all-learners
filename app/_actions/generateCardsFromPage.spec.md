@@ -12,9 +12,9 @@ Phase 1.1で、ユーザーが設定したAPIキーまたは環境変数のAPI�
 - Tests: `app/_actions/__tests__/generateCardsFromPage.test.ts` (新規作成)
 - Spec: `app/_actions/generateCardsFromPage.spec.md` (このファイル)
 - Dependencies:
-  - `app/_actions/ai/getUserAPIKey.ts` - APIキー取得
-  - `lib/gemini/client.ts` - Gemini クライアント
-  - `lib/llm/client.ts` - LLM統合クライアント（将来）
+  - `lib/llm/factory.ts` (createClientWithUserKey) - LLMクライアントファクトリー
+  - `lib/llm/prompt-builder.ts` (buildPrompt) - プロンプト変換
+  - `lib/logger.ts` - ロギング
 - Parents (使用先):
   - `components/pages/generate-cards/generate-cards-form.tsx` - ページからカード生成UI
 
@@ -67,8 +67,9 @@ interface GeneratedRawCard {
 
 **Behavior:**
 1. `provider`が指定されていない場合、デフォルトは`"google"`
-2. `getUserAPIKey(provider)`でAPIキーを取得
-3. 指定されたプロバイダーのクライアントを使用
+2. `createClientWithUserKey({ provider, model })`でクライアントを生成
+3. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+4. 指定されたプロバイダーのクライアントを使用
 
 **Success Criteria:**
 - Google、OpenAI、Anthropicすべてのプロバイダーで生成可能
@@ -81,14 +82,16 @@ interface GeneratedRawCard {
 **Description:** ユーザーが設定したAPIキーを使用してカード生成を行う
 
 **Behavior:**
-1. `getUserAPIKey(provider)`を呼び出し
-2. ユーザー設定キー → 環境変数キー の順でフォールバック
-3. キーが存在しない場合、エラーをスロー
+1. `createClientWithUserKey({ provider, model })`を呼び出し
+2. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+3. ユーザー設定キー → 環境変数キー の順でフォールバック
+4. キーが存在しない場合、エラーをスロー
 
 **Success Criteria:**
 - ユーザーが設定したAPIキーが優先される
 - 環境変数へのフォールバックが正常に動作
 - キー未設定時に適切なエラーメッセージが出力
+- `createClientWithUserKey`経由で統一インターフェースを使用
 
 ---
 
@@ -98,7 +101,7 @@ interface GeneratedRawCard {
 
 **Error Cases:**
 1. **空のページコンテンツ** → `{ error: "ページに抽出可能なテキストコンテンツがありません。", generatedRawCards: [] }`
-2. **APIキー未設定** → Error throw（getUserAPIKeyから）
+2. **APIキー未設定** → Error throw（createClientWithUserKey経由）
 3. **LLM API呼び出し失敗** → `{ error: "AIによるカード生成に失敗しました: {message}", generatedRawCards: [] }`
 4. **JSON解析失敗** → `{ error: "AIによるカード生成に失敗しました: {message}", generatedRawCards: [] }`
 5. **空の候補** → `{ error: "AIからの応答が空です。", generatedRawCards: [] }`
@@ -204,7 +207,7 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
 ✅ 返り値が { generatedRawCards: GeneratedRawCard[], error?: undefined } 型
 ✅ generatedRawCards.length >= 1
 ✅ generatedRawCards[0].front_content が存在
@@ -226,7 +229,7 @@ options = { provider: "openai" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("openai") が呼び出された
+✅ createClientWithUserKey({ provider: "openai" }) が呼び出された
 ✅ 返り値が { generatedRawCards: GeneratedRawCard[] } 型
 ```
 
@@ -245,7 +248,7 @@ options = { provider: "anthropic" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("anthropic") が呼び出された
+✅ createClientWithUserKey({ provider: "anthropic" }) が呼び出された
 ✅ 返り値が { generatedRawCards: GeneratedRawCard[] } 型
 ```
 
@@ -268,7 +271,7 @@ pageContentTiptap = null
 ✅ Error を throw しない
 ✅ result.error が設定される
 ✅ result.generatedRawCards が空配列
-✅ getUserAPIKey は呼び出されない（早期リターン）
+✅ createClientWithUserKey は呼び出されない（早期リターン）
 ```
 
 ---
@@ -288,7 +291,7 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
 ✅ ユーザー設定キーが優先される
 ✅ ログに確認可能
 ```
@@ -306,12 +309,12 @@ options = { provider: "openai" }
 ```
 
 **Expected:**
-- getUserAPIKey から Error が throw される
+- createClientWithUserKey から Error が throw される
 - エラーメッセージ: "API key not configured for provider: openai. Please set it in Settings."
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey からエラーが伝播
+✅ createClientWithUserKey からエラーが伝播
 ✅ 適切なエラーメッセージ
 ```
 
@@ -326,7 +329,7 @@ options = { provider: "invalid_provider" }
 ```
 
 **Expected:**
-- getUserAPIKey から Error が throw される
+- createClientWithUserKey から Error が throw される
 
 **Acceptance:**
 ```typescript
@@ -481,35 +484,17 @@ response = "[]"
 
 ## Implementation Notes
 
-### Phase 1.1 統合手順
+### 動的LLMクライアント実装（Phase 5完了）
 
-1. **getUserAPIKey インポート追加**
+1. **インポート追加**
    ```typescript
-   import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
+   import { createClientWithUserKey } from "@/lib/llm/factory";
+   import { buildPrompt } from "@/lib/llm/prompt-builder";
    import type { LLMProvider } from "@/lib/llm/client";
    import logger from "@/lib/logger";
    ```
 
-2. **GenerateCardsOptions インターフェース定義**
-   ```typescript
-   interface GenerateCardsOptions {
-     provider?: LLMProvider;
-     model?: string;
-   }
-   ```
-
-3. **関数シグネチャ修正**
-   ```typescript
-   export async function generateRawCardsFromPageContent(
-     pageContentTiptap: Json | null,
-     options?: GenerateCardsOptions
-   ): Promise<{
-     generatedRawCards: GeneratedRawCard[];
-     error?: string;
-   }>
-   ```
-
-4. **Provider決定とAPIキー取得（テキスト抽出後）**
+2. **Provider決定とクライアント生成（テキスト抽出後）**
    ```typescript
    const pageText = extractTextFromTiptap(pageContentTiptap);
    
@@ -527,27 +512,27 @@ response = "[]"
      "Starting card generation from page content",
    );
    
-   const apiKey = await getUserAPIKey(provider);
-   
-   logger.info(
-     { provider, hasApiKey: !!apiKey },
-     "API key retrieved for card generation",
-   );
-   ```
-
-5. **モデル対応**
-   ```typescript
-   const response = await geminiClient.models.generateContent({
-     model: options?.model || "gemini-2.5-flash",
-     contents,
+   // 動的にLLMクライアントを作成（ユーザーAPIキー自動取得）
+   const client = await createClientWithUserKey({
+     provider,
+     model: options?.model,
    });
    ```
 
-6. **エラーハンドリング修正**
-   - try-catch 内でのエラーは error プロパティに設定
-   - getUserAPIKey のエラーは throw（早期失敗）
+3. **プロンプト構築とLLM呼び出し**
+   ```typescript
+   // プロンプト文字列を構築
+   const prompt = buildPrompt([systemPrompt, pageText]);
+   
+   // LLM APIを呼び出し（プロバイダー非依存）
+   const response = await client.generate(prompt);
+   ```
 
-7. **DEPENDENCY MAP更新**
+4. **エラーハンドリング修正**
+   - try-catch 内でのエラーは error プロパティに設定
+   - `createClientWithUserKey` のエラーは throw（早期失敗）
+
+5. **DEPENDENCY MAP更新**
    ```typescript
    /**
     * DEPENDENCY MAP:
@@ -556,9 +541,10 @@ response = "[]"
     *   └─ components/pages/generate-cards/generate-cards-form.tsx
     *
     * Dependencies (依存先):
-    *   ├─ app/_actions/ai/getUserAPIKey.ts
-    *   ├─ lib/gemini/client.ts
-    *   └─ lib/logger.ts
+    *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+    *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
+    *   ├─ lib/logger.ts
+    *   └─ lib/supabase/server.ts
     *
     * Related Files:
     *   ├─ Spec: ./generateCardsFromPage.spec.md
@@ -570,15 +556,18 @@ response = "[]"
 ### テスト実装のポイント
 
 1. **Mock Setup**
-   - `getUserAPIKey` をモック
-   - `geminiClient.models.generateContent` をモック
+   - `createClientWithUserKey` をモック
+   - `buildPrompt` をモック
    - `logger` をモック（オプション）
 
 2. **Helper Function**
    ```typescript
-   function createMockGeminiResponse(
-     cards: Array<{ front_content: string; back_content: string }>
-   )
+   // モックLLMクライアント
+   class MockLLMClient implements LLMClient {
+     async generate(prompt: string): Promise<string> {
+       return JSON.stringify(mockCards);
+     }
+   }
    ```
 
 3. **Tiptap Mock Data**
@@ -594,18 +583,25 @@ response = "[]"
    };
    ```
 
+### 実装完了項目
+
+✅ **動的LLMクライアント実装完了**
+- `createClientWithUserKey` による統一インターフェース
+- プロバイダー非依存のコード
+- ユーザーAPIキー自動取得
+
+✅ **プロンプト変換実装完了**
+- `buildPrompt` による統一形式への変換
+- Gemini固有の構造化contentsから文字列への変換
+
 ### 将来の拡張
 
-1. **Phase 2.0: LLM Client 抽象化**
-   - OpenAI/Anthropicの完全対応
-   - `lib/llm/client.ts` に統合クライアント作成
-
-2. **高度なエラーリトライ**
+1. **高度なエラーリトライ**
    - 指数バックオフ
    - 複数プロバイダーのフォールバック
 
 ---
 
-**最終更新:** 2025-11-02
-**Phase:** 1.1
-**ステータス:** 仕様定義完了
+**最終更新:** 2025-11-03  
+**更新内容:** 動的LLMクライアント実装に対応（createClientWithUserKey, buildPrompt使用）  
+**ステータス:** ✅ 実装完了、テスト完了

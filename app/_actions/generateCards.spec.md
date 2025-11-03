@@ -12,9 +12,9 @@ Phase 1.0で、ユーザーが設定したAPIキーまたは環境変数のAPI�
 - Tests: `app/_actions/__tests__/generateCards.test.ts` (新規作成)
 - Spec: `app/_actions/generateCards.spec.md` (このファイル)
 - Dependencies:
-  - `app/_actions/ai/getUserAPIKey.ts` - APIキー取得
-  - `lib/gemini/client.ts` - Gemini クライアント
-  - `lib/llm/client.ts` - LLM統合クライアント（将来）
+  - `lib/llm/factory.ts` (createClientWithUserKey) - LLMクライアントファクトリー
+  - `lib/llm/prompt-builder.ts` (buildPrompt) - プロンプト変換
+  - `lib/logger.ts` - ロギング
 - Parents (使用先):
   - `app/_actions/audioBatchProcessing.ts` - バッチ処理
   - `app/(protected)/decks/[deckId]/_components/audio-card-generator.tsx` - 音声カード生成
@@ -68,8 +68,9 @@ interface GeneratedCard {
 
 **Behavior:**
 1. `provider`が指定されていない場合、デフォルトは`"google"`
-2. `getUserAPIKey(provider)`でAPIキーを取得
-3. 指定されたプロバイダーのクライアントを使用
+2. `createClientWithUserKey({ provider, model })`でクライアントを生成
+3. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+4. 指定されたプロバイダーのクライアントを使用
 
 **Success Criteria:**
 - Google、OpenAI、Anthropicすべてのプロバイダーで生成可能
@@ -82,14 +83,16 @@ interface GeneratedCard {
 **Description:** ユーザーが設定したAPIキーを使用してカード生成を行う
 
 **Behavior:**
-1. `getUserAPIKey(provider)`を呼び出し
-2. ユーザー設定キー → 環境変数キー の順でフォールバック
-3. キーが存在しない場合、エラーをスロー
+1. `createClientWithUserKey({ provider, model })`を呼び出し
+2. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+3. ユーザー設定キー → 環境変数キー の順でフォールバック
+4. キーが存在しない場合、エラーをスロー
 
 **Success Criteria:**
 - ユーザーが設定したAPIキーが優先される
 - 環境変数へのフォールバックが正常に動作
 - キー未設定時に適切なエラーメッセージが出力
+- `createClientWithUserKey`経由で統一インターフェースを使用
 
 ---
 
@@ -179,7 +182,9 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
+✅ buildPrompt([systemPrompt, transcript]) が呼び出された
+✅ client.generate(prompt) が呼び出された（統一インターフェース）
 ✅ 返り値が GeneratedCard[] 型
 ✅ cards.length >= 1
 ✅ cards[0].front_content が存在
@@ -204,8 +209,8 @@ options = { provider: "openai" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("openai") が呼び出された
-✅ OpenAI APIが呼び出された（将来実装）
+✅ createClientWithUserKey({ provider: "openai" }) が呼び出された
+✅ client.generate(prompt) が呼び出された（統一インターフェース）
 ✅ 返り値が GeneratedCard[] 型
 ```
 
@@ -226,8 +231,8 @@ options = { provider: "anthropic" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("anthropic") が呼び出された
-✅ Anthropic APIが呼び出された（将来実装）
+✅ createClientWithUserKey({ provider: "anthropic" }) が呼び出された
+✅ client.generate(prompt) が呼び出された（統一インターフェース）
 ✅ 返り値が GeneratedCard[] 型
 ```
 
@@ -249,7 +254,7 @@ sourceAudioUrl = "https://example.com/audio.mp3"
 ```typescript
 ✅ Error をスロー
 ✅ エラーメッセージが正確
-✅ getUserAPIKey は呼び出されない（早期リターン）
+✅ createClientWithUserKey は呼び出されない（早期リターン）
 ```
 
 ---
@@ -271,7 +276,8 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
+✅ createClientWithUserKey 内部で getUserAPIKey が呼び出された
 ✅ ユーザー設定キーが優先される
 ✅ ログに確認可能
 ```
@@ -295,7 +301,8 @@ options = { provider: "openai" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey からエラーが伝播
+✅ createClientWithUserKey からエラーが伝播
+✅ getUserAPIKey 内部のエラーが適切に伝播される
 ✅ 適切なエラーメッセージ
 ```
 
@@ -312,7 +319,7 @@ options = { provider: "invalid_provider" }  // 不正なプロバイダー
 
 **Expected:**
 - Error を throw
-- エラーメッセージ: "Invalid provider: invalid_provider"（getUserAPIKeyから）
+- エラーメッセージ: "Invalid provider: invalid_provider"（createClientWithUserKey経由）
 
 **Acceptance:**
 ```typescript
@@ -453,40 +460,17 @@ response.candidates = []
 
 ## Implementation Notes
 
-### Phase 1.0 統合手順
+### 動的LLMクライアント実装（Phase 5完了）
 
-1. **getUserAPIKey インポート追加**
+1. **インポート追加**
    ```typescript
-   import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
+   import { createClientWithUserKey } from "@/lib/llm/factory";
+   import { buildPrompt } from "@/lib/llm/prompt-builder";
    import type { LLMProvider } from "@/lib/llm/client";
    import logger from "@/lib/logger";
    ```
 
-2. **GenerateCardsOptions インターフェース定義**
-   ```typescript
-   interface GenerateCardsOptions {
-     provider?: LLMProvider;
-     model?: string;
-   }
-   ```
-
-3. **関数シグネチャ修正**
-   ```typescript
-   export async function generateCardsFromTranscript(
-     transcript: string,
-     sourceAudioUrl: string,
-     options?: GenerateCardsOptions
-   ): Promise<GeneratedCard[]>
-   ```
-
-4. **入力検証追加**
-   ```typescript
-   if (!transcript.trim()) {
-     throw new Error("トランスクリプトが空です");
-   }
-   ```
-
-5. **Provider決定とAPIキー取得**
+2. **Provider決定とクライアント生成**
    ```typescript
    const provider = (options?.provider || "google") as LLMProvider;
    
@@ -495,21 +479,28 @@ response.candidates = []
      "Starting card generation"
    );
    
-   const apiKey = await getUserAPIKey(provider);
-   
-   logger.info(
-     { provider, hasApiKey: !!apiKey },
-     "API key retrieved"
-   );
+   // 動的にLLMクライアントを作成（ユーザーAPIキー自動取得）
+   const client = await createClientWithUserKey({
+     provider,
+     model: options?.model,
+   });
    ```
 
-6. **既存のGemini呼び出しロジックを保持**
-   - システムプロンプト
-   - createUserContent
-   - geminiClient.models.generateContent
-   - JSONパース処理
+3. **プロンプト構築とLLM呼び出し**
+   ```typescript
+   // プロンプト文字列を構築
+   const prompt = buildPrompt([systemPrompt, transcript]);
+   
+   // LLM APIを呼び出し（プロバイダー非依存）
+   const response = await client.generate(prompt);
+   ```
 
-7. **DEPENDENCY MAP更新**
+4. **レスポンス処理**
+   - 統一インターフェースの `string` レスポンスを直接処理
+   - Gemini固有の `candidates[0].content.parts` 構造は不要
+   - JSONパース処理は変更なし
+
+5. **DEPENDENCY MAP更新**
    ```typescript
    /**
     * DEPENDENCY MAP:
@@ -520,36 +511,31 @@ response.candidates = []
     *   └─ app/(protected)/decks/[deckId]/_components/image-card-generator.tsx
     *
     * Dependencies (依存先):
-    *   ├─ app/_actions/ai/getUserAPIKey.ts
-    *   ├─ lib/gemini/client.ts
+    *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+    *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
     *   └─ lib/logger.ts
     *
     * Related Files:
     *   ├─ Spec: ./generateCards.spec.md
     *   ├─ Tests: ./__tests__/generateCards.test.ts
-    *   └─ Plan: docs/03_plans/phase-1-ai-integration/20251102_02_day3-generatecards-integration-plan.md
+    *   └─ Plan: docs/03_plans/ai-integration/20251103_04_dynamic-llm-client-implementation-plan.md
     */
    ```
 
 ### テスト実装のポイント
 
 1. **Mock Setup**
-   - `getUserAPIKey` をモック
-   - `geminiClient.models.generateContent` をモック
+   - `createClientWithUserKey` をモック
+   - `buildPrompt` をモック
    - `logger` をモック（オプション）
 
 2. **Helper Function**
    ```typescript
-   function createMockGeminiResponse(jsonArray: any[]) {
-     const text = JSON.stringify(jsonArray);
-     return {
-       candidates: [{ content: { parts: [{ text }] } }],
-       text,
-       data: undefined,
-       functionCalls: undefined,
-       executableCode: undefined,
-       codeExecutionResult: undefined,
-     };
+   // モックLLMクライアント
+   class MockLLMClient implements LLMClient {
+     async generate(prompt: string): Promise<string> {
+       return JSON.stringify(mockCards);
+     }
    }
    ```
 
@@ -557,27 +543,36 @@ response.candidates = []
    ```typescript
    beforeEach(() => {
      vi.clearAllMocks();
-     vi.mocked(getUserAPIKey).mockResolvedValue("test-api-key");
+     vi.mocked(createClientWithUserKey).mockResolvedValue(mockClient);
+     vi.mocked(buildPrompt).mockImplementation((parts) => 
+       Array.isArray(parts) ? parts.join("\n\n") : ""
+     );
    });
    ```
 
+### 実装完了項目
+
+✅ **動的LLMクライアント実装完了**
+- `createClientWithUserKey` による統一インターフェース
+- プロバイダー非依存のコード
+- ユーザーAPIキー自動取得
+
+✅ **プロンプト変換実装完了**
+- `buildPrompt` による統一形式への変換
+- Gemini固有の構造化contentsから文字列への変換
+
 ### 将来の拡張
 
-1. **Phase 2.0: LLM Client 抽象化**
-   - OpenAI/Anthropicの完全対応
-   - `lib/llm/client.ts` に統合クライアント作成
-   - プロバイダーごとのレスポンス形式を統一
+1. **カスタムモデル対応**
+   - `options.model` パラメータは既に実装済み
+   - プロバイダーごとの推奨モデルリストの追加検討
 
-2. **カスタムモデル対応**
-   - `options.model` パラメータを実際に使用
-   - プロバイダーごとの推奨モデルリスト
-
-3. **高度なエラーリトライ**
+2. **高度なエラーリトライ**
    - 指数バックオフ
    - 複数プロバイダーのフォールバック
 
 ---
 
-**最終更新:** 2025-11-02
-**Phase:** 1.0 Day 3
-**ステータス:** 仕様定義完了
+**最終更新:** 2025-11-03  
+**更新内容:** 動的LLMクライアント実装に対応（createClientWithUserKey, buildPrompt使用）  
+**ステータス:** ✅ 実装完了、テスト完了

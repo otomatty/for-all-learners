@@ -14,8 +14,8 @@
  *   └─ Tests: ./__tests__/generateQuestions.test.ts
  */
 
-import { createClientWithUserKey } from "@/lib/llm/factory";
 import type { LLMProvider } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import logger from "@/lib/logger";
 
 export type QuestionType = "flashcard" | "multiple_choice" | "cloze";

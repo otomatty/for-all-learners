@@ -12,8 +12,7 @@ Phase 1.2で、ユーザーが設定したAPIキーまたは環境変数のAPI�
 - Tests: `lib/__tests__/generateQuestions.test.ts` (新規作成)
 - Spec: `lib/gemini.spec.md` (このファイル)
 - Dependencies:
-  - `app/_actions/ai/getUserAPIKey.ts` - APIキー取得
-  - `lib/gemini/client.ts` - Gemini クライアント
+  - `lib/llm/factory.ts` (createClientWithUserKey) - LLMクライアントファクトリー
   - `lib/logger.ts` - Logger
 - Parents (使用先):
   - `app/api/practice/generate/route.ts` - API Route
@@ -65,8 +64,9 @@ Promise<QuestionData>;  // FlashcardQuestion | MultipleChoiceQuestion | ClozeQue
 
 **Behavior:**
 1. `provider`が指定されていない場合、デフォルトは`"google"`
-2. `getUserAPIKey(provider)`でAPIキーを取得
-3. 指定されたプロバイダーのクライアントを使用
+2. `createClientWithUserKey({ provider, model })`でクライアントを生成
+3. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+4. 指定されたプロバイダーのクライアントを使用
 
 **Success Criteria:**
 - Google、OpenAI、Anthropicすべてのプロバイダーで生成可能
@@ -79,14 +79,16 @@ Promise<QuestionData>;  // FlashcardQuestion | MultipleChoiceQuestion | ClozeQue
 **Description:** ユーザーが設定したAPIキーを使用して問題生成を行う
 
 **Behavior:**
-1. `getUserAPIKey(provider)`を呼び出し
-2. ユーザー設定キー → 環境変数キー の順でフォールバック
-3. キーが存在しない場合、エラーをスロー
+1. `createClientWithUserKey({ provider, model })`を呼び出し
+2. `createClientWithUserKey`が内部で`getUserAPIKey(provider)`を呼び出し
+3. ユーザー設定キー → 環境変数キー の順でフォールバック
+4. キーが存在しない場合、エラーをスロー
 
 **Success Criteria:**
 - ユーザーが設定したAPIキーが優先される
 - 環境変数へのフォールバックが正常に動作
 - キー未設定時に適切なエラーメッセージが出力
+- `createClientWithUserKey`経由で統一インターフェースを使用
 
 ---
 
@@ -96,7 +98,7 @@ Promise<QuestionData>;  // FlashcardQuestion | MultipleChoiceQuestion | ClozeQue
 
 **Error Cases:**
 1. **空のfront/back** → Error throw（入力検証）
-2. **APIキー未設定** → Error throw（getUserAPIKeyから）
+2. **APIキー未設定** → Error throw（createClientWithUserKey経由）
 3. **LLM API呼び出し失敗** → Error throw with message
 4. **JSON解析失敗** → Error throw: "Failed to parse Gemini response JSON: {message}"
 5. **空の応答** → Error throw: "Empty response from Gemini client"
@@ -205,7 +207,7 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
 ✅ 返り値が FlashcardQuestion 型
 ✅ result.type === "flashcard"
 ✅ result.question が存在
@@ -279,7 +281,7 @@ options = { provider: "openai" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("openai") が呼び出された
+✅ createClientWithUserKey({ provider: "openai" }) が呼び出された
 ✅ 返り値が QuestionData 型
 ```
 
@@ -300,7 +302,7 @@ options = { provider: "anthropic" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("anthropic") が呼び出された
+✅ createClientWithUserKey({ provider: "anthropic" }) が呼び出された
 ✅ 返り値が QuestionData 型
 ```
 
@@ -323,7 +325,7 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
 ✅ ユーザー設定キーが優先される
 ```
 
@@ -342,12 +344,12 @@ options = { provider: "openai" }
 ```
 
 **Expected:**
-- getUserAPIKey から Error が throw される
+- createClientWithUserKey から Error が throw される
 - エラーメッセージ: "API key not configured for provider: openai. Please set it in Settings."
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey からエラーが伝播
+✅ createClientWithUserKey からエラーが伝播
 ✅ 適切なエラーメッセージ
 ```
 
@@ -493,7 +495,7 @@ options = { provider: "google" }
 
 **Acceptance:**
 ```typescript
-✅ getUserAPIKey("google") が呼び出された
+✅ createClientWithUserKey({ provider: "google" }) が呼び出された
 ✅ 返り値が QuestionData[] 型
 ✅ result.length === 2
 ✅ result[0].type === "flashcard"
@@ -516,7 +518,7 @@ options = { provider: "google", model: "gemini-2.0-pro" }
 
 **Acceptance:**
 ```typescript
-✅ geminiClient.models.generateContent が呼ばれる
+✅ client.generate が呼ばれる
 ✅ model パラメータが "gemini-2.0-pro"
 ```
 
@@ -537,7 +539,7 @@ options = { provider: "google" }  // model 未指定
 
 **Acceptance:**
 ```typescript
-✅ geminiClient.models.generateContent が呼ばれる
+✅ client.generate が呼ばれる
 ✅ model パラメータが "gemini-2.5-flash"
 ```
 
@@ -545,35 +547,16 @@ options = { provider: "google" }  // model 未指定
 
 ## Implementation Notes
 
-### Phase 1.2 統合手順
+### 動的LLMクライアント実装（Phase 5完了）
 
-1. **getUserAPIKey インポート追加**
+1. **インポート追加**
    ```typescript
-   import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
+   import { createClientWithUserKey } from "@/lib/llm/factory";
    import type { LLMProvider } from "@/lib/llm/client";
    import logger from "@/lib/logger";
    ```
 
-2. **GenerateQuestionsOptions インターフェース定義**
-   ```typescript
-   interface GenerateQuestionsOptions {
-     provider?: LLMProvider;
-     model?: string;
-   }
-   ```
-
-3. **generateQuestions 関数シグネチャ修正**
-   ```typescript
-   export async function generateQuestions(
-     front: string,
-     back: string,
-     type: QuestionType,
-     difficulty: "easy" | "normal" | "hard" = "normal",
-     options?: GenerateQuestionsOptions,
-   ): Promise<QuestionData>
-   ```
-
-4. **Provider決定とAPIキー取得**
+2. **Provider決定とクライアント生成**
    ```typescript
    const provider = (options?.provider || "google") as LLMProvider;
    
@@ -582,25 +565,20 @@ options = { provider: "google" }  // model 未指定
      "Starting question generation",
    );
    
-   const apiKey = await getUserAPIKey(provider);
-   
-   logger.info(
-     { provider, hasApiKey: !!apiKey },
-     "API key retrieved for question generation",
-   );
-   ```
-
-5. **モデル対応**
-   ```typescript
-   const model = options?.model || process.env.GEMINI_MODEL || "gemini-2.5-flash";
-   
-   const apiResponse = await geminiClient.models.generateContent({
-     model,
-     contents: prompt,
+   // 動的にLLMクライアントを作成（ユーザーAPIキー自動取得）
+   const client = await createClientWithUserKey({
+     provider,
+     model: options?.model,
    });
    ```
 
-6. **エラーハンドリング修正**
+3. **プロンプト構築とLLM呼び出し**
+   ```typescript
+   // プロンプト文字列を構築（既存のprompt文字列を使用）
+   const response = await client.generate(prompt);
+   ```
+
+4. **エラーハンドリング修正**
    ```typescript
    } catch (error: unknown) {
      logger.error(
@@ -613,11 +591,11 @@ options = { provider: "google" }  // model 未指定
      );
      
      const msg = error instanceof Error ? error.message : String(error);
-     throw new Error(`Failed to parse Gemini response JSON: ${msg}`);
+     throw new Error(`Failed to parse LLM response JSON: ${msg}`);
    }
    ```
 
-7. **DEPENDENCY MAP追加**
+5. **DEPENDENCY MAP追加**
    ```typescript
    /**
     * DEPENDENCY MAP:
@@ -627,8 +605,7 @@ options = { provider: "google" }  // model 未指定
     *   └─ app/_actions/quiz.ts (generateBulkQuestions)
     *
     * Dependencies (依存先):
-    *   ├─ app/_actions/ai/getUserAPIKey.ts
-    *   ├─ lib/gemini/client.ts
+    *   ├─ lib/llm/factory.ts (createClientWithUserKey)
     *   └─ lib/logger.ts
     *
     * Related Files:
@@ -637,21 +614,24 @@ options = { provider: "google" }  // model 未指定
     */
    ```
 
-8. **generateBulkQuestions も同様に修正**
-   - options パラメータ追加
-   - getUserAPIKey 統合
-   - logger 統合
+6. **generateBulkQuestions も同様に修正**
+   - `createClientWithUserKey` を使用
+   - `client.generate()` の統一インターフェースを使用
 
 ### テスト実装のポイント
 
 1. **Mock Setup**
-   - `getUserAPIKey` をモック
-   - `geminiClient.models.generateContent` をモック
+   - `createClientWithUserKey` をモック
    - `logger` をモック（オプション）
 
 2. **Helper Function**
    ```typescript
-   function createMockGeminiResponse(questionData: Partial<QuestionData>)
+   // モックLLMクライアント
+   class MockLLMClient implements LLMClient {
+     async generate(prompt: string): Promise<string> {
+       return JSON.stringify(questionData);
+     }
+   }
    ```
 
 3. **Test Data**
@@ -660,18 +640,28 @@ options = { provider: "google" }  // model 未指定
    const mockBack = "関数コンポーネントで状態管理を行う機能";
    ```
 
+### 実装完了項目
+
+✅ **動的LLMクライアント実装完了**
+- `createClientWithUserKey` による統一インターフェース
+- プロバイダー非依存のコード
+- ユーザーAPIキー自動取得
+
+✅ **ファイル名の注意**
+- ファイル名は `gemini.ts` だが、プロバイダー非依存に実装済み
+- 将来的に `lib/llm/question-generator.ts` へのリネームを検討（別Issue化）
+
 ### 将来の拡張
 
-1. **Phase 2.0: LLM Client 抽象化**
-   - OpenAI/Anthropicの完全対応
-   - `lib/llm/client.ts` に統合クライアント作成
-
-2. **高度なエラーリトライ**
+1. **高度なエラーリトライ**
    - 指数バックオフ
    - 複数プロバイダーのフォールバック
 
+2. **ファイル名の整理**
+   - `lib/gemini.ts` → `lib/llm/question-generator.ts` へのリネーム検討
+
 ---
 
-**最終更新:** 2025-11-02
-**Phase:** 1.2
-**ステータス:** 仕様定義完了
+**最終更新:** 2025-11-03  
+**更新内容:** 動的LLMクライアント実装に対応（createClientWithUserKey使用）  
+**ステータス:** ✅ 実装完了、テスト完了

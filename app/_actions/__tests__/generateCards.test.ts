@@ -24,9 +24,9 @@ vi.mock("@/lib/logger", () => ({
 	},
 }));
 
+import type { LLMClient } from "@/lib/llm/client";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 import { buildPrompt } from "@/lib/llm/prompt-builder";
-import type { LLMClient } from "@/lib/llm/client";
 // Import AFTER mocks
 import { generateCardsFromTranscript } from "../generateCards";
 
