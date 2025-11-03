@@ -127,7 +127,7 @@
 		"@types/uuid": "^10.0.0",
 		"@vitest/ui": "^3.2.4",
 		"happy-dom": "^20.0.0",
-		"jsdom": "^26.1.0",
+		"jsdom": "^27.1.0",
 		"madge": "^8.0.0",
 		"tailwindcss": "^4.1.4",
 		"tw-animate-css": "^1.2.8",
