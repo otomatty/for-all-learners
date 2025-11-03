@@ -1,7 +1,6 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 
 /**
  * 正規表現を使ったフォールバックデータ抽出
@@ -88,29 +87,37 @@ export async function processPdfBatchOcr(
 	const startTime = Date.now();
 
 	try {
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
+		if (!client.uploadFile || !client.generateWithFiles) {
+			throw new Error("File upload is not supported by this provider");
+		}
+
 		// 1. 全画像をGemini Files APIにアップロード
 		const uploadPromises = imagePages.map(async ({ pageNumber, imageBlob }) => {
-			const _uploadStart = Date.now();
-			const { uri, mimeType } = await geminiClient.files.upload({
-				file: imageBlob,
-				config: { mimeType: imageBlob.type || "image/png" },
+			const uploadResult = await client.uploadFile?.(imageBlob, {
+				mimeType: imageBlob.type || "image/png",
 			});
+
+			if (!uploadResult) {
+				throw new Error(`File upload failed for page ${pageNumber}`);
+			}
 
 			return {
 				pageNumber,
-				uri,
-				mimeType: mimeType || imageBlob.type || "image/png",
+				uri: uploadResult.uri,
+				mimeType: uploadResult.mimeType,
 			};
 		});
 
 		const uploadedFiles = await Promise.all(uploadPromises);
 
-		// 2. 画像パーツを作成
-		const imageParts = uploadedFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
+		// 2. ファイルURIの配列を作成
+		const fileUris = uploadedFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
 		// 3. バッチOCR用のプロンプト
 		const systemPrompt = `以下の複数のPDF画像から、ページごとにテキストを抽出してください。
@@ -133,39 +140,11 @@ export async function processPdfBatchOcr(
 - 可能な限り正確にテキストを抽出してください
 - 数式や特殊記号も含めて抽出してください`;
 
-		const contents = createUserContent([systemPrompt, ...imageParts]);
-
 		// 4. Geminiで一括OCR処理
-		const _ocrStart = Date.now();
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
+		let jsonString = await client.generateWithFiles?.(systemPrompt, fileUris);
 
-		// 5. レスポンス解析
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-
-		if (!raw) {
-			throw new Error("OCR処理に失敗しました: 内容が空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
+		if (!jsonString) {
+			throw new Error("Batch OCR failed: no response from LLM");
 		}
 
 		// JSON抽出
@@ -228,26 +207,49 @@ export async function processDualPdfBatchOcr(
 	const startTime = Date.now();
 
 	try {
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
+		if (!client.uploadFile || !client.generateWithFiles) {
+			throw new Error("File upload is not supported by this provider");
+		}
+
 		// 1. 問題PDFと解答PDFを並列アップロード
 		const questionUploadPromises = questionPages.map(
 			async ({ pageNumber, imageBlob }) => {
-				const _uploadStart = Date.now();
-				const { uri, mimeType } = await geminiClient.files.upload({
-					file: imageBlob,
-					config: { mimeType: imageBlob.type || "image/png" },
+				const uploadResult = await client.uploadFile?.(imageBlob, {
+					mimeType: imageBlob.type || "image/png",
 				});
-				return { pageNumber, uri, mimeType, type: "question" as const };
+
+				if (!uploadResult) {
+					throw new Error(`File upload failed for question page ${pageNumber}`);
+				}
+
+				return {
+					pageNumber,
+					uri: uploadResult.uri,
+					mimeType: uploadResult.mimeType,
+					type: "question" as const,
+				};
 			},
 		);
 
 		const answerUploadPromises = answerPages.map(
 			async ({ pageNumber, imageBlob }) => {
-				const _uploadStart = Date.now();
-				const { uri, mimeType } = await geminiClient.files.upload({
-					file: imageBlob,
-					config: { mimeType: imageBlob.type || "image/png" },
+				const uploadResult = await client.uploadFile?.(imageBlob, {
+					mimeType: imageBlob.type || "image/png",
 				});
-				return { pageNumber, uri, mimeType, type: "answer" as const };
+
+				if (!uploadResult) {
+					throw new Error(`File upload failed for answer page ${pageNumber}`);
+				}
+
+				return {
+					pageNumber,
+					uri: uploadResult.uri,
+					mimeType: uploadResult.mimeType,
+					type: "answer" as const,
+				};
 			},
 		);
 
@@ -256,25 +258,23 @@ export async function processDualPdfBatchOcr(
 			Promise.all(answerUploadPromises),
 		]);
 
-		// 2. 画像パーツを作成（問題→解答の順序で配置）
-		const questionParts = questionFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
+		// 2. ファイルURIの配列を作成（問題→解答の順序で配置）
+		const questionFileUris = questionFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
-		const answerParts = answerFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
+		const answerFileUris = answerFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
 		// 3. 高度なデュアルPDF OCR用プロンプト
 		const systemPrompt = `以下の画像セットから学習カード用の問題・解答・解説を抽出してください。
 
 画像構成:
-- 最初の${questionParts.length}枚: 問題PDF（問題文が記載）
-- 次の${answerParts.length}枚: 解答PDF（解答と解説が記載）
+- 最初の${questionFileUris.length}枚: 問題PDF（問題文が記載）
+- 次の${answerFileUris.length}枚: 解答PDF（解答と解説が記載）
 
 出力形式（JSON）:
 [
@@ -308,45 +308,23 @@ export async function processDualPdfBatchOcr(
 - 解説が不十分な場合は問題文から推測して補完
 - 数式や図表の内容も可能な限りテキスト化`;
 
-		const contents = createUserContent([
-			systemPrompt,
-			"【問題PDF】",
-			...questionParts,
-			"【解答PDF】",
-			...answerParts,
-		]);
-
 		// 4. Geminiで高品質OCR処理
-		const _ocrStart = Date.now();
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
+		// 問題PDFと解答PDFの両方を含むプロンプトを作成
+		const fullPrompt = `${systemPrompt}
 
-		// 5. レスポンス解析
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
+【問題PDF】
+以下は問題PDFの画像です（${questionFileUris.length}枚）
 
-		if (!raw) {
-			throw new Error("デュアルPDF OCR処理に失敗しました: 内容が空です");
-		}
+【解答PDF】
+以下は解答PDFの画像です（${answerFileUris.length}枚）`;
 
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
+		// 全てのファイルURIを結合
+		const allFileUris = [...questionFileUris, ...answerFileUris];
+
+		let jsonString = await client.generateWithFiles?.(fullPrompt, allFileUris);
+
+		if (!jsonString) {
+			throw new Error("Dual PDF OCR failed: no response from LLM");
 		}
 
 		// 強化されたJSON抽出処理

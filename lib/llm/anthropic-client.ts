@@ -15,7 +15,13 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { GenerateOptions, LLMClient, StreamOptions } from "./client";
+import type {
+	FileUploadOptions,
+	FileUploadResult,
+	GenerateOptions,
+	LLMClient,
+	StreamOptions,
+} from "./client";
 
 /**
  * Anthropic Claude Client implementation
@@ -87,5 +93,18 @@ export class AnthropicClient implements LLMClient {
 				`Anthropic stream generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
 		}
+	}
+
+	/**
+	 * File upload is not yet implemented for Anthropic
+	 * TODO: Implement file upload when Anthropic supports it
+	 */
+	async uploadFile(
+		_fileData: Blob | Buffer | string,
+		_options: FileUploadOptions,
+	): Promise<FileUploadResult> {
+		throw new Error(
+			"File upload is not yet implemented for Anthropic provider. Use Google Gemini provider for file upload functionality.",
+		);
 	}
 }

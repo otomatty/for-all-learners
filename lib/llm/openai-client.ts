@@ -15,7 +15,13 @@
  */
 
 import OpenAI from "openai";
-import type { GenerateOptions, LLMClient, StreamOptions } from "./client";
+import type {
+	FileUploadOptions,
+	FileUploadResult,
+	GenerateOptions,
+	LLMClient,
+	StreamOptions,
+} from "./client";
 
 /**
  * OpenAI Client implementation
@@ -81,5 +87,18 @@ export class OpenAIClient implements LLMClient {
 				`OpenAI stream generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
 		}
+	}
+
+	/**
+	 * File upload is not yet implemented for OpenAI
+	 * TODO: Implement file upload using OpenAI Files API when needed
+	 */
+	async uploadFile(
+		_fileData: Blob | Buffer | string,
+		_options: FileUploadOptions,
+	): Promise<FileUploadResult> {
+		throw new Error(
+			"File upload is not yet implemented for OpenAI provider. Use Google Gemini provider for file upload functionality.",
+		);
 	}
 }

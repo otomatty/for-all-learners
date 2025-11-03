@@ -20,12 +20,47 @@ export interface StreamOptions extends GenerateOptions {
 	onChunk?: (chunk: string) => void;
 }
 
+// File upload types
+export interface FileUploadOptions {
+	mimeType: string;
+	displayName?: string;
+}
+
+export interface FileUploadResult {
+	uri: string;
+	mimeType: string;
+	name: string;
+	sizeBytes?: string;
+}
+
 export interface LLMClient {
 	generate(prompt: string, options?: GenerateOptions): Promise<string>;
 	generateStream(
 		prompt: string,
 		options?: StreamOptions,
 	): AsyncGenerator<string>;
+	/**
+	 * Upload a file to the LLM provider's file storage
+	 * @param fileData - File data as Blob, Buffer, or string path
+	 * @param options - Upload options including mime type
+	 * @returns File upload result with URI and metadata
+	 */
+	uploadFile?(
+		fileData: Blob | Buffer | string,
+		options: FileUploadOptions,
+	): Promise<FileUploadResult>;
+	/**
+	 * Generate content with file references
+	 * @param prompt - Text prompt
+	 * @param fileUris - Array of file URIs (from uploadFile)
+	 * @param options - Generation options
+	 * @returns Generated text
+	 */
+	generateWithFiles?(
+		prompt: string,
+		fileUris: Array<{ uri: string; mimeType: string }>,
+		options?: GenerateOptions,
+	): Promise<string>;
 }
 
 export interface LLMClientOptions {

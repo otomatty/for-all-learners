@@ -1,7 +1,6 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { createClient } from "@/lib/supabase/server";
 import {
 	convertTextToTiptapJSON,
@@ -209,41 +208,17 @@ export async function extractProblemsFromAllPages(
 `;
 
 	try {
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
 		// 全ページのテキストを結合
 		const allText = pagesText
 			.map((page) => `=== ページ ${page.pageNumber} ===\n${page.text}`)
 			.join("\n\n");
 
-		const contents = createUserContent([systemPrompt, allText]);
-
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("問題抽出に失敗しました: 内容が空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
-		}
+		// Generate problem extraction
+		const prompt = `${systemPrompt}\n\n${allText}`;
+		let jsonString = await client.generate(prompt);
 
 		// JSON抽出
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
@@ -367,36 +342,11 @@ ${problem.problemText}
 ⭕ 謙虚: "要確認" + 補足: "専門的内容"
 `;
 
-		const contents = createUserContent([systemPrompt, ""]);
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
 
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("解答・解説生成に失敗しました: レスポンスが空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
-		}
+		// Generate answer and explanation
+		let jsonString = await client.generate(systemPrompt);
 
 		// JSON抽出
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;

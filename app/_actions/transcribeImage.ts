@@ -1,17 +1,7 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { executeWithQuotaCheck } from "@/lib/utils/geminiQuotaManager";
-
-// Define types for OCR response to avoid any
-interface ImageOcrCandidate {
-	parts: { text: string }[];
-}
-type ImageOcrContent = string | ImageOcrCandidate;
-interface ImageOcrResponse {
-	candidates?: { content: ImageOcrContent }[];
-}
 
 /**
  * リトライロジック付きGemini API呼び出し
@@ -132,6 +122,10 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 	if (!imageUrl) {
 		throw new Error("No image URL provided for transcription");
 	}
+
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
 	// 画像データを取得
 	const res = await fetch(imageUrl);
 	if (!res.ok) {
@@ -142,51 +136,41 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 		type: res.headers.get("content-type") ?? "image/png",
 	});
 
-	// Gemini Files API にアップロード
-	const { uri, mimeType } = await geminiClient.files.upload({
-		file: blob,
-		config: { mimeType: blob.type },
-	});
-	if (!uri) throw new Error("Upload failed: missing URI");
-
-	// 画像ファイル部分を準備
-	const part = createPartFromUri(uri, mimeType ?? blob.type);
-	const contents = createUserContent([
-		"以下の画像からテキストを抽出してください。",
-		part,
-	]);
+	// Upload file and check support
+	if (!client.uploadFile || !client.generateWithFiles) {
+		throw new Error("File upload is not supported by this provider");
+	}
 
 	// クォータチェック付きリトライロジックでGemini API呼び出し
-	const responseRaw = await executeWithQuotaCheck(
-		() =>
-			callGeminiWithRetry(async () => {
-				return await geminiClient.models.generateContent({
-					model: "gemini-2.5-flash",
-					contents,
+	const text = await executeWithQuotaCheck(
+		async () => {
+			return await callGeminiWithRetry(async () => {
+				const uploadResult = await client.uploadFile?.(blob, {
+					mimeType: blob.type,
 				});
-			}),
+
+				if (!uploadResult) {
+					throw new Error("File upload failed: uploadResult is undefined");
+				}
+
+				const result = await client.generateWithFiles?.(
+					"以下の画像からテキストを抽出してください。",
+					[{ uri: uploadResult.uri, mimeType: uploadResult.mimeType }],
+				);
+
+				if (!result) {
+					throw new Error("OCR generation failed: result is undefined");
+				}
+
+				return result;
+			});
+		},
 		1,
 		"単一画像OCR処理",
 	);
 
-	const { candidates } = responseRaw as ImageOcrResponse;
-	const candidate = candidates?.[0]?.content;
-	if (!candidate) {
-		throw new Error("OCR failed: no content returned");
-	}
-
-	let text: string;
-	if (typeof candidate === "string") {
-		text = candidate;
-	} else if (
-		typeof candidate === "object" &&
-		Array.isArray((candidate as { parts: { text: string }[] }).parts)
-	) {
-		text = (candidate as { parts: { text: string }[] }).parts
-			.map((p) => p.text)
-			.join("");
-	} else {
-		text = String(candidate);
+	if (!text) {
+		throw new Error("OCR failed: no text returned");
 	}
 
 	return text;

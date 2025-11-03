@@ -1,7 +1,6 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
@@ -187,6 +186,13 @@ export async function transcribeImagesBatch(
 async function processBatchWithRetry(
 	batch: BatchOcrPage[],
 ): Promise<Array<{ pageNumber: number; text: string }>> {
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	if (!client.uploadFile || !client.generateWithFiles) {
+		throw new Error("File upload is not supported by this provider");
+	}
+
 	// 各画像をGemini Files APIにアップロード
 	const uploadPromises = batch.map(async (page) => {
 		try {
@@ -200,17 +206,18 @@ async function processBatchWithRetry(
 				type: res.headers.get("content-type") ?? "image/png",
 			});
 
-			const { uri, mimeType } = await geminiClient.files.upload({
-				file: blob,
-				config: { mimeType: blob.type },
+			const uploadResult = await client.uploadFile?.(blob, {
+				mimeType: blob.type,
 			});
 
-			if (!uri) throw new Error("アップロード失敗: URIが取得できませんでした");
+			if (!uploadResult) {
+				throw new Error(`File upload failed for page ${page.pageNumber}`);
+			}
 
 			return {
 				pageNumber: page.pageNumber,
-				uri,
-				mimeType: mimeType ?? blob.type,
+				uri: uploadResult.uri,
+				mimeType: uploadResult.mimeType,
 			};
 		} catch (_error) {
 			return null;
@@ -243,59 +250,41 @@ async function processBatchWithRetry(
 - 画像の順序は入力順と同じにしてください
 - 数式や図表の内容も可能な限りテキスト化してください`;
 
-	// 画像パーツを作成
-	const imageParts = validUploads.map((upload) =>
-		createPartFromUri(upload.uri, upload.mimeType),
-	);
-
-	const contents = createUserContent([systemPrompt, ...imageParts]);
+	// 画像ファイルURIの配列を作成
+	const fileUris = validUploads.map((upload) => ({
+		uri: upload.uri,
+		mimeType: upload.mimeType,
+	}));
 
 	// リトライ付きでOCR実行
-	const response = await callGeminiWithRetry(async () => {
-		return await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
+	const jsonString = await callGeminiWithRetry(async () => {
+		const result = await client.generateWithFiles?.(systemPrompt, fileUris);
+		if (!result) {
+			throw new Error("Batch OCR failed: no response from LLM");
+		}
+		return result;
 	});
 
-	// レスポンス解析
-	const { candidates } = response as { candidates?: { content: unknown }[] };
-	const raw = candidates?.[0]?.content;
-	if (!raw) {
-		throw new Error("OCRレスポンスが空です");
-	}
-
-	let jsonString: string;
-	if (typeof raw === "string") {
-		jsonString = raw;
-	} else if (
-		typeof raw === "object" &&
-		raw !== null &&
-		"parts" in raw &&
-		Array.isArray((raw as { parts: { text: string }[] }).parts)
-	) {
-		jsonString = (raw as { parts: { text: string }[] }).parts
-			.map((p) => p.text)
-			.join("");
-	} else {
-		jsonString = String(raw);
-	}
-
 	// JSON抽出
+	let extractedJson = jsonString;
 	const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
-	const fenceMatch = jsonString.match(fencePattern);
+	const fenceMatch = extractedJson.match(fencePattern);
 	if (fenceMatch) {
-		jsonString = fenceMatch[1].trim();
+		extractedJson = fenceMatch[1].trim();
 	} else {
-		const start = jsonString.indexOf("[");
-		const end = jsonString.lastIndexOf("]");
+		const start = extractedJson.indexOf("[");
+		const end = extractedJson.lastIndexOf("]");
 		if (start !== -1 && end !== -1 && end > start) {
-			jsonString = jsonString.slice(start, end + 1);
+			extractedJson = extractedJson.slice(start, end + 1);
 		}
 	}
 
+	if (!extractedJson) {
+		throw new Error("Failed to extract JSON from OCR response");
+	}
+
 	try {
-		const parsed = JSON.parse(jsonString);
+		const parsed = JSON.parse(extractedJson);
 		if (!Array.isArray(parsed)) {
 			throw new Error("レスポンスが配列ではありません");
 		}
@@ -329,43 +318,29 @@ async function processBatchWithRetry(
 async function processPagesIndividually(
 	uploads: Array<{ pageNumber: number; uri: string; mimeType: string }>,
 ): Promise<Array<{ pageNumber: number; text: string }>> {
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	if (!client.generateWithFiles) {
+		throw new Error("File generation is not supported by this provider");
+	}
+
 	const results: Array<{ pageNumber: number; text: string }> = [];
 
 	for (const upload of uploads) {
 		try {
-			const part = createPartFromUri(upload.uri, upload.mimeType);
-			const contents = createUserContent([
-				"以下の画像からテキストを抽出してください。",
-				part,
-			]);
-
-			const response = await callGeminiWithRetry(async () => {
-				return await geminiClient.models.generateContent({
-					model: "gemini-2.5-flash",
-					contents,
-				});
+			const text = await callGeminiWithRetry(async () => {
+				const result = await client.generateWithFiles?.(
+					"以下の画像からテキストを抽出してください。",
+					[{ uri: upload.uri, mimeType: upload.mimeType }],
+				);
+				if (!result) {
+					throw new Error("OCR failed: no response from LLM");
+				}
+				return result;
 			});
 
-			const { candidates } = response as {
-				candidates?: { content: unknown }[];
-			};
-			const raw = candidates?.[0]?.content;
-
-			let text = "";
-			if (typeof raw === "string") {
-				text = raw;
-			} else if (
-				typeof raw === "object" &&
-				raw !== null &&
-				"parts" in raw &&
-				Array.isArray((raw as { parts: { text: string }[] }).parts)
-			) {
-				text = (raw as { parts: { text: string }[] }).parts
-					.map((p) => p.text)
-					.join("");
-			}
-
-			if (text.trim()) {
+			if (text?.trim()) {
 				results.push({
 					pageNumber: upload.pageNumber,
 					text: text.trim(),
