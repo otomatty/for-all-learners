@@ -252,11 +252,11 @@ $ bun run build
 
 ## 変更ファイル一覧
 
-| ファイル | 変更内容 | 行数 |
+| ファイル | 変更内容 | 備考 |
 |---------|---------|------|
-| `app/_actions/generateCardsFromPage.spec.md` | 新規作成 | ~700行 |
+| `app/_actions/generateCardsFromPage.spec.md` | 新規作成 | 大規模仕様書（R-001~R-008, TC-001~TC-015） |
 | `app/_actions/generateCardsFromPage.ts` | getUserAPIKey統合、options追加、logging追加 | +50行 |
-| `app/_actions/__tests__/generateCardsFromPage.test.ts` | 新規作成（19テストケース） | ~500行 |
+| `app/_actions/__tests__/generateCardsFromPage.test.ts` | 新規作成（19テストケース） | 包括的テストスイート（19ケース） |
 
 ---
 

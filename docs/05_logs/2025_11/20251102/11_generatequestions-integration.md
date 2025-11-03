@@ -1,6 +1,7 @@
 # Phase 1.2: generateQuestions/generateBulkQuestions getUserAPIKey Integration
 
-**日付**: 2025-11-02
+**作成日**: 2025-11-02
+**最終更新日**: 2025-11-02
 **担当**: AI (Grok Code Fast 1.5) + 開発者
 **フェーズ**: Phase 1.2 - generateQuestions/generateBulkQuestions統合
 
@@ -18,11 +19,13 @@
 
 ### 1. 仕様書作成
 - ✅ **ファイル**: `lib/gemini.spec.md` (新規作成)
+- **作成日**: 2025-11-02
+- **最終更新日**: 2025-11-02
 - **内容**: 
   - 要件定義（R-001～R-008）
   - テストケース定義（TC-001～TC-015）
   - 実装ノート（JSON抽出、エラーハンドリング、ロギング）
-- **サイズ**: ~900行
+- **サイズ**: 大規模仕様書（R-001~R-008, TC-001~TC-015）
 
 ### 2. 実装変更（lib/gemini.ts）
 - ✅ **DEPENDENCY MAP追加**:

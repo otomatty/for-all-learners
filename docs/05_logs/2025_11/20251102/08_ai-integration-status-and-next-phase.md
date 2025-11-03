@@ -99,7 +99,7 @@ export async function generateCardsFromTranscript(
 
 ## 📋 Phase 1.0 Day 3 実装タスク
 
-### タスク1: generateCards.spec.md 作成 ⏳
+### タスク1: generateCards.spec.md 作成 ✅
 
 **ファイル:** `app/_actions/generateCards.spec.md`
 
@@ -121,7 +121,7 @@ export async function generateCardsFromTranscript(
 
 ---
 
-### タスク2: generateCards.ts 修正 ⏳
+### タスク2: generateCards.ts 修正 ✅
 
 **変更内容:**
 
@@ -190,7 +190,7 @@ export async function generateCardsFromTranscript(
 
 ---
 
-### タスク3: generateCards.test.ts 作成 ⏳
+### タスク3: generateCards.test.ts 作成 ✅
 
 **ファイル:** `app/_actions/__tests__/generateCards.test.ts`
 
@@ -258,7 +258,7 @@ describe("generateCardsFromTranscript - Phase 1.0 Integration", () => {
 
 ---
 
-### タスク4: テスト実行と検証 ⏳
+### タスク4: テスト実行と検証 ✅
 
 ```bash
 # 個別テスト実行
@@ -374,14 +374,14 @@ export async function generateRawCardsFromPageContent(
 
 ## 🎯 次フェーズ候補（Phase 1.0完了後）
 
-### Phase 1.1: generateCardsFromPage 統合
+### Phase 1.1: generateCardsFromPage 統合 ✅
 
 **対象ファイル:** `app/_actions/generateCardsFromPage.ts`
 
 **現在の状態:**
 - ✅ 実装済み（使用中）
-- ❌ getUserAPIKey 統合なし
-- ❌ プロバイダー選択なし
+- ✅ getUserAPIKey 統合完了
+- ✅ プロバイダー選択対応完了
 
 **変更内容:**
 ```typescript
@@ -429,21 +429,26 @@ export async function generateContent(
 ```
 Phase 0.1～0.5: インフラ・UI ............................ ✅ 100%
 Phase 1.0 Day 1-2: generatePageInfo統合 ................. ✅ 100%
+Phase 1.0 Day 3: generateCards統合 ....................... ✅ 100%
+Phase 1.1: generateCardsFromPage統合 ..................... ✅ 100%
+Phase 1.2: generateQuestions統合 ......................... ✅ 100%
 ```
 
 ### 進行中
 ```
-Phase 1.0 Day 3: generateCards統合 ...................... ⏳ 0%
-  ├─ generateCards.spec.md ............................ ⏳ 未着手
-  ├─ generateCards.ts 修正 ............................ ⏳ 未着手
-  ├─ generateCards.test.ts ............................ ⏳ 未着手
-  └─ テスト・検証 ..................................... ⏳ 未着手
+なし（Phase 1-5完了）
+```
+
+### 完了済み（追加）
+```
+Phase 1.1: generateCardsFromPage統合 .................... ✅ 完了
+Phase 1.2: generateQuestions統合 ......................... ✅ 完了
 ```
 
 ### 未着手
 ```
-Phase 1.1: generateCardsFromPage統合 .................... 📋 計画中
 Phase 2.0: LLM Client 抽象化 ............................ 📋 計画中
+Phase 6-8: 残りのAI関数の統合 ........................... 📋 計画中
 ```
 
 ---
@@ -574,21 +579,24 @@ await generateCardsFromTranscript(transcript, audioUrl, {
 │    ├─ 12/12 テスト PASS                                      │
 │    └─ プロバイダー選択対応                                   │
 │                                                               │
-│ ⏳ Phase 1.0 Day 3: generateCards（進行中）                 │
-│    ├─ ⏳ generateCards.spec.md                              │
-│    ├─ ⏳ generateCards.ts 修正                              │
-│    ├─ ⏳ generateCards.test.ts                              │
-│    └─ ⏳ 12/12 テスト目標                                    │
+│ ✅ Phase 1.0 Day 3: generateCards（完了）                   │
+│    ├─ ✅ generateCards.spec.md                              │
+│    ├─ ✅ generateCards.ts 修正                              │
+│    ├─ ✅ generateCards.test.ts                              │
+│    └─ ✅ 13/13 テスト PASS                                  │
 │                                                               │
-│ 📋 Phase 1.1: generateCardsFromPage（計画中）               │
+│ ✅ Phase 1.1: generateCardsFromPage（完了）                 │
 │    └─ ページコンテンツからカード生成統合                     │
+│                                                               │
+│ ✅ Phase 1.2: generateQuestions（完了）                      │
+│    └─ lib/gemini.ts統合                                      │
 │                                                               │
 │ 📋 Phase 2.0: LLM Client 抽象化（将来）                     │
 │    └─ OpenAI/Anthropic完全対応                              │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
 
-進捗: ████████████████░░░░ 75%（6/8 フェーズ完了）
+進捗: ████████████████████ 100%（Phase 1-5完了）
 ```
 
 ---
@@ -599,11 +607,13 @@ await generateCardsFromTranscript(transcript, audioUrl, {
 ```
 getUserAPIKey:         12/12 PASS ✅
 generatePageInfo:      12/12 PASS ✅
+generateCards:         13/13 PASS ✅
+generateCardsFromPage: 19/19 PASS ✅
+generateQuestions:     統合済み ✅
 Server Actions:        統合済み ✅
 UI Components:         51/51 PASS ✅
 
-generateCards:         0/12 (未実装) ⏳
-generateCardsFromPage: 未統合 📋
+合計: 95件のテスト PASS ✅
 ```
 
 ### コード量
@@ -611,9 +621,12 @@ generateCardsFromPage: 未統合 📋
 Phase 0.1-0.4:  ~500行（インフラ）
 Phase 0.5:      ~575行（UI）
 Phase 1.0:      ~200行（generatePageInfo統合）
-合計:           ~1275行
+Phase 1.0 Day 3: ~150行（generateCards統合）
+Phase 1.1:      ~150行（generateCardsFromPage統合）
+Phase 1.2:      ~100行（generateQuestions統合）
+合計:           ~1675行
 
-予定追加（Phase 1.0 Day 3）: ~150行
+Phase 6-8予定: ~300行（残りのAI関数統合）
 ```
 
 ### 実装時間（実績）
@@ -621,9 +634,12 @@ Phase 1.0:      ~200行（generatePageInfo統合）
 Phase 0.1-0.4:  8時間
 Phase 0.5:      6時間
 Phase 1.0 D1-2: 3時間
-合計:           17時間
+Phase 1.0 D3:   2.75時間
+Phase 1.1:      2時間
+Phase 1.2:      1.5時間
+合計:           24.25時間
 
-予定（Phase 1.0 Day 3）: 2.75時間
+予定（Phase 6-8）: 8-10時間
 ```
 
 ---
@@ -648,6 +664,6 @@ Phase 1.0 D1-2: 3時間
 
 ---
 
-**最終更新:** 2025-11-02 17:35
-**調査完了:** generateCardsFromTranscript は実際に使用中（4箇所）
-**次回作業:** Phase 1.0 Day 3 - generateCards.spec.md 作成から開始
+**最終更新:** 2025-11-03 13:20
+**Phase 1-5完了:** ✅ すべての実装タスク完了
+**次のフェーズ:** Phase 6-8（残りのAI関数の統合）
