@@ -5,15 +5,17 @@
  *
  * Parents (使用先):
  *   ├─ app/layout.tsx (Provider wrapper)
- *   ├─ components/settings/LLMProviderSettings.tsx
- *   └─ hooks/useGenerateQuestions.ts
+ *   ├─ components/settings/LLMSettingsIntegrated.tsx (useLLMProvider)
+ *   ├─ components/settings/LLMProviderSettings.tsx (useLLMProvider)
+ *   └─ hooks/useGenerateQuestions.ts (useLLMProvider)
  *
  * Dependencies (依存先):
  *   └─ React (createContext, useContext, useEffect, useState)
  *
  * Related Files:
  *   ├─ Spec: docs/03_plans/ai-integration/20251103_01_phase14-ui-spec.md
- *   └─ Components: components/settings/LLMProviderSettings.tsx
+ *   ├─ Plan: docs/03_plans/ai-integration/20251103_02_settings-consolidation-plan.md
+ *   └─ Components: components/settings/LLMSettingsIntegrated.tsx
  */
 
 "use client";
