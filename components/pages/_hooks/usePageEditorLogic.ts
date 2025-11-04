@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { getEditorManager } from "@/lib/plugins/editor-manager";
+import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import {
@@ -79,8 +80,10 @@ export function usePageEditorLogic({
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
 	// Memoize base extensions to prevent unnecessary re-renders
-	const baseExtensions = useMemo(
-		() => [
+	// Note: Plugin extensions are included at editor creation time
+	// because TipTap does not support dynamic extension updates after initialization
+	const baseExtensions = useMemo(() => {
+		const baseExts = [
 			StarterKit.configure({
 				heading: false,
 				bulletList: false,
@@ -112,9 +115,13 @@ export function usePageEditorLogic({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,
 			}),
-		],
-		[],
-	);
+		];
+
+		// Include plugin extensions at editor creation time
+		// TipTap does not support dynamic extension updates after initialization
+		const pluginExtensions = getTiptapExtensions();
+		return [...baseExts, ...pluginExtensions];
+	}, []);
 
 	const editor = useEditor({
 		immediatelyRender: false,

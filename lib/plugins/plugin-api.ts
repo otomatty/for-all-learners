@@ -843,13 +843,16 @@ function createEditorAPI(pluginId: string): EditorAPI {
 			try {
 				editorRegistry.register(pluginId, options);
 
-				// Apply extensions to all registered editors
-				const managerInstance = getEditorManager();
-				managerInstance.applyExtensionsToAllEditors();
+				// Note: TipTap does not support dynamic extension updates after editor initialization.
+				// New plugin extensions will only be available for newly created editors.
+				// Existing editors must be recreated to use new extensions.
+				// The deprecated applyExtensionsToAllEditors() method is not called because it does nothing.
 
 				logger.info(
 					{ pluginId, extensionId: options.id, type: options.type },
-					"Editor extension registered and applied",
+					"Editor extension registered. " +
+						"Note: This extension will only be available for newly created editors. " +
+						"Existing editors must be recreated to use this extension.",
 				);
 			} catch (error) {
 				logger.error(
@@ -864,11 +867,16 @@ function createEditorAPI(pluginId: string): EditorAPI {
 			try {
 				editorRegistry.unregister(pluginId, extensionId);
 
-				// Reapply extensions to all registered editors
-				const managerInstance = getEditorManager();
-				managerInstance.applyExtensionsToAllEditors();
+				// Note: TipTap does not support dynamic extension updates after editor initialization.
+				// Extension removal will only affect newly created editors.
+				// Existing editors will continue to use the extension until recreated.
+				// The deprecated applyExtensionsToAllEditors() method is not called because it does nothing.
 
-				logger.info({ pluginId, extensionId }, "Editor extension unregistered");
+				logger.info(
+					{ pluginId, extensionId },
+					"Editor extension unregistered. " +
+						"Note: This extension will still be available in existing editors until they are recreated.",
+				);
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, extensionId },

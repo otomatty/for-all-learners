@@ -9,13 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorManager } from "../editor-manager";
 import * as editorRegistry from "../editor-registry";
 
-// Extended Editor type with setExtensions method
-interface EditorWithExtensions extends Editor {
-	setExtensions(extensions: unknown[]): void;
-}
-
-// Mock Editor
-const createMockEditor = (): EditorWithExtensions => {
+// Mock Editor (without setExtensions method - TipTap doesn't have this)
+const createMockEditor = (): Editor => {
 	const chainMock = {
 		toggleBold: vi.fn(() => ({
 			run: vi.fn(() => true),
@@ -33,7 +28,6 @@ const createMockEditor = (): EditorWithExtensions => {
 			setContent: vi.fn(),
 			setTextSelection: vi.fn(),
 		},
-		setExtensions: vi.fn(),
 		state: {
 			selection: {
 				from: 0,
@@ -42,14 +36,14 @@ const createMockEditor = (): EditorWithExtensions => {
 		},
 		on: vi.fn(),
 		off: vi.fn(),
-	} as unknown as EditorWithExtensions;
+	} as unknown as Editor;
 
 	return editor;
 };
 
 describe("EditorManager", () => {
 	let manager: EditorManager;
-	let mockEditor: EditorWithExtensions;
+	let mockEditor: Editor;
 	let baseExtensions: unknown[];
 
 	beforeEach(() => {
@@ -97,7 +91,7 @@ describe("EditorManager", () => {
 			expect(editor).toBe(editor2);
 		});
 
-		it("should apply plugin extensions on registration", () => {
+		it("should not call setExtensions (TipTap doesn't support it)", () => {
 			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
 
 			editorRegistry.register("test-plugin", {
@@ -106,9 +100,17 @@ describe("EditorManager", () => {
 				type: "plugin",
 			});
 
+			// Create a spy to check if setExtensions would be called
+			const setExtensionsSpy = vi.fn();
+			// Add setExtensions to mockEditor to verify it's NOT called
+			(
+				mockEditor as unknown as { setExtensions?: ReturnType<typeof vi.fn> }
+			).setExtensions = setExtensionsSpy;
+
 			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
 
-			expect(mockEditor.setExtensions).toHaveBeenCalled();
+			// TipTap doesn't support setExtensions, so it should not be called
+			expect(setExtensionsSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -171,7 +173,7 @@ describe("EditorManager", () => {
 	});
 
 	describe("applyAllPluginExtensions", () => {
-		it("should apply plugin extensions to editor", () => {
+		it("should NOT call setExtensions (TipTap doesn't support dynamic extension updates)", () => {
 			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
 
 			editorRegistry.register("test-plugin", {
@@ -180,36 +182,52 @@ describe("EditorManager", () => {
 				type: "plugin",
 			});
 
+			// Create a spy to check if setExtensions would be called
+			const setExtensionsSpy = vi.fn();
+			// Add setExtensions to mockEditor to verify it's NOT called
+			(
+				mockEditor as unknown as { setExtensions?: ReturnType<typeof vi.fn> }
+			).setExtensions = setExtensionsSpy;
+
 			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
 			manager.applyAllPluginExtensions("test-editor-1");
 
-			expect(mockEditor.setExtensions).toHaveBeenCalled();
-			const callArgs = (mockEditor.setExtensions as ReturnType<typeof vi.fn>)
-				.mock.calls[0][0];
-			expect(callArgs).toContainEqual(baseExtensions[0]);
-			expect(callArgs).toContainEqual(pluginExtension);
+			// TipTap doesn't support setExtensions, so it should not be called
+			expect(setExtensionsSpy).not.toHaveBeenCalled();
 		});
 
 		it("should warn when editor not found", () => {
 			manager.applyAllPluginExtensions("non-existent");
 
 			// Should not throw, just log warning
-			expect(mockEditor.setExtensions).not.toHaveBeenCalled();
+			// No setExtensions call should be made
 		});
 	});
 
 	describe("applyExtensionsToAllEditors", () => {
-		it("should apply extensions to all registered editors", () => {
+		it("should NOT call setExtensions (TipTap doesn't support dynamic extension updates)", () => {
 			const editor1 = createMockEditor();
 			const editor2 = createMockEditor();
+
+			// Create spies to check if setExtensions would be called
+			const setExtensionsSpy1 = vi.fn();
+			const setExtensionsSpy2 = vi.fn();
+			(
+				editor1 as unknown as { setExtensions?: ReturnType<typeof vi.fn> }
+			).setExtensions = setExtensionsSpy1;
+			(
+				editor2 as unknown as { setExtensions?: ReturnType<typeof vi.fn> }
+			).setExtensions = setExtensionsSpy2;
 
 			manager.registerEditor("test-editor-1", editor1, baseExtensions);
 			manager.registerEditor("test-editor-2", editor2, baseExtensions);
 
+			// Note: Testing deprecated method to ensure it doesn't call setExtensions
 			manager.applyExtensionsToAllEditors();
 
-			expect(editor1.setExtensions).toHaveBeenCalled();
-			expect(editor2.setExtensions).toHaveBeenCalled();
+			// TipTap doesn't support setExtensions, so it should not be called
+			expect(setExtensionsSpy1).not.toHaveBeenCalled();
+			expect(setExtensionsSpy2).not.toHaveBeenCalled();
 		});
 	});
 
@@ -427,6 +445,34 @@ describe("EditorManager", () => {
 
 			expect(stats.totalEditors).toBe(2);
 			expect(stats.activeEditorId).toBe("test-editor-1");
+		});
+	});
+
+	describe("getAllExtensions", () => {
+		it("should return combined base and plugin extensions", () => {
+			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
+
+			editorRegistry.register("test-plugin", {
+				id: "test-extension",
+				extension: pluginExtension,
+				type: "plugin",
+			});
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const allExtensions = manager.getAllExtensions("test-editor-1");
+
+			expect(allExtensions).toContainEqual(baseExtensions[0]);
+			expect(allExtensions).toContainEqual(pluginExtension);
+			expect(allExtensions.length).toBe(baseExtensions.length + 1);
+		});
+
+		it("should return only base extensions when no plugin extensions exist", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const allExtensions = manager.getAllExtensions("test-editor-1");
+
+			expect(allExtensions).toEqual(baseExtensions);
 		});
 	});
 });
