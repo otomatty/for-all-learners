@@ -2,7 +2,8 @@
 
 **最終更新**: 2025-11-04  
 **対象**: プラグイン開発者  
-**前提知識**: TypeScript, Web Workers, React
+**前提知識**: TypeScript, Web Workers, React  
+**Phase 2対応**: ✅ エディタ拡張システム対応済み
 
 ---
 
@@ -13,6 +14,11 @@
 3. [プラグインの作成](#プラグインの作成)
 4. [マニフェストの定義](#マニフェストの定義)
 5. [プラグインAPI](#プラグインapi)
+   - [App API](#app-api)
+   - [Storage API](#storage-api)
+   - [Notifications API](#notifications-api)
+   - [UI API](#ui-api-phase-1)
+   - [Editor API](#editor-api-phase-2) ✅
 6. [拡張ポイント](#拡張ポイント)
 7. [開発環境のセットアップ](#開発環境のセットアップ)
 8. [デバッグとテスト](#デバッグとテスト)
@@ -375,6 +381,89 @@ const result = await api.ui.showDialog({
 });
 ```
 
+### Editor API (Phase 2) ✅
+
+エディタ拡張機能を提供するAPIです。Tiptap拡張機能（ノード、マーク、プラグイン）を登録し、エディタを操作できます。
+
+#### 拡張機能の登録
+
+```typescript
+// カスタムマークを登録
+await api.editor.registerExtension({
+  id: 'custom-highlight',
+  extension: Mark.create({
+    name: 'customHighlight',
+    addAttributes() {
+      return {
+        color: {
+          default: '#ffeb3b',
+        },
+      };
+    },
+    parseHTML() {
+      return [{ tag: 'span[data-custom-highlight]' }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return [
+        'span',
+        {
+          'data-custom-highlight': '',
+          style: `background-color: ${HTMLAttributes.color}`,
+        },
+        0,
+      ];
+    },
+  }),
+  type: 'mark',
+});
+
+// 拡張機能を解除
+await api.editor.unregisterExtension('custom-highlight');
+```
+
+**注意**: プラグインの `deactivate()` メソッドで必ず拡張機能を解除してください。
+
+#### エディタコマンドの実行
+
+```typescript
+// エディタコマンドを実行
+await api.editor.executeCommand('toggleBold');
+
+// コマンドが実行可能かチェック
+const canExecute = await api.editor.canExecuteCommand('toggleBold');
+```
+
+#### エディタコンテンツの操作
+
+```typescript
+// コンテンツを取得
+const content = await api.editor.getContent();
+
+// コンテンツを設定
+await api.editor.setContent({
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: 'Hello, World!' }],
+    },
+  ],
+});
+```
+
+#### 選択範囲の操作
+
+```typescript
+// 選択範囲を取得
+const selection = await api.editor.getSelection();
+// { from: 5, to: 10 } または null（選択なし）
+
+// 選択範囲を設定
+await api.editor.setSelection(5, 10);
+```
+
+**注意**: エディタIDを指定しない場合、アクティブ（最後にフォーカスされた）エディタが使用されます。
+
 ---
 
 ## 拡張ポイント
@@ -383,9 +472,12 @@ const result = await api.ui.showDialog({
 
 - **UI拡張**: コマンド登録、ダイアログ表示
 
-### Phase 2 (予定)
+### Phase 2 (実装完了 ✅)
 
-- **エディタ拡張**: Tiptap Extensions
+- **エディタ拡張**: Tiptap Extensions の動的登録
+- **エディタ操作**: コマンド実行、コンテンツ取得/設定、選択範囲操作
+
+詳細は [Editor API](#editor-api-phase-2) を参照してください。
 
 ### Phase 3 (予定)
 
