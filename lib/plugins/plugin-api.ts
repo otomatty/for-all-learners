@@ -29,7 +29,7 @@ import pkg from "../../package.json";
 import { getAIExtensionRegistry } from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as editorRegistry from "./editor-registry";
 import { getIntegrationExtensionRegistry } from "./integration-registry";
 import type {
 	Command,
@@ -839,13 +839,12 @@ export function clearPluginCommands(pluginId: string): void {
  * @param pluginId Plugin ID for extension registration
  */
 function createEditorAPI(pluginId: string): EditorAPI {
-	const registry = getEditorExtensionRegistry();
 	const manager = getEditorManager();
 
 	return {
 		async registerExtension(options: EditorExtensionOptions): Promise<void> {
 			try {
-				registry.register(pluginId, options);
+				editorRegistry.register(pluginId, options);
 
 				// Apply extensions to all registered editors
 				const managerInstance = getEditorManager();
@@ -866,7 +865,7 @@ function createEditorAPI(pluginId: string): EditorAPI {
 
 		async unregisterExtension(extensionId: string): Promise<void> {
 			try {
-				registry.unregister(pluginId, extensionId);
+				editorRegistry.unregister(pluginId, extensionId);
 
 				// Reapply extensions to all registered editors
 				const managerInstance = getEditorManager();

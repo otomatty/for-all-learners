@@ -28,7 +28,7 @@ import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
 import { getAIExtensionRegistry } from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as editorRegistry from "./editor-registry";
 import { getIntegrationExtensionRegistry } from "./integration-registry";
 import { clearPluginCommands, createPluginAPI } from "./plugin-api";
 import { getPluginRegistry } from "./plugin-registry";
@@ -222,9 +222,8 @@ export class PluginLoader {
 			clearPluginCommands(pluginId);
 
 			// Step 3: Clear editor extensions
-			const extensionRegistry = getEditorExtensionRegistry();
-			if (extensionRegistry.hasExtensions(pluginId)) {
-				extensionRegistry.clearPlugin(pluginId);
+			if (editorRegistry.hasExtensions(pluginId)) {
+				editorRegistry.clearPlugin(pluginId);
 
 				// Reapply extensions to all editors
 				const editorManager = getEditorManager();

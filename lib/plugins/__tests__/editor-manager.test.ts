@@ -7,7 +7,7 @@
 import type { Editor, JSONContent } from "@tiptap/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorManager } from "../editor-manager";
-import { getEditorExtensionRegistry } from "../editor-registry";
+import * as editorRegistry from "../editor-registry";
 
 // Extended Editor type with setExtensions method
 interface EditorWithExtensions extends Editor {
@@ -66,7 +66,7 @@ describe("EditorManager", () => {
 		const _stats = manager.getStats();
 		// Note: We can't directly access editor IDs, so we'll reset the manager
 		EditorManager.reset();
-		getEditorExtensionRegistry().clear();
+		editorRegistry.clear();
 	});
 
 	describe("Singleton Pattern", () => {
@@ -98,10 +98,9 @@ describe("EditorManager", () => {
 		});
 
 		it("should apply plugin extensions on registration", () => {
-			const registry = getEditorExtensionRegistry();
 			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
 
-			registry.register("test-plugin", {
+			editorRegistry.register("test-plugin", {
 				id: "test-extension",
 				extension: pluginExtension,
 				type: "plugin",
@@ -173,10 +172,9 @@ describe("EditorManager", () => {
 
 	describe("applyAllPluginExtensions", () => {
 		it("should apply plugin extensions to editor", () => {
-			const registry = getEditorExtensionRegistry();
 			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
 
-			registry.register("test-plugin", {
+			editorRegistry.register("test-plugin", {
 				id: "test-extension",
 				extension: pluginExtension,
 				type: "plugin",

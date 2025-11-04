@@ -22,7 +22,7 @@
 
 import type { Editor, JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as editorRegistry from "./editor-registry";
 import type { EditorSelection } from "./types";
 
 // ============================================================================
@@ -181,8 +181,7 @@ export class EditorManager {
 			return;
 		}
 
-		const registry = getEditorExtensionRegistry();
-		const pluginExtensions = registry.getTiptapExtensions();
+		const pluginExtensions = editorRegistry.getTiptapExtensions();
 		const baseExtensions = this.baseExtensions.get(editorId) ?? [];
 
 		// Combine base extensions and plugin extensions

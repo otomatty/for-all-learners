@@ -1,12 +1,12 @@
 /**
  * Editor Extension Registry Tests
  *
- * Unit tests for the EditorExtensionRegistry class.
+ * Unit tests for the editor extension registry functions.
  */
 
 import type { Extension } from "@tiptap/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { EditorExtensionRegistry } from "../editor-registry";
+import * as registry from "../editor-registry";
 import type { EditorExtensionOptions } from "../types";
 
 // Mock Extension
@@ -21,9 +21,7 @@ const createMockExtension = (
 	return extension;
 };
 
-describe("EditorExtensionRegistry", () => {
-	let registry: EditorExtensionRegistry;
-
+describe("Editor Extension Registry", () => {
 	const createMockExtensionOptions = (
 		id: string,
 		type: "node" | "mark" | "plugin" = "plugin",
@@ -34,21 +32,11 @@ describe("EditorExtensionRegistry", () => {
 	});
 
 	beforeEach(() => {
-		registry = EditorExtensionRegistry.getInstance();
+		registry.reset();
 	});
 
 	afterEach(() => {
-		registry.clear();
-		EditorExtensionRegistry.reset();
-	});
-
-	describe("Singleton Pattern", () => {
-		it("should return the same instance", () => {
-			const instance1 = EditorExtensionRegistry.getInstance();
-			const instance2 = EditorExtensionRegistry.getInstance();
-
-			expect(instance1).toBe(instance2);
-		});
+		registry.reset();
 	});
 
 	describe("register", () => {
@@ -279,6 +267,17 @@ describe("EditorExtensionRegistry", () => {
 			expect(stats.extensionsByType.node).toBe(1);
 			expect(stats.extensionsByType.mark).toBe(1);
 			expect(stats.extensionsByType.plugin).toBe(1);
+		});
+	});
+
+	describe("reset", () => {
+		it("should clear all extensions", () => {
+			const options = createMockExtensionOptions("extension-1", "plugin");
+			registry.register("test-plugin", options);
+
+			registry.reset();
+
+			expect(registry.hasExtensions("test-plugin")).toBe(false);
 		});
 	});
 });
