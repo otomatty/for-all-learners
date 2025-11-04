@@ -25,7 +25,7 @@
 
 import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
-import { getAIExtensionRegistry } from "./ai-registry";
+import * as aiRegistry from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
@@ -45,7 +45,7 @@ import {
 	type PluginValidationResult,
 	type WorkerMessage,
 } from "./types";
-import { getUIExtensionRegistry } from "./ui-registry";
+import * as uiRegistry from "./ui-registry";
 
 // ============================================================================
 // Plugin Loader Class
@@ -233,12 +233,10 @@ export class PluginLoader {
 			}
 
 			// Step 4: Clear AI extensions
-			const aiRegistry = getAIExtensionRegistry();
 			aiRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "AI extensions cleared for plugin");
 
 			// Step 5: Clear UI extensions
-			const uiRegistry = getUIExtensionRegistry();
 			uiRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "UI extensions cleared for plugin");
 

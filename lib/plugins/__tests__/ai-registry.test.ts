@@ -1,20 +1,18 @@
 /**
  * AI Extension Registry Tests
  *
- * Unit tests for the AIExtensionRegistry class.
+ * Unit tests for the AI extension registry functions.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AIExtensionRegistry } from "../ai-registry";
+import * as registry from "../ai-registry";
 import type {
 	ContentAnalyzerOptions,
 	PromptTemplateOptions,
 	QuestionGeneratorOptions,
 } from "../types";
 
-describe("AIExtensionRegistry", () => {
-	let registry: AIExtensionRegistry;
-
+describe("AI Extension Registry", () => {
 	const createMockQuestionGenerator = (
 		id: string,
 		supportedTypes: Array<"flashcard" | "multiple_choice" | "cloze"> = [
@@ -73,29 +71,11 @@ describe("AIExtensionRegistry", () => {
 	});
 
 	beforeEach(() => {
-		registry = AIExtensionRegistry.getInstance();
+		registry.reset();
 	});
 
 	afterEach(() => {
-		registry.clear();
-		AIExtensionRegistry.reset();
-	});
-
-	describe("Singleton Pattern", () => {
-		it("should return the same instance", () => {
-			const instance1 = AIExtensionRegistry.getInstance();
-			const instance2 = AIExtensionRegistry.getInstance();
-
-			expect(instance1).toBe(instance2);
-		});
-
-		it("should reset instance correctly", () => {
-			const instance1 = AIExtensionRegistry.getInstance();
-			AIExtensionRegistry.reset();
-			const instance2 = AIExtensionRegistry.getInstance();
-
-			expect(instance1).not.toBe(instance2);
-		});
+		registry.reset();
 	});
 
 	describe("Question Generator Registration", () => {

@@ -5,7 +5,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAIExtensionRegistry } from "../ai-registry";
+import * as aiRegistry from "../ai-registry";
 import { getDataProcessorExtensionRegistry } from "../data-processor-registry";
 import {
 	clearPluginCommands,
@@ -25,15 +25,15 @@ import type {
 	TransformerOptions,
 	WidgetOptions,
 } from "../types";
-import { getUIExtensionRegistry } from "../ui-registry";
+import * as uiRegistry from "../ui-registry";
 
 describe("PluginAPI", () => {
 	const pluginId = "test-plugin";
 
 	beforeEach(() => {
 		clearPluginCommands(pluginId);
-		getAIExtensionRegistry().clearPlugin(pluginId);
-		getUIExtensionRegistry().clearPlugin(pluginId);
+		aiRegistry.clearPlugin(pluginId);
+		uiRegistry.clearPlugin(pluginId);
 		getDataProcessorExtensionRegistry().clearPlugin(pluginId);
 		vi.clearAllMocks();
 	});
@@ -396,8 +396,7 @@ describe("PluginAPI", () => {
 
 				await api.ai.registerQuestionGenerator(options);
 
-				const registry = getAIExtensionRegistry();
-				const generators = registry.getQuestionGenerators(pluginId);
+				const generators = aiRegistry.getQuestionGenerators(pluginId);
 				expect(generators).toHaveLength(1);
 				expect(generators[0].generatorId).toBe("test-generator");
 			});
@@ -446,8 +445,7 @@ describe("PluginAPI", () => {
 				await api.ai.registerQuestionGenerator(options);
 				await api.ai.unregisterQuestionGenerator("test-generator");
 
-				const registry = getAIExtensionRegistry();
-				const generators = registry.getQuestionGenerators(pluginId);
+				const generators = aiRegistry.getQuestionGenerators(pluginId);
 				expect(generators).toHaveLength(0);
 			});
 		});
@@ -472,8 +470,7 @@ describe("PluginAPI", () => {
 
 				await api.ai.registerPromptTemplate(options);
 
-				const registry = getAIExtensionRegistry();
-				const template = registry.getPromptTemplate("test-key");
+				const template = aiRegistry.getPromptTemplate("test-key");
 				expect(template).toBeDefined();
 				expect(template?.templateId).toBe("test-template");
 			});
@@ -510,8 +507,7 @@ describe("PluginAPI", () => {
 				await api.ai.registerPromptTemplate(options);
 				await api.ai.unregisterPromptTemplate("test-template");
 
-				const registry = getAIExtensionRegistry();
-				const template = registry.getPromptTemplate("test-key");
+				const template = aiRegistry.getPromptTemplate("test-key");
 				expect(template).toBeUndefined();
 			});
 		});
@@ -535,8 +531,7 @@ describe("PluginAPI", () => {
 
 				await api.ai.registerContentAnalyzer(options);
 
-				const registry = getAIExtensionRegistry();
-				const analyzers = registry.getContentAnalyzers(pluginId);
+				const analyzers = aiRegistry.getContentAnalyzers(pluginId);
 				expect(analyzers).toHaveLength(1);
 				expect(analyzers[0].analyzerId).toBe("test-analyzer");
 			});
@@ -577,8 +572,7 @@ describe("PluginAPI", () => {
 				await api.ai.registerContentAnalyzer(options);
 				await api.ai.unregisterContentAnalyzer("test-analyzer");
 
-				const registry = getAIExtensionRegistry();
-				const analyzers = registry.getContentAnalyzers(pluginId);
+				const analyzers = aiRegistry.getContentAnalyzers(pluginId);
 				expect(analyzers).toHaveLength(0);
 			});
 		});
@@ -819,8 +813,7 @@ describe("PluginAPI", () => {
 
 				await api.ui.registerWidget(options);
 
-				const registry = getUIExtensionRegistry();
-				const widgets = registry.getWidgets(pluginId);
+				const widgets = uiRegistry.getWidgets(pluginId);
 				expect(widgets).toHaveLength(1);
 				expect(widgets[0].widgetId).toBe("test-widget");
 			});
@@ -861,8 +854,7 @@ describe("PluginAPI", () => {
 				await api.ui.registerWidget(options);
 				await api.ui.unregisterWidget("test-widget");
 
-				const registry = getUIExtensionRegistry();
-				const widgets = registry.getWidgets(pluginId);
+				const widgets = uiRegistry.getWidgets(pluginId);
 				expect(widgets).toHaveLength(0);
 			});
 		});
@@ -886,8 +878,7 @@ describe("PluginAPI", () => {
 
 				await api.ui.registerPage(options);
 
-				const registry = getUIExtensionRegistry();
-				const pages = registry.getPages(pluginId);
+				const pages = uiRegistry.getPages(pluginId);
 				expect(pages).toHaveLength(1);
 				expect(pages[0].pageId).toBe("test-page");
 			});
@@ -932,8 +923,7 @@ describe("PluginAPI", () => {
 				await api.ui.registerPage(options);
 				await api.ui.unregisterPage("test-page");
 
-				const registry = getUIExtensionRegistry();
-				const pages = registry.getPages(pluginId);
+				const pages = uiRegistry.getPages(pluginId);
 				expect(pages).toHaveLength(0);
 			});
 		});
@@ -955,8 +945,7 @@ describe("PluginAPI", () => {
 
 				await api.ui.registerSidebarPanel(options);
 
-				const registry = getUIExtensionRegistry();
-				const panels = registry.getSidebarPanels(pluginId);
+				const panels = uiRegistry.getSidebarPanels(pluginId);
 				expect(panels).toHaveLength(1);
 				expect(panels[0].panelId).toBe("test-panel");
 			});
@@ -995,8 +984,7 @@ describe("PluginAPI", () => {
 				await api.ui.registerSidebarPanel(options);
 				await api.ui.unregisterSidebarPanel("test-panel");
 
-				const registry = getUIExtensionRegistry();
-				const panels = registry.getSidebarPanels(pluginId);
+				const panels = uiRegistry.getSidebarPanels(pluginId);
 				expect(panels).toHaveLength(0);
 			});
 		});

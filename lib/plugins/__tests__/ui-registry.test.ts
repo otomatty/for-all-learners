@@ -1,16 +1,14 @@
 /**
  * UI Extension Registry Tests
  *
- * Unit tests for the UIExtensionRegistry class.
+ * Unit tests for the UI extension registry functions.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { PageOptions, SidebarPanelOptions, WidgetOptions } from "../types";
-import { UIExtensionRegistry } from "../ui-registry";
+import * as registry from "../ui-registry";
 
-describe("UIExtensionRegistry", () => {
-	let registry: UIExtensionRegistry;
-
+describe("UI Extension Registry", () => {
 	const createMockWidget = (
 		id: string,
 		position: WidgetOptions["position"] = "top-left",
@@ -60,29 +58,11 @@ describe("UIExtensionRegistry", () => {
 	});
 
 	beforeEach(() => {
-		registry = UIExtensionRegistry.getInstance();
+		registry.reset();
 	});
 
 	afterEach(() => {
-		registry.clear();
-		UIExtensionRegistry.reset();
-	});
-
-	describe("Singleton Pattern", () => {
-		it("should return the same instance", () => {
-			const instance1 = UIExtensionRegistry.getInstance();
-			const instance2 = UIExtensionRegistry.getInstance();
-
-			expect(instance1).toBe(instance2);
-		});
-
-		it("should reset instance correctly", () => {
-			const instance1 = UIExtensionRegistry.getInstance();
-			UIExtensionRegistry.reset();
-			const instance2 = UIExtensionRegistry.getInstance();
-
-			expect(instance1).not.toBe(instance2);
-		});
+		registry.reset();
 	});
 
 	describe("Widget Registration", () => {

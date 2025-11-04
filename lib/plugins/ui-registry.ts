@@ -65,532 +65,499 @@ export interface SidebarPanelEntry {
 }
 
 // ============================================================================
-// UI Extension Registry Class
+// State (Private)
+// ============================================================================
+
+/** Map of plugin ID to array of widgets */
+const widgets = new Map<string, WidgetEntry[]>();
+
+/** Map of plugin ID to array of pages */
+const pages = new Map<string, PageEntry[]>();
+
+/** Map of plugin ID to array of sidebar panels */
+const sidebarPanels = new Map<string, SidebarPanelEntry[]>();
+
+/** Map of route path to page entry (for quick lookup) */
+const routeMap = new Map<string, PageEntry>();
+
+// ============================================================================
+// Widget Registration
 // ============================================================================
 
 /**
- * UI Extension Registry
+ * Register a widget
  *
- * Singleton registry for managing UI extensions registered by plugins.
- * Thread-safe operations with Map-based storage.
+ * @param pluginId Plugin ID registering the widget
+ * @param options Widget options
+ * @throws Error if widget ID already exists for this plugin
  */
-export class UIExtensionRegistry {
-	private static instance: UIExtensionRegistry | null = null;
+export function registerWidget(pluginId: string, options: WidgetOptions): void {
+	const pluginWidgets = widgets.get(pluginId) ?? [];
 
-	/** Map of plugin ID to array of widgets */
-	private widgets: Map<string, WidgetEntry[]>;
+	// Check if widget ID already exists
+	const existing = pluginWidgets.find(
+		(widget) => widget.widgetId === options.id,
+	);
 
-	/** Map of plugin ID to array of pages */
-	private pages: Map<string, PageEntry[]>;
-
-	/** Map of plugin ID to array of sidebar panels */
-	private sidebarPanels: Map<string, SidebarPanelEntry[]>;
-
-	/** Map of route path to page entry (for quick lookup) */
-	private routeMap: Map<string, PageEntry>;
-
-	/**
-	 * Private constructor (Singleton pattern)
-	 */
-	private constructor() {
-		this.widgets = new Map();
-		this.pages = new Map();
-		this.sidebarPanels = new Map();
-		this.routeMap = new Map();
-	}
-
-	/**
-	 * Get singleton instance
-	 */
-	public static getInstance(): UIExtensionRegistry {
-		if (!UIExtensionRegistry.instance) {
-			UIExtensionRegistry.instance = new UIExtensionRegistry();
-		}
-		return UIExtensionRegistry.instance;
-	}
-
-	/**
-	 * Reset registry (for testing)
-	 */
-	public static reset(): void {
-		UIExtensionRegistry.instance = null;
-	}
-
-	// ========================================================================
-	// Widget Registration
-	// ========================================================================
-
-	/**
-	 * Register a widget
-	 *
-	 * @param pluginId Plugin ID registering the widget
-	 * @param options Widget options
-	 * @throws Error if widget ID already exists for this plugin
-	 */
-	public registerWidget(pluginId: string, options: WidgetOptions): void {
-		const pluginWidgets = this.widgets.get(pluginId) ?? [];
-
-		// Check if widget ID already exists
-		const existing = pluginWidgets.find(
-			(widget) => widget.widgetId === options.id,
+	if (existing) {
+		throw new Error(
+			`Widget ${options.id} already registered for plugin ${pluginId}`,
 		);
+	}
 
-		if (existing) {
-			throw new Error(
-				`Widget ${options.id} already registered for plugin ${pluginId}`,
-			);
-		}
+	const entry: WidgetEntry = {
+		pluginId,
+		widgetId: options.id,
+		name: options.name,
+		description: options.description,
+		position: options.position,
+		size: options.size,
+		render: options.render,
+		icon: options.icon,
+	};
 
-		const entry: WidgetEntry = {
+	pluginWidgets.push(entry);
+	widgets.set(pluginId, pluginWidgets);
+
+	logger.info(
+		{
 			pluginId,
 			widgetId: options.id,
-			name: options.name,
-			description: options.description,
 			position: options.position,
 			size: options.size,
-			render: options.render,
-			icon: options.icon,
-		};
+		},
+		"Widget registered",
+	);
+}
 
-		pluginWidgets.push(entry);
-		this.widgets.set(pluginId, pluginWidgets);
+/**
+ * Unregister a widget
+ *
+ * @param pluginId Plugin ID
+ * @param widgetId Widget ID (optional, if not provided, all widgets for plugin are removed)
+ * @returns True if widget was unregistered, false if not found
+ */
+export function unregisterWidget(pluginId: string, widgetId?: string): boolean {
+	const pluginWidgets = widgets.get(pluginId);
 
-		logger.info(
-			{
-				pluginId,
-				widgetId: options.id,
-				position: options.position,
-				size: options.size,
-			},
-			"Widget registered",
-		);
+	if (!pluginWidgets) {
+		logger.warn({ pluginId }, "No widgets found for plugin");
+		return false;
 	}
 
-	/**
-	 * Unregister a widget
-	 *
-	 * @param pluginId Plugin ID
-	 * @param widgetId Widget ID (optional, if not provided, all widgets for plugin are removed)
-	 * @returns True if widget was unregistered, false if not found
-	 */
-	public unregisterWidget(pluginId: string, widgetId?: string): boolean {
-		const pluginWidgets = this.widgets.get(pluginId);
+	if (widgetId) {
+		const index = pluginWidgets.findIndex(
+			(widget) => widget.widgetId === widgetId,
+		);
 
-		if (!pluginWidgets) {
-			logger.warn({ pluginId }, "No widgets found for plugin");
+		if (index === -1) {
+			logger.warn(
+				{ pluginId, widgetId },
+				"Widget not found for unregistration",
+			);
 			return false;
 		}
 
-		if (widgetId) {
-			const index = pluginWidgets.findIndex(
-				(widget) => widget.widgetId === widgetId,
-			);
+		pluginWidgets.splice(index, 1);
 
-			if (index === -1) {
-				logger.warn(
-					{ pluginId, widgetId },
-					"Widget not found for unregistration",
-				);
-				return false;
-			}
-
-			pluginWidgets.splice(index, 1);
-
-			if (pluginWidgets.length === 0) {
-				this.widgets.delete(pluginId);
-			} else {
-				this.widgets.set(pluginId, pluginWidgets);
-			}
-
-			logger.info({ pluginId, widgetId }, "Widget unregistered");
-			return true;
-		}
-
-		// Remove all widgets for plugin
-		this.widgets.delete(pluginId);
-		logger.info(
-			{ pluginId, count: pluginWidgets.length },
-			"All widgets unregistered for plugin",
-		);
-		return true;
-	}
-
-	// ========================================================================
-	// Page Registration
-	// ========================================================================
-
-	/**
-	 * Register a custom page
-	 *
-	 * @param pluginId Plugin ID registering the page
-	 * @param options Page options
-	 * @throws Error if page ID already exists for this plugin or route is already used
-	 */
-	public registerPage(pluginId: string, options: PageOptions): void {
-		const pluginPages = this.pages.get(pluginId) ?? [];
-
-		// Check if page ID already exists
-		const existing = pluginPages.find((page) => page.pageId === options.id);
-
-		if (existing) {
-			throw new Error(
-				`Page ${options.id} already registered for plugin ${pluginId}`,
-			);
-		}
-
-		// Check if route path is already used
-		if (this.routeMap.has(options.route.path)) {
-			const existingEntry = this.routeMap.get(options.route.path);
-			throw new Error(
-				`Page route "${options.route.path}" is already used by plugin ${existingEntry?.pluginId}`,
-			);
-		}
-
-		const entry: PageEntry = {
-			pluginId,
-			pageId: options.id,
-			route: options.route,
-			render: options.render,
-			description: options.description,
-		};
-
-		pluginPages.push(entry);
-		this.pages.set(pluginId, pluginPages);
-		this.routeMap.set(options.route.path, entry);
-
-		logger.info(
-			{
-				pluginId,
-				pageId: options.id,
-				route: options.route.path,
-			},
-			"Page registered",
-		);
-	}
-
-	/**
-	 * Unregister a custom page
-	 *
-	 * @param pluginId Plugin ID
-	 * @param pageId Page ID (optional, if not provided, all pages for plugin are removed)
-	 * @returns True if page was unregistered, false if not found
-	 */
-	public unregisterPage(pluginId: string, pageId?: string): boolean {
-		const pluginPages = this.pages.get(pluginId);
-
-		if (!pluginPages) {
-			logger.warn({ pluginId }, "No pages found for plugin");
-			return false;
-		}
-
-		if (pageId) {
-			const index = pluginPages.findIndex((page) => page.pageId === pageId);
-
-			if (index === -1) {
-				logger.warn({ pluginId, pageId }, "Page not found for unregistration");
-				return false;
-			}
-
-			const entry = pluginPages[index];
-			this.routeMap.delete(entry.route.path);
-			pluginPages.splice(index, 1);
-
-			if (pluginPages.length === 0) {
-				this.pages.delete(pluginId);
-			} else {
-				this.pages.set(pluginId, pluginPages);
-			}
-
-			logger.info({ pluginId, pageId }, "Page unregistered");
-			return true;
-		}
-
-		// Remove all pages for plugin
-		for (const entry of pluginPages) {
-			this.routeMap.delete(entry.route.path);
-		}
-		this.pages.delete(pluginId);
-		logger.info(
-			{ pluginId, count: pluginPages.length },
-			"All pages unregistered for plugin",
-		);
-		return true;
-	}
-
-	// ========================================================================
-	// Sidebar Panel Registration
-	// ========================================================================
-
-	/**
-	 * Register a sidebar panel
-	 *
-	 * @param pluginId Plugin ID registering the panel
-	 * @param options Panel options
-	 * @throws Error if panel ID already exists for this plugin
-	 */
-	public registerSidebarPanel(
-		pluginId: string,
-		options: SidebarPanelOptions,
-	): void {
-		const pluginPanels = this.sidebarPanels.get(pluginId) ?? [];
-
-		// Check if panel ID already exists
-		const existing = pluginPanels.find((panel) => panel.panelId === options.id);
-
-		if (existing) {
-			throw new Error(
-				`Sidebar panel ${options.id} already registered for plugin ${pluginId}`,
-			);
-		}
-
-		const entry: SidebarPanelEntry = {
-			pluginId,
-			panelId: options.id,
-			name: options.name,
-			description: options.description,
-			position: options.position,
-			render: options.render,
-			icon: options.icon,
-			defaultOpen: options.defaultOpen,
-		};
-
-		pluginPanels.push(entry);
-		this.sidebarPanels.set(pluginId, pluginPanels);
-
-		logger.info(
-			{
-				pluginId,
-				panelId: options.id,
-				position: options.position,
-			},
-			"Sidebar panel registered",
-		);
-	}
-
-	/**
-	 * Unregister a sidebar panel
-	 *
-	 * @param pluginId Plugin ID
-	 * @param panelId Panel ID (optional, if not provided, all panels for plugin are removed)
-	 * @returns True if panel was unregistered, false if not found
-	 */
-	public unregisterSidebarPanel(pluginId: string, panelId?: string): boolean {
-		const pluginPanels = this.sidebarPanels.get(pluginId);
-
-		if (!pluginPanels) {
-			logger.warn({ pluginId }, "No sidebar panels found for plugin");
-			return false;
-		}
-
-		if (panelId) {
-			const index = pluginPanels.findIndex(
-				(panel) => panel.panelId === panelId,
-			);
-
-			if (index === -1) {
-				logger.warn(
-					{ pluginId, panelId },
-					"Sidebar panel not found for unregistration",
-				);
-				return false;
-			}
-
-			pluginPanels.splice(index, 1);
-
-			if (pluginPanels.length === 0) {
-				this.sidebarPanels.delete(pluginId);
-			} else {
-				this.sidebarPanels.set(pluginId, pluginPanels);
-			}
-
-			logger.info({ pluginId, panelId }, "Sidebar panel unregistered");
-			return true;
-		}
-
-		// Remove all panels for plugin
-		this.sidebarPanels.delete(pluginId);
-		logger.info(
-			{ pluginId, count: pluginPanels.length },
-			"All sidebar panels unregistered for plugin",
-		);
-		return true;
-	}
-
-	// ========================================================================
-	// Query Operations
-	// ========================================================================
-
-	/**
-	 * Get widgets
-	 *
-	 * @param pluginId Plugin ID (optional, if not provided, returns all widgets)
-	 * @param position Widget position filter (optional)
-	 * @returns Array of widget entries
-	 */
-	public getWidgets(
-		pluginId?: string,
-		position?: WidgetOptions["position"],
-	): WidgetEntry[] {
-		let widgets: WidgetEntry[] = [];
-
-		if (pluginId) {
-			widgets = this.widgets.get(pluginId) ?? [];
+		if (pluginWidgets.length === 0) {
+			widgets.delete(pluginId);
 		} else {
-			for (const pluginWidgets of this.widgets.values()) {
-				widgets.push(...pluginWidgets);
-			}
+			widgets.set(pluginId, pluginWidgets);
 		}
 
-		// Filter by position if provided
-		if (position) {
-			widgets = widgets.filter((widget) => widget.position === position);
-		}
-
-		return widgets;
+		logger.info({ pluginId, widgetId }, "Widget unregistered");
+		return true;
 	}
 
-	/**
-	 * Get pages
-	 *
-	 * @param pluginId Plugin ID (optional, if not provided, returns all pages)
-	 * @returns Array of page entries
-	 */
-	public getPages(pluginId?: string): PageEntry[] {
-		if (pluginId) {
-			return this.pages.get(pluginId) ?? [];
-		}
-
-		const allPages: PageEntry[] = [];
-		for (const pluginPages of this.pages.values()) {
-			allPages.push(...pluginPages);
-		}
-		return allPages;
-	}
-
-	/**
-	 * Get page by route path
-	 *
-	 * @param path Route path
-	 * @returns Page entry or undefined if not found
-	 */
-	public getPageByRoute(path: string): PageEntry | undefined {
-		return this.routeMap.get(path);
-	}
-
-	/**
-	 * Get sidebar panels
-	 *
-	 * @param pluginId Plugin ID (optional, if not provided, returns all panels)
-	 * @param position Panel position filter (optional)
-	 * @returns Array of sidebar panel entries
-	 */
-	public getSidebarPanels(
-		pluginId?: string,
-		position?: SidebarPanelOptions["position"],
-	): SidebarPanelEntry[] {
-		let panels: SidebarPanelEntry[] = [];
-
-		if (pluginId) {
-			panels = this.sidebarPanels.get(pluginId) ?? [];
-		} else {
-			for (const pluginPanels of this.sidebarPanels.values()) {
-				panels.push(...pluginPanels);
-			}
-		}
-
-		// Filter by position if provided
-		if (position) {
-			panels = panels.filter((panel) => panel.position === position);
-		}
-
-		return panels;
-	}
-
-	/**
-	 * Clear all extensions for a plugin
-	 *
-	 * @param pluginId Plugin ID
-	 */
-	public clearPlugin(pluginId: string): void {
-		this.unregisterWidget(pluginId);
-		this.unregisterPage(pluginId);
-		this.unregisterSidebarPanel(pluginId);
-	}
-
-	/**
-	 * Clear all extensions
-	 *
-	 * @warning This will remove all registered extensions!
-	 */
-	public clear(): void {
-		const widgetCount = Array.from(this.widgets.values()).reduce(
-			(sum, widgets) => sum + widgets.length,
-			0,
-		);
-		const pageCount = Array.from(this.pages.values()).reduce(
-			(sum, pages) => sum + pages.length,
-			0,
-		);
-		const panelCount = Array.from(this.sidebarPanels.values()).reduce(
-			(sum, panels) => sum + panels.length,
-			0,
-		);
-
-		this.widgets.clear();
-		this.pages.clear();
-		this.sidebarPanels.clear();
-		this.routeMap.clear();
-
-		logger.info(
-			{
-				clearedWidgets: widgetCount,
-				clearedPages: pageCount,
-				clearedPanels: panelCount,
-			},
-			"All UI extensions cleared",
-		);
-	}
-
-	/**
-	 * Get statistics
-	 *
-	 * @returns Statistics about registered extensions
-	 */
-	public getStats(): {
-		totalPlugins: number;
-		totalWidgets: number;
-		totalPages: number;
-		totalPanels: number;
-	} {
-		return {
-			totalPlugins: new Set([
-				...this.widgets.keys(),
-				...this.pages.keys(),
-				...this.sidebarPanels.keys(),
-			]).size,
-			totalWidgets: Array.from(this.widgets.values()).reduce(
-				(sum, widgets) => sum + widgets.length,
-				0,
-			),
-			totalPages: Array.from(this.pages.values()).reduce(
-				(sum, pages) => sum + pages.length,
-				0,
-			),
-			totalPanels: Array.from(this.sidebarPanels.values()).reduce(
-				(sum, panels) => sum + panels.length,
-				0,
-			),
-		};
-	}
+	// Remove all widgets for plugin
+	widgets.delete(pluginId);
+	logger.info(
+		{ pluginId, count: pluginWidgets.length },
+		"All widgets unregistered for plugin",
+	);
+	return true;
 }
 
 // ============================================================================
-// Singleton Export
+// Page Registration
 // ============================================================================
 
 /**
- * Get UI extension registry instance
+ * Register a custom page
+ *
+ * @param pluginId Plugin ID registering the page
+ * @param options Page options
+ * @throws Error if page ID already exists for this plugin or route is already used
  */
-export function getUIExtensionRegistry(): UIExtensionRegistry {
-	return UIExtensionRegistry.getInstance();
+export function registerPage(pluginId: string, options: PageOptions): void {
+	const pluginPages = pages.get(pluginId) ?? [];
+
+	// Check if page ID already exists
+	const existing = pluginPages.find((page) => page.pageId === options.id);
+
+	if (existing) {
+		throw new Error(
+			`Page ${options.id} already registered for plugin ${pluginId}`,
+		);
+	}
+
+	// Check if route path is already used
+	if (routeMap.has(options.route.path)) {
+		const existingEntry = routeMap.get(options.route.path);
+		throw new Error(
+			`Page route "${options.route.path}" is already used by plugin ${existingEntry?.pluginId}`,
+		);
+	}
+
+	const entry: PageEntry = {
+		pluginId,
+		pageId: options.id,
+		route: options.route,
+		render: options.render,
+		description: options.description,
+	};
+
+	pluginPages.push(entry);
+	pages.set(pluginId, pluginPages);
+	routeMap.set(options.route.path, entry);
+
+	logger.info(
+		{
+			pluginId,
+			pageId: options.id,
+			route: options.route.path,
+		},
+		"Page registered",
+	);
+}
+
+/**
+ * Unregister a custom page
+ *
+ * @param pluginId Plugin ID
+ * @param pageId Page ID (optional, if not provided, all pages for plugin are removed)
+ * @returns True if page was unregistered, false if not found
+ */
+export function unregisterPage(pluginId: string, pageId?: string): boolean {
+	const pluginPages = pages.get(pluginId);
+
+	if (!pluginPages) {
+		logger.warn({ pluginId }, "No pages found for plugin");
+		return false;
+	}
+
+	if (pageId) {
+		const index = pluginPages.findIndex((page) => page.pageId === pageId);
+
+		if (index === -1) {
+			logger.warn({ pluginId, pageId }, "Page not found for unregistration");
+			return false;
+		}
+
+		const entry = pluginPages[index];
+		routeMap.delete(entry.route.path);
+		pluginPages.splice(index, 1);
+
+		if (pluginPages.length === 0) {
+			pages.delete(pluginId);
+		} else {
+			pages.set(pluginId, pluginPages);
+		}
+
+		logger.info({ pluginId, pageId }, "Page unregistered");
+		return true;
+	}
+
+	// Remove all pages for plugin
+	for (const entry of pluginPages) {
+		routeMap.delete(entry.route.path);
+	}
+	pages.delete(pluginId);
+	logger.info(
+		{ pluginId, count: pluginPages.length },
+		"All pages unregistered for plugin",
+	);
+	return true;
+}
+
+// ============================================================================
+// Sidebar Panel Registration
+// ============================================================================
+
+/**
+ * Register a sidebar panel
+ *
+ * @param pluginId Plugin ID registering the panel
+ * @param options Panel options
+ * @throws Error if panel ID already exists for this plugin
+ */
+export function registerSidebarPanel(
+	pluginId: string,
+	options: SidebarPanelOptions,
+): void {
+	const pluginPanels = sidebarPanels.get(pluginId) ?? [];
+
+	// Check if panel ID already exists
+	const existing = pluginPanels.find((panel) => panel.panelId === options.id);
+
+	if (existing) {
+		throw new Error(
+			`Sidebar panel ${options.id} already registered for plugin ${pluginId}`,
+		);
+	}
+
+	const entry: SidebarPanelEntry = {
+		pluginId,
+		panelId: options.id,
+		name: options.name,
+		description: options.description,
+		position: options.position,
+		render: options.render,
+		icon: options.icon,
+		defaultOpen: options.defaultOpen,
+	};
+
+	pluginPanels.push(entry);
+	sidebarPanels.set(pluginId, pluginPanels);
+
+	logger.info(
+		{
+			pluginId,
+			panelId: options.id,
+			position: options.position,
+		},
+		"Sidebar panel registered",
+	);
+}
+
+/**
+ * Unregister a sidebar panel
+ *
+ * @param pluginId Plugin ID
+ * @param panelId Panel ID (optional, if not provided, all panels for plugin are removed)
+ * @returns True if panel was unregistered, false if not found
+ */
+export function unregisterSidebarPanel(
+	pluginId: string,
+	panelId?: string,
+): boolean {
+	const pluginPanels = sidebarPanels.get(pluginId);
+
+	if (!pluginPanels) {
+		logger.warn({ pluginId }, "No sidebar panels found for plugin");
+		return false;
+	}
+
+	if (panelId) {
+		const index = pluginPanels.findIndex((panel) => panel.panelId === panelId);
+
+		if (index === -1) {
+			logger.warn(
+				{ pluginId, panelId },
+				"Sidebar panel not found for unregistration",
+			);
+			return false;
+		}
+
+		pluginPanels.splice(index, 1);
+
+		if (pluginPanels.length === 0) {
+			sidebarPanels.delete(pluginId);
+		} else {
+			sidebarPanels.set(pluginId, pluginPanels);
+		}
+
+		logger.info({ pluginId, panelId }, "Sidebar panel unregistered");
+		return true;
+	}
+
+	// Remove all panels for plugin
+	sidebarPanels.delete(pluginId);
+	logger.info(
+		{ pluginId, count: pluginPanels.length },
+		"All sidebar panels unregistered for plugin",
+	);
+	return true;
+}
+
+// ============================================================================
+// Query Operations
+// ============================================================================
+
+/**
+ * Get widgets
+ *
+ * @param pluginId Plugin ID (optional, if not provided, returns all widgets)
+ * @param position Widget position filter (optional)
+ * @returns Array of widget entries
+ */
+export function getWidgets(
+	pluginId?: string,
+	position?: WidgetOptions["position"],
+): WidgetEntry[] {
+	let result: WidgetEntry[] = [];
+
+	if (pluginId) {
+		result = widgets.get(pluginId) ?? [];
+	} else {
+		for (const pluginWidgets of widgets.values()) {
+			result.push(...pluginWidgets);
+		}
+	}
+
+	// Filter by position if provided
+	if (position) {
+		result = result.filter((widget) => widget.position === position);
+	}
+
+	return result;
+}
+
+/**
+ * Get pages
+ *
+ * @param pluginId Plugin ID (optional, if not provided, returns all pages)
+ * @returns Array of page entries
+ */
+export function getPages(pluginId?: string): PageEntry[] {
+	if (pluginId) {
+		return pages.get(pluginId) ?? [];
+	}
+
+	const allPages: PageEntry[] = [];
+	for (const pluginPages of pages.values()) {
+		allPages.push(...pluginPages);
+	}
+	return allPages;
+}
+
+/**
+ * Get page by route path
+ *
+ * @param path Route path
+ * @returns Page entry or undefined if not found
+ */
+export function getPageByRoute(path: string): PageEntry | undefined {
+	return routeMap.get(path);
+}
+
+/**
+ * Get sidebar panels
+ *
+ * @param pluginId Plugin ID (optional, if not provided, returns all panels)
+ * @param position Panel position filter (optional)
+ * @returns Array of sidebar panel entries
+ */
+export function getSidebarPanels(
+	pluginId?: string,
+	position?: SidebarPanelOptions["position"],
+): SidebarPanelEntry[] {
+	let result: SidebarPanelEntry[] = [];
+
+	if (pluginId) {
+		result = sidebarPanels.get(pluginId) ?? [];
+	} else {
+		for (const pluginPanels of sidebarPanels.values()) {
+			result.push(...pluginPanels);
+		}
+	}
+
+	// Filter by position if provided
+	if (position) {
+		result = result.filter((panel) => panel.position === position);
+	}
+
+	return result;
+}
+
+/**
+ * Clear all extensions for a plugin
+ *
+ * @param pluginId Plugin ID
+ */
+export function clearPlugin(pluginId: string): void {
+	unregisterWidget(pluginId);
+	unregisterPage(pluginId);
+	unregisterSidebarPanel(pluginId);
+}
+
+/**
+ * Clear all extensions
+ *
+ * @warning This will remove all registered extensions!
+ */
+export function clear(): void {
+	const widgetCount = Array.from(widgets.values()).reduce(
+		(sum, widgets) => sum + widgets.length,
+		0,
+	);
+	const pageCount = Array.from(pages.values()).reduce(
+		(sum, pages) => sum + pages.length,
+		0,
+	);
+	const panelCount = Array.from(sidebarPanels.values()).reduce(
+		(sum, panels) => sum + panels.length,
+		0,
+	);
+
+	widgets.clear();
+	pages.clear();
+	sidebarPanels.clear();
+	routeMap.clear();
+
+	logger.info(
+		{
+			clearedWidgets: widgetCount,
+			clearedPages: pageCount,
+			clearedPanels: panelCount,
+		},
+		"All UI extensions cleared",
+	);
+}
+
+/**
+ * Get statistics
+ *
+ * @returns Statistics about registered extensions
+ */
+export function getStats(): {
+	totalPlugins: number;
+	totalWidgets: number;
+	totalPages: number;
+	totalPanels: number;
+} {
+	return {
+		totalPlugins: new Set([
+			...widgets.keys(),
+			...pages.keys(),
+			...sidebarPanels.keys(),
+		]).size,
+		totalWidgets: Array.from(widgets.values()).reduce(
+			(sum, widgets) => sum + widgets.length,
+			0,
+		),
+		totalPages: Array.from(pages.values()).reduce(
+			(sum, pages) => sum + pages.length,
+			0,
+		),
+		totalPanels: Array.from(sidebarPanels.values()).reduce(
+			(sum, panels) => sum + panels.length,
+			0,
+		),
+	};
+}
+
+// ============================================================================
+// Test Utilities
+// ============================================================================
+
+/**
+ * Reset registry (for testing)
+ */
+export function reset(): void {
+	widgets.clear();
+	pages.clear();
+	sidebarPanels.clear();
+	routeMap.clear();
 }

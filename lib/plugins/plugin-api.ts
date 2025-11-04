@@ -26,7 +26,7 @@ import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
-import { getAIExtensionRegistry } from "./ai-registry";
+import * as aiRegistry from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
@@ -52,8 +52,7 @@ import type {
 	WebhookOptions,
 	WidgetOptions,
 } from "./types";
-import { getUIExtensionRegistry } from "./ui-registry";
-
+import * as uiRegistry from "./ui-registry";
 // ============================================================================
 // Plugin API Interface
 // ============================================================================
@@ -633,8 +632,6 @@ const commandRegistry = new Map<string, Command>();
  * @param pluginId Plugin ID for command registration
  */
 function createUIAPI(pluginId: string): UIAPI {
-	const registry = getUIExtensionRegistry();
-
 	return {
 		async registerCommand(command: Command): Promise<void> {
 			const fullCommandId = `${pluginId}.${command.id}`;
@@ -693,7 +690,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async registerWidget(options: WidgetOptions): Promise<void> {
 			try {
-				registry.registerWidget(pluginId, options);
+				uiRegistry.registerWidget(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -714,7 +711,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async unregisterWidget(widgetId: string): Promise<void> {
 			try {
-				registry.unregisterWidget(pluginId, widgetId);
+				uiRegistry.unregisterWidget(pluginId, widgetId);
 				logger.info({ pluginId, widgetId }, "Widget unregistered");
 			} catch (error) {
 				logger.error(
@@ -727,7 +724,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async registerPage(options: PageOptions): Promise<void> {
 			try {
-				registry.registerPage(pluginId, options);
+				uiRegistry.registerPage(pluginId, options);
 				logger.info(
 					{ pluginId, pageId: options.id, route: options.route.path },
 					"Page registered",
@@ -743,7 +740,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async unregisterPage(pageId: string): Promise<void> {
 			try {
-				registry.unregisterPage(pluginId, pageId);
+				uiRegistry.unregisterPage(pluginId, pageId);
 				logger.info({ pluginId, pageId }, "Page unregistered");
 			} catch (error) {
 				logger.error({ error, pluginId, pageId }, "Failed to unregister page");
@@ -753,7 +750,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async registerSidebarPanel(options: SidebarPanelOptions): Promise<void> {
 			try {
-				registry.registerSidebarPanel(pluginId, options);
+				uiRegistry.registerSidebarPanel(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -773,7 +770,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async unregisterSidebarPanel(panelId: string): Promise<void> {
 			try {
-				registry.unregisterSidebarPanel(pluginId, panelId);
+				uiRegistry.unregisterSidebarPanel(pluginId, panelId);
 				logger.info({ pluginId, panelId }, "Sidebar panel unregistered");
 			} catch (error) {
 				logger.error(
@@ -972,14 +969,12 @@ function createEditorAPI(pluginId: string): EditorAPI {
  * @returns AI API instance
  */
 function createAIAPI(pluginId: string): AIAPI {
-	const registry = getAIExtensionRegistry();
-
 	return {
 		async registerQuestionGenerator(
 			options: QuestionGeneratorOptions,
 		): Promise<void> {
 			try {
-				registry.registerQuestionGenerator(pluginId, options);
+				aiRegistry.registerQuestionGenerator(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -999,7 +994,7 @@ function createAIAPI(pluginId: string): AIAPI {
 
 		async unregisterQuestionGenerator(generatorId: string): Promise<void> {
 			try {
-				registry.unregisterQuestionGenerator(pluginId, generatorId);
+				aiRegistry.unregisterQuestionGenerator(pluginId, generatorId);
 				logger.info(
 					{ pluginId, generatorId },
 					"Question generator unregistered",
@@ -1017,7 +1012,7 @@ function createAIAPI(pluginId: string): AIAPI {
 			options: PromptTemplateOptions,
 		): Promise<void> {
 			try {
-				registry.registerPromptTemplate(pluginId, options);
+				aiRegistry.registerPromptTemplate(pluginId, options);
 				logger.info(
 					{ pluginId, templateId: options.id, key: options.key },
 					"Prompt template registered",
@@ -1033,7 +1028,7 @@ function createAIAPI(pluginId: string): AIAPI {
 
 		async unregisterPromptTemplate(templateId: string): Promise<void> {
 			try {
-				registry.unregisterPromptTemplate(pluginId, templateId);
+				aiRegistry.unregisterPromptTemplate(pluginId, templateId);
 				logger.info({ pluginId, templateId }, "Prompt template unregistered");
 			} catch (error) {
 				logger.error(
@@ -1048,7 +1043,7 @@ function createAIAPI(pluginId: string): AIAPI {
 			options: ContentAnalyzerOptions,
 		): Promise<void> {
 			try {
-				registry.registerContentAnalyzer(pluginId, options);
+				aiRegistry.registerContentAnalyzer(pluginId, options);
 				logger.info(
 					{ pluginId, analyzerId: options.id },
 					"Content analyzer registered",
@@ -1064,7 +1059,7 @@ function createAIAPI(pluginId: string): AIAPI {
 
 		async unregisterContentAnalyzer(analyzerId: string): Promise<void> {
 			try {
-				registry.unregisterContentAnalyzer(pluginId, analyzerId);
+				aiRegistry.unregisterContentAnalyzer(pluginId, analyzerId);
 				logger.info({ pluginId, analyzerId }, "Content analyzer unregistered");
 			} catch (error) {
 				logger.error(
