@@ -10,50 +10,79 @@
  * Dependencies:
  *   ├─ app/_actions/plugins.ts
  *   ├─ components/ui/* (Button, Card, Switch, etc.)
- *   └─ types/plugin.ts
+ *   ├─ types/plugin.ts
+ *   └─ ./_components/PluginFiltersClient.tsx
  *
  * Related Documentation:
- *   └─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
+import { Package } from "lucide-react";
 import {
-	Download,
-	Package,
-	Shield,
-	Star,
-	ToggleLeft,
-	Trash2,
-} from "lucide-react";
-import {
-	disablePlugin,
-	enablePlugin,
 	getAvailablePlugins,
-	getInstalledPlugins,
-	installPlugin,
-	uninstallPlugin,
+	getInstalledPluginsWithUpdates,
 } from "@/app/_actions/plugins";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { PluginMetadata, UserPlugin } from "@/types/plugin";
+import { InstalledPluginCard } from "./_components/InstalledPluginCard";
+import { MarketplacePluginCard } from "./_components/MarketplacePluginCard";
+import { PluginFiltersClient } from "./_components/PluginFiltersClient";
 
 /**
  * Plugin Settings Page Component
  */
-export default async function PluginsPage() {
+export default async function PluginsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{
+		search?: string;
+		official?: string;
+		reviewed?: string;
+		extensionPoint?: string;
+		sort?: string;
+		tab?: string;
+	}>;
+}) {
+	const params = await searchParams;
+	const search = params.search ?? "";
+	const isOfficial = params.official === "true" ? true : null;
+	const isReviewed = params.reviewed === "true" ? true : null;
+	const extensionPoint =
+		params.extensionPoint && params.extensionPoint !== "all"
+			? params.extensionPoint
+			: undefined;
+	const sort = params.sort ?? "popular";
+
 	// Fetch data
 	const [installedPlugins, availablePlugins] = await Promise.all([
-		getInstalledPlugins().catch(() => []),
-		getAvailablePlugins({ limit: 50 }).catch(() => []),
+		getInstalledPluginsWithUpdates().catch(() => []),
+		getAvailablePlugins({
+			search: search || undefined,
+			isOfficial: isOfficial ?? undefined,
+			isReviewed: isReviewed ?? undefined,
+			extensionPoint,
+			limit: 50,
+		}).catch(() => []),
 	]);
+
+	// Sort plugins based on sort parameter
+	const sortedPlugins = [...availablePlugins].sort((a, b) => {
+		if (sort === "popular") {
+			return b.downloadsCount - a.downloadsCount;
+		}
+		if (sort === "rating") {
+			const aRating = a.ratingAverage ?? 0;
+			const bRating = b.ratingAverage ?? 0;
+			return bRating - aRating;
+		}
+		if (sort === "updated") {
+			return b.updatedAt.getTime() - a.updatedAt.getTime();
+		}
+		if (sort === "name") {
+			return a.name.localeCompare(b.name, "ja");
+		}
+		return 0;
+	});
 
 	const installedIds = new Set(installedPlugins.map((p) => p.pluginId));
 
@@ -66,13 +95,13 @@ export default async function PluginsPage() {
 				</p>
 			</div>
 
-			<Tabs defaultValue="installed" className="w-full">
+			<Tabs defaultValue={params.tab ?? "installed"} className="w-full">
 				<TabsList className="grid w-full grid-cols-2 mb-8">
 					<TabsTrigger value="installed">
 						インストール済み ({installedPlugins.length})
 					</TabsTrigger>
 					<TabsTrigger value="marketplace">
-						マーケットプレイス ({availablePlugins.length})
+						マーケットプレイス ({sortedPlugins.length})
 					</TabsTrigger>
 				</TabsList>
 
@@ -99,7 +128,24 @@ export default async function PluginsPage() {
 
 				{/* Marketplace Tab */}
 				<TabsContent value="marketplace" className="space-y-4">
-					{availablePlugins.length === 0 ? (
+					<PluginFiltersClient
+						initialSearch={search}
+						initialOfficial={isOfficial}
+						initialReviewed={isReviewed}
+						initialExtensionPoint={
+							extensionPoint as
+								| "editor"
+								| "ai"
+								| "ui"
+								| "dataProcessor"
+								| "integration"
+								| null
+								| undefined
+						}
+						initialSort={sort as "popular" | "rating" | "updated" | "name"}
+					/>
+
+					{sortedPlugins.length === 0 ? (
 						<Card>
 							<CardContent className="pt-6 text-center">
 								<p className="text-muted-foreground">
@@ -108,7 +154,7 @@ export default async function PluginsPage() {
 							</CardContent>
 						</Card>
 					) : (
-						availablePlugins.map((plugin) => (
+						sortedPlugins.map((plugin) => (
 							<MarketplacePluginCard
 								key={plugin.pluginId}
 								plugin={plugin}
@@ -119,187 +165,5 @@ export default async function PluginsPage() {
 				</TabsContent>
 			</Tabs>
 		</div>
-	);
-}
-
-/**
- * Installed Plugin Card Component
- */
-function InstalledPluginCard({
-	userPlugin,
-}: {
-	userPlugin: UserPlugin & { metadata: PluginMetadata };
-}) {
-	const { metadata } = userPlugin;
-
-	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-start justify-between">
-					<div className="flex-1">
-						<div className="flex items-center gap-2 mb-1">
-							<CardTitle>{metadata.name}</CardTitle>
-							{metadata.isOfficial && (
-								<Badge variant="default" className="gap-1">
-									<Shield className="h-3 w-3" />
-									公式
-								</Badge>
-							)}
-							{userPlugin.enabled ? (
-								<Badge variant="outline" className="bg-green-50">
-									有効
-								</Badge>
-							) : (
-								<Badge variant="secondary">無効</Badge>
-							)}
-						</div>
-						<CardDescription>{metadata.description}</CardDescription>
-					</div>
-				</div>
-				<div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-					<span>v{userPlugin.installedVersion}</span>
-					<span>作成者: {metadata.author}</span>
-				</div>
-			</CardHeader>
-
-			<CardContent>
-				<div className="flex flex-wrap gap-2">
-					{metadata.manifest.extensionPoints.editor && (
-						<Badge variant="outline">エディタ</Badge>
-					)}
-					{metadata.manifest.extensionPoints.ai && (
-						<Badge variant="outline">AI</Badge>
-					)}
-					{metadata.manifest.extensionPoints.ui && (
-						<Badge variant="outline">UI</Badge>
-					)}
-					{metadata.manifest.extensionPoints.dataProcessor && (
-						<Badge variant="outline">データ処理</Badge>
-					)}
-					{metadata.manifest.extensionPoints.integration && (
-						<Badge variant="outline">外部連携</Badge>
-					)}
-				</div>
-			</CardContent>
-
-			<CardFooter className="flex gap-2">
-				<form action={userPlugin.enabled ? disablePlugin : enablePlugin}>
-					<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
-					<Button
-						type="submit"
-						variant={userPlugin.enabled ? "outline" : "default"}
-						size="sm"
-						className="gap-2"
-					>
-						<ToggleLeft className="h-4 w-4" />
-						{userPlugin.enabled ? "無効化" : "有効化"}
-					</Button>
-				</form>
-
-				<form action={uninstallPlugin}>
-					<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
-					<Button
-						type="submit"
-						variant="destructive"
-						size="sm"
-						className="gap-2"
-					>
-						<Trash2 className="h-4 w-4" />
-						アンインストール
-					</Button>
-				</form>
-			</CardFooter>
-		</Card>
-	);
-}
-
-/**
- * Marketplace Plugin Card Component
- */
-function MarketplacePluginCard({
-	plugin,
-	isInstalled,
-}: {
-	plugin: PluginMetadata;
-	isInstalled: boolean;
-}) {
-	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-start justify-between">
-					<div className="flex-1">
-						<div className="flex items-center gap-2 mb-1">
-							<CardTitle>{plugin.name}</CardTitle>
-							{plugin.isOfficial && (
-								<Badge variant="default" className="gap-1">
-									<Shield className="h-3 w-3" />
-									公式
-								</Badge>
-							)}
-							{plugin.isReviewed && (
-								<Badge variant="secondary">レビュー済み</Badge>
-							)}
-							{isInstalled && (
-								<Badge variant="outline" className="bg-blue-50">
-									インストール済み
-								</Badge>
-							)}
-						</div>
-						<CardDescription>{plugin.description}</CardDescription>
-					</div>
-				</div>
-
-				<div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-					<span>v{plugin.version}</span>
-					<span>作成者: {plugin.author}</span>
-					<span className="flex items-center gap-1">
-						<Download className="h-3 w-3" />
-						{plugin.downloadsCount.toLocaleString()}
-					</span>
-					{plugin.ratingAverage && (
-						<span className="flex items-center gap-1">
-							<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-							{plugin.ratingAverage.toFixed(1)}
-						</span>
-					)}
-				</div>
-			</CardHeader>
-
-			<CardContent>
-				<div className="flex flex-wrap gap-2">
-					{plugin.manifest.extensionPoints.editor && (
-						<Badge variant="outline">エディタ</Badge>
-					)}
-					{plugin.manifest.extensionPoints.ai && (
-						<Badge variant="outline">AI</Badge>
-					)}
-					{plugin.manifest.extensionPoints.ui && (
-						<Badge variant="outline">UI</Badge>
-					)}
-					{plugin.manifest.extensionPoints.dataProcessor && (
-						<Badge variant="outline">データ処理</Badge>
-					)}
-					{plugin.manifest.extensionPoints.integration && (
-						<Badge variant="outline">外部連携</Badge>
-					)}
-				</div>
-			</CardContent>
-
-			<CardFooter>
-				{isInstalled ? (
-					<Button disabled variant="outline" size="sm">
-						インストール済み
-					</Button>
-				) : (
-					<form action={installPlugin}>
-						<input type="hidden" name="pluginId" value={plugin.pluginId} />
-						<Button type="submit" size="sm" className="gap-2">
-							<Download className="h-4 w-4" />
-							インストール
-						</Button>
-					</form>
-				)}
-			</CardFooter>
-		</Card>
 	);
 }

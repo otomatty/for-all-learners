@@ -1374,6 +1374,132 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			plugin_ratings: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					plugin_id: string;
+					rating: number;
+					updated_at: string | null;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					plugin_id: string;
+					rating: number;
+					updated_at?: string | null;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					plugin_id?: string;
+					rating?: number;
+					updated_at?: string | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_ratings_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_ratings_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_review_helpful: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					review_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					review_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					review_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_review_helpful_review_id_fkey";
+						columns: ["review_id"];
+						isOneToOne: false;
+						referencedRelation: "plugin_reviews";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "plugin_review_helpful_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_reviews: {
+				Row: {
+					content: string;
+					created_at: string | null;
+					helpful_count: number | null;
+					id: string;
+					plugin_id: string;
+					title: string | null;
+					updated_at: string | null;
+					user_id: string;
+				};
+				Insert: {
+					content: string;
+					created_at?: string | null;
+					helpful_count?: number | null;
+					id?: string;
+					plugin_id: string;
+					title?: string | null;
+					updated_at?: string | null;
+					user_id: string;
+				};
+				Update: {
+					content?: string;
+					created_at?: string | null;
+					helpful_count?: number | null;
+					id?: string;
+					plugin_id?: string;
+					title?: string | null;
+					updated_at?: string | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_reviews_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_reviews_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			plugin_storage: {
 				Row: {
 					created_at: string | null;
@@ -2409,6 +2535,10 @@ export type Database = {
 			};
 			show_limit: { Args: never; Returns: number };
 			show_trgm: { Args: { "": string }; Returns: string[] };
+			toggle_review_helpful: {
+				Args: { p_review_id: string };
+				Returns: boolean;
+			};
 			update_pdf_job_heartbeat: {
 				Args: {
 					current_step_text?: string;
@@ -2433,6 +2563,10 @@ export type Database = {
 			};
 			update_plugin_rating: {
 				Args: { p_new_rating: number; p_plugin_id: string };
+				Returns: undefined;
+			};
+			upsert_plugin_rating: {
+				Args: { p_plugin_id: string; p_rating: number };
 				Returns: undefined;
 			};
 		};

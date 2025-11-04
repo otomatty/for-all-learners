@@ -22,7 +22,7 @@
 
 import type { Editor, JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as editorRegistry from "./editor-registry";
 import type { EditorSelection } from "./types";
 
 // ============================================================================
@@ -82,6 +82,11 @@ export class EditorManager {
 	 * @param editorId Unique editor ID
 	 * @param editor Editor instance
 	 * @param baseExtensions Base extensions (non-plugin extensions)
+	 *
+	 * @note TipTap does not support dynamic extension updates after editor initialization.
+	 *       Plugin extensions must be included when creating the editor instance.
+	 *       Use getTiptapExtensions() from editor-registry to get plugin extensions
+	 *       and include them in the extensions array when calling useEditor().
 	 */
 	public registerEditor(
 		editorId: string,
@@ -95,8 +100,20 @@ export class EditorManager {
 		this.editors.set(editorId, editor);
 		this.baseExtensions.set(editorId, baseExtensions);
 
-		// Apply all plugin extensions
-		this.applyAllPluginExtensions(editorId);
+		// Note: TipTap does not support setExtensions() after initialization.
+		// Plugin extensions must be included when creating the editor.
+		// We only log a warning if plugin extensions exist but were not included.
+		const pluginExtensions = editorRegistry.getTiptapExtensions();
+		if (pluginExtensions.length > 0) {
+			logger.warn(
+				{
+					editorId,
+					pluginExtensionCount: pluginExtensions.length,
+				},
+				"Plugin extensions exist but cannot be applied dynamically. " +
+					"Ensure plugin extensions are included when creating the editor.",
+			);
+		}
 
 		logger.info({ editorId }, "Editor registered");
 	}
@@ -169,74 +186,94 @@ export class EditorManager {
 	// ========================================================================
 
 	/**
+	 * Get all extensions (base + plugin) for an editor
+	 *
+	 * @param editorId Editor ID
+	 * @returns Combined array of base and plugin extensions
+	 *
+	 * @note This method returns the extensions but does not apply them.
+	 *       TipTap does not support dynamic extension updates after editor initialization.
+	 *       Use this method to get the extensions array when creating a new editor instance.
+	 */
+	public getAllExtensions(editorId: string): unknown[] {
+		const baseExtensions = this.baseExtensions.get(editorId) ?? [];
+		const pluginExtensions = editorRegistry.getTiptapExtensions();
+		return [...baseExtensions, ...pluginExtensions];
+	}
+
+	/**
 	 * Apply all plugin extensions to an editor
+	 *
+	 * @deprecated TipTap does not support dynamic extension updates after editor initialization.
+	 *             Plugin extensions must be included when creating the editor instance.
+	 *             This method is kept for backward compatibility but does nothing.
 	 *
 	 * @param editorId Editor ID
 	 */
 	public applyAllPluginExtensions(editorId: string): void {
-		const editor = this.editors.get(editorId);
-
-		if (!editor) {
-			logger.warn({ editorId }, "Cannot apply extensions: editor not found");
-			return;
-		}
-
-		const registry = getEditorExtensionRegistry();
-		const pluginExtensions = registry.getTiptapExtensions();
-		const baseExtensions = this.baseExtensions.get(editorId) ?? [];
-
-		// Combine base extensions and plugin extensions
-		const allExtensions = [...baseExtensions, ...pluginExtensions] as unknown[];
-
-		try {
-			// Update editor extensions
-			editor.setExtensions(allExtensions);
-			logger.info(
-				{
-					editorId,
-					baseExtensionCount: baseExtensions.length,
-					pluginExtensionCount: pluginExtensions.length,
-				},
-				"All plugin extensions applied to editor",
-			);
-		} catch (error) {
-			logger.error(
-				{ error, editorId },
-				"Failed to apply plugin extensions to editor",
-			);
-			throw error;
-		}
+		logger.warn(
+			{ editorId },
+			"applyAllPluginExtensions() is deprecated. " +
+				"TipTap does not support dynamic extension updates. " +
+				"Plugin extensions must be included when creating the editor.",
+		);
+		// Do nothing - TipTap does not support setExtensions() after initialization
 	}
 
 	/**
 	 * Apply extensions to all registered editors
+	 *
+	 * @deprecated TipTap does not support dynamic extension updates after editor initialization.
+	 *             Plugin extensions must be included when creating the editor instance.
+	 *             This method is kept for backward compatibility but does nothing.
 	 */
 	public applyExtensionsToAllEditors(): void {
-		for (const editorId of this.editors.keys()) {
-			this.applyAllPluginExtensions(editorId);
-		}
+		logger.warn(
+			"applyExtensionsToAllEditors() is deprecated. " +
+				"TipTap does not support dynamic extension updates. " +
+				"Plugin extensions must be included when creating the editor.",
+		);
+		// Do nothing - TipTap does not support setExtensions() after initialization
 	}
 
 	/**
 	 * Apply extensions from a specific plugin to an editor
 	 *
+	 * @deprecated TipTap does not support dynamic extension updates after editor initialization.
+	 *             Plugin extensions must be included when creating the editor instance.
+	 *             This method is kept for backward compatibility but does nothing.
+	 *
 	 * @param editorId Editor ID
 	 * @param pluginId Plugin ID
 	 */
 	public applyPluginExtensions(editorId: string, _pluginId: string): void {
-		// Reapply all extensions (simpler approach)
-		this.applyAllPluginExtensions(editorId);
+		logger.warn(
+			{ editorId, pluginId: _pluginId },
+			"applyPluginExtensions() is deprecated. " +
+				"TipTap does not support dynamic extension updates. " +
+				"Plugin extensions must be included when creating the editor.",
+		);
+		// Do nothing - TipTap does not support setExtensions() after initialization
 	}
 
 	/**
 	 * Remove extensions from a specific plugin from an editor
 	 *
+	 * @deprecated TipTap does not support dynamic extension updates after editor initialization.
+	 *             Plugin extensions must be included when creating the editor instance.
+	 *             This method is kept for backward compatibility but does nothing.
+	 *
 	 * @param editorId Editor ID
 	 * @param pluginId Plugin ID
 	 */
 	public removePluginExtensions(editorId: string, _pluginId: string): void {
-		// Reapply all extensions without the removed plugin's extensions
-		this.applyAllPluginExtensions(editorId);
+		logger.warn(
+			{ editorId, pluginId: _pluginId },
+			"removePluginExtensions() is deprecated. " +
+				"TipTap does not support dynamic extension updates. " +
+				"Plugin extensions must be included when creating the editor.",
+		);
+		// Do nothing - TipTap does not support setExtensions() after initialization
 	}
 
 	// ========================================================================

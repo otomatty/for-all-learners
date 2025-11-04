@@ -25,9 +25,12 @@
 
 import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
-import { clearPluginCommands, createPluginAPI } from "./plugin-api";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as aiRegistry from "./ai-registry";
+import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
+import * as editorRegistry from "./editor-registry";
+import * as integrationRegistry from "./integration-registry";
+import { clearPluginCommands, createPluginAPI } from "./plugin-api";
 import { getPluginRegistry } from "./plugin-registry";
 import {
 	type APICallPayload,
@@ -42,6 +45,7 @@ import {
 	type PluginValidationResult,
 	type WorkerMessage,
 } from "./types";
+import * as uiRegistry from "./ui-registry";
 
 // ============================================================================
 // Plugin Loader Class
@@ -218,24 +222,36 @@ export class PluginLoader {
 			clearPluginCommands(pluginId);
 
 			// Step 3: Clear editor extensions
-			const extensionRegistry = getEditorExtensionRegistry();
-			if (extensionRegistry.hasExtensions(pluginId)) {
-				extensionRegistry.clearPlugin(pluginId);
+			if (editorRegistry.hasExtensions(pluginId)) {
+				editorRegistry.clearPlugin(pluginId);
 
 				// Reapply extensions to all editors
 				const editorManager = getEditorManager();
 				editorManager.applyExtensionsToAllEditors();
 
-				logger.info(
-					{ pluginId },
-					"Editor extensions cleared for plugin",
-				);
+				logger.info({ pluginId }, "Editor extensions cleared for plugin");
 			}
 
-			// Step 4: Cleanup worker
+			// Step 4: Clear AI extensions
+			aiRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "AI extensions cleared for plugin");
+
+			// Step 5: Clear UI extensions
+			uiRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "UI extensions cleared for plugin");
+
+			// Step 6: Clear Data Processor extensions
+			dataProcessorRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "Data Processor extensions cleared for plugin");
+
+			// Step 7: Clear Integration extensions
+			integrationRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "Integration extensions cleared for plugin");
+
+			// Step 8: Cleanup worker
 			this.cleanupWorker(pluginId);
 
-			// Step 5: Unregister from registry
+			// Step 9: Unregister from registry
 			registry.unregister(pluginId);
 
 			logger.info(
