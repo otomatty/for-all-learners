@@ -1395,12 +1395,38 @@ async function defaultHTTPCaller(
 	if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
 		// Relative URL - use proxy if needed or construct absolute URL
 		if (options.useProxy && typeof window !== "undefined") {
+			// Validate URL before passing to proxy to prevent open redirect attacks
+			try {
+				// Try to parse as URL to validate format
+				const testUrl = new URL(urlString, window.location.origin);
+				// Only allow relative URLs, not absolute URLs that could be used for redirects
+				if (testUrl.origin !== window.location.origin) {
+					throw new Error("Invalid URL: cannot use proxy for external URLs");
+				}
+			} catch (error) {
+				throw new Error(
+					`Invalid URL format for proxy: ${error instanceof Error ? error.message : "unknown error"}`,
+				);
+			}
 			// In browser, use proxy endpoint
 			urlString = `/api/proxy?url=${encodeURIComponent(urlString)}`;
 		} else {
 			// For server-side, use the URL as-is or throw error
 			throw new Error(
 				"Relative URLs require useProxy=true in browser context or absolute URL",
+			);
+		}
+	} else {
+		// For absolute URLs, validate the URL before using
+		try {
+			const url = new URL(urlString);
+			// Basic security check: reject dangerous protocols
+			if (!["http:", "https:"].includes(url.protocol)) {
+				throw new Error(`Unsupported protocol: ${url.protocol}`);
+			}
+		} catch (error) {
+			throw new Error(
+				`Invalid URL: ${error instanceof Error ? error.message : "unknown error"}`,
 			);
 		}
 	}

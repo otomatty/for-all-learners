@@ -594,6 +594,8 @@ export async function deletePluginReview(
 /**
  * Toggle helpful vote for a review
  *
+ * Uses database RPC function for atomic operation to prevent race conditions.
+ *
  * @param reviewId Review ID
  */
 export async function toggleReviewHelpful(
@@ -606,55 +608,28 @@ export async function toggleReviewHelpful(
 
 		const supabase = await createClient();
 
-		// Check if vote already exists
-		const { data: existingVote } = await supabase
-			.from("plugin_review_helpful")
-			.select("id")
-			.eq("user_id", user.id)
-			.eq("review_id", reviewId)
-			.single();
-
-		if (existingVote) {
-			// Remove vote
-			const { error } = await supabase
-				.from("plugin_review_helpful")
-				.delete()
-				.eq("id", existingVote.id);
-
-			if (error) {
-				logger.error(
-					{ error, reviewId, userId: user.id },
-					"[plugin-review] Failed to remove helpful vote",
-				);
-				return {
-					success: false,
-					error: "投票の削除に失敗しました",
-					isHelpful: false,
-				};
-			}
-
-			return { success: true, isHelpful: false };
-		}
-
-		// Add vote
-		const { error } = await supabase.from("plugin_review_helpful").insert({
-			user_id: user.id,
-			review_id: reviewId,
+		// Use RPC function for atomic toggle operation
+		const { data, error } = await supabase.rpc("toggle_review_helpful", {
+			p_review_id: reviewId,
 		});
 
 		if (error) {
 			logger.error(
 				{ error, reviewId, userId: user.id },
-				"[plugin-review] Failed to add helpful vote",
+				"[plugin-review] Failed to toggle helpful vote",
 			);
 			return {
 				success: false,
-				error: "投票の追加に失敗しました",
+				error: "投票の処理に失敗しました",
 				isHelpful: false,
 			};
 		}
 
-		return { success: true, isHelpful: true };
+		// RPC function returns true if vote was added, false if removed
+		return {
+			success: true,
+			isHelpful: data === true,
+		};
 	} catch (error) {
 		logger.error(
 			{ error, reviewId, userId: user?.id },
