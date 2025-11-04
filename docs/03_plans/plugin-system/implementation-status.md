@@ -313,6 +313,7 @@
 | **レート制限** | ✅ **完了** | `lib/plugins/plugin-rate-limiter.ts` | API呼び出し・ストレージ使用・CPU使用のレート制限 |
 | **実行監視** | ✅ **完了** | `lib/plugins/plugin-execution-monitor.ts` | プラグイン実行時間の監視とタイムアウト処理 |
 | **セキュリティ監査ログ** | ✅ **完了** | `lib/plugins/plugin-security-audit-logger.ts`<br>`app/_actions/plugin-security-audit-logs.ts`<br>`app/admin/plugins/security-audit/` | セキュリティイベントのログ記録・データベース保存・管理者UI表示 |
+| **コード署名・検証** | ✅ **完了** | `lib/plugins/plugin-signature/`<br>`database/migrations/20251105_03_plugin_signatures.sql`<br>`app/admin/plugins/signatures/`<br>`scripts/plugin-sign.ts` | Phase 1-3完了: 基盤実装・検証システム・UI・管理機能実装済み |
 
 ### 詳細
 

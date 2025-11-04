@@ -39,6 +39,11 @@ import * as integrationRegistry from "../integration-registry";
 import { clearPluginCommands } from "../plugin-api";
 import { getPluginExecutionMonitor } from "../plugin-execution-monitor";
 import { getPluginRegistry } from "../plugin-registry";
+import { getPluginSecurityAuditLogger } from "../plugin-security-audit-logger";
+import {
+	type SignatureAlgorithm,
+	verifyPluginSignatureFromDB,
+} from "../plugin-signature";
 import {
 	PluginError,
 	PluginErrorType,
@@ -148,6 +153,56 @@ export class PluginLoader {
 					`Missing dependencies: ${missing}`,
 					pluginId,
 				);
+			}
+
+			// Step 3.5: Verify signature (if provided)
+			if (options.requireSignature || options.signature) {
+				const auditLogger = getPluginSecurityAuditLogger();
+				const verificationResult = verifyPluginSignatureFromDB(
+					manifest,
+					code,
+					options.signature ?? null,
+					options.publicKey ?? null,
+					(options.signatureAlgorithm as SignatureAlgorithm | null) ?? null,
+					options.signedAt ?? null,
+				);
+
+				if (!verificationResult.valid) {
+					// Log verification failure
+					auditLogger.logSignatureVerification(
+						pluginId,
+						verificationResult.error || "Unknown verification error",
+						false,
+					);
+
+					if (options.requireSignature) {
+						throw new PluginError(
+							PluginErrorType.INVALID_SIGNATURE,
+							`Plugin signature verification failed: ${verificationResult.error}`,
+							pluginId,
+						);
+					} else {
+						// If signature is provided but not required, log warning but continue
+						logger.warn(
+							{
+								pluginId,
+								error: verificationResult.error,
+							},
+							"Plugin signature verification failed, but signature is not required",
+						);
+					}
+				} else {
+					// Log successful verification
+					auditLogger.logSignatureVerification(pluginId, null, true);
+					logger.info(
+						{
+							pluginId,
+							algorithm: verificationResult.details?.algorithm,
+							codeHash: verificationResult.details?.codeHash,
+						},
+						"Plugin signature verified successfully",
+					);
+				}
 			}
 
 			// Step 4: Create Web Worker

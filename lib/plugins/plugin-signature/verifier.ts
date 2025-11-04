@@ -21,18 +21,19 @@
 
 import { createVerify, verify } from "node:crypto";
 import type { PluginManifest } from "@/types/plugin";
+import { base64ToPEM } from "./key-manager";
+import {
+	buildSignatureData,
+	calculateCodeHash,
+	serializeSignatureData,
+} from "./signer";
 import type {
 	PluginSignature,
+	SignatureAlgorithm,
 	SignatureData,
 	SignatureVerificationResult,
 	VerificationOptions,
 } from "./types";
-import { base64ToPEM } from "./key-manager";
-import {
-	calculateCodeHash,
-	buildSignatureData,
-	serializeSignatureData,
-} from "./signer";
 
 /**
  * Verify plugin signature with Ed25519
@@ -70,7 +71,7 @@ export function verifyWithEd25519(
 				verifyObj.update(serializedData, "utf8");
 				verifyObj.end();
 				return verifyObj.verify(base64ToPEM(publicKey), signature, "base64");
-			} catch (fallbackError) {
+			} catch (_fallbackError) {
 				return false;
 			}
 		}
@@ -100,7 +101,7 @@ export function verifyWithRSA(
 		verifyObj.end();
 
 		return verifyObj.verify(publicKeyPEM, signature, "base64");
-	} catch (error) {
+	} catch (_error) {
 		return false;
 	}
 }
@@ -216,37 +217,69 @@ export function verifyPluginSignature(
  * Verify plugin signature from database format
  *
  * This is a convenience function for verifying signatures stored in the database.
+ * Note: The timestamp in signatureData must match the original signing timestamp.
+ * If signedAt is provided, it will be used; otherwise, the current timestamp is used
+ * (which may cause verification to fail if the signature was created with a different timestamp).
  *
  * @param manifest Plugin manifest
  * @param code Plugin code as string
  * @param signature Base64-encoded signature (from database)
  * @param publicKey Base64-encoded public key (from database)
  * @param algorithm Signature algorithm (from database, defaults to "ed25519")
+ * @param signedAt Timestamp when the plugin was signed (from database, optional)
  * @returns Verification result
  */
 export function verifyPluginSignatureFromDB(
 	manifest: PluginManifest,
 	code: string,
-	signature: string,
-	publicKey: string,
-	algorithm: SignatureAlgorithm = "ed25519",
+	signature: string | null,
+	publicKey: string | null,
+	algorithm: SignatureAlgorithm | null = "ed25519",
+	signedAt?: number | string | null,
 ): SignatureVerificationResult {
-	// Calculate code hash and build signature data
+	// Check if signature exists
+	if (!signature || !publicKey) {
+		return {
+			valid: false,
+			error: "Signature or public key is missing",
+		};
+	}
+
+	// Use provided algorithm or default to ed25519
+	const signatureAlgorithm: SignatureAlgorithm = algorithm || "ed25519";
+
+	// Calculate code hash
 	const codeHash = calculateCodeHash(code);
-	const signatureData = buildSignatureData(manifest, codeHash);
+
+	// Build signature data with timestamp
+	// If signedAt is provided, use it; otherwise use current timestamp
+	// Note: This may cause verification to fail if the signature was created with a different timestamp
+	const timestamp =
+		signedAt !== undefined && signedAt !== null
+			? typeof signedAt === "string"
+				? new Date(signedAt).getTime()
+				: signedAt
+			: Date.now();
+
+	const signatureData: SignatureData = {
+		pluginId: manifest.id,
+		version: manifest.version,
+		codeHash,
+		timestamp,
+		author: manifest.author,
+	};
 
 	// Create plugin signature object
 	const pluginSignature: PluginSignature = {
-		algorithm,
+		algorithm: signatureAlgorithm,
 		signature,
 		signatureData,
-		signedAt: Date.now(),
+		signedAt: timestamp,
 	};
 
 	// Verify
 	return verifyPluginSignature(manifest, code, pluginSignature, {
 		publicKey,
-		algorithm,
+		algorithm: signatureAlgorithm,
 	});
 }
-

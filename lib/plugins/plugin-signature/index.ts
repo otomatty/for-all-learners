@@ -35,14 +35,6 @@ export {
 	signWithEd25519,
 	signWithRSA,
 } from "./signer";
-
-// Verification
-export {
-	verifyWithEd25519,
-	verifyWithRSA,
-	verifyPluginSignature,
-	verifyPluginSignatureFromDB,
-} from "./verifier";
 // Types
 export type {
 	KeyPair,
@@ -54,3 +46,10 @@ export type {
 	SigningOptions,
 	VerificationOptions,
 } from "./types";
+// Verification
+export {
+	verifyPluginSignature,
+	verifyPluginSignatureFromDB,
+	verifyWithEd25519,
+	verifyWithRSA,
+} from "./verifier";

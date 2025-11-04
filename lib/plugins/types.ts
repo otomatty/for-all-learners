@@ -159,6 +159,18 @@ export interface PluginLoadOptions {
 
 	/** Timeout for loading (ms) */
 	timeout?: number;
+
+	/** Signature verification options */
+	/** Base64-encoded signature (from database) */
+	signature?: string | null;
+	/** Base64-encoded public key (from database) */
+	publicKey?: string | null;
+	/** Signature algorithm (from database) */
+	signatureAlgorithm?: string | null;
+	/** Timestamp when the plugin was signed (from database, optional) */
+	signedAt?: number | string | null;
+	/** Whether to require signature (default: false for backward compatibility) */
+	requireSignature?: boolean;
 }
 
 /**
@@ -223,6 +235,7 @@ export enum PluginErrorType {
 	API_CALL_FAILED = "API_CALL_FAILED",
 	TIMEOUT = "TIMEOUT",
 	SANDBOX_VIOLATION = "SANDBOX_VIOLATION",
+	INVALID_SIGNATURE = "INVALID_SIGNATURE",
 }
 
 /**

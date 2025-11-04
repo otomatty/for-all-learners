@@ -81,6 +81,7 @@ export interface KeyPairOptions {
  */
 export interface SigningOptions {
 	privateKey: string; // Base64-encoded private key
+	publicKey?: string; // Base64-encoded public key (optional, for returning in signature)
 	algorithm?: SignatureAlgorithm;
 }
 

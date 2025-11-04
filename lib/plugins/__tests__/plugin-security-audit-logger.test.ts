@@ -400,4 +400,134 @@ describe("PluginSecurityAuditLogger", () => {
 			expect(insertCall.context).toEqual({});
 		});
 	});
+
+	describe("Signature Verification Logging", () => {
+		it("should log successful signature verification", () => {
+			auditLogger.logSignatureVerification(
+				"test-plugin",
+				null,
+				true,
+				"user-1",
+				"ed25519",
+			);
+
+			expect(infoSpy).toHaveBeenCalled();
+			const call = infoSpy.mock.calls[0];
+			expect(call[0]).toMatchObject({
+				audit: true,
+				eventType: "signature_verification",
+				severity: "low",
+				pluginId: "test-plugin",
+				signatureVerificationSuccess: true,
+				signatureAlgorithm: "ed25519",
+			});
+			expect(call[1]).toContain("Plugin signature verification succeeded");
+		});
+
+		it("should log failed signature verification", () => {
+			auditLogger.logSignatureVerification(
+				"test-plugin",
+				"Invalid signature",
+				false,
+				"user-1",
+				"ed25519",
+			);
+
+			expect(errorSpy).toHaveBeenCalled();
+			const call = errorSpy.mock.calls[0];
+			expect(call[0]).toMatchObject({
+				audit: true,
+				eventType: "signature_verification",
+				severity: "high",
+				pluginId: "test-plugin",
+				signatureVerificationSuccess: false,
+				signatureVerificationError: "Invalid signature",
+				signatureAlgorithm: "ed25519",
+			});
+			expect(call[1]).toContain("Plugin signature verification failed");
+		});
+
+		it("should log signature verification without user ID", () => {
+			auditLogger.logSignatureVerification("test-plugin", null, true);
+
+			expect(infoSpy).toHaveBeenCalled();
+			const call = infoSpy.mock.calls[0];
+			const logContext = call[0] as Record<string, unknown>;
+			expect(logContext.userId).toBeUndefined();
+		});
+
+		it("should log signature verification without algorithm", () => {
+			auditLogger.logSignatureVerification("test-plugin", null, true);
+
+			expect(infoSpy).toHaveBeenCalled();
+			const call = infoSpy.mock.calls[0];
+			const logContext = call[0] as Record<string, unknown>;
+			expect(logContext.signatureAlgorithm).toBeUndefined();
+		});
+
+		it("should save signature verification to database", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			auditLogger.logSignatureVerification(
+				"test-plugin",
+				null,
+				true,
+				"user-1",
+				"ed25519",
+			);
+
+			// Wait for async database save
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockInsert).toHaveBeenCalled();
+			const insertCall = mockInsert.mock.calls[0][0];
+			expect(insertCall).toMatchObject({
+				plugin_id: "test-plugin",
+				user_id: "user-1",
+				event_type: "signature_verification",
+				severity: "low",
+			});
+			expect(insertCall.event_data).toMatchObject({
+				signatureVerificationSuccess: true,
+				signatureAlgorithm: "ed25519",
+			});
+		});
+
+		it("should save failed signature verification to database", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			auditLogger.logSignatureVerification(
+				"test-plugin",
+				"Invalid signature",
+				false,
+				"user-1",
+				"rsa",
+			);
+
+			// Wait for async database save
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockInsert).toHaveBeenCalled();
+			const insertCall = mockInsert.mock.calls[0][0];
+			expect(insertCall).toMatchObject({
+				plugin_id: "test-plugin",
+				user_id: "user-1",
+				event_type: "signature_verification",
+				severity: "high",
+			});
+			expect(insertCall.event_data).toMatchObject({
+				signatureVerificationSuccess: false,
+				signatureVerificationError: "Invalid signature",
+				signatureAlgorithm: "rsa",
+			});
+		});
+	});
 });

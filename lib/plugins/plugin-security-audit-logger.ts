@@ -39,7 +39,8 @@ export type SecurityAuditEventType =
 	| "storage_quota_exceeded"
 	| "plugin_error"
 	| "plugin_terminated"
-	| "unauthorized_access_attempt";
+	| "unauthorized_access_attempt"
+	| "signature_verification";
 
 /**
  * Security audit event severity levels
@@ -140,6 +141,20 @@ export interface PluginTerminatedAuditEvent extends BaseSecurityAuditEvent {
 }
 
 /**
+ * Signature verification audit event
+ */
+export interface SignatureVerificationAuditEvent
+	extends BaseSecurityAuditEvent {
+	eventType: "signature_verification";
+	/** Whether verification was successful */
+	success: boolean;
+	/** Error message if verification failed */
+	error?: string;
+	/** Algorithm used for verification */
+	algorithm?: string;
+}
+
+/**
  * Union type for all security audit events
  */
 export type SecurityAuditEvent =
@@ -149,6 +164,7 @@ export type SecurityAuditEvent =
 	| StorageAccessAuditEvent
 	| PluginErrorAuditEvent
 	| PluginTerminatedAuditEvent
+	| SignatureVerificationAuditEvent
 	| BaseSecurityAuditEvent;
 
 /**
@@ -255,6 +271,19 @@ class PluginSecurityAuditLogger {
 			if (event.errorStack) {
 				logContext.errorStack = event.errorStack;
 				eventData.errorStack = event.errorStack;
+			}
+		}
+
+		if ("success" in event && event.eventType === "signature_verification") {
+			logContext.signatureVerificationSuccess = event.success;
+			eventData.signatureVerificationSuccess = event.success;
+			if (event.error) {
+				logContext.signatureVerificationError = event.error;
+				eventData.signatureVerificationError = event.error;
+			}
+			if (event.algorithm) {
+				logContext.signatureAlgorithm = event.algorithm;
+				eventData.signatureAlgorithm = event.algorithm;
 			}
 		}
 
@@ -499,6 +528,36 @@ class PluginSecurityAuditLogger {
 	}
 
 	/**
+	 * Log signature verification
+	 *
+	 * @param pluginId Plugin ID
+	 * @param error Error message if verification failed (null if successful)
+	 * @param success Whether verification was successful
+	 * @param userId User ID (optional)
+	 * @param algorithm Signature algorithm used (optional)
+	 */
+	public logSignatureVerification(
+		pluginId: string,
+		error: string | null,
+		success: boolean,
+		userId?: string,
+		algorithm?: string,
+	): void {
+		const event: SignatureVerificationAuditEvent = {
+			eventType: "signature_verification",
+			severity: success ? "low" : "high",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			success,
+			error: error || undefined,
+			algorithm,
+		};
+
+		this.log(event);
+	}
+
+	/**
 	 * Sanitize arguments for logging (remove sensitive data)
 	 *
 	 * @param args Arguments array
@@ -596,6 +655,11 @@ class PluginSecurityAuditLogger {
 				return `Plugin error: ${event.pluginId}`;
 			case "plugin_terminated":
 				return `Plugin terminated: ${event.pluginId}`;
+			case "signature_verification":
+				if ("success" in event) {
+					return `Plugin signature verification ${event.success ? "succeeded" : "failed"}: ${event.pluginId}`;
+				}
+				return `Plugin signature verification: ${event.pluginId}`;
 			default:
 				return `Security audit event: ${event.eventType}`;
 		}

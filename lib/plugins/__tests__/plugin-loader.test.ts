@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PluginManifest } from "@/types/plugin";
 import { PluginLoader, validateManifest } from "../plugin-loader";
 import { getPluginRegistry } from "../plugin-registry";
+import { generateEd25519KeyPair } from "../plugin-signature/key-manager";
 
-// Mock Worker
 global.Worker = vi.fn().mockImplementation(() => ({
 	postMessage: vi.fn(),
 	terminate: vi.fn(),
@@ -136,6 +136,53 @@ describe("PluginLoader", () => {
 			// Full integration test would require more setup
 
 			expect(global.Worker).toBeDefined();
+		});
+	});
+
+	describe("Signature Verification", () => {
+		// Note: Full integration tests for signature verification are in plugin-signature-verifier.test.ts
+		// These tests verify the integration with PluginLoader, specifically error handling
+
+		it("should reject plugin with invalid signature when requireSignature is true", async () => {
+			const manifest = createMockManifest("test-plugin");
+			const keyPair = generateEd25519KeyPair();
+
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				signature: "invalid_signature",
+				publicKey: keyPair.publicKey,
+				signatureAlgorithm: "ed25519",
+				requireSignature: true,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error).toContain("signature verification failed");
+		});
+
+		it("should reject plugin when signature is missing but required", async () => {
+			const manifest = createMockManifest("test-plugin");
+
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				requireSignature: true,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error).toContain("signature verification failed");
+		});
+
+		it("should not perform verification when signature is not provided and not required", async () => {
+			const manifest = createMockManifest("test-plugin-signature-optional");
+
+			// This test verifies that signature verification is skipped when not provided
+			// The actual loading may still fail due to Worker initialization, but
+			// the signature verification step should not be executed
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				requireSignature: false,
+			});
+
+			// If it fails, it should be due to Worker/initialization, not signature verification
+			if (!result.success) {
+				expect(result.error).not.toContain("signature verification");
+			}
 		});
 	});
 });
