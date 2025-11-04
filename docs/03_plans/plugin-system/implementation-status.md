@@ -167,7 +167,7 @@
 |------|---------|------------|------|
 | **基本UI** | ✅ **完了** | `app/(protected)/settings/plugins/page.tsx` | インストール済み/マーケットプレイスタブ切り替え |
 | **検索・フィルタリング** | ✅ **完了** | `app/(protected)/settings/plugins/_components/PluginFiltersClient.tsx` | 検索バー、フィルター、ソート機能実装済み |
-| **レーティング・レビュー** | ⚠️ **部分的** | DBスキーマ | レーティング表示のみ、投稿UI未実装 |
+| **レーティング・レビュー** | ✅ **完了** | `app/(protected)/settings/plugins/_components/*` | レーティング・レビュー投稿・一覧表示・編集・削除機能実装済み |
 | **更新通知** | ❌ **未実装** | - | 未実装 |
 | **設定UI** | ❌ **未実装** | - | 未実装 |
 | **アンインストール確認** | ✅ **完了** | `app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx` | AlertDialogによる確認ダイアログ実装済み |
@@ -213,23 +213,37 @@
 
 **備考**: 検索・フィルタリング・ソート機能のUI実装が完了。URLパラメータによる状態管理も実装済み。
 
-#### ⚠️ レーティング・レビューシステム（部分的）
+#### ✅ レーティング・レビューシステム（完了）
 
 **実装済み**:
 - ✅ DBスキーマ: `plugins.rating_average` カラムが存在（表示のみ）
 - ✅ UI表示: レーティング平均値の表示（`page.tsx`）
+- ✅ `plugin_ratings` テーブル（作成済み）
+- ✅ `plugin_reviews` テーブル（作成済み）
+- ✅ `plugin_review_helpful` テーブル（役立ったボタン用）
+- ✅ レーティング投稿UI（星評価1〜5）: `StarRating` / `PluginRatingForm` コンポーネント
+- ✅ レビューテキスト投稿UI: `PluginReviewForm` コンポーネント
+- ✅ レビュー編集・削除機能: `PluginReviewForm` に実装済み
+- ✅ レビュー一覧表示: `PluginReviewsList` コンポーネント
+- ✅ ページネーション: `PluginReviewsList` に実装済み
+- ✅ 役立ったボタン: `PluginReviewsList` に実装済み
+- ✅ Server Actions: `app/_actions/plugin-ratings-reviews.ts` に実装済み
+- ✅ プラグイン詳細ダイアログ: `MarketplacePluginCard` / `PluginDetails` コンポーネント
+- ✅ レーティング統計の自動更新: データベーストリガーで実装済み
 
-**未実装**:
-- ❌ `plugin_ratings` テーブル（未作成）
-- ❌ `plugin_reviews` テーブル（未作成）
-- ❌ レーティング投稿UI（星評価1〜5）
-- ❌ レビューテキスト投稿UI
-- ❌ レビュー編集・削除機能
-- ❌ レビュー一覧表示
-- ❌ ページネーション
-- ❌ 役立ったボタン
+**実装ファイル**:
+- `database/migrations/20250105_01_plugin_ratings_reviews.sql`: データベースマイグレーション
+- `app/_actions/plugin-ratings-reviews.ts`: Server Actions（レーティング・レビューのCRUD）
+- `app/(protected)/settings/plugins/_components/StarRating.tsx`: 星評価コンポーネント
+- `app/(protected)/settings/plugins/_components/PluginRatingForm.tsx`: レーティング投稿フォーム
+- `app/(protected)/settings/plugins/_components/PluginReviewForm.tsx`: レビュー投稿フォーム
+- `app/(protected)/settings/plugins/_components/PluginReviewsList.tsx`: レビュー一覧表示
+- `app/(protected)/settings/plugins/_components/PluginDetails.tsx`: プラグイン詳細コンポーネント
+- `app/(protected)/settings/plugins/_components/MarketplacePluginCard.tsx`: マーケットプレイスプラグインカード（詳細ダイアログ統合）
 
-**推定時間**: 8時間（未着手）
+**備考**: レーティング・レビューシステムの実装が完了。ユーザーはプラグインに対して星評価とレビューを投稿でき、レビューを編集・削除することも可能。レビュー一覧はページネーションとソート機能（最新順・役立った順）に対応。レーティング統計はデータベーストリガーにより自動更新される。
+
+**推定時間**: 8時間（実装完了）
 
 #### ❌ プラグイン更新通知（未実装）
 
@@ -304,12 +318,12 @@
 
 - ✅ 基本UI（完了）
 - ✅ 検索・フィルタリング（完了）
-- ⚠️ レーティング・レビュー（表示のみ）
+- ✅ レーティング・レビュー（完了）
 - ❌ 更新通知（未実装）
 - ❌ 設定UI（未実装）
 - ✅ アンインストール確認（完了）
 
-**完了率**: 約50% (基本UI + 検索・フィルタリング + アンインストール確認)
+**完了率**: 約67% (基本UI + 検索・フィルタリング + レーティング・レビュー + アンインストール確認)
 
 ---
 
@@ -331,7 +345,7 @@
 
 3. **マーケットプレイスUI強化**（推定24時間）
    - ✅ 検索・フィルタリングUI実装 ✅
-   - レーティング・レビューシステム実装
+   - ✅ レーティング・レビューシステム実装 ✅
    - 更新通知機能実装
    - 設定UI実装
    - ✅ アンインストール確認ダイアログ実装 ✅
@@ -379,4 +393,5 @@
 | 2025-01-05 | Data Processor Extensions実装完了（Importer/Exporter/Transformer API） | AI Agent |
 | 2025-01-05 | Integration Extensions実装完了（OAuth連携/Webhook/External API呼び出しAPI） | AI Agent |
 | 2025-01-05 | Phase 2 Extension Registryを関数型にリファクタリング完了<br>（EditorExtensionRegistry, AIExtensionRegistry, UIExtensionRegistry,<br>DataProcessorExtensionRegistry, IntegrationExtensionRegistryをクラスベース<br>シングルトンから関数型モジュールに移行。244テストケース全てパス） | AI Agent |
+| 2025-01-05 | レーティング・レビューシステム実装完了<br>（plugin_ratings, plugin_reviews, plugin_review_helpfulテーブル作成、<br>Server Actions実装、星評価・レビュー投稿UI、レビュー一覧表示・ページネーション・役立ったボタン実装） | AI Agent |
 

@@ -197,6 +197,7 @@ export interface PluginMetadata {
 	isReviewed: boolean; // Code reviewed and approved
 	downloadsCount: number;
 	ratingAverage?: number;
+	ratingCount?: number;
 	createdAt: Date;
 	updatedAt: Date;
 }
