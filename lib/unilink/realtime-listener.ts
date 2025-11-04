@@ -12,12 +12,12 @@ export interface RealtimePageEvent {
 	new?: {
 		id: string;
 		title: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 	old?: {
 		id: string;
 		title: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 }
 
@@ -40,7 +40,6 @@ export const createUnilinkRealtimeListener = () => {
 	/**
 	 * Handle page insert event from Realtime
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: Supabase payload type
 	const handlePageInsert = (payload: any): void => {
 		try {
 			const newRecord = payload.new;

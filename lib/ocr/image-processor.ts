@@ -115,7 +115,6 @@ export async function processImageForOcr(
 			compressionRatio: originalSize / processedBlob.size,
 		};
 	} catch (error) {
-		console.error("Image processing failed:", error);
 		throw new Error(
 			`Image processing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 		);

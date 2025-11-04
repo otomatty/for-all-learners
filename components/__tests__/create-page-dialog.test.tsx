@@ -2,11 +2,10 @@
  * CreatePageDialog のテストスイート
  * ページ作成ダイアログコンポーネントの包括的なテスト
  *
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreatePageDialog } from "../create-page-dialog";
 

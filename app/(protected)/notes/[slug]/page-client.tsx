@@ -1,7 +1,6 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Link as LinkIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { Database } from "@/types/database.types";
 
@@ -28,6 +27,8 @@ interface NotePagesClientProps {
 	noteId: string;
 	linkedDecks: Deck[];
 	availableDecks: Deck[];
+	deckDialogOpen?: boolean;
+	setDeckDialogOpen?: (open: boolean) => void;
 }
 
 export default function NotePagesClient({
@@ -36,10 +37,17 @@ export default function NotePagesClient({
 	noteId,
 	linkedDecks,
 	availableDecks,
+	deckDialogOpen: externalDeckDialogOpen,
+	setDeckDialogOpen: externalSetDeckDialogOpen,
 }: NotePagesClientProps) {
 	const [sortBy, setSortBy] = useState<"updated" | "created">("updated");
-	const [deckDialogOpen, setDeckDialogOpen] = useState(false);
+	const [internalDeckDialogOpen, setInternalDeckDialogOpen] = useState(false);
 	const limit = 100;
+
+	// Use external state if provided, otherwise use internal state
+	const deckDialogOpen = externalDeckDialogOpen ?? internalDeckDialogOpen;
+	const setDeckDialogOpen =
+		externalSetDeckDialogOpen ?? setInternalDeckDialogOpen;
 
 	const {
 		data,
@@ -90,14 +98,6 @@ export default function NotePagesClient({
 	return (
 		<>
 			<div className="flex justify-end mb-4 items-center space-x-2">
-				<Button
-					variant="outline"
-					onClick={() => setDeckDialogOpen(true)}
-					className="flex items-center gap-2"
-				>
-					<LinkIcon className="w-4 h-4" />
-					リンクされたデッキ
-				</Button>
 				<Select
 					value={sortBy}
 					onValueChange={(value) => setSortBy(value as "updated" | "created")}
@@ -120,7 +120,7 @@ export default function NotePagesClient({
 			</div>
 			{isError && <div className="text-red-500">Error: {error?.message}</div>}
 			{isLoading ? (
-				<PagesListSkeleton />
+				<PagesListSkeleton count={Math.min(totalCount, 48)} />
 			) : (
 				<PagesList pages={pages} slug={slug} />
 			)}

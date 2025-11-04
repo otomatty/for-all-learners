@@ -27,7 +27,6 @@ describe("createUnwrapBracketsCommand", () => {
 		});
 
 		test("TC-002: 関数が関数を返す", () => {
-			// biome-ignore lint/suspicious/noExplicitAny: テスト用のモックオブジェクト
 			const mockMarkType = { name: "unifiedLink" } as any;
 			const command = createUnwrapBracketsCommand(mockMarkType);
 			expect(typeof command).toBe("function");

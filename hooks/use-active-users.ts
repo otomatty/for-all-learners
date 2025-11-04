@@ -273,9 +273,7 @@ export function useActiveUsers(supabase: SupabaseClient) {
 			if (channelRef.current) {
 				try {
 					await supabase.removeChannel(channelRef.current);
-				} catch (error) {
-					console.warn("Error removing previous channel:", error);
-				}
+				} catch (_error) {}
 				channelRef.current = null;
 			}
 
@@ -353,11 +351,7 @@ export function useActiveUsers(supabase: SupabaseClient) {
 		return () => {
 			clearInterval(intervalId);
 			if (channelRef.current) {
-				supabase
-					.removeChannel(channelRef.current)
-					.catch((err) =>
-						console.warn("Error removing channel on cleanup:", err),
-					);
+				supabase.removeChannel(channelRef.current).catch((_err) => {});
 				channelRef.current = null;
 			}
 		};

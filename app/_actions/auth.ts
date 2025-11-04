@@ -19,7 +19,6 @@ export async function loginWithGoogle() {
 		},
 	});
 	if (error) {
-		console.error("Google login error:", error);
 		throw new Error("Google login failed");
 	}
 	if (url) {
@@ -35,7 +34,6 @@ export async function logout() {
 	const supabase = await createClient();
 	const { error } = await supabase.auth.signOut();
 	if (error) {
-		console.error("Sign out error:", error);
 		throw new Error("Logout failed");
 	}
 	// Redirect to login page after sign out
@@ -62,7 +60,6 @@ export async function loginWithMagicLink(formData: FormData) {
 		},
 	});
 	if (error) {
-		console.error("Magic Link login error:", error);
 		throw new Error(`Magic Link login failed: ${error.message}`);
 	}
 	// Magic Linkが送信されたことをユーザーに通知するために、リダイレクトやメッセージ表示を検討できます。

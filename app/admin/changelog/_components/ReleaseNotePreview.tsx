@@ -10,7 +10,6 @@ import {
 	SortableContext,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import React from "react";
 import { ReleaseNotePreviewSkeleton } from "./ReleaseNotePreviewSkeleton";
 import { SortableReleaseNoteItem } from "./SortableReleaseNoteItem";
 

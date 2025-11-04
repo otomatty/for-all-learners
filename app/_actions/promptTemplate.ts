@@ -19,7 +19,6 @@ export async function getUserPromptTemplate(
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.error("getUserPromptTemplate: Not authenticated", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -46,7 +45,6 @@ export async function updateUserPromptTemplate(
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.error("updateUserPromptTemplate: Not authenticated", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -59,7 +57,6 @@ export async function updateUserPromptTemplate(
 		.select("*")
 		.single();
 	if (error || !data) {
-		console.error("updateUserPromptTemplate error:", error);
 		throw new Error(error?.message ?? "Failed to update prompt template");
 	}
 	return data;
@@ -75,7 +72,6 @@ export async function initializeUserPromptTemplates(): Promise<void> {
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.error("initializeUserPromptTemplates: auth error", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -88,7 +84,6 @@ export async function initializeUserPromptTemplates(): Promise<void> {
 		{ onConflict: "user_id, prompt_key" },
 	);
 	if (error) {
-		console.error("initializeUserPromptTemplates error:", error);
 		throw new Error(error.message);
 	}
 }
@@ -105,7 +100,6 @@ export async function getAllUserPromptTemplates(): Promise<
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.error("getAllUserPromptTemplates: Not authenticated", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 

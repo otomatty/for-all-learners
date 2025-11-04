@@ -1,7 +1,6 @@
 "use client";
 
 import { BookOpen, BrainCircuit, Clock } from "lucide-react";
-import type React from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import {
 	Card,

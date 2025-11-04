@@ -8,10 +8,7 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-import {
-	ALLOWED_IMAGE_DOMAINS,
-	isAllowedImageDomain,
-} from "./domainValidation";
+import { isAllowedImageDomain } from "./domainValidation";
 
 /**
  * 画像抽出結果の型定義
@@ -39,7 +36,6 @@ export function extractFirstImageUrl(content: JSONContent): string | null {
 				if (isAllowedImageDomain(src)) {
 					return src;
 				}
-				console.warn(`Image URL from disallowed domain: ${src}`);
 			}
 		}
 

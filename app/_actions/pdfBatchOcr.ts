@@ -1,7 +1,6 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 
 /**
  * 正規表現を使ったフォールバックデータ抽出
@@ -41,7 +40,7 @@ function extractDataWithRegex(text: string): Array<{
 
 		for (const match of jsonMatches) {
 			results.push({
-				pageNumber: Number.parseInt(match[1]) || 1,
+				pageNumber: Number.parseInt(match[1], 10) || 1,
 				questionText: match[2]?.replace(/\\"/g, '"').trim() || "",
 				answerText: match[3]?.replace(/\\"/g, '"').trim() || "",
 				explanationText:
@@ -88,37 +87,37 @@ export async function processPdfBatchOcr(
 	const startTime = Date.now();
 
 	try {
-		console.log(`[バッチOCR] ${imagePages.length}ページの一括処理開始`);
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
+		if (!client.uploadFile || !client.generateWithFiles) {
+			throw new Error("File upload is not supported by this provider");
+		}
 
 		// 1. 全画像をGemini Files APIにアップロード
 		const uploadPromises = imagePages.map(async ({ pageNumber, imageBlob }) => {
-			const uploadStart = Date.now();
-			const { uri, mimeType } = await geminiClient.files.upload({
-				file: imageBlob,
-				config: { mimeType: imageBlob.type || "image/png" },
+			const uploadResult = await client.uploadFile?.(imageBlob, {
+				mimeType: imageBlob.type || "image/png",
 			});
-			console.log(
-				`[バッチOCR] ページ${pageNumber}: アップロード完了 (${Date.now() - uploadStart}ms)`,
-			);
+
+			if (!uploadResult) {
+				throw new Error(`File upload failed for page ${pageNumber}`);
+			}
 
 			return {
 				pageNumber,
-				uri,
-				mimeType: mimeType || imageBlob.type || "image/png",
+				uri: uploadResult.uri,
+				mimeType: uploadResult.mimeType,
 			};
 		});
 
 		const uploadedFiles = await Promise.all(uploadPromises);
-		console.log(
-			`[バッチOCR] 全ページアップロード完了 (${Date.now() - startTime}ms)`,
-		);
 
-		// 2. 画像パーツを作成
-		const imageParts = uploadedFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
+		// 2. ファイルURIの配列を作成
+		const fileUris = uploadedFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
 		// 3. バッチOCR用のプロンプト
 		const systemPrompt = `以下の複数のPDF画像から、ページごとにテキストを抽出してください。
@@ -141,40 +140,11 @@ export async function processPdfBatchOcr(
 - 可能な限り正確にテキストを抽出してください
 - 数式や特殊記号も含めて抽出してください`;
 
-		const contents = createUserContent([systemPrompt, ...imageParts]);
-
 		// 4. Geminiで一括OCR処理
-		const ocrStart = Date.now();
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-		console.log(`[バッチOCR] Gemini処理完了 (${Date.now() - ocrStart}ms)`);
+		let jsonString = await client.generateWithFiles?.(systemPrompt, fileUris);
 
-		// 5. レスポンス解析
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-
-		if (!raw) {
-			throw new Error("OCR処理に失敗しました: 内容が空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
+		if (!jsonString) {
+			throw new Error("Batch OCR failed: no response from LLM");
 		}
 
 		// JSON抽出
@@ -206,9 +176,6 @@ export async function processPdfBatchOcr(
 			}));
 
 		const processingTimeMs = Date.now() - startTime;
-		console.log(
-			`[バッチOCR] 完了: ${extractedText.length}/${imagePages.length}ページ処理 (総時間: ${processingTimeMs}ms)`,
-		);
 
 		return {
 			success: true,
@@ -217,7 +184,6 @@ export async function processPdfBatchOcr(
 			processingTimeMs,
 		};
 	} catch (error) {
-		console.error("[バッチOCR] エラー:", error);
 		return {
 			success: false,
 			message: "バッチOCR処理中にエラーが発生しました",
@@ -241,36 +207,49 @@ export async function processDualPdfBatchOcr(
 	const startTime = Date.now();
 
 	try {
-		console.log(
-			`[デュアルPDF-OCR] 問題${questionPages.length}ページ + 解答${answerPages.length}ページの処理開始`,
-		);
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
+		if (!client.uploadFile || !client.generateWithFiles) {
+			throw new Error("File upload is not supported by this provider");
+		}
 
 		// 1. 問題PDFと解答PDFを並列アップロード
 		const questionUploadPromises = questionPages.map(
 			async ({ pageNumber, imageBlob }) => {
-				const uploadStart = Date.now();
-				const { uri, mimeType } = await geminiClient.files.upload({
-					file: imageBlob,
-					config: { mimeType: imageBlob.type || "image/png" },
+				const uploadResult = await client.uploadFile?.(imageBlob, {
+					mimeType: imageBlob.type || "image/png",
 				});
-				console.log(
-					`[デュアルPDF-OCR] 問題ページ${pageNumber}: アップロード完了 (${Date.now() - uploadStart}ms)`,
-				);
-				return { pageNumber, uri, mimeType, type: "question" as const };
+
+				if (!uploadResult) {
+					throw new Error(`File upload failed for question page ${pageNumber}`);
+				}
+
+				return {
+					pageNumber,
+					uri: uploadResult.uri,
+					mimeType: uploadResult.mimeType,
+					type: "question" as const,
+				};
 			},
 		);
 
 		const answerUploadPromises = answerPages.map(
 			async ({ pageNumber, imageBlob }) => {
-				const uploadStart = Date.now();
-				const { uri, mimeType } = await geminiClient.files.upload({
-					file: imageBlob,
-					config: { mimeType: imageBlob.type || "image/png" },
+				const uploadResult = await client.uploadFile?.(imageBlob, {
+					mimeType: imageBlob.type || "image/png",
 				});
-				console.log(
-					`[デュアルPDF-OCR] 解答ページ${pageNumber}: アップロード完了 (${Date.now() - uploadStart}ms)`,
-				);
-				return { pageNumber, uri, mimeType, type: "answer" as const };
+
+				if (!uploadResult) {
+					throw new Error(`File upload failed for answer page ${pageNumber}`);
+				}
+
+				return {
+					pageNumber,
+					uri: uploadResult.uri,
+					mimeType: uploadResult.mimeType,
+					type: "answer" as const,
+				};
 			},
 		);
 
@@ -279,29 +258,23 @@ export async function processDualPdfBatchOcr(
 			Promise.all(answerUploadPromises),
 		]);
 
-		console.log(
-			`[デュアルPDF-OCR] 全ファイルアップロード完了 (${Date.now() - startTime}ms)`,
-		);
+		// 2. ファイルURIの配列を作成（問題→解答の順序で配置）
+		const questionFileUris = questionFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
-		// 2. 画像パーツを作成（問題→解答の順序で配置）
-		const questionParts = questionFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
-
-		const answerParts = answerFiles
-			.filter((file) => file.uri)
-			.map(({ uri, mimeType }) =>
-				createPartFromUri(uri as string, mimeType || "image/png"),
-			);
+		const answerFileUris = answerFiles.map(({ uri, mimeType }) => ({
+			uri,
+			mimeType,
+		}));
 
 		// 3. 高度なデュアルPDF OCR用プロンプト
 		const systemPrompt = `以下の画像セットから学習カード用の問題・解答・解説を抽出してください。
 
 画像構成:
-- 最初の${questionParts.length}枚: 問題PDF（問題文が記載）
-- 次の${answerParts.length}枚: 解答PDF（解答と解説が記載）
+- 最初の${questionFileUris.length}枚: 問題PDF（問題文が記載）
+- 次の${answerFileUris.length}枚: 解答PDF（解答と解説が記載）
 
 出力形式（JSON）:
 [
@@ -335,48 +308,23 @@ export async function processDualPdfBatchOcr(
 - 解説が不十分な場合は問題文から推測して補完
 - 数式や図表の内容も可能な限りテキスト化`;
 
-		const contents = createUserContent([
-			systemPrompt,
-			"【問題PDF】",
-			...questionParts,
-			"【解答PDF】",
-			...answerParts,
-		]);
-
 		// 4. Geminiで高品質OCR処理
-		const ocrStart = Date.now();
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-		console.log(
-			`[デュアルPDF-OCR] Gemini処理完了 (${Date.now() - ocrStart}ms)`,
-		);
+		// 問題PDFと解答PDFの両方を含むプロンプトを作成
+		const fullPrompt = `${systemPrompt}
 
-		// 5. レスポンス解析
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
+【問題PDF】
+以下は問題PDFの画像です（${questionFileUris.length}枚）
 
-		if (!raw) {
-			throw new Error("デュアルPDF OCR処理に失敗しました: 内容が空です");
-		}
+【解答PDF】
+以下は解答PDFの画像です（${answerFileUris.length}枚）`;
 
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
+		// 全てのファイルURIを結合
+		const allFileUris = [...questionFileUris, ...answerFileUris];
+
+		let jsonString = await client.generateWithFiles?.(fullPrompt, allFileUris);
+
+		if (!jsonString) {
+			throw new Error("Dual PDF OCR failed: no response from LLM");
 		}
 
 		// 強化されたJSON抽出処理
@@ -420,35 +368,16 @@ export async function processDualPdfBatchOcr(
 
 			// Step 4: JSON解析試行
 			parsed = JSON.parse(jsonString);
-			console.log(`[JSON解析] 成功: ${parsed.length}個のアイテムを解析`);
-		} catch (parseError) {
-			console.warn("[JSON解析] 第1試行失敗:", parseError);
-			console.log(
-				"[JSON解析] 問題のあるJSON文字列（最初の500文字）:",
-				jsonString.slice(0, 500),
-			);
-
+		} catch (_parseError) {
 			// Step 5: フォールバック - 正規表現でのデータ抽出
 			try {
 				const fallbackData = extractDataWithRegex(jsonString);
 				if (fallbackData.length > 0) {
 					parsed = fallbackData;
-					console.log(
-						`[正規表現フォールバック] 成功: ${parsed.length}個のアイテムを抽出`,
-					);
 				} else {
-					console.warn(
-						"[正規表現フォールバック] データなし、元テキストを確認:",
-						jsonString.slice(0, 300),
-					);
 					throw new Error("正規表現でもデータ抽出に失敗");
 				}
-			} catch (fallbackError) {
-				console.error("[フォールバック] 失敗:", fallbackError);
-				console.log(
-					"[フォールバック] 元レスポンス確認用:",
-					raw ? String(raw).slice(0, 200) : "raw data is null",
-				);
+			} catch (_fallbackError) {
 				// 空の配列を返して処理継続
 				parsed = [];
 			}
@@ -467,9 +396,6 @@ export async function processDualPdfBatchOcr(
 			}));
 
 		const processingTimeMs = Date.now() - startTime;
-		console.log(
-			`[デュアルPDF-OCR] 完了: ${extractedText.length}個の問題・解答セットを生成 (総時間: ${processingTimeMs}ms)`,
-		);
 
 		return {
 			success: true,
@@ -478,7 +404,6 @@ export async function processDualPdfBatchOcr(
 			processingTimeMs,
 		};
 	} catch (error) {
-		console.error("[デュアルPDF-OCR] エラー:", error);
 		return {
 			success: false,
 			message: "デュアルPDF OCR処理中にエラーが発生しました",
@@ -512,10 +437,6 @@ export async function processLargeDualPdfInBatches(
 	const startTime = Date.now();
 
 	try {
-		console.log(
-			`[分割バッチOCR] 開始: 問題${questionPages.length}ページ + 解答${answerPages.length}ページ (${batchSize}ページずつ処理)`,
-		);
-
 		const allExtractedData: Array<{
 			pageNumber: number;
 			questionText: string;
@@ -523,7 +444,7 @@ export async function processLargeDualPdfInBatches(
 			explanationText?: string;
 		}> = [];
 
-		const totalBatches = Math.ceil(questionPages.length / batchSize);
+		const _totalBatches = Math.ceil(questionPages.length / batchSize);
 		const progressDetails: Array<{
 			batchNumber: number;
 			extractedCount: number;
@@ -537,10 +458,6 @@ export async function processLargeDualPdfInBatches(
 			const currentBatch = Math.floor(i / batchSize) + 1;
 			const batchStartTime = Date.now();
 
-			console.log(
-				`[分割バッチOCR] バッチ${currentBatch}/${totalBatches}: 問題${questionBatch.length}ページ + 解答${answerBatch.length}ページを処理中`,
-			);
-
 			let batchExtractedCount = 0;
 
 			try {
@@ -553,20 +470,9 @@ export async function processLargeDualPdfInBatches(
 				if (batchResult.success && batchResult.extractedText) {
 					allExtractedData.push(...batchResult.extractedText);
 					batchExtractedCount = batchResult.extractedText.length;
-					console.log(
-						`[分割バッチOCR] バッチ${currentBatch}完了: ${batchExtractedCount}個抽出`,
-					);
 				} else {
-					console.warn(
-						`[分割バッチOCR] バッチ${currentBatch}失敗: ${batchResult.message}`,
-					);
 				}
-			} catch (batchError) {
-				console.error(
-					`[分割バッチOCR] バッチ${currentBatch}エラー:`,
-					batchError,
-				);
-			}
+			} catch (_batchError) {}
 
 			// バッチ進捗詳細を記録
 			progressDetails.push({
@@ -581,10 +487,6 @@ export async function processLargeDualPdfInBatches(
 
 		const processingTimeMs = Date.now() - startTime;
 
-		console.log(
-			`[分割バッチOCR] 完了: ${allExtractedData.length}個の問題・解答セットを抽出 (総時間: ${processingTimeMs}ms)`,
-		);
-
 		return {
 			success: allExtractedData.length > 0,
 			message: `分割バッチ処理で${allExtractedData.length}個の高品質問題・解答・解説セットを生成しました`,
@@ -593,7 +495,6 @@ export async function processLargeDualPdfInBatches(
 			progressDetails,
 		};
 	} catch (error) {
-		console.error("[分割バッチOCR] 全体エラー:", error);
 		return {
 			success: false,
 			message: "分割バッチOCR処理中にエラーが発生しました",

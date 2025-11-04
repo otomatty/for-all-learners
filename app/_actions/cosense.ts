@@ -23,7 +23,6 @@ export async function getUserCosenseProjects(): Promise<
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("getUserCosenseProjects auth error:", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -35,7 +34,6 @@ export async function getUserCosenseProjects(): Promise<
 		.eq("user_id", user.id);
 
 	if (error) {
-		console.error("getUserCosenseProjects fetch error:", error);
 		throw new Error(error.message);
 	}
 
@@ -74,7 +72,6 @@ export async function addUserCosenseProject(
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("addUserCosenseProject auth error:", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -85,7 +82,6 @@ export async function addUserCosenseProject(
 		.single();
 
 	if (projectError || !project) {
-		console.error("addUserCosenseProject project upsert error:", projectError);
 		throw new Error(projectError?.message ?? "Failed to upsert project");
 	}
 
@@ -105,7 +101,6 @@ export async function addUserCosenseProject(
 		try {
 			res = await fetch(apiUrl, { headers: { cookie: cookieHeader } });
 		} catch (fetchErr) {
-			console.error("Scrapbox API fetch error:", fetchErr);
 			throw new Error(
 				`Failed to fetch Scrapbox API for project ${projectName}: ${
 					fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
@@ -114,10 +109,7 @@ export async function addUserCosenseProject(
 		}
 
 		if (!res.ok) {
-			const text = await res.text().catch(() => "<no body>");
-			console.error(
-				`Scrapbox API returned non-OK status: ${res.status}, body=${text}`,
-			);
+			const _text = await res.text().catch(() => "<no body>");
 			throw new Error(
 				`Scrapbox API returned status ${res.status} for project ${projectName}`,
 			);
@@ -126,14 +118,8 @@ export async function addUserCosenseProject(
 		let dataScrap: { count: number; pages: { title: string }[] };
 		try {
 			dataScrap = await res.json();
-		} catch (parseErr) {
-			const raw = await res.text().catch(() => "<no body>");
-			console.error(
-				"Error parsing Scrapbox API JSON:",
-				parseErr,
-				"raw response:",
-				raw,
-			);
+		} catch (_parseErr) {
+			const _raw = await res.text().catch(() => "<no body>");
 			throw new Error(
 				`Failed to parse Scrapbox API response for project ${projectName}`,
 			);
@@ -160,7 +146,6 @@ export async function addUserCosenseProject(
 		)
 		.single();
 	if (linkError || !userProj) {
-		console.error("addUserCosenseProject link error:", linkError);
 		throw new Error(linkError?.message ?? "Failed to link project");
 	}
 	return {
@@ -186,7 +171,6 @@ export async function removeUserCosenseProject(
 	} = await supabase.auth.getUser();
 
 	if (authError || !user) {
-		console.error("removeUserCosenseProject auth error:", authError);
 		throw new Error(authError?.message ?? "Not authenticated");
 	}
 
@@ -197,7 +181,6 @@ export async function removeUserCosenseProject(
 		.eq("user_id", user.id);
 
 	if (error) {
-		console.error("removeUserCosenseProject error:", error);
 		throw new Error(error.message);
 	}
 }

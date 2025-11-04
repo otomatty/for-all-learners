@@ -1,4 +1,3 @@
-import React from "react";
 import { getUserSettingsByUser } from "@/app/_actions/user_settings";
 
 interface SettingsProps {

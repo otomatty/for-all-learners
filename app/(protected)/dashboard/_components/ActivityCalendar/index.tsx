@@ -99,10 +99,12 @@ export function ActivityCalendar({
 				/>
 
 				{loading ? (
-					<div className="border rounded-lg p-12 flex items-center justify-center bg-white">
+					<div className="border rounded-lg p-12 flex items-center justify-center bg-background">
 						<div className="text-center">
 							<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
-							<p className="mt-3 text-sm text-gray-600">読み込み中...</p>
+							<p className="mt-3 text-sm text-muted-foreground">
+								読み込み中...
+							</p>
 						</div>
 					</div>
 				) : (
@@ -115,15 +117,19 @@ export function ActivityCalendar({
 
 						{/* 統計サマリー */}
 						<div className="mt-4 grid grid-cols-2 gap-4">
-							<div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-								<p className="text-sm text-gray-600 mb-1">アクティブな日数</p>
-								<p className="text-2xl font-bold text-blue-700">
+							<div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+								<p className="text-sm text-muted-foreground mb-1">
+									アクティブな日数
+								</p>
+								<p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
 									{monthData.totalActiveDays}日
 								</p>
 							</div>
-							<div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-								<p className="text-sm text-gray-600 mb-1">連続学習日数</p>
-								<p className="text-2xl font-bold text-orange-700 flex items-center gap-1">
+							<div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+								<p className="text-sm text-muted-foreground mb-1">
+									連続学習日数
+								</p>
+								<p className="text-2xl font-bold text-orange-700 dark:text-orange-300 flex items-center gap-1">
 									🔥 {monthData.streakCount}日
 								</p>
 							</div>

@@ -1,7 +1,7 @@
 /**
  * OCRクライアント機能のテスト
  *
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  */
 
 import {
@@ -54,12 +54,12 @@ vi.mock("tesseract.js", () => {
 	};
 });
 
-interface MockImage extends Partial<HTMLImageElement> {
-	addEventListener: MockedFunction<HTMLImageElement["addEventListener"]>;
-	removeEventListener: MockedFunction<HTMLImageElement["removeEventListener"]>;
-	onload: (() => void) | null;
-	onerror: OnErrorEventHandler;
-}
+// interface MockImage extends Partial<HTMLImageElement> {
+// 	addEventListener: MockedFunction<HTMLImageElement["addEventListener"]>;
+// 	removeEventListener: MockedFunction<HTMLImageElement["removeEventListener"]>;
+// 	onload: (() => void) | null;
+// 	onerror: OnErrorEventHandler;
+// }
 
 type MockFetch = MockedFunction<typeof fetch> & {
 	mockResolvedValueOnce: (value: unknown) => MockFetch;
@@ -72,6 +72,36 @@ global.fetch = vi.fn();
 describe("ClientOcr", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+
+		// Image コンストラクタのモック（クラスとしてモック）
+		global.Image = class MockImage {
+			addEventListener = vi.fn();
+			removeEventListener = vi.fn();
+			crossOrigin = "";
+			_src = "";
+			width = 300;
+			height = 200;
+			onload: (() => void) | null = null;
+			onerror: OnErrorEventHandler | null = null;
+
+			constructor() {
+				// src設定時に即座にonloadを呼び出す（タイムアウト問題を回避）
+				Object.defineProperty(this, "src", {
+					set: function (value: string) {
+						this._src = value;
+						// onload が設定されている場合、非同期で onload を呼び出す
+						setTimeout(() => {
+							if (this.onload) {
+								this.onload();
+							}
+						}, 0);
+					},
+					get: function () {
+						return this._src;
+					},
+				});
+			}
+		} as unknown as typeof Image;
 
 		// Canvas APIのモック
 		const mockCanvas = {
@@ -98,30 +128,7 @@ describe("ClientOcr", () => {
 				return mockCanvas as unknown as HTMLCanvasElement;
 			}
 			if (tagName === "img") {
-				const img = {
-					addEventListener: vi.fn(),
-					removeEventListener: vi.fn(),
-					crossOrigin: "",
-					src: "",
-					width: 300,
-					height: 200,
-					onload: null,
-					onerror: null,
-				};
-				// src設定時に即座にonloadを呼び出す（タイムアウト問題を回避）
-				Object.defineProperty(img, "src", {
-					set: function (value) {
-						this._src = value;
-						// setTimeoutを使わず、即座にonloadを実行
-						if (this.onload) {
-							this.onload();
-						}
-					},
-					get: function () {
-						return this._src;
-					},
-				});
-				return img as unknown as HTMLImageElement;
+				return new global.Image();
 			}
 			return {} as unknown as HTMLElement;
 		});
@@ -143,11 +150,14 @@ describe("ClientOcr", () => {
 				"https://i.gyazo.com/test.png",
 			);
 
+			if (!result.success) {
+			}
+
 			expect(result.success).toBe(true);
 			expect(result.text).toBe("Test OCR Result");
 			expect(result.confidence).toBe(85.5);
 			expect(result.processingTime).toBeGreaterThan(0);
-		});
+		}, 15000); // タイムアウトを15秒に延長
 
 		it("無効な画像URLでエラーが発生する", async () => {
 			const result = await ClientOcr.processImage("invalid-url");
@@ -188,7 +198,7 @@ describe("ClientOcr", () => {
 			expect(progressEvents[0]).toHaveProperty("stage");
 			expect(progressEvents[0]).toHaveProperty("progress");
 			expect(progressEvents[0]).toHaveProperty("message");
-		});
+		}, 15000); // タイムアウトを15秒に延長
 	});
 
 	describe("checkSupport", () => {

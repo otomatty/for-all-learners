@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function updateIncomingPageLinks({
 	currentPageId,
-	oldTitle,
 	newTitle,
 	incomingPageIds,
 }: {

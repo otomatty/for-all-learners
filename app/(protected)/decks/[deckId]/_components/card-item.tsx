@@ -62,9 +62,6 @@ export function CardItem({
 
 	// isLoadingがfalseの場合、cardは必須
 	if (!card) {
-		console.error(
-			"CardItem: 'card' prop is required when 'isLoading' is false.",
-		);
 		return null;
 	}
 

@@ -51,24 +51,16 @@ export async function joinNotePublic(slug: string) {
 		const userInfo = await getUserInfo(user.id);
 
 		if (userInfo.userSlug) {
-			const userPageResult = await ensureUserPageInNote({
+			const _userPageResult = await ensureUserPageInNote({
 				userId: user.id,
 				userSlug: userInfo.userSlug,
 				noteId: note.id,
 				avatarUrl: userInfo.avatarUrl,
 				fullName: userInfo.fullName,
 			});
-
-			console.log("[joinNotePublic] ユーザーページ処理完了:", userPageResult);
 		} else {
-			console.warn(
-				"[joinNotePublic] user_slugが未設定のため、ユーザーページを作成できませんでした",
-			);
 		}
-	} catch (userPageError) {
-		// ユーザーページ作成エラーはログ出力のみ（ノート参加処理は成功させる）
-		console.error("[joinNotePublic] ユーザーページ作成エラー:", userPageError);
-	}
+	} catch (_userPageError) {}
 
 	return data;
 }

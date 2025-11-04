@@ -18,7 +18,7 @@
 // Export types for convenience
 export type { MockEditorOptions } from "./editor-mock";
 export * from "./editor-mock";
-// Re-export all helpers
+// Re-export setupJSDOMEnvironment (deprecated, but kept for backwards compatibility)
 export { setupJSDOMEnvironment } from "./jsdom-setup";
 export type { MockOptionsConfig } from "./options-mock";
 export * from "./options-mock";

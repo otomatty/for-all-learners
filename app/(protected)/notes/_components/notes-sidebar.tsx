@@ -49,7 +49,7 @@ export function NotesExplorerSidebar({
 	onPageMove,
 }: NotesExplorerSidebarProps) {
 	const pathname = usePathname();
-	const [activeId, setActiveId] = useState<string | null>(null);
+	const [_activeId, setActiveId] = useState<string | null>(null);
 
 	// 現在のノートとページの識別
 	const pathSegments = pathname.split("/").filter(Boolean);

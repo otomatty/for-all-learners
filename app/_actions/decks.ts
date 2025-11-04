@@ -37,7 +37,6 @@ export async function createDeck(
 		.select()
 		.single();
 	if (error) {
-		console.error("createDeck error:", error);
 		// Supabase error message forwarded to user
 		throw new Error(`デッキの作成に失敗しました: ${error.message}`);
 	}
@@ -60,92 +59,84 @@ export async function updateDeck(
 
 export async function deleteDeck(id: string) {
 	const supabase = await createClient();
+	// 関連データを正しい順序で削除
 
-	try {
-		// 関連データを正しい順序で削除
+	// 1. カードの削除
+	const { error: cardsError } = await supabase
+		.from("cards")
+		.delete()
+		.eq("deck_id", id);
 
-		// 1. カードの削除
-		const { error: cardsError } = await supabase
-			.from("cards")
-			.delete()
-			.eq("deck_id", id);
-
-		if (cardsError) {
-			throw new Error(`カードの削除に失敗しました: ${cardsError.message}`);
-		}
-
-		// 2. 目標デッキリンクの削除
-		const { error: goalLinksError } = await supabase
-			.from("goal_deck_links")
-			.delete()
-			.eq("deck_id", id);
-
-		if (goalLinksError) {
-			throw new Error(
-				`目標リンクの削除に失敗しました: ${goalLinksError.message}`,
-			);
-		}
-
-		// 3. ノートデッキリンクの削除
-		const { error: noteLinksError } = await supabase
-			.from("note_deck_links")
-			.delete()
-			.eq("deck_id", id);
-
-		if (noteLinksError) {
-			throw new Error(
-				`ノートリンクの削除に失敗しました: ${noteLinksError.message}`,
-			);
-		}
-
-		// 4. 共有情報の削除
-		const { error: sharesError } = await supabase
-			.from("deck_shares")
-			.delete()
-			.eq("deck_id", id);
-
-		if (sharesError) {
-			throw new Error(`共有情報の削除に失敗しました: ${sharesError.message}`);
-		}
-
-		// 5. 学習ログの削除
-		const { error: studyLogsError } = await supabase
-			.from("deck_study_logs")
-			.delete()
-			.eq("deck_id", id);
-
-		if (studyLogsError) {
-			throw new Error(
-				`学習ログの削除に失敗しました: ${studyLogsError.message}`,
-			);
-		}
-
-		// 6. 音声記録の削除
-		const { error: audioError } = await supabase
-			.from("audio_transcriptions")
-			.delete()
-			.eq("deck_id", id);
-
-		if (audioError) {
-			throw new Error(`音声記録の削除に失敗しました: ${audioError.message}`);
-		}
-
-		// 7. 最後にデッキ本体を削除
-		const { data, error: deckError } = await supabase
-			.from("decks")
-			.delete()
-			.eq("id", id)
-			.single();
-
-		if (deckError) {
-			throw new Error(`デッキの削除に失敗しました: ${deckError.message}`);
-		}
-
-		return data;
-	} catch (error) {
-		console.error("[deleteDeck] エラー:", error);
-		throw error;
+	if (cardsError) {
+		throw new Error(`カードの削除に失敗しました: ${cardsError.message}`);
 	}
+
+	// 2. 目標デッキリンクの削除
+	const { error: goalLinksError } = await supabase
+		.from("goal_deck_links")
+		.delete()
+		.eq("deck_id", id);
+
+	if (goalLinksError) {
+		throw new Error(
+			`目標リンクの削除に失敗しました: ${goalLinksError.message}`,
+		);
+	}
+
+	// 3. ノートデッキリンクの削除
+	const { error: noteLinksError } = await supabase
+		.from("note_deck_links")
+		.delete()
+		.eq("deck_id", id);
+
+	if (noteLinksError) {
+		throw new Error(
+			`ノートリンクの削除に失敗しました: ${noteLinksError.message}`,
+		);
+	}
+
+	// 4. 共有情報の削除
+	const { error: sharesError } = await supabase
+		.from("deck_shares")
+		.delete()
+		.eq("deck_id", id);
+
+	if (sharesError) {
+		throw new Error(`共有情報の削除に失敗しました: ${sharesError.message}`);
+	}
+
+	// 5. 学習ログの削除
+	const { error: studyLogsError } = await supabase
+		.from("deck_study_logs")
+		.delete()
+		.eq("deck_id", id);
+
+	if (studyLogsError) {
+		throw new Error(`学習ログの削除に失敗しました: ${studyLogsError.message}`);
+	}
+
+	// 6. 音声記録の削除
+	const { error: audioError } = await supabase
+		.from("audio_transcriptions")
+		.delete()
+		.eq("deck_id", id);
+
+	if (audioError) {
+		throw new Error(`音声記録の削除に失敗しました: ${audioError.message}`);
+	}
+
+	// 7. 最後にデッキ本体を削除
+	const { data, error: deckError } = await supabase
+		.from("decks")
+		.delete()
+		.eq("id", id)
+		.single();
+
+	if (deckError) {
+		throw new Error(`デッキの削除に失敗しました: ${deckError.message}`);
+	}
+
+	return data;
 }
 
 export async function getSharedDecksByUser(userId: string): Promise<
@@ -196,7 +187,6 @@ export async function createDeckAction(
 		revalidatePath("/dashboard");
 		return newDeck;
 	} catch (err) {
-		console.error("createDeckAction error:", err);
 		if (err instanceof Error) {
 			throw new Error(`デッキの作成中にエラーが発生しました: ${err.message}`);
 		}

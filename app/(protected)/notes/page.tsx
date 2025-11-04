@@ -1,4 +1,3 @@
-import React from "react";
 import { getNotesList } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import CreateNoteDialog from "./_components/create-note-dialog";

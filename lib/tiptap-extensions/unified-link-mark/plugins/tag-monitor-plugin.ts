@@ -60,7 +60,7 @@ function findTagsInDoc(
 			const raw = match[1];
 
 			// Verify it matches our official tag pattern
-			const fullMatch = match[0] + " "; // Add space for pattern matching
+			const fullMatch = `${match[0]} `; // Add space for pattern matching
 			if (PATTERNS.tag.test(fullMatch)) {
 				tags.push({
 					from: pos + matchStart,

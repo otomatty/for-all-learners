@@ -1,17 +1,17 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import {
-	Columns3,
-	Rows3,
-	Trash2,
+	ArrowDownToLine,
 	ArrowLeftToLine,
 	ArrowRightToLine,
 	ArrowUpToLine,
-	ArrowDownToLine,
+	Columns3,
 	Merge,
+	Rows3,
 	Split,
+	Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -48,12 +48,9 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 					// テーブル内にカーソルがある場合のみ表示
 					return editor.isActive("table");
 				}}
-				tippyOptions={{
-					duration: 100,
+				options={{
 					placement: "top",
-					offset: [0, 8],
-					hideOnClick: false,
-					interactive: true,
+					offset: 8,
 				}}
 			>
 				<div className="flex items-center space-x-1 bg-background text-foreground shadow-lg rounded-lg border border-border p-2">
@@ -65,7 +62,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().addRowBefore().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.addRowBefore();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<ArrowUpToLine className="h-4 w-4" />
@@ -82,7 +82,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().addRowAfter().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.addRowAfter();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<ArrowDownToLine className="h-4 w-4" />
@@ -99,7 +102,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().deleteRow().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.deleteRow();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<Rows3 className="h-4 w-4" />
@@ -121,7 +127,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().addColumnBefore().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.addColumnBefore();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<ArrowLeftToLine className="h-4 w-4" />
@@ -138,7 +147,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().addColumnAfter().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.addColumnAfter();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<ArrowRightToLine className="h-4 w-4" />
@@ -155,7 +167,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().deleteColumn().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.deleteColumn();
+									}}
 									className="h-8 w-8 p-0"
 								>
 									<Columns3 className="h-4 w-4" />
@@ -177,7 +192,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().mergeCells().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.mergeCells();
+									}}
 									disabled={!editor.can().mergeCells()}
 									className="h-8 w-8 p-0"
 								>
@@ -195,7 +213,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 									type="button"
 									variant="ghost"
 									size="sm"
-									onClick={() => editor.chain().focus().splitCell().run()}
+									onClick={() => {
+										editor.view.focus();
+										editor.commands.splitCell();
+									}}
 									disabled={!editor.can().splitCell()}
 									className="h-8 w-8 p-0"
 								>
@@ -217,7 +238,10 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
 								type="button"
 								variant="ghost"
 								size="sm"
-								onClick={() => editor.chain().focus().deleteTable().run()}
+								onClick={() => {
+									editor.view.focus();
+									editor.commands.deleteTable();
+								}}
 								className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
 							>
 								<Trash2 className="h-4 w-4" />

@@ -1,14 +1,8 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-
-// 型定義: Gemini 応答の候補
-interface GenerateReleaseNotesResponse {
-	candidates?: { content: string }[];
-}
 
 /**
  * リリースノートJSONの型定義
@@ -85,26 +79,15 @@ export async function processVersionCommitStaging(
 
 コミット一覧:
 ${commitListText}`;
-	const contents = createUserContent([systemPrompt]);
-	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash",
-		contents,
-	});
-	const { candidates } = response as unknown as GenerateReleaseNotesResponse;
-	// AIレスポンスを文字列化
-	const rawContent = candidates?.[0]?.content;
-	let jsonString: string;
-	if (typeof rawContent === "string") {
-		jsonString = rawContent;
-	} else if (rawContent != null) {
-		jsonString = JSON.stringify(rawContent);
-	} else {
-		throw new Error("No content returned from AI");
-	}
-	// JSONパース
-	let parsed: ReleaseNotesJSON;
+
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	// Generate release notes using LLM
+	const jsonString = await client.generate(systemPrompt);
+	// JSONパース（バリデーション用）
 	try {
-		parsed = JSON.parse(jsonString) as ReleaseNotesJSON;
+		JSON.parse(jsonString) as ReleaseNotesJSON;
 	} catch (e) {
 		throw new Error(`Failed to parse release notes JSON: ${e}`);
 	}

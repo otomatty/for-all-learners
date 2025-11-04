@@ -115,7 +115,6 @@ export async function restoreFromTrash({
 			message: `${restoredPages.length}件のページを復元しました`,
 		};
 	} catch (error) {
-		console.error("Restore from trash error:", error);
 		return {
 			success: false,
 			restoredCount: 0,

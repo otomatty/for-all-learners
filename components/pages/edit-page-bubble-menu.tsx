@@ -1,7 +1,7 @@
 "use client";
 
 import type { Editor } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import {
 	Bold,
 	Code,
@@ -98,14 +98,10 @@ export function EditPageBubbleMenu({
 					// テーブル内にいない場合のみ表示（テーブルは別のBubbleMenuで処理）
 					return from < to && !editor.isActive("table");
 				}}
-				tippyOptions={{
-					duration: 100,
-					// モバイルでの表示設定を調整
-					delay: isMobile ? [800, 0] : [0, 0], // モバイルでは800ms遅延
-					placement: isMobile ? "bottom" : "top", // モバイルでは下に表示
-					offset: isMobile ? [0, 10] : [0, 8], // モバイルでより離す
-					hideOnClick: false, // クリック時に非表示にしない
-					interactive: true, // インタラクティブにする
+				updateDelay={isMobile ? 800 : 0}
+				options={{
+					placement: isMobile ? "bottom" : "top",
+					offset: isMobile ? 10 : 8,
 				}}
 			>
 				<div
@@ -120,7 +116,7 @@ export function EditPageBubbleMenu({
 							<button
 								type="button"
 								onClick={wrapSelectionWithPageLink}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								{isLinkSelected ? (
 									<Link2Off className="w-6 h-6" />
@@ -132,8 +128,11 @@ export function EditPageBubbleMenu({
 							{/* Bold - モバイル重要機能 */}
 							<button
 								type="button"
-								onClick={() => editor.chain().focus().toggleBold().run()}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								onClick={() => {
+									editor.view.focus();
+									editor.chain().toggleBold().run();
+								}}
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								<Bold className="w-6 h-6" />
 							</button>
@@ -141,8 +140,11 @@ export function EditPageBubbleMenu({
 							{/* Code Block - 開発者用 */}
 							<button
 								type="button"
-								onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-								className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+								onClick={() => {
+									editor.view.focus();
+									editor.chain().toggleCodeBlock().run();
+								}}
+								className="px-3 py-2 hover:bg-accent rounded"
 							>
 								<Code className="w-6 h-6" />
 							</button>
@@ -158,7 +160,7 @@ export function EditPageBubbleMenu({
 											<DropdownMenuTrigger asChild>
 												<button
 													type="button"
-													className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+													className="px-2 py-1 hover:bg-accent"
 												>
 													<Hash className="w-5 h-5" />
 												</button>
@@ -184,33 +186,33 @@ export function EditPageBubbleMenu({
 									</Tooltip>
 								) : (
 									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
-										>
+										<button type="button" className="px-2 py-1 hover:bg-accent">
 											<Hash className="w-5 h-5" />
 										</button>
 									</DropdownMenuTrigger>
 								)}
 								<DropdownMenuContent>
 									<DropdownMenuItem
-										onSelect={() =>
-											editor.chain().focus().toggleHeading({ level: 1 }).run()
-										}
+										onSelect={() => {
+											editor.view.focus();
+											editor.chain().toggleHeading({ level: 1 }).run();
+										}}
 									>
 										<Heading1 className="w-4 h-4 mr-2" /> 見出し1
 									</DropdownMenuItem>
 									<DropdownMenuItem
-										onSelect={() =>
-											editor.chain().focus().toggleHeading({ level: 2 }).run()
-										}
+										onSelect={() => {
+											editor.view.focus();
+											editor.chain().toggleHeading({ level: 2 }).run();
+										}}
 									>
 										<Heading2 className="w-4 h-4 mr-2" /> 見出し2
 									</DropdownMenuItem>
 									<DropdownMenuItem
-										onSelect={() =>
-											editor.chain().focus().toggleHeading({ level: 3 }).run()
-										}
+										onSelect={() => {
+											editor.view.focus();
+											editor.chain().toggleHeading({ level: 3 }).run();
+										}}
 									>
 										<Heading3 className="w-4 h-4 mr-2" /> 見出し3
 									</DropdownMenuItem>
@@ -223,8 +225,11 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() => editor.chain().focus().toggleBold().run()}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											onClick={() => {
+												editor.view.focus();
+												editor.chain().toggleBold().run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Bold className="w-5 h-5" />
 										</button>
@@ -241,8 +246,11 @@ export function EditPageBubbleMenu({
 							) : (
 								<button
 									type="button"
-									onClick={() => editor.chain().focus().toggleBold().run()}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									onClick={() => {
+										editor.view.focus();
+										editor.chain().toggleBold().run();
+									}}
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Bold className="w-5 h-5" />
 								</button>
@@ -254,10 +262,11 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() =>
-												editor.chain().focus().toggleStrike().run()
-											}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											onClick={() => {
+												editor.view.focus();
+												editor.chain().toggleStrike().run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Strikethrough className="w-5 h-5" />
 										</button>
@@ -274,8 +283,11 @@ export function EditPageBubbleMenu({
 							) : (
 								<button
 									type="button"
-									onClick={() => editor.chain().focus().toggleStrike().run()}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									onClick={() => {
+										editor.view.focus();
+										editor.chain().toggleStrike().run();
+									}}
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Strikethrough className="w-5 h-5" />
 								</button>
@@ -287,10 +299,11 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() =>
-												editor.chain().focus().toggleOrderedList().run()
-											}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											onClick={() => {
+												editor.view.focus();
+												editor.chain().toggleOrderedList().run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<ListOrdered className="w-5 h-5" />
 										</button>
@@ -307,10 +320,11 @@ export function EditPageBubbleMenu({
 							) : (
 								<button
 									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleOrderedList().run()
-									}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									onClick={() => {
+										editor.view.focus();
+										editor.chain().toggleOrderedList().run();
+									}}
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<ListOrdered className="w-5 h-5" />
 								</button>
@@ -322,10 +336,11 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() =>
-												editor.chain().focus().toggleBulletList().run()
-											}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											onClick={() => {
+												editor.view.focus();
+												editor.chain().toggleBulletList().run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<List className="w-5 h-5" />
 										</button>
@@ -342,10 +357,11 @@ export function EditPageBubbleMenu({
 							) : (
 								<button
 									type="button"
-									onClick={() =>
-										editor.chain().focus().toggleBulletList().run()
-									}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									onClick={() => {
+										editor.view.focus();
+										editor.chain().toggleBulletList().run();
+									}}
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<List className="w-5 h-5" />
 								</button>
@@ -358,7 +374,7 @@ export function EditPageBubbleMenu({
 										<button
 											type="button"
 											onClick={wrapSelectionWithPageLink}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											{isLinkSelected ? (
 												<Link2Off className="w-5 h-5" />
@@ -380,7 +396,7 @@ export function EditPageBubbleMenu({
 								<button
 									type="button"
 									onClick={wrapSelectionWithPageLink}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									{isLinkSelected ? (
 										<Link2Off className="w-5 h-5" />
@@ -397,7 +413,7 @@ export function EditPageBubbleMenu({
 										<button
 											type="button"
 											onClick={splitPage}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Scissors className="w-5 h-5" />
 										</button>
@@ -415,7 +431,7 @@ export function EditPageBubbleMenu({
 								<button
 									type="button"
 									onClick={splitPage}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Scissors className="w-5 h-5" />
 								</button>
@@ -427,10 +443,11 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() =>
-												editor.chain().focus().toggleCodeBlock().run()
-											}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+											onClick={() => {
+												editor.view.focus();
+												editor.chain().toggleCodeBlock().run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Code className="w-5 h-5" />
 										</button>
@@ -447,8 +464,11 @@ export function EditPageBubbleMenu({
 							) : (
 								<button
 									type="button"
-									onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-									className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+									onClick={() => {
+										editor.view.focus();
+										editor.chain().toggleCodeBlock().run();
+									}}
+									className="px-2 py-1 hover:bg-accent"
 								>
 									<Code className="w-5 h-5" />
 								</button>
@@ -460,18 +480,18 @@ export function EditPageBubbleMenu({
 									<TooltipTrigger asChild>
 										<button
 											type="button"
-											onClick={() =>
+											onClick={() => {
+												editor.view.focus();
 												editor
 													.chain()
-													.focus()
 													.insertTable({
 														rows: 3,
 														cols: 3,
 														withHeaderRow: true,
 													})
-													.run()
-											}
-											className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+													.run();
+											}}
+											className="px-2 py-1 hover:bg-accent"
 										>
 											<Table className="w-5 h-5" />
 										</button>

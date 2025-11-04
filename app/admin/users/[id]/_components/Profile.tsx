@@ -1,4 +1,3 @@
-import React from "react";
 import { getAccountById } from "@/app/_actions/accounts";
 
 interface ProfileProps {

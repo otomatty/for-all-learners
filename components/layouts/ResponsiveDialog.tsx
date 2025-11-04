@@ -9,7 +9,6 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
 	Drawer,
@@ -17,7 +16,6 @@ import {
 	DrawerDescription,
 	DrawerHeader,
 	DrawerTitle,
-	DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -86,7 +84,7 @@ export function ResponsiveDialog({
 	};
 
 	// アイコンが指定されていれば優先的に表示
-	const triggerElement = triggerIcon ? (
+	const _triggerElement = triggerIcon ? (
 		<Button {...buttonProps}>{triggerIcon}</Button>
 	) : (
 		<Button {...buttonProps}>{triggerText}</Button>

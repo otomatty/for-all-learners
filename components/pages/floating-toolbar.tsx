@@ -1,7 +1,7 @@
 "use client";
 
 import { MoreVertical, Pause, Volume2 } from "lucide-react";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
 	Popover,
 	PopoverContent,

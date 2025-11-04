@@ -14,7 +14,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 
 interface StudyGoal {
 	id: string;
@@ -53,7 +52,7 @@ export function DeleteGoalDialog({
 			} else {
 				toast.error(result.error);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("目標の削除に失敗しました");
 		} finally {
 			setIsDeleting(false);

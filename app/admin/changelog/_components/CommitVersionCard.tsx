@@ -7,7 +7,6 @@ import {
 	Plus,
 	Tag,
 } from "lucide-react";
-import React from "react";
 
 interface CommitVersionCardProps {
 	version: string;

@@ -97,7 +97,7 @@ export const pageLinkPreviewMarkPlugin = new Plugin({
 	key: pageLinkPreviewMarkPluginKey,
 	props: {
 		handleDOMEvents: {
-			mouseover(view, event) {
+			mouseover(_view, event) {
 				const target = event.target as HTMLElement;
 				if (target.tagName !== "A") return false;
 				const pageId = target.getAttribute("data-page-id");
@@ -118,7 +118,7 @@ export const pageLinkPreviewMarkPlugin = new Plugin({
 				}, 500);
 				return false;
 			},
-			mouseout(view, event) {
+			mouseout(_view, event) {
 				const target = event.target as HTMLElement;
 				if (target.tagName !== "A") return false;
 				if ((target as any)._hoverTimeout) {

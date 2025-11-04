@@ -5,6 +5,7 @@ import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
 import type { ClozeQuestion } from "@/lib/gemini";
+import logger from "@/lib/logger";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
 interface ClozeQuizProps {
@@ -63,16 +64,22 @@ export default function ClozeQuiz({
 
 	// Prepare safe data lists and log errors if data is invalid
 	const blanksList = Array.isArray(blanks) ? blanks : [];
-	if (!Array.isArray(blanks))
-		console.error("[ClozeQuiz] Invalid blanks for question:", current);
+	if (!Array.isArray(blanks)) {
+		logger.error({ blanks }, "blanks is not an array");
+	}
 	const answersList = Array.isArray(answers) ? answers : [];
-	if (!Array.isArray(answers))
-		console.error("[ClozeQuiz] Invalid answers for question:", current);
-	if (blanksList.length !== answersList.length)
-		console.error("[ClozeQuiz] Mismatch blanks/answers length:", {
-			blanksList,
-			answersList,
-		});
+	if (!Array.isArray(answers)) {
+		logger.error({ answers }, "answers is not an array");
+	}
+	if (blanksList.length !== answersList.length) {
+		logger.error(
+			{
+				blanksLength: blanksList.length,
+				answersLength: answersList.length,
+			},
+			"blanks and answers length mismatch",
+		);
+	}
 
 	// Manage inputs: always call hooks unconditionally using safe lists
 	// const [inputs, setInputs] = useState<string[]>(() =>
@@ -83,13 +90,6 @@ export default function ClozeQuiz({
 		setSelectedOptions(Array(blanksList.length).fill(undefined)); // 選択肢をリセット
 		setShowResult(false);
 	}, [blanksList.length]);
-
-	// Guards after hooks
-	if (total === 0) {
-		return (
-			<div className="p-4 text-center text-red-500">問題が見つかりません。</div>
-		);
-	}
 
 	// 質問開始時に expire 時刻を更新 (timeLimit変更時のみ)
 	useEffect(() => {
@@ -204,6 +204,22 @@ export default function ClozeQuiz({
 		return () => window.removeEventListener("keydown", handleKeyPress);
 	}, [showResult, handleCheck, handleNext]);
 
+	// Record learning time when finished; include all dependencies
+	useEffect(() => {
+		if (finished && !timeRecorded) {
+			const durationSec = Math.floor((Date.now() - startedAtMs) / 1000);
+			recordLearningTime(durationSec);
+			setTimeRecorded(true);
+		}
+	}, [finished, timeRecorded, startedAtMs]);
+
+	// Guards after hooks - check if there are no questions
+	if (total === 0) {
+		return (
+			<div className="p-4 text-center text-red-500">問題が見つかりません。</div>
+		);
+	}
+
 	// Prepare parts with error handling
 	let parts: React.ReactNode[];
 	try {
@@ -212,11 +228,6 @@ export default function ClozeQuiz({
 		blanksList.forEach((blank, idx) => {
 			// Check blank existence in text
 			if (!remainingText.includes(blank)) {
-				console.error("[ClozeQuiz] Blank not found in text:", {
-					blank,
-					remainingText,
-					current,
-				});
 				throw new Error(`Blank "${blank}" not present in text at index ${idx}`);
 			}
 			const [before, after] = remainingText.split(blank);
@@ -230,10 +241,6 @@ export default function ClozeQuiz({
 			// 選択肢ボタンに変更
 			const blankOptions = options?.[idx] ?? [];
 			if (blankOptions.length === 0) {
-				console.warn(
-					`[ClozeQuiz] No options for blank ${idx} in question:`,
-					current,
-				);
 			}
 
 			parts.push(
@@ -285,7 +292,6 @@ export default function ClozeQuiz({
 			</span>,
 		);
 	} catch (error) {
-		console.error("[ClozeQuiz] Error rendering blanks:", error, current);
 		return (
 			<div className="p-4 text-center text-red-500">
 				クイズの表示中にエラーが発生しました:{" "}
@@ -294,15 +300,6 @@ export default function ClozeQuiz({
 			</div>
 		);
 	}
-
-	// Record learning time when finished; include all dependencies
-	useEffect(() => {
-		if (finished && !timeRecorded) {
-			const durationSec = Math.floor((Date.now() - startedAtMs) / 1000);
-			recordLearningTime(durationSec);
-			setTimeRecorded(true);
-		}
-	}, [finished, timeRecorded, startedAtMs]);
 
 	// クイズが終了している場合は、結果表示コンポーネントをレンダリング
 	if (finished) {
@@ -326,7 +323,6 @@ export default function ClozeQuiz({
 				<h3 className="text-xl font-semibold mb-2">{current.question}</h3>
 				<div className="mt-2 text-lg leading-loose">
 					{parts.map((part, i) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						<React.Fragment key={i}>{part}</React.Fragment>
 					))}
 				</div>

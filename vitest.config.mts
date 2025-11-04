@@ -6,10 +6,15 @@ export default defineConfig({
 		globals: true,
 		environment: "happy-dom",
 		setupFiles: ["./vitest.setup.ts"],
+		env: {
+			ENCRYPTION_KEY:
+				"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		},
 		include: ["**/*.test.ts", "**/*.test.tsx"],
 		exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "**/build/**"],
 		deps: {
 			inline: ["@testing-library/react"],
+			external: ["jsdom"],
 		},
 		coverage: {
 			provider: "v8",

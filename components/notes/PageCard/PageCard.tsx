@@ -102,7 +102,6 @@ function getVariantClasses(variant: PageCardVariant): string {
 			return "ring-2 ring-primary/20";
 		case "dashed":
 			return "border-dashed border-2 hover:border-primary hover:bg-accent cursor-pointer";
-		case "default":
 		default:
 			return "";
 	}
@@ -206,7 +205,7 @@ export function PageCard({
 							className="w-full h-32 object-contain"
 						/>
 					) : showSecurityWarning ? (
-						<div className="w-full h-32 flex items-center justify-center bg-gray-100 text-sm text-center text-gray-500 p-4">
+						<div className="w-full h-32 flex items-center justify-center bg-muted text-sm text-center text-muted-foreground p-4">
 							この画像のドメインは許可されていません。
 							<br />
 							<span className="text-xs">URL: {thumbnailUrl}</span>

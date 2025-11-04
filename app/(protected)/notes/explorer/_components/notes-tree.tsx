@@ -1,10 +1,8 @@
 "use client";
 
-import { Folder, FolderOpen, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import type { NoteSummary } from "../../_components/notes-list";
 import DroppableNoteItem from "./droppable-note-item";
 

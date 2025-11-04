@@ -1,17 +1,7 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { executeWithQuotaCheck } from "@/lib/utils/geminiQuotaManager";
-
-// Define types for OCR response to avoid any
-interface ImageOcrCandidate {
-	parts: { text: string }[];
-}
-type ImageOcrContent = string | ImageOcrCandidate;
-interface ImageOcrResponse {
-	candidates?: { content: ImageOcrContent }[];
-}
 
 /**
  * リトライロジック付きGemini API呼び出し
@@ -39,9 +29,6 @@ async function callGeminiWithRetry<T>(
 
 				if (attempt < maxRetries && retryDelayStr) {
 					const delayMs = parseRetryDelay(retryDelayStr);
-					console.warn(
-						`[OCRリトライ] Gemini APIクォータ制限: ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-					);
 					await new Promise((resolve) => setTimeout(resolve, delayMs));
 					continue;
 				}
@@ -54,9 +41,6 @@ async function callGeminiWithRetry<T>(
 			// その他のエラーの場合は指数バックオフでリトライ
 			if (attempt < maxRetries) {
 				const delayMs = baseDelayMs * 2 ** (attempt - 1);
-				console.warn(
-					`[OCRリトライ] APIエラー (${error instanceof Error ? error.message : String(error)}): ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-				);
 				await new Promise((resolve) => setTimeout(resolve, delayMs));
 				continue;
 			}
@@ -126,7 +110,6 @@ export async function processGyazoImageOcr(imageUrl: string): Promise<{
 			confidence: 95, // Geminiの信頼度は通常高い
 		};
 	} catch (error) {
-		console.error("Gyazo OCR processing failed:", error);
 		return {
 			success: false,
 			text: "",
@@ -140,71 +123,55 @@ export async function transcribeImage(imageUrl: string): Promise<string> {
 		throw new Error("No image URL provided for transcription");
 	}
 
-	try {
-		// 画像データを取得
-		const res = await fetch(imageUrl);
-		if (!res.ok) {
-			throw new Error(`Failed to fetch image for OCR: ${res.status}`);
-		}
-		const arrayBuffer = await res.arrayBuffer();
-		const blob = new Blob([arrayBuffer], {
-			type: res.headers.get("content-type") ?? "image/png",
-		});
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
 
-		// Gemini Files API にアップロード
-		const { uri, mimeType } = await geminiClient.files.upload({
-			file: blob,
-			config: { mimeType: blob.type },
-		});
-		if (!uri) throw new Error("Upload failed: missing URI");
-
-		// 画像ファイル部分を準備
-		const part = createPartFromUri(uri, mimeType ?? blob.type);
-		const contents = createUserContent([
-			"以下の画像からテキストを抽出してください。",
-			part,
-		]);
-
-		// クォータチェック付きリトライロジックでGemini API呼び出し
-		const responseRaw = await executeWithQuotaCheck(
-			() =>
-				callGeminiWithRetry(async () => {
-					return await geminiClient.models.generateContent({
-						model: "gemini-2.5-flash",
-						contents,
-					});
-				}),
-			1,
-			"単一画像OCR処理",
-		);
-
-		const { candidates } = responseRaw as ImageOcrResponse;
-		const candidate = candidates?.[0]?.content;
-		if (!candidate) {
-			throw new Error("OCR failed: no content returned");
-		}
-
-		let text: string;
-		if (typeof candidate === "string") {
-			text = candidate;
-		} else if (
-			typeof candidate === "object" &&
-			Array.isArray((candidate as { parts: { text: string }[] }).parts)
-		) {
-			text = (candidate as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			text = String(candidate);
-		}
-
-		return text;
-	} catch (error) {
-		// エラーをより詳細にログ出力
-		console.error("OCR処理エラー:", {
-			error: error instanceof Error ? error.message : String(error),
-			imageUrl: `${imageUrl.slice(0, 100)}...`, // URLは一部のみ表示
-		});
-		throw error;
+	// 画像データを取得
+	const res = await fetch(imageUrl);
+	if (!res.ok) {
+		throw new Error(`Failed to fetch image for OCR: ${res.status}`);
 	}
+	const arrayBuffer = await res.arrayBuffer();
+	const blob = new Blob([arrayBuffer], {
+		type: res.headers.get("content-type") ?? "image/png",
+	});
+
+	// Upload file and check support
+	if (!client.uploadFile || !client.generateWithFiles) {
+		throw new Error("File upload is not supported by this provider");
+	}
+
+	// クォータチェック付きリトライロジックでGemini API呼び出し
+	const text = await executeWithQuotaCheck(
+		async () => {
+			return await callGeminiWithRetry(async () => {
+				const uploadResult = await client.uploadFile?.(blob, {
+					mimeType: blob.type,
+				});
+
+				if (!uploadResult) {
+					throw new Error("File upload failed: uploadResult is undefined");
+				}
+
+				const result = await client.generateWithFiles?.(
+					"以下の画像からテキストを抽出してください。",
+					[{ uri: uploadResult.uri, mimeType: uploadResult.mimeType }],
+				);
+
+				if (!result) {
+					throw new Error("OCR generation failed: result is undefined");
+				}
+
+				return result;
+			});
+		},
+		1,
+		"単一画像OCR処理",
+	);
+
+	if (!text) {
+		throw new Error("OCR failed: no text returned");
+	}
+
+	return text;
 }

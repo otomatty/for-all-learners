@@ -151,7 +151,6 @@ export async function submitInquiry(
 		.single();
 
 	if (error) {
-		console.error("Supabase error creating inquiry:", error);
 		return {
 			message: `お問い合わせの送信中にエラーが発生しました。(詳細: ${error.message})`,
 			success: false,
@@ -196,10 +195,6 @@ export async function submitInquiry(
 				});
 
 			if (uploadError) {
-				console.error(
-					`Supabase Storage upload error for ${file.name}:`,
-					uploadError,
-				);
 				attachmentErrors.push(
 					`ファイル "${file.name}" のアップロードに失敗しました: ${uploadError.message}`,
 				);
@@ -220,10 +215,6 @@ export async function submitInquiry(
 				});
 
 			if (attachmentDbError) {
-				console.error(
-					`Error saving attachment metadata to DB for ${file.name}:`,
-					attachmentDbError,
-				);
 				attachmentErrors.push(
 					`ファイル "${file.name}" のメタデータ保存に失敗しました。`,
 				);
@@ -267,7 +258,6 @@ export async function getInquiryCategories(): Promise<GetInquiryCategoriesState>
 		.order("sort_order", { ascending: true }); // inquiries.sql の sort_order を使用
 
 	if (error) {
-		console.error("Supabase error fetching inquiry categories:", error);
 		return {
 			categories: null,
 			message: `お問い合わせカテゴリの取得中にエラーが発生しました。(詳細: ${error.message})`,
@@ -401,7 +391,6 @@ export async function getAllInquiries(
 	const { data, error, count } = await query;
 
 	if (error) {
-		console.error("Supabase error fetching inquiries for admin:", error);
 		return {
 			inquiries: null,
 			totalCount: 0,
@@ -478,10 +467,6 @@ export async function getInquiryById(
 				success: false,
 			};
 		}
-		console.error(
-			`Supabase error fetching inquiry by ID (${inquiryId}):`,
-			error,
-		);
 		return {
 			inquiry: null,
 			message: `お問い合わせ詳細の取得中にエラーが発生しました。(詳細: ${error.message})`,
@@ -597,7 +582,6 @@ export async function updateInquiry(
 		.single();
 
 	if (error) {
-		console.error(`Supabase error updating inquiry (${inquiryId}):`, error);
 		return {
 			message: `お問い合わせの更新中にエラーが発生しました。(詳細: ${error.message})`,
 			success: false,

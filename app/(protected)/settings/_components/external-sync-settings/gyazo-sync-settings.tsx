@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
@@ -21,9 +21,6 @@ export default function GyazoSyncSettings({
 
 	const handleConnect = () => {
 		if (!GYAZO_CLIENT_ID || !GYAZO_REDIRECT_URI) {
-			console.error(
-				"Missing NEXT_PUBLIC_GYAZO_CLIENT_ID or NEXT_PUBLIC_GYAZO_REDIRECT_URI",
-			);
 			return;
 		}
 		const params = new URLSearchParams({
@@ -39,9 +36,7 @@ export default function GyazoSyncSettings({
 			await fetch("/api/gyazo/disconnect", { method: "POST" });
 			setEnabled(false);
 			onEnabledChange?.(false);
-		} catch (err) {
-			console.error(err);
-		}
+		} catch (_err) {}
 	};
 
 	const toggleEnabled = (value: boolean) => {

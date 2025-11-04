@@ -29,6 +29,11 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.next();
 	}
 
+	// Redirect /settings/api-keys to /settings (LLM settings tab)
+	if (pathname === "/settings/api-keys") {
+		return NextResponse.redirect(new URL("/settings?tab=llm", req.url));
+	}
+
 	// Redirect old /pages routes to /notes/default
 	if (pathname === "/pages") {
 		return NextResponse.redirect(new URL("/notes/default", req.url));

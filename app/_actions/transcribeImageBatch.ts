@@ -1,7 +1,6 @@
 "use server";
 
-import { createPartFromUri, createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
@@ -46,9 +45,6 @@ async function callGeminiWithRetry<T>(
 
 				if (attempt < maxRetries && retryDelayStr) {
 					const delayMs = parseRetryDelay(retryDelayStr);
-					console.warn(
-						`[リトライ] Gemini APIクォータ制限: ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-					);
 					await new Promise((resolve) => setTimeout(resolve, delayMs));
 					continue;
 				}
@@ -61,9 +57,6 @@ async function callGeminiWithRetry<T>(
 			// その他のエラーの場合は指数バックオフでリトライ
 			if (attempt < maxRetries) {
 				const delayMs = baseDelayMs * 2 ** (attempt - 1);
-				console.warn(
-					`[リトライ] APIエラー (${(error as Error).message}): ${delayMs}ms後にリトライ (${attempt}/${maxRetries})`,
-				);
 				await new Promise((resolve) => setTimeout(resolve, delayMs));
 				continue;
 			}
@@ -109,13 +102,9 @@ export async function transcribeImagesBatch(
 	batchSize = 4, // Geminiの同時画像処理制限を考慮
 ): Promise<BatchOcrResult> {
 	try {
-		console.log(
-			`[バッチOCR] ${pages.length}ページを${batchSize}ページずつ処理開始`,
-		);
-
 		// 事前クォータチェック
 		const quotaManager = getGeminiQuotaManager();
-		const estimatedRequests = Math.ceil(pages.length / batchSize);
+		const _estimatedRequests = Math.ceil(pages.length / batchSize);
 		const quotaCheck = quotaManager.validatePdfProcessing(pages.length);
 
 		if (!quotaCheck.canProcess) {
@@ -127,9 +116,6 @@ export async function transcribeImagesBatch(
 		}
 
 		if (quotaCheck.suggestion) {
-			console.warn(
-				`[バッチOCR] 警告: ${quotaCheck.message} - ${quotaCheck.suggestion}`,
-			);
 		}
 
 		const extractedPages: Array<{ pageNumber: number; text: string }> = [];
@@ -140,11 +126,7 @@ export async function transcribeImagesBatch(
 		for (let i = 0; i < pages.length; i += batchSize) {
 			const batch = pages.slice(i, i + batchSize);
 			const batchNumber = Math.floor(i / batchSize) + 1;
-			const totalBatches = Math.ceil(pages.length / batchSize);
-
-			console.log(
-				`[バッチOCR] バッチ ${batchNumber}/${totalBatches}: ${batch.length}ページ処理中...`,
-			);
+			const _totalBatches = Math.ceil(pages.length / batchSize);
 
 			try {
 				const batchResult = await executeWithQuotaCheck(
@@ -156,21 +138,15 @@ export async function transcribeImagesBatch(
 				extractedPages.push(...batchResult);
 				processedCount += batchResult.length;
 
-				console.log(
-					`[バッチOCR] バッチ処理完了: ${batchResult.length}/${batch.length}ページ成功`,
-				);
-
 				// レート制限回避のため、バッチ間に小さな待機
 				if (i + batchSize < pages.length) {
 					await new Promise((resolve) => setTimeout(resolve, 500));
 				}
 			} catch (error: unknown) {
-				console.error("[バッチOCR] バッチ処理エラー:", error);
 				skippedCount += batch.length;
 
 				// クォータエラーの場合は即座に停止
 				if (error instanceof Error && error.message.includes("クォータ")) {
-					console.error("[バッチOCR] クォータ制限により処理停止");
 					break;
 				}
 
@@ -196,7 +172,6 @@ export async function transcribeImagesBatch(
 			skippedCount,
 		};
 	} catch (error) {
-		console.error("[バッチOCR] 致命的エラー:", error);
 		return {
 			success: false,
 			message: "バッチOCR処理中に致命的エラーが発生しました",
@@ -211,6 +186,13 @@ export async function transcribeImagesBatch(
 async function processBatchWithRetry(
 	batch: BatchOcrPage[],
 ): Promise<Array<{ pageNumber: number; text: string }>> {
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	if (!client.uploadFile || !client.generateWithFiles) {
+		throw new Error("File upload is not supported by this provider");
+	}
+
 	// 各画像をGemini Files APIにアップロード
 	const uploadPromises = batch.map(async (page) => {
 		try {
@@ -224,20 +206,20 @@ async function processBatchWithRetry(
 				type: res.headers.get("content-type") ?? "image/png",
 			});
 
-			const { uri, mimeType } = await geminiClient.files.upload({
-				file: blob,
-				config: { mimeType: blob.type },
+			const uploadResult = await client.uploadFile?.(blob, {
+				mimeType: blob.type,
 			});
 
-			if (!uri) throw new Error("アップロード失敗: URIが取得できませんでした");
+			if (!uploadResult) {
+				throw new Error(`File upload failed for page ${page.pageNumber}`);
+			}
 
 			return {
 				pageNumber: page.pageNumber,
-				uri,
-				mimeType: mimeType ?? blob.type,
+				uri: uploadResult.uri,
+				mimeType: uploadResult.mimeType,
 			};
-		} catch (error) {
-			console.error(`ページ${page.pageNumber}のアップロードエラー:`, error);
+		} catch (_error) {
 			return null;
 		}
 	});
@@ -268,59 +250,41 @@ async function processBatchWithRetry(
 - 画像の順序は入力順と同じにしてください
 - 数式や図表の内容も可能な限りテキスト化してください`;
 
-	// 画像パーツを作成
-	const imageParts = validUploads.map((upload) =>
-		createPartFromUri(upload.uri, upload.mimeType),
-	);
-
-	const contents = createUserContent([systemPrompt, ...imageParts]);
+	// 画像ファイルURIの配列を作成
+	const fileUris = validUploads.map((upload) => ({
+		uri: upload.uri,
+		mimeType: upload.mimeType,
+	}));
 
 	// リトライ付きでOCR実行
-	const response = await callGeminiWithRetry(async () => {
-		return await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
+	const jsonString = await callGeminiWithRetry(async () => {
+		const result = await client.generateWithFiles?.(systemPrompt, fileUris);
+		if (!result) {
+			throw new Error("Batch OCR failed: no response from LLM");
+		}
+		return result;
 	});
 
-	// レスポンス解析
-	const { candidates } = response as { candidates?: { content: unknown }[] };
-	const raw = candidates?.[0]?.content;
-	if (!raw) {
-		throw new Error("OCRレスポンスが空です");
-	}
-
-	let jsonString: string;
-	if (typeof raw === "string") {
-		jsonString = raw;
-	} else if (
-		typeof raw === "object" &&
-		raw !== null &&
-		"parts" in raw &&
-		Array.isArray((raw as { parts: { text: string }[] }).parts)
-	) {
-		jsonString = (raw as { parts: { text: string }[] }).parts
-			.map((p) => p.text)
-			.join("");
-	} else {
-		jsonString = String(raw);
-	}
-
 	// JSON抽出
+	let extractedJson = jsonString;
 	const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
-	const fenceMatch = jsonString.match(fencePattern);
+	const fenceMatch = extractedJson.match(fencePattern);
 	if (fenceMatch) {
-		jsonString = fenceMatch[1].trim();
+		extractedJson = fenceMatch[1].trim();
 	} else {
-		const start = jsonString.indexOf("[");
-		const end = jsonString.lastIndexOf("]");
+		const start = extractedJson.indexOf("[");
+		const end = extractedJson.lastIndexOf("]");
 		if (start !== -1 && end !== -1 && end > start) {
-			jsonString = jsonString.slice(start, end + 1);
+			extractedJson = extractedJson.slice(start, end + 1);
 		}
 	}
 
+	if (!extractedJson) {
+		throw new Error("Failed to extract JSON from OCR response");
+	}
+
 	try {
-		const parsed = JSON.parse(jsonString);
+		const parsed = JSON.parse(extractedJson);
 		if (!Array.isArray(parsed)) {
 			throw new Error("レスポンスが配列ではありません");
 		}
@@ -343,12 +307,7 @@ async function processBatchWithRetry(
 				text: item.extractedText.trim(),
 			}))
 			.filter((item) => item.text.length > 0); // 空文字は除外
-	} catch (parseError) {
-		console.error("JSON解析エラー:", parseError);
-		console.error("問題のあるJSON:", jsonString);
-
-		// フォールバック: 個別処理
-		console.warn("バッチ処理失敗、個別処理にフォールバック");
+	} catch (_parseError) {
 		return await processPagesIndividually(validUploads);
 	}
 }
@@ -359,43 +318,29 @@ async function processBatchWithRetry(
 async function processPagesIndividually(
 	uploads: Array<{ pageNumber: number; uri: string; mimeType: string }>,
 ): Promise<Array<{ pageNumber: number; text: string }>> {
+	// Create dynamic LLM client
+	const client = await createClientWithUserKey({ provider: "google" });
+
+	if (!client.generateWithFiles) {
+		throw new Error("File generation is not supported by this provider");
+	}
+
 	const results: Array<{ pageNumber: number; text: string }> = [];
 
 	for (const upload of uploads) {
 		try {
-			const part = createPartFromUri(upload.uri, upload.mimeType);
-			const contents = createUserContent([
-				"以下の画像からテキストを抽出してください。",
-				part,
-			]);
-
-			const response = await callGeminiWithRetry(async () => {
-				return await geminiClient.models.generateContent({
-					model: "gemini-2.5-flash",
-					contents,
-				});
+			const text = await callGeminiWithRetry(async () => {
+				const result = await client.generateWithFiles?.(
+					"以下の画像からテキストを抽出してください。",
+					[{ uri: upload.uri, mimeType: upload.mimeType }],
+				);
+				if (!result) {
+					throw new Error("OCR failed: no response from LLM");
+				}
+				return result;
 			});
 
-			const { candidates } = response as {
-				candidates?: { content: unknown }[];
-			};
-			const raw = candidates?.[0]?.content;
-
-			let text = "";
-			if (typeof raw === "string") {
-				text = raw;
-			} else if (
-				typeof raw === "object" &&
-				raw !== null &&
-				"parts" in raw &&
-				Array.isArray((raw as { parts: { text: string }[] }).parts)
-			) {
-				text = (raw as { parts: { text: string }[] }).parts
-					.map((p) => p.text)
-					.join("");
-			}
-
-			if (text.trim()) {
+			if (text?.trim()) {
 				results.push({
 					pageNumber: upload.pageNumber,
 					text: text.trim(),
@@ -404,8 +349,7 @@ async function processPagesIndividually(
 
 			// 個別処理時は少し待機
 			await new Promise((resolve) => setTimeout(resolve, 200));
-		} catch (error) {
-			console.error(`ページ${upload.pageNumber}の個別処理エラー:`, error);
+		} catch (_error) {
 			// エラーでも続行
 		}
 	}

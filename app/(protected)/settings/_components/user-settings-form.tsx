@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateUserSettings } from "@/app/_actions/user_settings";
 import {
@@ -42,9 +42,13 @@ export default function UserSettingsForm({
 	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const [initialPathname] = useState(pathname);
 	const [showDialog, setShowDialog] = useState(false);
 	const [nextPath, setNextPath] = useState<string | null>(null);
+
+	// Get default tab from query params
+	const defaultTab = searchParams.get("tab") || "general";
 
 	// 変更有無を判定
 	const isDirty = useMemo(() => {
@@ -177,7 +181,7 @@ export default function UserSettingsForm({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-			<Tabs defaultValue="general">
+			<Tabs defaultValue={defaultTab}>
 				<TabsList className="mb-4">
 					<TabsTrigger value="general">全般</TabsTrigger>
 					<TabsTrigger value="appearance">外観</TabsTrigger>

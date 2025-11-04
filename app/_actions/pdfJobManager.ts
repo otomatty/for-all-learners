@@ -2,7 +2,6 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 // Service Role クライアント（サーバーサイド専用）
 const supabaseAdmin = createClient(
@@ -125,7 +124,6 @@ export async function createPdfProcessingJob(
 			.single();
 
 		if (jobError) {
-			console.error("PDF job creation error:", jobError);
 			// アップロードしたファイルをクリーンアップ
 			if (uploadResult.filePath) {
 				await cleanupUploadedFile(uploadResult.filePath);
@@ -148,8 +146,7 @@ export async function createPdfProcessingJob(
 			estimatedDuration,
 			redirectUrl: `/decks/${params.deckId}?tab=processing`,
 		};
-	} catch (error) {
-		console.error("Create PDF job error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			message:
@@ -208,7 +205,6 @@ export async function cancelPdfJob(jobId: string): Promise<PdfJobResult> {
 			.eq("id", jobId);
 
 		if (updateError) {
-			console.error("Job cancellation error:", updateError);
 			return { success: false, message: "キャンセル処理に失敗しました" };
 		}
 
@@ -219,8 +215,7 @@ export async function cancelPdfJob(jobId: string): Promise<PdfJobResult> {
 			success: true,
 			message: "ジョブをキャンセルしました",
 		};
-	} catch (error) {
-		console.error("Cancel PDF job error:", error);
+	} catch (_error) {
 		return { success: false, message: "予期しないエラーが発生しました" };
 	}
 }
@@ -286,7 +281,6 @@ export async function retryPdfJob(jobId: string): Promise<PdfJobResult> {
 			.single();
 
 		if (newJobError) {
-			console.error("Job retry error:", newJobError);
 			return { success: false, message: "ジョブの再作成に失敗しました" };
 		}
 
@@ -303,8 +297,7 @@ export async function retryPdfJob(jobId: string): Promise<PdfJobResult> {
 			message: "ジョブを再試行しました",
 			estimatedDuration,
 		};
-	} catch (error) {
-		console.error("Retry PDF job error:", error);
+	} catch (_error) {
 		return { success: false, message: "予期しないエラーが発生しました" };
 	}
 }
@@ -331,8 +324,7 @@ export async function getUserPdfJobStats(userId?: string) {
 			.single();
 
 		return stats;
-	} catch (error) {
-		console.error("Get user stats error:", error);
+	} catch (_error) {
 		return null;
 	}
 }
@@ -387,7 +379,6 @@ async function checkUserActiveJobs(
 		.in("status", ["pending", "processing"]);
 
 	if (error) {
-		console.error("Active jobs check error:", error);
 		return { canProcess: false, message: "システムエラーが発生しました" };
 	}
 
@@ -415,7 +406,7 @@ async function uploadPdfToStorage(
 		const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.name}`;
 		const filePath = `pdf-processing/${userId}/${fileName}`;
 
-		const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+		const { error: uploadError } = await supabaseAdmin.storage
 			.from("documents")
 			.upload(filePath, file, {
 				cacheControl: "3600",
@@ -423,7 +414,6 @@ async function uploadPdfToStorage(
 			});
 
 		if (uploadError) {
-			console.error("PDF upload error:", uploadError);
 			return {
 				success: false,
 				message: "ファイルのアップロードに失敗しました",
@@ -441,8 +431,7 @@ async function uploadPdfToStorage(
 			publicUrl: urlData.publicUrl,
 			filePath,
 		};
-	} catch (error) {
-		console.error("Upload error:", error);
+	} catch (_error) {
 		return {
 			success: false,
 			message: "アップロード処理中にエラーが発生しました",
@@ -453,9 +442,7 @@ async function uploadPdfToStorage(
 async function cleanupUploadedFile(filePath: string): Promise<void> {
 	try {
 		await supabaseAdmin.storage.from("documents").remove([filePath]);
-	} catch (error) {
-		console.error("Cleanup error:", error);
-	}
+	} catch (_error) {}
 }
 
 function estimateProcessingTime(
@@ -475,7 +462,7 @@ function estimateProcessingTime(
 	);
 }
 
-function calculateJobPriority(userId: string, fileSizeBytes: number): number {
+function calculateJobPriority(_userId: string, fileSizeBytes: number): number {
 	// 基本優先度は5（中程度）
 	let priority = 5;
 
@@ -507,9 +494,7 @@ async function notifyWorkerOfNewJob(jobId: string): Promise<void> {
 					type: "new_pdf_job",
 				}),
 			});
-		} catch (error) {
-			console.warn("Worker webhook notification failed:", error);
-		}
+		} catch (_error) {}
 	}
 
 	// オプション2: データベースによる通知（将来実装）

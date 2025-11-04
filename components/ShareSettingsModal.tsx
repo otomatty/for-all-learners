@@ -53,10 +53,19 @@ interface ShareSettingsModalProps {
 		updatedAt: string;
 		ownerId: string;
 	};
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
-export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
-	const [open, setOpen] = useState(false);
+export function ShareSettingsModal({
+	note,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+}: ShareSettingsModalProps) {
+	const [internalOpen, setInternalOpen] = useState(false);
+	// Use controlled state if provided, otherwise use internal state
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = controlledOnOpenChange ?? setInternalOpen;
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 	const [shares, setShares] = useState<
 		Array<{
@@ -101,9 +110,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 					setShares(s || []);
 					const l = await getNoteShareLinks(note.id);
 					setLinks(l || []);
-				} catch (err) {
-					console.error(err);
-				}
+				} catch (_err) {}
 			})();
 		}
 	}, [open, note.id]);
@@ -180,9 +187,12 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">共有設定</Button>
-			</DialogTrigger>
+			{/* DialogTrigger は制御されていない場合のみ表示 */}
+			{controlledOpen === undefined && (
+				<DialogTrigger asChild>
+					<Button variant="outline">共有設定</Button>
+				</DialogTrigger>
+			)}
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>共有設定</DialogTitle>
@@ -218,7 +228,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 							{/* 非公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "private" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "private" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("private")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -239,7 +249,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 							{/* 招待 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "invite" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "invite" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("invite")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -260,7 +270,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 							{/* 限定公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "unlisted" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "unlisted" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("unlisted")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {
@@ -281,7 +291,7 @@ export function ShareSettingsModal({ note }: ShareSettingsModalProps) {
 							{/* 公開 */}
 							<button
 								type="button"
-								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "public" ? "border-primary bg-primary/5" : "border-gray-200"}`}
+								className={`w-full p-4 border rounded cursor-pointer flex flex-col items-start ${visibility === "public" ? "border-primary bg-primary/5" : "border-border"}`}
 								onClick={() => handleVisibilityChange("public")}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" || e.key === " ") {

@@ -1,7 +1,28 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import type { LLMProvider } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+import logger from "@/lib/logger";
+
+/**
+ * DEPENDENCY MAP:
+ *
+ * Parents (使用先):
+ *   ├─ app/_actions/audioBatchProcessing.ts
+ *   ├─ app/(protected)/decks/[deckId]/_components/audio-card-generator.tsx
+ *   └─ app/(protected)/decks/[deckId]/_components/image-card-generator.tsx
+ *
+ * Dependencies (依存先):
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
+ *   └─ lib/logger.ts
+ *
+ * Related Files:
+ *   ├─ Spec: ./generateCards.spec.md
+ *   ├─ Tests: ./__tests__/generateCards.test.ts
+ *   └─ Plan: docs/03_plans/phase-1-ai-integration/20251102_02_day3-generatecards-integration-plan.md
+ */
 
 export interface GeneratedCard {
 	front_content: string;
@@ -9,44 +30,77 @@ export interface GeneratedCard {
 	source_audio_url: string;
 }
 
+interface GenerateCardsOptions {
+	provider?: LLMProvider;
+	model?: string;
+}
+
 /**
  * Server action to generate flashcard Q&A pairs from a transcript.
+ *
+ * @param transcript - Audio transcription text
+ * @param sourceAudioUrl - Audio file URL
+ * @param options - Generation options
+ * @param options.provider - LLM provider ("google" | "openai" | "anthropic", default: "google")
+ * @param options.model - Custom model name (optional)
+ * @returns Array of generated flashcards
+ * @throws Error if transcript is empty
+ * @throws Error if API key is not configured
+ *
+ * @example
+ * ```typescript
+ * // Google Gemini でカード生成
+ * const cards = await generateCardsFromTranscript(transcript, audioUrl);
+ *
+ * // OpenAI でカード生成
+ * const cards = await generateCardsFromTranscript(transcript, audioUrl, { provider: "openai" });
+ * ```
  */
 export async function generateCardsFromTranscript(
 	transcript: string,
 	sourceAudioUrl: string,
+	options?: GenerateCardsOptions,
 ): Promise<GeneratedCard[]> {
+	// Input validation
+	if (!transcript.trim()) {
+		throw new Error("トランスクリプトが空です");
+	}
+
+	// Determine provider
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	logger.info(
+		{ provider, transcriptLength: transcript.length, model: options?.model },
+		"Starting card generation from transcript",
+	);
+
 	// System prompt guiding the model to output JSON array of cards
 	const systemPrompt =
 		"以下の文字起こしから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。";
 
-	// Build contents for Gemini
-	const contents = createUserContent([systemPrompt, transcript]);
+	// Build prompt string
+	const prompt = buildPrompt([systemPrompt, transcript]);
 
-	// Call Gemini API
-	const response = await geminiClient.models.generateContent({
-		model: "gemini-2.5-flash",
-		contents,
+	// Create LLM client dynamically (auto-fetches user API key)
+	const client = await createClientWithUserKey({
+		provider,
+		model: options?.model,
 	});
 
-	// Extract raw content
-	const { candidates } = response as unknown as {
-		candidates?: { content: { parts: { text: string }[] } }[];
-	};
-	const raw = candidates?.[0]?.content;
-	if (!raw) {
+	logger.info(
+		{ provider, model: options?.model },
+		"Calling LLM for card generation",
+	);
+
+	// Call LLM API (provider-agnostic)
+	const response = await client.generate(prompt);
+
+	// Response is already a simple string
+	if (!response || response.trim().length === 0) {
 		throw new Error("カード生成に失敗しました: 内容が空です");
 	}
 
-	// Combine parts if needed
-	let jsonString: string;
-	if (typeof raw === "string") {
-		jsonString = raw;
-	} else if (typeof raw === "object" && Array.isArray(raw.parts)) {
-		jsonString = raw.parts.map((p: { text: string }) => p.text).join("");
-	} else {
-		jsonString = String(raw);
-	}
+	let jsonString = response;
 
 	// Attempt to extract JSON block between code fences
 	const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
@@ -66,8 +120,7 @@ export async function generateCardsFromTranscript(
 	let parsed: { front_content: string; back_content: string }[];
 	try {
 		parsed = JSON.parse(jsonString);
-	} catch (e) {
-		console.error("JSON解析エラー:", e, jsonString);
+	} catch (_e) {
 		throw new Error("カード生成結果の解析に失敗しました");
 	}
 

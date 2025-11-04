@@ -73,7 +73,6 @@ export async function autoSetThumbnailOnPageView(
 			.eq("id", pageId);
 
 		if (updateError) {
-			console.error("Failed to auto-set thumbnail:", updateError);
 			return {
 				thumbnailSet: false,
 				thumbnailUrl: null,
@@ -90,7 +89,6 @@ export async function autoSetThumbnailOnPageView(
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : "Unknown error";
-		console.error("autoSetThumbnailOnPageView error:", error);
 
 		return {
 			thumbnailSet: false,
@@ -142,7 +140,6 @@ export async function autoSetThumbnailById(
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : "Unknown error";
-		console.error("autoSetThumbnailById error:", error);
 
 		return {
 			thumbnailSet: false,

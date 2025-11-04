@@ -3,7 +3,7 @@
 import confetti from "canvas-confetti";
 import { CircleCheck, CircleX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {

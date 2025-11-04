@@ -6,11 +6,9 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import { createInputRules } from "../index";
 
-// Setup jsdom environment for this test
-setupJSDOMEnvironment();
+// Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("createInputRules", () => {
 	let editor: Editor;

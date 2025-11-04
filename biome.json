@@ -1,29 +1,57 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.2.5/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
-		"useIgnoreFile": false
+		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": true
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"formatWithErrors": true
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noConsole": "error"
+				"noConsole": "error",
+				"noUnknownAtRules": "off",
+				"noArrayIndexKey": "off",
+				"noExplicitAny": "off",
+				"noDocumentCookie": "off"
+			},
+			"correctness": {
+				"noUnusedVariables": "warn"
+			},
+			"performance": {
+				"noDynamicNamespaceImportAccess": "warn"
+			},
+			"a11y": {
+				"useAriaPropsSupportedByRole": "off",
+				"useSemanticElements": "off",
+				"noStaticElementInteractions": "off"
 			}
 		}
 	},
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
+		}
+	},
+	"css": {
+		"parser": {
+			"allowWrongLineComments": true,
+			"tailwindDirectives": true
+		},
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
 		}
 	},
 	"assist": {

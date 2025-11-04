@@ -75,4 +75,5 @@ export interface ResolverQueueItem {
 	markId: string;
 	editor: Editor;
 	variant?: "bracket" | "tag";
+	pos?: number; // Position in the document
 }

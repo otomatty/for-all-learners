@@ -1,7 +1,6 @@
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
 import { createClient } from "@/lib/supabase/server";
 import {
 	convertTextToTiptapJSON,
@@ -65,10 +64,6 @@ export async function createPdfChunks(
 	pagesText: Array<{ pageNumber: number; text: string }>,
 	maxTokensPerChunk = 4000,
 ): Promise<PdfChunk[]> {
-	console.log(
-		`[チャンク分割] 入力: ${pagesText.length}ページ、各ページの文字数: ${pagesText.map((p) => p.text.length).join(", ")}`,
-	);
-	console.log(`[チャンク分割] 最大トークン数: ${maxTokensPerChunk}`);
 	const chunks: PdfChunk[] = [];
 	let currentChunk: { pageNumbers: number[]; text: string } = {
 		pageNumbers: [],
@@ -141,10 +136,6 @@ export async function createPdfChunks(
 			confidence: 1.0,
 		});
 	}
-
-	console.log(
-		`[チャンク分割] 結果: ${chunks.length}個のチャンク、各チャンクのトークン数: ${chunks.map((c) => c.tokenCount).join(", ")}`,
-	);
 	return chunks;
 }
 
@@ -217,44 +208,17 @@ export async function extractProblemsFromAllPages(
 `;
 
 	try {
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
+
 		// 全ページのテキストを結合
 		const allText = pagesText
 			.map((page) => `=== ページ ${page.pageNumber} ===\n${page.text}`)
 			.join("\n\n");
 
-		console.log(`[AI処理] 全${pagesText.length}ページのテキストを一括処理開始`);
-		console.log(`[AI処理] 総文字数: ${allText.length}文字`);
-
-		const contents = createUserContent([systemPrompt, allText]);
-
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("問題抽出に失敗しました: 内容が空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
-		}
+		// Generate problem extraction
+		const prompt = `${systemPrompt}\n\n${allText}`;
+		let jsonString = await client.generate(prompt);
 
 		// JSON抽出
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
@@ -293,11 +257,8 @@ export async function extractProblemsFromAllPages(
 				chunkId: "batch-processing", // 一括処理用の固定ID
 			}),
 		);
-
-		console.log(`[AI処理] 一括処理完了: ${problems.length}個の問題を抽出`);
 		return problems;
-	} catch (error) {
-		console.error("一括問題抽出エラー:", error);
+	} catch (_error) {
 		return [];
 	}
 }
@@ -381,36 +342,11 @@ ${problem.problemText}
 ⭕ 謙虚: "要確認" + 補足: "専門的内容"
 `;
 
-		const contents = createUserContent([systemPrompt, ""]);
+		// Create dynamic LLM client
+		const client = await createClientWithUserKey({ provider: "google" });
 
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash",
-			contents,
-		});
-
-		const { candidates } = response as {
-			candidates?: Array<{ content: unknown }>;
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
-			throw new Error("解答・解説生成に失敗しました: レスポンスが空です");
-		}
-
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (
-			typeof raw === "object" &&
-			raw !== null &&
-			"parts" in raw &&
-			Array.isArray((raw as { parts: unknown }).parts)
-		) {
-			jsonString = (raw as { parts: { text: string }[] }).parts
-				.map((p) => p.text)
-				.join("");
-		} else {
-			jsonString = String(raw);
-		}
+		// Generate answer and explanation
+		let jsonString = await client.generate(systemPrompt);
 
 		// JSON抽出
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
@@ -432,8 +368,7 @@ ${problem.problemText}
 			explanationText: parsed.explanationText || "解説を生成できませんでした",
 			confidence: parsed.confidence || 0.5,
 		};
-	} catch (error) {
-		console.error(`問題 ${problem.id} の解答・解説生成エラー:`, error);
+	} catch (_error) {
 		return {
 			answerText: "解答を生成できませんでした",
 			explanationText: "解説を生成できませんでした",
@@ -451,14 +386,7 @@ export async function generateAnswersForProblems(
 		(problem) => !problem.answerText || problem.answerText.trim() === "",
 	);
 
-	console.log(
-		`[解答生成] 全${problems.length}問中、${problemsNeedingAnswers.length}問に解答生成が必要`,
-	);
-
 	if (problemsNeedingAnswers.length === 0) {
-		console.log(
-			"[解答生成] 全ての問題に解答が含まれているため、生成処理をスキップ",
-		);
 		return problems;
 	}
 
@@ -475,11 +403,7 @@ export async function generateAnswersForProblems(
 		{ answerText: string; explanationText: string; confidence: number }
 	>();
 
-	for (const [batchIndex, batch] of problemBatches.entries()) {
-		console.log(
-			`[解答生成] バッチ${batchIndex + 1}/${problemBatches.length}: ${batch.length}問を並列処理中...`,
-		);
-
+	for (const [_batchIndex, batch] of problemBatches.entries()) {
 		const batchPromises = batch.map(async (problem) => {
 			const answerResult = await generateAnswerAndExplanation(problem);
 			return {
@@ -498,10 +422,6 @@ export async function generateAnswersForProblems(
 				confidence: result.confidence,
 			});
 		}
-
-		console.log(
-			`[解答生成] バッチ${batchIndex + 1}完了: ${batchResults.length}問の解答・解説を生成`,
-		);
 	}
 
 	// 元の問題リストに生成された解答をマージ
@@ -517,10 +437,6 @@ export async function generateAnswersForProblems(
 		}
 		return problem; // 既に解答がある問題はそのまま
 	});
-
-	console.log(
-		`[解答生成] 完了: ${problemsNeedingAnswers.length}問の解答を生成、${problems.length - problemsNeedingAnswers.length}問は既存解答を使用`,
-	);
 	return enrichedProblems;
 }
 
@@ -534,9 +450,6 @@ export async function generateCardsFromProblems(
 	// 信頼度が0.3以上の問題のみフィルタ
 	const filteredProblems = problems.filter(
 		(problem) => problem.confidence > 0.3,
-	);
-	console.log(
-		`[カード生成] 信頼度フィルタ: ${problems.length}個 → ${filteredProblems.length}個（閾値0.3以上）`,
 	);
 
 	return filteredProblems.map((problem) => {
@@ -571,7 +484,7 @@ export async function generateCardsFromProblems(
 export async function processPdfToCards(
 	pagesText: Array<{ pageNumber: number; text: string }>,
 	sourcePdfUrl: string,
-	maxTokensPerChunk = 4000, // 下位互換のため残すが使用しない
+	_maxTokensPerChunk = 4000, // 下位互換のため残すが使用しない
 ): Promise<{
 	cards: EnhancedPdfCard[];
 	processingResult: PdfProcessingResult;
@@ -579,37 +492,22 @@ export async function processPdfToCards(
 	const startTime = Date.now();
 
 	try {
-		// 1. 全ページから問題を一括抽出
-		console.log(`[PDF処理] 1. 問題一括抽出開始: ${pagesText.length}ページ`);
 		const allProblems = await extractProblemsFromAllPages(pagesText);
-		console.log(`[PDF処理] 1. 問題抽出完了: ${allProblems.length}個の問題`);
 
 		// 2. 重複除去
 		const uniqueProblems = removeDuplicateProblems(allProblems);
-		console.log(
-			`[PDF処理] 2. 重複除去完了: ${uniqueProblems.length}個の問題（ユニーク）`,
-		);
 
 		// 3. 条件付き解答・解説生成
 		let enrichedProblems: PdfProblem[] = [];
 		if (uniqueProblems.length > 0) {
 			enrichedProblems = await generateAnswersForProblems(uniqueProblems);
-			console.log(
-				`[PDF処理] 3. 解答・解説生成完了: ${enrichedProblems.length}個の問題`,
-			);
 		} else {
-			console.log(
-				"[PDF処理] 3. 問題が見つからなかったため、解答・解説生成をスキップ",
-			);
 		}
 
 		// 4. カード生成
 		const cards = await generateCardsFromProblems(
 			enrichedProblems,
 			sourcePdfUrl,
-		);
-		console.log(
-			`[PDF処理] 4. カード生成完了: ${cards.length}個のカード（解説付き）`,
 		);
 
 		// 処理結果（チャンクは使用しないため空配列）
@@ -622,7 +520,6 @@ export async function processPdfToCards(
 
 		return { cards, processingResult };
 	} catch (error) {
-		console.error("PDF処理エラー:", error);
 		throw new Error(
 			`PDF処理に失敗しました: ${error instanceof Error ? error.message : "不明なエラー"}`,
 		);
@@ -665,10 +562,6 @@ export async function generateCardsFromDualPdfData(
 	}>,
 	sourcePdfUrl: string,
 ): Promise<EnhancedPdfCard[]> {
-	console.log(
-		`[デュアルカード生成] ${dualPdfData.length}個の問題・解答セットからカード生成開始`,
-	);
-
 	return dualPdfData.map((item) => {
 		// 一問一答形式：答えメインで、必要時のみ補足を追加
 		let backContentText = item.answerText;

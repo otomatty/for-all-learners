@@ -17,9 +17,6 @@ let maxMissingTime = 0;
 
 export function markPending(plId: string, title: string) {
 	pending.set(plId, { plId, title, start: performance.now() });
-	console.debug(
-		`[PageLinkMetrics] pending start plId=${plId} title="${title}"`,
-	);
 }
 
 function finish(plId: string, state: "exists" | "missing") {
@@ -36,11 +33,6 @@ function finish(plId: string, state: "exists" | "missing") {
 		totalMissingTime += dur;
 		if (dur > maxMissingTime) maxMissingTime = dur;
 	}
-	console.debug(
-		`[PageLinkMetrics] ${state} plId=${plId} title="${
-			entry.title
-		}" duration=${dur.toFixed(1)}ms`,
-	);
 }
 
 export function markResolved(plId: string) {

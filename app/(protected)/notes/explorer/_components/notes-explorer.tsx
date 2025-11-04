@@ -103,7 +103,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	};
 
 	// ドラッグ中
-	const handleDragOver = (event: DragOverEvent) => {
+	const handleDragOver = (_event: DragOverEvent) => {
 		// 将来的にドロップゾーンのハイライト処理を追加
 	};
 
@@ -163,10 +163,9 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 
 			// 競合がない場合は直接実行
 			await executeBatchMove(pageIds, targetNoteId, isCopy, []);
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("処理に失敗しました");
-			console.error("ページ移動エラー:", error);
 		}
 	};
 
@@ -209,10 +208,9 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 					`処理中にエラーが発生しました: ${result.errors[0]?.error || "不明なエラー"}`,
 				);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("処理に失敗しました");
-			console.error("ページ移動エラー:", error);
 		}
 	};
 
@@ -285,10 +283,9 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 					toast.error(result.message);
 				}
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("削除に失敗しました");
-			console.error("Delete error:", error);
 		}
 	};
 

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
-	req: NextRequest,
+	_req: NextRequest,
 	{ params }: { params: Promise<{ slug: string }> },
 ) {
 	try {
@@ -53,8 +53,7 @@ export async function GET(
 			avatarUrl: account.avatar_url,
 			fullName: account.full_name,
 		});
-	} catch (error) {
-		console.error("User icon API error:", error);
+	} catch (_error) {
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 },

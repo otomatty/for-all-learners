@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useId } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
@@ -13,12 +13,15 @@ export default function NotificationSettings({
 	notifications,
 	onChange,
 }: NotificationSettingsProps) {
+	const emailId = useId();
+	const pushId = useId();
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<Label htmlFor="email-notifications">メール通知</Label>
+				<Label htmlFor={emailId}>メール通知</Label>
 				<Switch
-					id="email-notifications"
+					id={emailId}
 					checked={notifications.email ?? false}
 					onCheckedChange={(checked) =>
 						onChange({ ...notifications, email: checked })
@@ -26,9 +29,9 @@ export default function NotificationSettings({
 				/>
 			</div>
 			<div className="flex items-center justify-between">
-				<Label htmlFor="push-notifications">プッシュ通知</Label>
+				<Label htmlFor={pushId}>プッシュ通知</Label>
 				<Switch
-					id="push-notifications"
+					id={pushId}
 					checked={notifications.push ?? false}
 					onCheckedChange={(checked) =>
 						onChange({ ...notifications, push: checked })

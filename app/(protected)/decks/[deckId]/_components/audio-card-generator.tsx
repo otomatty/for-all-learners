@@ -76,8 +76,7 @@ export function AudioCardGenerator({
 			mediaRecorderRef.current.start();
 			recordingStartRef.current = Date.now();
 			setIsRecording(true);
-		} catch (error) {
-			console.error("Error accessing microphone:", error);
+		} catch (_error) {
 			toast.error("マイクへのアクセスエラー", {
 				description: "マイクへのアクセスが許可されていないか、利用できません。",
 			});
@@ -95,8 +94,7 @@ export function AudioCardGenerator({
 				toast.success("学習時間を記録しました", {
 					description: `音読時間: ${durationSec}秒`,
 				});
-			} catch (error) {
-				console.error("Failed to record learning time:", error);
+			} catch (_error) {
 				toast.error("学習時間の記録に失敗しました");
 			}
 			for (const track of mediaRecorderRef.current.stream.getTracks()) {
@@ -120,7 +118,7 @@ export function AudioCardGenerator({
 			const timestamp = Date.now();
 			const filePath = `audio/${userId}/${timestamp}.wav`;
 
-			const { data: uploadData, error: uploadError } = await supabase.storage
+			const { data: _uploadData, error: uploadError } = await supabase.storage
 				.from("audio-recordings")
 				.upload(filePath, audioBlob);
 
@@ -172,7 +170,6 @@ export function AudioCardGenerator({
 			});
 			setIsProcessing(false);
 		} catch (error) {
-			console.error("Error processing audio:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error
@@ -235,7 +232,7 @@ export function AudioCardGenerator({
 			});
 
 			// Use server action to insert cards
-			const data = await createCards(cardsToInsert);
+			const _data = await createCards(cardsToInsert);
 
 			toast.success("カードを保存しました", {
 				description: `${selectedCardsList.length}件のカードを保存しました。`,
@@ -243,7 +240,6 @@ export function AudioCardGenerator({
 
 			router.push(`/decks/${deckId}`);
 		} catch (error) {
-			console.error("Error saving cards:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error
@@ -383,7 +379,7 @@ export function AudioCardGenerator({
 											// インデックスを再調整
 											const newSelection: Record<number, boolean> = {};
 											for (const key of Object.keys(updatedSelection)) {
-												const keyNum = Number.parseInt(key);
+												const keyNum = Number.parseInt(key, 10);
 												const value = updatedSelection[keyNum];
 												if (keyNum > index) {
 													newSelection[keyNum - 1] = value;

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseCosenseDescriptions } from "@/lib/utils/cosenseParser";
 
 export async function GET(
-	request: NextRequest,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ cosenseProjectId: string }> },
 ) {
 	try {
@@ -15,7 +15,6 @@ export async function GET(
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			console.error("[Cosense Sync List] Authentication failed", authError);
 			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
@@ -29,7 +28,6 @@ export async function GET(
 			.eq("id", cosenseProjectId)
 			.single();
 		if (relError || !relation) {
-			console.error("[Cosense Sync List] Project relation not found", relError);
 			return NextResponse.json(
 				{ error: "Cosense project not found" },
 				{ status: 404 },
@@ -71,10 +69,6 @@ export async function GET(
 			url.searchParams.set("skip", String(skip));
 			const pageRes = await fetch(url.toString(), fetchOptions);
 			if (!pageRes.ok) {
-				console.error(
-					"[Cosense Sync List] API fetch failed status",
-					pageRes.status,
-				);
 				return NextResponse.json(
 					{ error: "Failed to fetch from Cosense" },
 					{ status: 502 },
@@ -110,10 +104,6 @@ export async function GET(
 				uid: user.id,
 			});
 		if (existingPagesError) {
-			console.error(
-				"[Cosense Sync List] Failed to fetch existing pages",
-				existingPagesError,
-			);
 		}
 		// Build map of existing metadata for comparison
 		const existingMap = new Map(
@@ -132,10 +122,6 @@ export async function GET(
 			.eq("user_id", user.id)
 			.in("scrapbox_page_id", scrapboxIds);
 		if (contentSyncError) {
-			console.error(
-				"[Cosense Sync List] Failed to fetch content sync timestamps",
-				contentSyncError,
-			);
 		}
 		const contentSyncMap = new Map(
 			(contentSyncPages ?? []).map(
@@ -195,7 +181,6 @@ export async function GET(
 			.from("pages")
 			.upsert(records, { onConflict: "user_id,scrapbox_page_id" });
 		if (upsertError) {
-			console.error("[Cosense Sync List] Upsert failed", upsertError);
 			return NextResponse.json(
 				{ error: "Failed to save pages" },
 				{ status: 500 },
@@ -208,10 +193,6 @@ export async function GET(
 			.update({ page_count: totalCount, updated_at: now })
 			.eq("id", cosenseProjectId);
 		if (relUpdateError) {
-			console.error(
-				"[Cosense Sync List] Failed to update user_cosense_projects page_count:",
-				relUpdateError,
-			);
 		}
 
 		return NextResponse.json(
@@ -223,8 +204,7 @@ export async function GET(
 			},
 			{ status: 200 },
 		);
-	} catch (err) {
-		console.error("Cosense list sync error:", err);
+	} catch (_err) {
 		return NextResponse.json(
 			{ error: "Internal server error" },
 			{ status: 500 },

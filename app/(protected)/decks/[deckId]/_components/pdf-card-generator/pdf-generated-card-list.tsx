@@ -18,7 +18,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { Json } from "@/types/database.types";
 import type {
-	CardSelectionState,
 	GeneratedCardListProps,
 	TiptapContent,
 } from "@/types/pdf-card-generator";
@@ -59,7 +58,7 @@ export function PdfGeneratedCardList({
 				source_pdf_url: card.source_pdf_url,
 			}));
 
-			const data = await createCards(cardsToInsert);
+			const _data = await createCards(cardsToInsert);
 
 			toast.success("カードを保存しました", {
 				description: `${selectedCardsList.length}件のカードを保存しました。`,
@@ -67,7 +66,6 @@ export function PdfGeneratedCardList({
 
 			router.push(`/decks/${deckId}`);
 		} catch (error) {
-			console.error("Error saving cards:", error);
 			toast.error("エラーが発生しました", {
 				description:
 					error instanceof Error

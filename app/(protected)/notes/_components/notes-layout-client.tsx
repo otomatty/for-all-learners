@@ -62,10 +62,9 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 
 			// 競合がない場合は直接実行
 			await executeBatchMove(pageIds, targetNoteId, isCopy, []);
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("処理に失敗しました");
-			console.error("ページ移動エラー:", error);
 		}
 	};
 
@@ -111,10 +110,9 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 					`処理中にエラーが発生しました: ${result.errors[0]?.error || "不明なエラー"}`,
 				);
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.dismiss();
 			toast.error("処理に失敗しました");
-			console.error("ページ移動エラー:", error);
 		}
 	};
 

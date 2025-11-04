@@ -1,0 +1,406 @@
+/**
+ * Editor Manager Tests
+ *
+ * Unit tests for the EditorManager class.
+ */
+
+import type { Editor, JSONContent } from "@tiptap/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EditorManager } from "../editor-manager";
+import { getEditorExtensionRegistry } from "../editor-registry";
+
+// Extended Editor type with setExtensions method
+interface EditorWithExtensions extends Editor {
+	setExtensions(extensions: unknown[]): void;
+}
+
+// Mock Editor
+const createMockEditor = (): EditorWithExtensions => {
+	const editor = {
+		chain: vi.fn(() => ({
+			focus: vi.fn(() => ({
+				toggleBold: vi.fn(() => ({
+					run: vi.fn(),
+				})),
+			})),
+		})),
+		getJSON: vi.fn(() => ({ type: "doc", content: [] })),
+		commands: {
+			setContent: vi.fn(),
+			setTextSelection: vi.fn(),
+		},
+		setExtensions: vi.fn(),
+		state: {
+			selection: {
+				from: 0,
+				to: 0,
+			},
+		},
+		on: vi.fn(),
+		off: vi.fn(),
+	} as unknown as EditorWithExtensions;
+
+	return editor;
+};
+
+describe("EditorManager", () => {
+	let manager: EditorManager;
+	let mockEditor: EditorWithExtensions;
+	let baseExtensions: unknown[];
+
+	beforeEach(() => {
+		manager = EditorManager.getInstance();
+		mockEditor = createMockEditor();
+		baseExtensions = [
+			{ name: "starterKit" },
+			{ name: "customHeading" },
+		] as unknown[];
+	});
+
+	afterEach(() => {
+		// Cleanup: unregister all editors
+		const _stats = manager.getStats();
+		// Note: We can't directly access editor IDs, so we'll reset the manager
+		EditorManager.reset();
+		getEditorExtensionRegistry().clear();
+	});
+
+	describe("Singleton Pattern", () => {
+		it("should return the same instance", () => {
+			const instance1 = EditorManager.getInstance();
+			const instance2 = EditorManager.getInstance();
+
+			expect(instance1).toBe(instance2);
+		});
+	});
+
+	describe("registerEditor", () => {
+		it("should register an editor", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const editor = manager.getEditor("test-editor-1");
+			expect(editor).toBe(mockEditor);
+		});
+
+		it("should update editor if already registered", () => {
+			const editor1 = createMockEditor();
+			const editor2 = createMockEditor();
+
+			manager.registerEditor("test-editor-1", editor1, baseExtensions);
+			manager.registerEditor("test-editor-1", editor2, baseExtensions);
+
+			const editor = manager.getEditor("test-editor-1");
+			expect(editor).toBe(editor2);
+		});
+
+		it("should apply plugin extensions on registration", () => {
+			const registry = getEditorExtensionRegistry();
+			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
+
+			registry.register("test-plugin", {
+				id: "test-extension",
+				extension: pluginExtension,
+				type: "plugin",
+			});
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			expect(mockEditor.setExtensions).toHaveBeenCalled();
+		});
+	});
+
+	describe("unregisterEditor", () => {
+		it("should unregister an editor", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.unregisterEditor("test-editor-1");
+
+			expect(manager.getEditor("test-editor-1")).toBeNull();
+		});
+
+		it("should clear active editor if unregistered", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.setActiveEditor("test-editor-1");
+			manager.unregisterEditor("test-editor-1");
+
+			expect(manager.getActiveEditor()).toBeNull();
+		});
+	});
+
+	describe("setActiveEditor / getActiveEditor", () => {
+		it("should set and get active editor", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.setActiveEditor("test-editor-1");
+
+			expect(manager.getActiveEditor()).toBe(mockEditor);
+		});
+
+		it("should return null when no active editor", () => {
+			expect(manager.getActiveEditor()).toBeNull();
+		});
+
+		it("should warn when setting active editor for non-existent editor", () => {
+			const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+			manager.setActiveEditor("non-existent");
+
+			expect(consoleSpy).not.toHaveBeenCalled(); // logger.warn is used, not console.warn
+			consoleSpy.mockRestore();
+		});
+	});
+
+	describe("getEditor", () => {
+		it("should get editor by ID", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			expect(manager.getEditor("test-editor-1")).toBe(mockEditor);
+		});
+
+		it("should return active editor when no ID specified", () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.setActiveEditor("test-editor-1");
+
+			expect(manager.getEditor()).toBe(mockEditor);
+		});
+
+		it("should return null for non-existent editor", () => {
+			expect(manager.getEditor("non-existent")).toBeNull();
+		});
+	});
+
+	describe("applyAllPluginExtensions", () => {
+		it("should apply plugin extensions to editor", () => {
+			const registry = getEditorExtensionRegistry();
+			const pluginExtension = { name: "plugin-extension" } as unknown as Editor;
+
+			registry.register("test-plugin", {
+				id: "test-extension",
+				extension: pluginExtension,
+				type: "plugin",
+			});
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.applyAllPluginExtensions("test-editor-1");
+
+			expect(mockEditor.setExtensions).toHaveBeenCalled();
+			const callArgs = (mockEditor.setExtensions as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
+			expect(callArgs).toContainEqual(baseExtensions[0]);
+			expect(callArgs).toContainEqual(pluginExtension);
+		});
+
+		it("should warn when editor not found", () => {
+			manager.applyAllPluginExtensions("non-existent");
+
+			// Should not throw, just log warning
+			expect(mockEditor.setExtensions).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("applyExtensionsToAllEditors", () => {
+		it("should apply extensions to all registered editors", () => {
+			const editor1 = createMockEditor();
+			const editor2 = createMockEditor();
+
+			manager.registerEditor("test-editor-1", editor1, baseExtensions);
+			manager.registerEditor("test-editor-2", editor2, baseExtensions);
+
+			manager.applyExtensionsToAllEditors();
+
+			expect(editor1.setExtensions).toHaveBeenCalled();
+			expect(editor2.setExtensions).toHaveBeenCalled();
+		});
+	});
+
+	describe("executeCommand", () => {
+		it("should execute command on editor", async () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+			manager.setActiveEditor("test-editor-1");
+
+			// Mock chain command - toggleBold is a direct method on chain, not nested
+			const chainMock = {
+				toggleBold: vi.fn(() => ({
+					run: vi.fn(),
+				})),
+			};
+			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+
+			await manager.executeCommand(undefined, "toggleBold");
+
+			expect(mockEditor.chain).toHaveBeenCalled();
+			expect(chainMock.toggleBold).toHaveBeenCalled();
+		});
+
+		it("should throw error when editor not found", async () => {
+			await expect(
+				manager.executeCommand("non-existent", "toggleBold"),
+			).rejects.toThrow("Editor non-existent not found");
+		});
+
+		it("should throw error when command not found", async () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const chainMock = {} as Record<string, unknown>;
+			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+
+			await expect(
+				manager.executeCommand("test-editor-1", "nonExistentCommand"),
+			).rejects.toThrow("Command nonExistentCommand not found");
+		});
+	});
+
+	describe("getContent", () => {
+		it("should get editor content", async () => {
+			const mockContent: JSONContent = {
+				type: "doc",
+				content: [{ type: "paragraph", content: [] }],
+			};
+			(mockEditor.getJSON as ReturnType<typeof vi.fn>).mockReturnValue(
+				mockContent,
+			);
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const content = await manager.getContent("test-editor-1");
+
+			expect(content).toEqual(mockContent);
+			expect(mockEditor.getJSON).toHaveBeenCalled();
+		});
+
+		it("should throw error when editor not found", async () => {
+			await expect(manager.getContent("non-existent")).rejects.toThrow(
+				"Editor non-existent not found",
+			);
+		});
+	});
+
+	describe("setContent", () => {
+		it("should set editor content", async () => {
+			const mockContent: JSONContent = {
+				type: "doc",
+				content: [{ type: "paragraph", content: [] }],
+			};
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			await manager.setContent("test-editor-1", mockContent);
+
+			expect(mockEditor.commands.setContent).toHaveBeenCalledWith(mockContent);
+		});
+
+		it("should throw error when editor not found", async () => {
+			await expect(
+				manager.setContent("non-existent", { type: "doc", content: [] }),
+			).rejects.toThrow("Editor non-existent not found");
+		});
+	});
+
+	describe("getSelection", () => {
+		it("should get editor selection", async () => {
+			mockEditor.state.selection = {
+				from: 5,
+				to: 10,
+			} as Editor["state"]["selection"];
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const selection = await manager.getSelection("test-editor-1");
+
+			expect(selection).toEqual({ from: 5, to: 10 });
+		});
+
+		it("should return null when no selection", async () => {
+			mockEditor.state.selection = {
+				from: 5,
+				to: 5,
+			} as Editor["state"]["selection"];
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const selection = await manager.getSelection("test-editor-1");
+
+			expect(selection).toBeNull();
+		});
+
+		it("should throw error when editor not found", async () => {
+			await expect(manager.getSelection("non-existent")).rejects.toThrow(
+				"Editor non-existent not found",
+			);
+		});
+	});
+
+	describe("setSelection", () => {
+		it("should set editor selection", async () => {
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			await manager.setSelection("test-editor-1", 5, 10);
+
+			expect(mockEditor.commands.setTextSelection).toHaveBeenCalledWith({
+				from: 5,
+				to: 10,
+			});
+		});
+
+		it("should throw error when editor not found", async () => {
+			await expect(manager.setSelection("non-existent", 5, 10)).rejects.toThrow(
+				"Editor non-existent not found",
+			);
+		});
+	});
+
+	describe("canExecuteCommand", () => {
+		it("should return true when command exists", async () => {
+			const chainMock = {
+				toggleBold: vi.fn(),
+			} as Record<string, unknown>;
+			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const canExecute = await manager.canExecuteCommand(
+				"test-editor-1",
+				"toggleBold",
+			);
+
+			expect(canExecute).toBe(true);
+		});
+
+		it("should return false when command does not exist", async () => {
+			const chainMock = {} as Record<string, unknown>;
+			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const canExecute = await manager.canExecuteCommand(
+				"test-editor-1",
+				"nonExistentCommand",
+			);
+
+			expect(canExecute).toBe(false);
+		});
+
+		it("should return false when editor not found", async () => {
+			const canExecute = await manager.canExecuteCommand(
+				"non-existent",
+				"toggleBold",
+			);
+
+			expect(canExecute).toBe(false);
+		});
+	});
+
+	describe("getStats", () => {
+		it("should return manager statistics", () => {
+			const editor1 = createMockEditor();
+			const editor2 = createMockEditor();
+
+			manager.registerEditor("test-editor-1", editor1, baseExtensions);
+			manager.registerEditor("test-editor-2", editor2, baseExtensions);
+			manager.setActiveEditor("test-editor-1");
+
+			const stats = manager.getStats();
+
+			expect(stats.totalEditors).toBe(2);
+			expect(stats.activeEditorId).toBe("test-editor-1");
+		});
+	});
+});

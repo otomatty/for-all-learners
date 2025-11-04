@@ -1,6 +1,4 @@
 @import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 @import "tailwindcss";
 @import "./themes/red.css";
 @import "./themes/rose.css";
@@ -9,7 +7,8 @@
 @import "./themes/blue.css";
 @import "./themes/yellow.css";
 @import "./themes/violet.css";
-@import "prismjs/themes/prism-tomorrow.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @layer utilities {
 	.text-balance {
@@ -88,6 +87,8 @@
 		--accent-foreground: 0 0% 9%;
 		--destructive: 0 84.2% 60.2%;
 		--destructive-foreground: 0 0% 98%;
+		--success: 142 76% 36%;
+		--success-foreground: 0 0% 98%;
 		--border: 0 0% 89.8%;
 		--input: 0 0% 89.8%;
 		--ring: 0 0% 3.9%;
@@ -123,6 +124,8 @@
 		--accent-foreground: 0 0% 98%;
 		--destructive: 0 62.8% 30.6%;
 		--destructive-foreground: 0 0% 98%;
+		--success: 142 71% 45%;
+		--success-foreground: 0 0% 98%;
 		--border: 0 0% 14.9%;
 		--input: 0 0% 14.9%;
 		--ring: 0 0% 83.1%;
@@ -170,6 +173,8 @@
 		--color-accent: var(--accent);
 		--color-accent-foreground: var(--accent-foreground);
 		--color-destructive: var(--destructive);
+		--color-success: var(--success);
+		--color-success-foreground: var(--success-foreground);
 		--color-border: var(--border);
 		--color-input: var(--input);
 		--color-ring: var(--ring);

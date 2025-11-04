@@ -1,12 +1,26 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import * as Icons from "lucide-react";
+import {
+	BarChart,
+	BookOpen,
+	Grip,
+	LayoutList,
+	type LucideIcon,
+	Target,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { NavItem } from "@/lib/navigation/types";
 import { cn } from "@/lib/utils";
+
+// アイコン名とコンポーネントのマッピング
+const iconMap: Record<string, LucideIcon> = {
+	LayoutList,
+	Target,
+	BookOpen,
+	BarChart,
+};
 
 interface AppNavDropdownProps {
 	items: NavItem[];
@@ -47,16 +61,16 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 			`}</style>
 			<div className="relative" ref={containerRef}>
 				<Button onClick={() => setOpen(!open)} variant="ghost" size="icon">
-					<Icons.Grip className="w-4 h-4" />
+					<Grip className="w-4 h-4" />
 				</Button>
 
 				{open && (
-					<div className="p-4 absolute right-0 mt-2 w-xs max-h-96 overflow-y-auto bg-white rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
+					<div className="p-4 absolute right-0 mt-2 w-xs max-h-96 overflow-y-auto bg-background rounded-md shadow-lg ring-opacity-5 z-50 border border-border">
 						<div className="p-2 grid grid-cols-3 gap-2">
 							{items.map((item) => {
 								const isDisabled =
 									item.status === "disabled" || item.status === "coming-soon";
-								const IconComponent = Icons[item.icon] as LucideIcon;
+								const IconComponent = iconMap[item.icon] as LucideIcon;
 								return (
 									<Link
 										key={item.href}
@@ -65,8 +79,8 @@ export default function AppNavDropdown({ items = [] }: AppNavDropdownProps) {
 										className={cn(
 											"relative group flex flex-col items-center justify-center p-2 text-sm rounded-md w-full aspect-square",
 											isDisabled
-												? "cursor-not-allowed text-gray-400"
-												: "hover:bg-gray-100 text-gray-700",
+												? "cursor-not-allowed text-muted-foreground"
+												: "hover:bg-accent text-foreground",
 										)}
 										onClick={(e) => {
 											if (isDisabled) e.preventDefault();

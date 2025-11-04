@@ -1,4 +1,3 @@
-import React from "react";
 import { getGoalDecks } from "@/app/_actions/goal-decks";
 import { createClient } from "@/lib/supabase/server";
 import type { Deck as ClientDeck } from "./GoalDecksSectionClient";
@@ -26,7 +25,7 @@ export default async function ServerGoalDecksSection({
 	} = await supabase.auth.getUser();
 	if (authError || !user)
 		throw new Error(authError?.message || "Not authenticated");
-	const userId = user.id;
+	const _userId = user.id;
 
 	// 目標に紐づくデッキを取得
 	const decks = await getGoalDecks(goalId);

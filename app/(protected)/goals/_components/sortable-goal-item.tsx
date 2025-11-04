@@ -42,14 +42,15 @@ export function SortableGoalItem({ goal }: SortableGoalItemProps) {
 		<div ref={setNodeRef} style={style} className="relative group">
 			<div className="flex items-center gap-3">
 				{/* ドラッグハンドル */}
-				<div
+				<button
+					type="button"
 					{...listeners}
 					{...attributes}
-					className="cursor-grab hover:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity touch-none"
+					className="cursor-grab hover:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity touch-none bg-transparent border-0 p-0"
 					aria-label="ゴールの順序を変更"
 				>
 					<GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-				</div>
+				</button>
 
 				{/* 優先順位番号 */}
 				{goal.priority_order && goal.priority_order > 0 && (

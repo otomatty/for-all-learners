@@ -16,7 +16,6 @@ export async function getUserSettings(): Promise<
 		error: authError,
 	} = await supabase.auth.getUser();
 	if (authError || !user) {
-		console.warn("Not authenticated, returning default user settings");
 		// Return default settings for unauthenticated users
 		return {
 			theme: "light",
@@ -31,7 +30,6 @@ export async function getUserSettings(): Promise<
 		.maybeSingle();
 
 	if (error) {
-		console.error("getUserSettings fetch error:", error);
 		throw new Error(error.message);
 	}
 
@@ -67,7 +65,6 @@ export async function updateUserSettings(
 		.single();
 
 	if (error || !data) {
-		console.error("updateUserSettings error:", error);
 		throw new Error(error?.message ?? "Failed to update user settings");
 	}
 
@@ -95,7 +92,6 @@ export async function initializeUserSettings(): Promise<
 		.select("*")
 		.single();
 	if (error || !data) {
-		console.error("initializeUserSettings error:", error);
 		throw new Error(error?.message ?? "Failed to initialize user settings");
 	}
 	return data;

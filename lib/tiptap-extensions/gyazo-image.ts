@@ -12,14 +12,14 @@ export const GyazoImage = Image.extend({
 
 	addAttributes() {
 		return {
-			...this.parent?.(),
+			...Image.config.addAttributes,
 			fullWidth: { default: false },
 		};
 	},
 
 	addOptions() {
 		return {
-			...this.parent?.(),
+			...Image.config.addOptions,
 			HTMLAttributes: {
 				class: "image",
 			},
@@ -34,12 +34,6 @@ export const GyazoImage = Image.extend({
 				type: this.type,
 				getAttributes: (match: RegExpMatchArray) => {
 					const id = match[1];
-					console.log("🖼️ GyazoImage: Double-bracket InputRule triggered", {
-						fullMatch: match[0],
-						id: match[1],
-						matchIndex: match.index,
-						matchLength: match[0].length,
-					});
 					return { src: `https://i.gyazo.com/${id}.png`, fullWidth: true };
 				},
 			}),

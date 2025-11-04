@@ -219,14 +219,12 @@ export interface UnilinkAttrs {
  * Note: ProseMirror types are kept as 'any' due to complex type imports
  */
 export const updateUnilinkAttrs = (
-	// biome-ignore lint/suspicious/noExplicitAny: ProseMirror Transaction type
 	tr: any,
 	pos: number,
 	attrs: UnilinkAttrs,
 ): void => {
 	const mark = tr.doc
 		.nodeAt(pos)
-		// biome-ignore lint/suspicious/noExplicitAny: ProseMirror Mark type
 		?.marks?.find((m: any) => m.type.name === "unilink");
 	if (!mark) {
 		logger.debug(

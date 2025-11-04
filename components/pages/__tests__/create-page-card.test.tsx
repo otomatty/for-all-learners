@@ -1,6 +1,6 @@
 /**
  * Tests for CreatePageCard component
- * @vitest-environment jsdom
+ * Note: happy-dom environment is already set up in vitest.config.mts
  *
  * Note: TypeScript errors for mock functions (mockResolvedValue, mockImplementation)
  * are expected because Vitest mock types are not included in SupabaseClient type.

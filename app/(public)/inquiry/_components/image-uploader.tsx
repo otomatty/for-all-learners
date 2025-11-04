@@ -1,12 +1,12 @@
 "use client";
 
 import imageCompression from "browser-image-compression";
-import { Image as ImageIcon, Loader2, PlusCircle, XCircle } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2, PlusCircle, XCircle } from "lucide-react";
+import Image from "next/image";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-import { Button } from "@/components/ui/button"; // Button for remove, if needed
 import { cn } from "@/lib/utils";
 
 export interface FileDetail {
@@ -40,6 +40,7 @@ export function ImageUploader({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [fileDetails, setFileDetails] = useState<FileDetail[]>([]);
 	const [isOverallProcessing, setIsOverallProcessing] = useState(false);
+	const fileInputId = useId();
 
 	const maxFileSizeBytes = maxFileSizeMB * MAX_FILE_SIZE_BYTES_FACTOR;
 
@@ -104,7 +105,6 @@ export function ImageUploader({
 				);
 				// toast.success(`ファイル "${file.name}" の処理が完了しました。`); // Individual success can be noisy
 			} catch (error) {
-				console.error(`Image processing error for ${file.name}:`, error);
 				const errorMessage =
 					error instanceof Error ? error.message : "画像の処理に失敗しました。";
 				setFileDetails((prevDetails) =>
@@ -210,11 +210,15 @@ export function ImageUploader({
 						key={detail.id}
 						className="relative group border rounded-md p-2 space-y-1 text-xs aspect-square flex flex-col items-center justify-center"
 					>
-						<img
-							src={detail.previewUrl}
-							alt={`プレビュー ${detail.originalFile.name}`}
-							className="max-w-full max-h-20 object-contain rounded-md mb-1"
-						/>
+						<div className="relative w-full h-20 mb-1">
+							<Image
+								src={detail.previewUrl}
+								alt={`プレビュー ${detail.originalFile.name}`}
+								fill
+								className="object-contain rounded-md"
+								unoptimized
+							/>
+						</div>
 						<button
 							type="button"
 							onClick={() => removeFile(detail.id)}
@@ -259,16 +263,18 @@ export function ImageUploader({
 				))}
 
 				{fileDetails.length < maxFiles && (
-					<div
+					<button
+						type="button"
 						onClick={triggerFileInput}
 						className={cn(
-							"cursor-pointer border-2 border-dashed border-muted-foreground/50 rounded-md aspect-square flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors",
+							"border-2 border-dashed border-muted-foreground/50 rounded-md aspect-square flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors",
 							(disabled || isOverallProcessing) &&
 								"cursor-not-allowed opacity-50 hover:border-muted-foreground/50 hover:text-muted-foreground",
+							!disabled && !isOverallProcessing && "cursor-pointer",
 						)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") triggerFileInput();
-						}}
+						disabled={
+							disabled || isOverallProcessing || fileDetails.length >= maxFiles
+						}
 						aria-label="画像を追加"
 					>
 						{isOverallProcessing ? (
@@ -281,12 +287,12 @@ export function ImageUploader({
 								? "処理中..."
 								: `画像を追加 (${fileDetails.length}/${maxFiles})`}
 						</p>
-					</div>
+					</button>
 				)}
 			</div>
 
 			<input
-				id="hidden-file-input" // id for label association if needed elsewhere
+				id={fileInputId}
 				ref={fileInputRef}
 				type="file"
 				accept="image/*"

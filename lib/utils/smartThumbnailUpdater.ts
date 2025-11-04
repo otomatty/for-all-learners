@@ -169,16 +169,9 @@ export function generateThumbnailUpdateLog(
  * @param decision 判定結果
  */
 export function debugThumbnailDecision(
-	params: SmartThumbnailUpdateParams,
-	decision: ThumbnailUpdateDecision,
+	_params: SmartThumbnailUpdateParams,
+	_decision: ThumbnailUpdateDecision,
 ): void {
 	if (process.env.NODE_ENV === "development") {
-		console.group(`[SmartThumbnail Debug] ページ ${params.pageId}`);
-		console.log("現在のサムネイル:", params.currentThumbnailUrl);
-		console.log("先頭画像URL:", decision.newThumbnailUrl);
-		console.log("更新判定:", decision.shouldUpdate ? "更新する" : "更新しない");
-		console.log("理由:", decision.reason);
-		console.log("強制更新:", params.forceUpdate);
-		console.groupEnd();
 	}
 }

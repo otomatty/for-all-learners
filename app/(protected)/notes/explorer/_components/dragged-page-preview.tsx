@@ -34,7 +34,7 @@ export default function DraggedPagePreview({ pages }: DraggedPagePreviewProps) {
 				</Badge>
 			</div>
 			<div className="text-xs text-muted-foreground space-y-1 max-h-20 overflow-hidden">
-				{pages.slice(0, 3).map((page, index) => (
+				{pages.slice(0, 3).map((page, _index) => (
 					<div key={page.id} className="truncate">
 						• {page.title}
 					</div>

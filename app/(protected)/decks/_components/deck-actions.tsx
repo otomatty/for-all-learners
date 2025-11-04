@@ -2,7 +2,7 @@
 
 import { MoreHorizontal, Share2, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import {
 	AlertDialog,
@@ -41,6 +41,7 @@ interface DeckActionsProps {
 export function DeckActions({ deckId }: DeckActionsProps) {
 	const router = useRouter();
 	const supabase = createClient();
+	const emailInputId = useId();
 	const [showShareDialog, setShowShareDialog] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [email, setEmail] = useState("");
@@ -92,7 +93,7 @@ export function DeckActions({ deckId }: DeckActionsProps) {
 
 			setEmail("");
 			setShowShareDialog(false);
-		} catch (error) {
+		} catch (_error) {
 			toast.error("デッキの共有中にエラーが発生しました。");
 		} finally {
 			setIsLoading(false);
@@ -119,7 +120,7 @@ export function DeckActions({ deckId }: DeckActionsProps) {
 			toast.success("デッキを削除しました。");
 
 			router.push("/decks");
-		} catch (error) {
+		} catch (_error) {
 			toast.error("デッキの削除中にエラーが発生しました。");
 		} finally {
 			setIsLoading(false);
@@ -162,9 +163,9 @@ export function DeckActions({ deckId }: DeckActionsProps) {
 					</DialogHeader>
 					<div className="space-y-4 py-2">
 						<div className="space-y-2">
-							<Label htmlFor="email">メールアドレス</Label>
+							<Label htmlFor={emailInputId}>メールアドレス</Label>
 							<Input
-								id="email"
+								id={emailInputId}
 								placeholder="user@example.com"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}

@@ -2,7 +2,7 @@
 
 import { RefreshCwIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import {
 	addUserCosenseProject,
@@ -65,6 +65,9 @@ export default function CosenseSyncSettings({
 	const [syncError, setSyncError] = useState<string | null>(null);
 	const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
 
+	const cookieId = useId();
+	const projectNameId = useId();
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
@@ -81,7 +84,7 @@ export default function CosenseSyncSettings({
 					<div className="mt-4 space-y-4">
 						{/* Scrapbox privateプロジェクト用 connect.sid — DevToolsで 'connect.sid' の値を取得 */}
 						<div className="flex flex-col space-y-1">
-							<label className="text-sm text-gray-600" htmlFor="scrapboxCookie">
+							<label className="text-sm text-gray-600" htmlFor={cookieId}>
 								DevTools → Network → 任意の Scrapbox プライベートページ →
 								Request Headers → Cookie → connect.sid の値をコピー
 							</label>
@@ -91,13 +94,17 @@ export default function CosenseSyncSettings({
 								value={scrapboxCookie}
 								onChange={(e) => setScrapboxCookie(e.target.value)}
 								className="flex-1 p-2 border rounded"
-								id="scrapboxCookie"
+								id={cookieId}
 							/>
 						</div>
 						{/* プロジェクト名入力 */}
 						<div className="flex items-center space-x-2">
+							<label htmlFor={projectNameId} className="sr-only">
+								プロジェクト名
+							</label>
 							<input
 								type="text"
+								id={projectNameId}
 								placeholder="プロジェクト名"
 								value={newProjName}
 								onChange={(e) => setNewProjName(e.target.value)}
@@ -150,7 +157,6 @@ export default function CosenseSyncSettings({
 										setProjects((prev) => [...prev, newProj]);
 										setNewProjName("");
 									} catch (err: unknown) {
-										console.error("Error in Cosense sync:", err);
 										setAddError(
 											err instanceof Error ? err.message : "不明なエラー",
 										);
@@ -267,7 +273,6 @@ export default function CosenseSyncSettings({
 												setShowDeleteDialog(false);
 												setSelectedProject(null);
 											} catch (err: unknown) {
-												console.error(err);
 												setDeleteError(
 													err instanceof Error ? err.message : "不明なエラー",
 												);
@@ -347,7 +352,6 @@ export default function CosenseSyncSettings({
 											setShowSyncDialog(false);
 											setProjectToSync(null);
 										} catch (err: unknown) {
-											console.error("Sync error:", err);
 											setSyncError(
 												err instanceof Error ? err.message : "不明なエラー",
 											);

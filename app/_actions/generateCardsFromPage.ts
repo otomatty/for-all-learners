@@ -1,16 +1,39 @@
+/**
+ * generateCardsFromPage - Generate flashcards from page content (Tiptap JSON)
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (使用先):
+ *   └─ components/pages/generate-cards/generate-cards-form.tsx
+ *
+ * Dependencies (依存先):
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt)
+ *   ├─ lib/logger.ts
+ *   └─ lib/supabase/server.ts
+ *
+ * Related Files:
+ *   ├─ Spec: ./generateCardsFromPage.spec.md
+ *   ├─ Tests: ./__tests__/generateCardsFromPage.test.ts
+ *   └─ Related: ./generateCards.ts (音声トランスクリプト用)
+ */
+
 "use server";
 
-import { createUserContent } from "@google/genai";
-import { geminiClient } from "@/lib/gemini/client";
+import type { LLMProvider } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
 
-interface TiptapNode {
-	type: string;
-	content?: TiptapNode[];
-	text?: string;
-	// attrs など他のプロパティも存在しうる
-}
+// Interface for Tiptap node structure (currently unused, kept for reference)
+// interface TiptapNode {
+// 	type: string;
+// 	content?: TiptapNode[];
+// 	text?: string;
+// 	// attrs など他のプロパティも存在しうる
+// }
 
 // TiptapのJSONBからテキストを抽出するヘルパー関数
 // node の型を Json に変更し、内部で TiptapNode ライクなオブジェクトかチェックする
@@ -65,6 +88,12 @@ function extractTextFromTiptap(tiptapContent: Json | null | undefined): string {
 		.trim();
 }
 
+// Options for card generation
+interface GenerateCardsOptions {
+	provider?: LLMProvider;
+	model?: string;
+}
+
 // 生成されたカードの型
 interface GeneratedRawCard {
 	front_content: string;
@@ -109,6 +138,7 @@ export async function wrapTextInTiptapJson(text: string): Promise<Json> {
 
 export async function generateRawCardsFromPageContent(
 	pageContentTiptap: Json | null,
+	options?: GenerateCardsOptions,
 ): Promise<{
 	generatedRawCards: GeneratedRawCard[];
 	error?: string;
@@ -124,35 +154,41 @@ export async function generateRawCardsFromPageContent(
 		};
 	}
 
-	// 2. AIモデルを呼び出してカードを生成
+	// 2. Provider を決定
+	const provider = (options?.provider || "google") as LLMProvider;
+
+	logger.info(
+		{ provider, pageTextLength: pageText.length, model: options?.model },
+		"Starting card generation from page content",
+	);
+
+	// 3. プロンプトを構築
 	const systemPrompt =
 		"以下のテキストから、問題文 (front_content) と回答 (back_content) のペアをJSON配列で生成してください。各ペアは独立した暗記カードとして機能するようにしてください。";
 
-	const contents = createUserContent([systemPrompt, pageText]);
+	const prompt = buildPrompt([systemPrompt, pageText]);
 
+	// 4. 動的にLLMクライアントを作成してカードを生成
 	let generatedRawCards: GeneratedRawCard[];
 	try {
-		const response = await geminiClient.models.generateContent({
-			model: "gemini-2.5-flash", // モデル名は適宜調整してください
-			contents,
+		const client = await createClientWithUserKey({
+			provider,
+			model: options?.model,
 		});
 
-		const { candidates } = response as unknown as {
-			candidates?: { content: { parts: { text: string }[] } }[];
-		};
-		const raw = candidates?.[0]?.content;
-		if (!raw) {
+		logger.info(
+			{ provider, model: options?.model },
+			"Calling LLM API for card generation from page",
+		);
+
+		// LLM APIを呼び出し（プロバイダー非依存）
+		const response = await client.generate(prompt);
+
+		if (!response || response.trim().length === 0) {
 			throw new Error("AIからの応答が空です。");
 		}
 
-		let jsonString: string;
-		if (typeof raw === "string") {
-			jsonString = raw;
-		} else if (typeof raw === "object" && Array.isArray(raw.parts)) {
-			jsonString = raw.parts.map((p: { text: string }) => p.text).join("");
-		} else {
-			jsonString = String(raw);
-		}
+		let jsonString = response;
 
 		const fencePattern = /```(?:json)?\s*?\n([\s\S]*?)```/;
 		const fenceMatch = jsonString.match(fencePattern);
@@ -167,7 +203,14 @@ export async function generateRawCardsFromPageContent(
 		}
 		generatedRawCards = JSON.parse(jsonString);
 	} catch (error: unknown) {
-		console.error("AIによるカード生成エラー:", error);
+		logger.error(
+			{
+				provider,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			"Failed to generate cards from page content",
+		);
+
 		if (error instanceof Error) {
 			return {
 				error: `AIによるカード生成に失敗しました: ${error.message}`,
@@ -196,7 +239,7 @@ interface CardToSave extends InsertableCard {
 
 export async function saveGeneratedCards(
 	cardsToSave: CardToSave[],
-	userId: string, // 念のためuser_idも引数で受け取り、cardsToSave内のものと一致確認しても良い
+	_userId: string, // 念のためuser_idも引数で受け取り、cardsToSave内のものと一致確認しても良い
 ): Promise<{ savedCardsCount: number; error?: string }> {
 	if (!cardsToSave || cardsToSave.length === 0) {
 		return { savedCardsCount: 0, error: "保存するカードがありません。" };
@@ -219,7 +262,6 @@ export async function saveGeneratedCards(
 		.select("id");
 
 	if (insertCardsError) {
-		console.error("カードのDB保存エラー:", insertCardsError);
 		return {
 			savedCardsCount: 0,
 			error: `カードのDB保存に失敗しました: ${insertCardsError.message}`,
@@ -243,7 +285,6 @@ export async function saveGeneratedCards(
 		.insert(cardPageLinksToInsert);
 
 	if (insertLinksError) {
-		console.error("カードとページのリンク作成エラー:", insertLinksError);
 		// カード自体は作成されているので、エラーメッセージは出すが、成功したカード数を返す
 		return {
 			savedCardsCount: insertedCards.length,

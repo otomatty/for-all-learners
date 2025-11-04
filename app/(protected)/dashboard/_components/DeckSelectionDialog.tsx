@@ -128,7 +128,6 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 				.eq("user_id", user.id)
 				.order("updated_at", { ascending: false });
 			if (error) {
-				console.error("Failed to fetch decks:", error);
 				return;
 			}
 			if (data?.length) {
@@ -158,7 +157,6 @@ export const DeckSelectionDialog: React.FC<DeckSelectionDialogProps> = ({
 			.select("*")
 			.maybeSingle();
 		if (error || !data) {
-			console.error("Failed to create deck:", error);
 			return;
 		}
 		const newDeck: DeckWithCount = { ...data, todayReviewCount: 0 };

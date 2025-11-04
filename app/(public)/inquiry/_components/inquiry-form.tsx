@@ -110,7 +110,7 @@ export default function InquiryForm({
 	}, []);
 
 	// isSubmitting や ImageUploader 内部の isProcessing を考慮して送信ボタンを制御
-	const isUploadingOrProcessing =
+	const _isUploadingOrProcessing =
 		processedAttachments.length > 0 && // そもそもファイルが選択されているか
 		form.formState.isSubmitting; // ImageUploaderが処理中かどうかはImageUploader自身が管理
 

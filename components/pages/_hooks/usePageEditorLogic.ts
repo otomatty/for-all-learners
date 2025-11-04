@@ -3,9 +3,10 @@ import type { JSONContent } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
 import { ReactNodeViewRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
+import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
 import {
@@ -77,9 +78,9 @@ export function usePageEditorLogic({
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
-	const editor = useEditor({
-		immediatelyRender: false,
-		extensions: [
+	// Memoize base extensions to prevent unnecessary re-renders
+	const baseExtensions = useMemo(
+		() => [
 			StarterKit.configure({
 				heading: false,
 				bulletList: false,
@@ -112,6 +113,12 @@ export function usePageEditorLogic({
 				includeChildren: true,
 			}),
 		],
+		[],
+	);
+
+	const editor = useEditor({
+		immediatelyRender: false,
+		extensions: baseExtensions,
 		editorProps: {
 			attributes: {
 				class:
@@ -119,6 +126,31 @@ export function usePageEditorLogic({
 			},
 		},
 	});
+
+	// Register editor with editor manager
+	useEffect(() => {
+		if (!editor) return;
+
+		const editorId = `page-editor-${page.id}`;
+		const editorManager = getEditorManager();
+
+		// Register editor with base extensions
+		editorManager.registerEditor(editorId, editor, baseExtensions);
+		editorManager.setActiveEditor(editorId);
+
+		// Set active editor on focus
+		const handleFocus = () => {
+			editorManager.setActiveEditor(editorId);
+		};
+
+		editor.on("focus", handleFocus);
+
+		// Cleanup: unregister editor on unmount
+		return () => {
+			editor.off("focus", handleFocus);
+			editorManager.unregisterEditor(editorId);
+		};
+	}, [editor, page.id, baseExtensions]);
 
 	// Initialize editor content with transformation pipeline
 	useEditorInitializer({

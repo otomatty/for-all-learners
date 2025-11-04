@@ -10,14 +10,10 @@ export default async function InquiryPage() {
 	} = await supabase.auth.getUser();
 
 	// お問い合わせカテゴリのデータをサーバーアクション経由で取得
-	const {
-		categories,
-		message: categoriesMessage,
-		success: categoriesSuccess,
-	} = await getInquiryCategories();
+	const { categories, success: categoriesSuccess } =
+		await getInquiryCategories();
 
 	if (!categoriesSuccess) {
-		console.error("Error fetching inquiry categories:", categoriesMessage);
 		// エラーハンドリング: カテゴリなしで進めるか、エラーページを表示するかなど
 		// ここでは categories が null または空配列になるので、フォーム側で適切に処理される想定
 	}

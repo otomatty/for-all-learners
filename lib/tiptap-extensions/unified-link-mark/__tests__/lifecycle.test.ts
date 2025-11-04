@@ -9,15 +9,13 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setupJSDOMEnvironment } from "@/lib/__tests__/helpers";
 import {
 	getAutoReconciler,
 	onCreateHandler,
 	onDestroyHandler,
 } from "../lifecycle";
 
-// Setup jsdom environment for this test
-setupJSDOMEnvironment();
+// Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("UnifiedLinkMark Lifecycle", () => {
 	let editor: Editor;

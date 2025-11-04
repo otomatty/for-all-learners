@@ -95,7 +95,6 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 				.select("deck_id")
 				.eq("goal_id", selectedGoalId);
 			if (linksError) {
-				console.error("Failed to fetch goal-deck links:", linksError);
 				return;
 			}
 			const deckIds = links.map((l) => l.deck_id);
@@ -111,7 +110,6 @@ const GoalSummaryClient: React.FC<GoalSummaryClientProps> = ({
 				.in("deck_id", deckIds)
 				.or(`next_review_at.is.null,next_review_at.lte.${nowIso}`);
 			if (countError) {
-				console.error("Failed to count due cards:", countError);
 				return;
 			}
 			setReviewCount(count ?? 0);

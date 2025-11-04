@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { updateDeck } from "@/app/_actions/decks";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,9 @@ export function DeckForm({
 }: DeckFormProps) {
 	const router = useRouter();
 	const supabase = createClient();
+	const titleId = useId();
+	const descriptionId = useId();
+	const isPublicId = useId();
 	const [isLoading, setIsLoading] = useState(false);
 	// Initialize form state (use initial values for edit)
 	const [title, setTitle] = useState(initialTitle ?? "");
@@ -65,8 +68,6 @@ export function DeckForm({
 				router.push(`/decks/${data[0].id}`);
 			}
 		} catch (err) {
-			// Log detailed error for debugging
-			console.error("DeckForm handleSubmit error:", err);
 			// Determine user-friendly message
 			let message = "デッキの作成中にエラーが発生しました。";
 			if (err instanceof Error && err.message) {
@@ -85,9 +86,9 @@ export function DeckForm({
 	return (
 		<form onSubmit={handleSubmit} className="space-y-4">
 			<div className="space-y-2">
-				<Label htmlFor="title">タイトル</Label>
+				<Label htmlFor={titleId}>タイトル</Label>
 				<Input
-					id="title"
+					id={titleId}
 					placeholder="デッキのタイトルを入力"
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
@@ -95,9 +96,9 @@ export function DeckForm({
 				/>
 			</div>
 			<div className="space-y-2">
-				<Label htmlFor="description">説明</Label>
+				<Label htmlFor={descriptionId}>説明</Label>
 				<Textarea
-					id="description"
+					id={descriptionId}
 					placeholder="デッキの説明を入力（任意）"
 					value={description}
 					onChange={(e) => setDescription(e.target.value)}
@@ -106,11 +107,11 @@ export function DeckForm({
 			</div>
 			<div className="flex items-center space-x-2">
 				<Switch
-					id="is-public"
+					id={isPublicId}
 					checked={isPublic}
 					onCheckedChange={setIsPublic}
 				/>
-				<Label htmlFor="is-public">公開する</Label>
+				<Label htmlFor={isPublicId}>公開する</Label>
 			</div>
 			<Button
 				type="button"

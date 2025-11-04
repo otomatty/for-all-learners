@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -106,7 +105,7 @@ export function EditGoalDialog({
 			} else {
 				setSubmitError(result.error);
 			}
-		} catch (error) {
+		} catch (_error) {
 			setSubmitError("目標の更新に失敗しました");
 		} finally {
 			setIsSubmitting(false);
