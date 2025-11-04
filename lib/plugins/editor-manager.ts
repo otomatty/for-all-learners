@@ -223,7 +223,7 @@ export class EditorManager {
 	 * @param editorId Editor ID
 	 * @param pluginId Plugin ID
 	 */
-	public applyPluginExtensions(editorId: string, pluginId: string): void {
+	public applyPluginExtensions(editorId: string, _pluginId: string): void {
 		// Reapply all extensions (simpler approach)
 		this.applyAllPluginExtensions(editorId);
 	}
@@ -234,7 +234,7 @@ export class EditorManager {
 	 * @param editorId Editor ID
 	 * @param pluginId Plugin ID
 	 */
-	public removePluginExtensions(editorId: string, pluginId: string): void {
+	public removePluginExtensions(editorId: string, _pluginId: string): void {
 		// Reapply all extensions without the removed plugin's extensions
 		this.applyAllPluginExtensions(editorId);
 	}
@@ -266,17 +266,20 @@ export class EditorManager {
 
 		// Check if command exists
 		const chain = editor.chain();
-		const commandFn = (chain as Record<string, unknown>)[command];
+		const commandFn = (chain as Record<string, (...a: unknown[]) => unknown>)[
+			command
+		];
 
 		if (typeof commandFn !== "function") {
 			throw new Error(`Command ${command} not found`);
 		}
 
 		try {
-			const result = (commandFn as (...args: unknown[]) => unknown)(
-				...args,
-			);
-			return result;
+			// .run() must be called to execute the command
+			const chainResult = commandFn.apply(chain, args) as {
+				run: () => unknown;
+			};
+			return chainResult.run();
 		} catch (error) {
 			logger.error(
 				{ error, editorId, command, args },
@@ -292,9 +295,7 @@ export class EditorManager {
 	 * @param editorId Editor ID (optional, defaults to active editor)
 	 * @returns Editor content as JSONContent
 	 */
-	public async getContent(
-		editorId?: string,
-	): Promise<JSONContent> {
+	public async getContent(editorId?: string): Promise<JSONContent> {
 		const editor = this.getEditor(editorId);
 
 		if (!editor) {
@@ -393,10 +394,17 @@ export class EditorManager {
 			return false;
 		}
 
-		const chain = editor.chain();
-		const commandFn = (chain as Record<string, unknown>)[command];
+		const canChain = editor.can();
+		const commandFn = (canChain as unknown as Record<string, () => boolean>)[
+			command
+		];
 
-		return typeof commandFn === "function";
+		if (typeof commandFn !== "function") {
+			return false;
+		}
+
+		// Call the command on the `can()` chain to check its availability
+		return commandFn();
 	}
 
 	// ========================================================================
@@ -429,4 +437,3 @@ export class EditorManager {
 export function getEditorManager(): EditorManager {
 	return EditorManager.getInstance();
 }
-
