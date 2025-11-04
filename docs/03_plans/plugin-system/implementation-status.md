@@ -136,7 +136,7 @@
 | 機能 | ステータス | 実装ファイル | 備考 |
 |------|---------|------------|------|
 | **基本UI** | ✅ **完了** | `app/(protected)/settings/plugins/page.tsx` | インストール済み/マーケットプレイスタブ切り替え |
-| **検索・フィルタリング** | ⚠️ **部分的** | `app/_actions/plugins.ts` | バックエンド実装済み、UI未実装 |
+| **検索・フィルタリング** | ✅ **完了** | `app/(protected)/settings/plugins/_components/PluginFiltersClient.tsx` | 検索バー、フィルター、ソート機能実装済み |
 | **レーティング・レビュー** | ⚠️ **部分的** | DBスキーマ | レーティング表示のみ、投稿UI未実装 |
 | **更新通知** | ❌ **未実装** | - | 未実装 |
 | **設定UI** | ❌ **未実装** | - | 未実装 |
@@ -160,7 +160,7 @@
 
 **実装ファイル**: `app/(protected)/settings/plugins/page.tsx`
 
-#### ⚠️ 検索・フィルタリング（部分的）
+#### ✅ 検索・フィルタリング（完了）
 
 **実装済み**:
 - ✅ `getAvailablePlugins()`: バックエンド検索・フィルタリング機能
@@ -169,14 +169,19 @@
   - `isReviewed`: レビュー済みフィルタ
   - `extensionPoint`: 拡張ポイントフィルタ
   - `limit` / `offset`: ページネーション
+- ✅ UI検索バー（`PluginSearchBar`）: リアルタイム検索
+- ✅ UIフィルタリング（`PluginFilters`）: 公式/コミュニティ、レビュー済み、拡張ポイント
+- ✅ ソート機能（`PluginSortSelect`）: 人気順、レーティング順、最新順、名前順
+- ✅ URLパラメータ管理（`PluginFiltersClient`）: Next.jsのuseSearchParamsを使用
 
-**未実装**:
-- ❌ UI検索バー（リアルタイム検索）
-- ❌ オートコンプリート
-- ❌ UIフィルタリング（カテゴリ、公式/コミュニティ、レビュー済み）
-- ❌ ソート機能（人気順、レーティング順、最新順、名前順）
+**実装ファイル**:
+- `app/(protected)/settings/plugins/_components/PluginSearchBar.tsx`: 検索バーコンポーネント
+- `app/(protected)/settings/plugins/_components/PluginFilters.tsx`: フィルターコンポーネント
+- `app/(protected)/settings/plugins/_components/PluginSortSelect.tsx`: ソート選択コンポーネント
+- `app/(protected)/settings/plugins/_components/PluginFiltersClient.tsx`: クライアントコンポーネント（URLパラメータ管理）
+- `app/(protected)/settings/plugins/page.tsx`: プラグインページの統合
 
-**推定時間**: 6時間（UI実装が必要）
+**備考**: 検索・フィルタリング・ソート機能のUI実装が完了。URLパラメータによる状態管理も実装済み。
 
 #### ⚠️ レーティング・レビューシステム（部分的）
 
@@ -268,13 +273,13 @@
 ### Phase 3: Marketplace UI/UX ⚠️ 部分的完了
 
 - ✅ 基本UI（完了）
-- ⚠️ 検索・フィルタリング（バックエンドのみ）
+- ✅ 検索・フィルタリング（完了）
 - ⚠️ レーティング・レビュー（表示のみ）
 - ❌ 更新通知（未実装）
 - ❌ 設定UI（未実装）
 - ✅ アンインストール確認（完了）
 
-**完了率**: 約40% (基本UI + アンインストール確認 + 一部バックエンド)
+**完了率**: 約50% (基本UI + 検索・フィルタリング + アンインストール確認)
 
 ---
 
@@ -295,7 +300,7 @@
 ### 中優先度（Issue 95完了のため）
 
 3. **マーケットプレイスUI強化**（推定24時間）
-   - 検索・フィルタリングUI実装
+   - ✅ 検索・フィルタリングUI実装 ✅
    - レーティング・レビューシステム実装
    - 更新通知機能実装
    - 設定UI実装
@@ -341,4 +346,5 @@
 | 2025-11-04 | AI Extensions実装完了（Question Generator/Prompt Template/Content Analyzer API） | AI Agent |
 | 2025-11-04 | アンインストール確認ダイアログ実装完了 | AI Agent |
 | 2025-01-05 | UI Extensions実装完了（Widget/Page/Sidebar Panel API） | AI Agent |
+| 2025-01-05 | 検索・フィルタリングUI実装完了（検索バー、フィルター、ソート機能） | AI Agent |
 

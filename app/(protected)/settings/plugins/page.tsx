@@ -10,10 +10,11 @@
  * Dependencies:
  *   ├─ app/_actions/plugins.ts
  *   ├─ components/ui/* (Button, Card, Switch, etc.)
- *   └─ types/plugin.ts
+ *   ├─ types/plugin.ts
+ *   └─ ./_components/PluginFiltersClient.tsx
  *
  * Related Documentation:
- *   └─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
 import { Download, Package, Shield, Star } from "lucide-react";
@@ -35,16 +36,63 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PluginMetadata } from "@/types/plugin";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
+import { PluginFiltersClient } from "./_components/PluginFiltersClient";
 
 /**
  * Plugin Settings Page Component
  */
-export default async function PluginsPage() {
+export default async function PluginsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{
+		search?: string;
+		official?: string;
+		reviewed?: string;
+		extensionPoint?: string;
+		sort?: string;
+		tab?: string;
+	}>;
+}) {
+	const params = await searchParams;
+	const search = params.search ?? "";
+	const isOfficial = params.official === "true" ? true : null;
+	const isReviewed = params.reviewed === "true" ? true : null;
+	const extensionPoint =
+		params.extensionPoint && params.extensionPoint !== "all"
+			? params.extensionPoint
+			: undefined;
+	const sort = params.sort ?? "popular";
+
 	// Fetch data
 	const [installedPlugins, availablePlugins] = await Promise.all([
 		getInstalledPlugins().catch(() => []),
-		getAvailablePlugins({ limit: 50 }).catch(() => []),
+		getAvailablePlugins({
+			search: search || undefined,
+			isOfficial: isOfficial ?? undefined,
+			isReviewed: isReviewed ?? undefined,
+			extensionPoint,
+			limit: 50,
+		}).catch(() => []),
 	]);
+
+	// Sort plugins based on sort parameter
+	const sortedPlugins = [...availablePlugins].sort((a, b) => {
+		if (sort === "popular") {
+			return b.downloadsCount - a.downloadsCount;
+		}
+		if (sort === "rating") {
+			const aRating = a.ratingAverage ?? 0;
+			const bRating = b.ratingAverage ?? 0;
+			return bRating - aRating;
+		}
+		if (sort === "updated") {
+			return b.updatedAt.getTime() - a.updatedAt.getTime();
+		}
+		if (sort === "name") {
+			return a.name.localeCompare(b.name, "ja");
+		}
+		return 0;
+	});
 
 	const installedIds = new Set(installedPlugins.map((p) => p.pluginId));
 
@@ -57,13 +105,13 @@ export default async function PluginsPage() {
 				</p>
 			</div>
 
-			<Tabs defaultValue="installed" className="w-full">
+			<Tabs defaultValue={params.tab ?? "installed"} className="w-full">
 				<TabsList className="grid w-full grid-cols-2 mb-8">
 					<TabsTrigger value="installed">
 						インストール済み ({installedPlugins.length})
 					</TabsTrigger>
 					<TabsTrigger value="marketplace">
-						マーケットプレイス ({availablePlugins.length})
+						マーケットプレイス ({sortedPlugins.length})
 					</TabsTrigger>
 				</TabsList>
 
@@ -90,7 +138,24 @@ export default async function PluginsPage() {
 
 				{/* Marketplace Tab */}
 				<TabsContent value="marketplace" className="space-y-4">
-					{availablePlugins.length === 0 ? (
+					<PluginFiltersClient
+						initialSearch={search}
+						initialOfficial={isOfficial}
+						initialReviewed={isReviewed}
+						initialExtensionPoint={
+							extensionPoint as
+								| "editor"
+								| "ai"
+								| "ui"
+								| "dataProcessor"
+								| "integration"
+								| null
+								| undefined
+						}
+						initialSort={sort as "popular" | "rating" | "updated" | "name"}
+					/>
+
+					{sortedPlugins.length === 0 ? (
 						<Card>
 							<CardContent className="pt-6 text-center">
 								<p className="text-muted-foreground">
@@ -99,7 +164,7 @@ export default async function PluginsPage() {
 							</CardContent>
 						</Card>
 					) : (
-						availablePlugins.map((plugin) => (
+						sortedPlugins.map((plugin) => (
 							<MarketplacePluginCard
 								key={plugin.pluginId}
 								plugin={plugin}
