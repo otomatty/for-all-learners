@@ -20,7 +20,7 @@
 import { Package } from "lucide-react";
 import {
 	getAvailablePlugins,
-	getInstalledPlugins,
+	getInstalledPluginsWithUpdates,
 } from "@/app/_actions/plugins";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,7 +55,7 @@ export default async function PluginsPage({
 
 	// Fetch data
 	const [installedPlugins, availablePlugins] = await Promise.all([
-		getInstalledPlugins().catch(() => []),
+		getInstalledPluginsWithUpdates().catch(() => []),
 		getAvailablePlugins({
 			search: search || undefined,
 			isOfficial: isOfficial ?? undefined,

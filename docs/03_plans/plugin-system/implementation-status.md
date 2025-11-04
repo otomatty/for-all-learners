@@ -168,7 +168,7 @@
 | **基本UI** | ✅ **完了** | `app/(protected)/settings/plugins/page.tsx` | インストール済み/マーケットプレイスタブ切り替え |
 | **検索・フィルタリング** | ✅ **完了** | `app/(protected)/settings/plugins/_components/PluginFiltersClient.tsx` | 検索バー、フィルター、ソート機能実装済み |
 | **レーティング・レビュー** | ✅ **完了** | `app/(protected)/settings/plugins/_components/*` | レーティング・レビュー投稿・一覧表示・編集・削除機能実装済み |
-| **更新通知** | ❌ **未実装** | - | 未実装 |
+| **更新通知** | ✅ **完了** | `app/_actions/plugins.ts`<br>`app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx` | バージョン比較・更新機能実装済み |
 | **設定UI** | ❌ **未実装** | - | 未実装 |
 | **アンインストール確認** | ✅ **完了** | `app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx` | AlertDialogによる確認ダイアログ実装済み |
 
@@ -245,17 +245,24 @@
 
 **推定時間**: 8時間（実装完了）
 
-#### ❌ プラグイン更新通知（未実装）
+#### ✅ プラグイン更新通知（完了）
 
-**未実装**:
-- ❌ 更新チェック機能（バージョン比較ロジック）
-- ❌ 定期的な更新確認
-- ❌ 更新可能プラグイン一覧UI
-- ❌ バッジ表示（更新可能）
-- ❌ 変更履歴表示
-- ❌ 一括更新機能
+**実装内容**:
+- ✅ バージョン比較ロジック（semver比較）: `compareVersions()` / `isUpdateAvailable()` 関数
+- ✅ 更新可能プラグインの検出API: `getInstalledPluginsWithUpdates()` 関数
+- ✅ 更新処理API: `updatePlugin()` Server Action
+- ✅ インストール済みプラグインカードに更新バッジ表示（「更新あり」バッジ）
+- ✅ 更新ボタンと更新処理（`InstalledPluginCard` コンポーネント）
+- ✅ バージョン情報表示（現在のバージョン → 最新バージョン）
 
-**推定時間**: 4時間（未着手）
+**実装ファイル**:
+- `app/_actions/plugins.ts`: バージョン比較ロジック、更新検出・更新処理API
+- `app/(protected)/settings/plugins/page.tsx`: `getInstalledPluginsWithUpdates()` を使用
+- `app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx`: 更新バッジ・更新ボタンUI
+
+**備考**: 基本的な更新通知機能の実装が完了。ユーザーは更新可能なプラグインを視覚的に確認でき、ワンクリックで更新できる。定期的な更新確認と一括更新機能、変更履歴表示は将来的な拡張として残している。
+
+**推定時間**: 4時間（実装完了）
 
 #### ❌ プラグイン設定UI（未実装）
 
@@ -319,11 +326,11 @@
 - ✅ 基本UI（完了）
 - ✅ 検索・フィルタリング（完了）
 - ✅ レーティング・レビュー（完了）
-- ❌ 更新通知（未実装）
+- ✅ 更新通知（完了）
 - ❌ 設定UI（未実装）
 - ✅ アンインストール確認（完了）
 
-**完了率**: 約67% (基本UI + 検索・フィルタリング + レーティング・レビュー + アンインストール確認)
+**完了率**: 約83% (基本UI + 検索・フィルタリング + レーティング・レビュー + 更新通知 + アンインストール確認)
 
 ---
 
@@ -346,7 +353,7 @@
 3. **マーケットプレイスUI強化**（推定24時間）
    - ✅ 検索・フィルタリングUI実装 ✅
    - ✅ レーティング・レビューシステム実装 ✅
-   - 更新通知機能実装
+   - ✅ 更新通知機能実装 ✅
    - 設定UI実装
    - ✅ アンインストール確認ダイアログ実装 ✅
 
@@ -394,4 +401,5 @@
 | 2025-01-05 | Integration Extensions実装完了（OAuth連携/Webhook/External API呼び出しAPI） | AI Agent |
 | 2025-01-05 | Phase 2 Extension Registryを関数型にリファクタリング完了<br>（EditorExtensionRegistry, AIExtensionRegistry, UIExtensionRegistry,<br>DataProcessorExtensionRegistry, IntegrationExtensionRegistryをクラスベース<br>シングルトンから関数型モジュールに移行。244テストケース全てパス） | AI Agent |
 | 2025-01-05 | レーティング・レビューシステム実装完了<br>（plugin_ratings, plugin_reviews, plugin_review_helpfulテーブル作成、<br>Server Actions実装、星評価・レビュー投稿UI、レビュー一覧表示・ページネーション・役立ったボタン実装） | AI Agent |
+| 2025-01-05 | プラグイン更新通知機能実装完了<br>（バージョン比較ロジック、更新検出API、更新処理API、<br>インストール済みプラグインカードに更新バッジ・更新ボタンUI実装） | AI Agent |
 

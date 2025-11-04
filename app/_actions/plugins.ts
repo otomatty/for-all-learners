@@ -30,6 +30,49 @@ import type {
 } from "@/types/plugin";
 
 // ============================================================================
+// Version Comparison Utilities
+// ============================================================================
+
+/**
+ * Compare two semantic versions
+ * Returns: 1 if v1 > v2, -1 if v1 < v2, 0 if v1 === v2
+ *
+ * @param v1 First version string
+ * @param v2 Second version string
+ * @returns Comparison result
+ */
+function compareVersions(v1: string, v2: string): number {
+	const parts1 = v1.split(".").map(Number);
+	const parts2 = v2.split(".").map(Number);
+
+	// Ensure both arrays have same length
+	const maxLength = Math.max(parts1.length, parts2.length);
+	while (parts1.length < maxLength) parts1.push(0);
+	while (parts2.length < maxLength) parts2.push(0);
+
+	for (let i = 0; i < maxLength; i++) {
+		if (parts1[i] > parts2[i]) return 1;
+		if (parts1[i] < parts2[i]) return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Check if an update is available for a plugin
+ *
+ * @param installedVersion Installed version
+ * @param latestVersion Latest available version
+ * @returns True if update is available
+ */
+function isUpdateAvailable(
+	installedVersion: string,
+	latestVersion: string,
+): boolean {
+	return compareVersions(latestVersion, installedVersion) > 0;
+}
+
+// ============================================================================
 // Type Mapping Helpers
 // ============================================================================
 
@@ -581,5 +624,131 @@ export async function isPluginInstalled(pluginId: string): Promise<boolean> {
 			"[plugins] Failed to check if plugin is installed",
 		);
 		return false;
+	}
+}
+
+// ============================================================================
+// Plugin Update Management
+// ============================================================================
+
+/**
+ * Get plugins with update availability information
+ *
+ * @returns Array of installed plugins with update info
+ */
+export async function getInstalledPluginsWithUpdates(): Promise<
+	Array<
+		UserPlugin & {
+			metadata: PluginMetadata;
+			hasUpdate: boolean;
+			latestVersion: string;
+			installedVersion: string;
+		}
+	>
+> {
+	try {
+		const installedPlugins = await getInstalledPlugins();
+
+		return installedPlugins.map((userPlugin) => {
+			const latestVersion = userPlugin.metadata.version;
+			const installedVersion = userPlugin.installedVersion;
+			const hasUpdate = isUpdateAvailable(installedVersion, latestVersion);
+
+			return {
+				...userPlugin,
+				hasUpdate,
+				latestVersion,
+				installedVersion,
+			};
+		});
+	} catch (error) {
+		logger.error(
+			{ error },
+			"[plugins] Failed to get installed plugins with updates",
+		);
+		throw error;
+	}
+}
+
+/**
+ * Update a plugin to the latest version
+ *
+ * @param formData FormData containing pluginId
+ */
+export async function updatePlugin(formData: FormData): Promise<void> {
+	const pluginId = formData.get("pluginId") as string;
+	if (!pluginId) {
+		throw new Error("Plugin ID is required");
+	}
+
+	let user: { id: string } | null = null;
+	try {
+		const supabase = await createClient();
+
+		// Get current user
+		const {
+			data: { user: currentUser },
+		} = await supabase.auth.getUser();
+
+		if (!currentUser) {
+			throw new Error("User not authenticated");
+		}
+
+		user = currentUser;
+
+		// Get plugin metadata
+		const plugin = await getPlugin(pluginId);
+
+		if (!plugin) {
+			throw new Error(`Plugin ${pluginId} not found`);
+		}
+
+		// Get user plugin
+		const { data: userPlugin, error: fetchError } = await supabase
+			.from("user_plugins")
+			.select("*")
+			.eq("user_id", user.id)
+			.eq("plugin_id", pluginId)
+			.single();
+
+		if (fetchError) {
+			throw new Error(`Plugin ${pluginId} is not installed`);
+		}
+
+		// Check if update is available
+		if (!isUpdateAvailable(userPlugin.installed_version, plugin.version)) {
+			throw new Error(
+				`Plugin ${pluginId} is already at the latest version`,
+			);
+		}
+
+		// Update installed version
+		const { error: updateError } = await supabase
+			.from("user_plugins")
+			.update({
+				installed_version: plugin.version,
+			})
+			.eq("user_id", user.id)
+			.eq("plugin_id", pluginId);
+
+		if (updateError) {
+			throw updateError;
+		}
+
+		logger.info(
+			{
+				pluginId,
+				userId: user.id,
+				oldVersion: userPlugin.installed_version,
+				newVersion: plugin.version,
+			},
+			"[plugins] Plugin updated successfully",
+		);
+	} catch (error) {
+		logger.error(
+			{ error, pluginId, userId: user?.id },
+			"[plugins] Failed to update plugin",
+		);
+		throw error;
 	}
 }

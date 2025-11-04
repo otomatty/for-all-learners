@@ -1,11 +1,11 @@
 "use client";
 
-import { Shield, ToggleLeft, Trash2 } from "lucide-react";
+import { ArrowDownCircle, Shield, ToggleLeft, Trash2 } from "lucide-react";
 /**
  * Installed Plugin Card Component (Client Component)
  *
  * Displays installed plugin information with enable/disable and uninstall actions.
- * Includes uninstall confirmation dialog.
+ * Includes uninstall confirmation dialog and update functionality.
  */
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import {
 	disablePlugin,
 	enablePlugin,
 	uninstallPlugin,
+	updatePlugin,
 } from "@/app/_actions/plugins";
 import {
 	AlertDialog,
@@ -37,13 +38,23 @@ import {
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 
 interface InstalledPluginCardProps {
-	userPlugin: UserPlugin & { metadata: PluginMetadata };
+	userPlugin: UserPlugin & {
+		metadata: PluginMetadata;
+		hasUpdate?: boolean;
+		latestVersion?: string;
+		installedVersion?: string;
+	};
 }
 
 export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 	const { metadata } = userPlugin;
+	const hasUpdate = userPlugin.hasUpdate ?? false;
+	const latestVersion = userPlugin.latestVersion ?? metadata.version;
+	const installedVersion = userPlugin.installedVersion;
+
 	const [showUninstallDialog, setShowUninstallDialog] = useState(false);
 	const [isPending, startTransition] = useTransition();
+	const [isUpdating, setIsUpdating] = useState(false);
 
 	const handleUninstall = () => {
 		startTransition(async () => {
@@ -65,6 +76,26 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 		});
 	};
 
+	const handleUpdate = () => {
+		setIsUpdating(true);
+		startTransition(async () => {
+			try {
+				const formData = new FormData();
+				formData.append("pluginId", userPlugin.pluginId);
+				await updatePlugin(formData);
+				toast.success("プラグインを更新しました");
+				// Refresh the page to update the list
+				window.location.reload();
+			} catch (error) {
+				toast.error(
+					error instanceof Error ? error.message : "更新に失敗しました",
+				);
+			} finally {
+				setIsUpdating(false);
+			}
+		});
+	};
+
 	return (
 		<>
 			<Card>
@@ -79,6 +110,15 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 										公式
 									</Badge>
 								)}
+								{hasUpdate && (
+									<Badge
+										variant="default"
+										className="gap-1 bg-orange-500 hover:bg-orange-600"
+									>
+										<ArrowDownCircle className="h-3 w-3" />
+										更新あり
+									</Badge>
+								)}
 								{userPlugin.enabled ? (
 									<Badge variant="outline" className="bg-green-50">
 										有効
@@ -91,7 +131,12 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 						</div>
 					</div>
 					<div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-						<span>v{userPlugin.installedVersion}</span>
+						<span>
+							v{installedVersion}
+							{hasUpdate && (
+								<span className="ml-2 text-orange-600">→ v{latestVersion}</span>
+							)}
+						</span>
 						<span>作成者: {metadata.author}</span>
 					</div>
 				</CardHeader>
@@ -117,6 +162,18 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 				</CardContent>
 
 				<CardFooter className="flex gap-2">
+					{hasUpdate && (
+						<Button
+							variant="default"
+							size="sm"
+							className="gap-2"
+							onClick={handleUpdate}
+							disabled={isUpdating || isPending}
+						>
+							<ArrowDownCircle className="h-4 w-4" />
+							{isUpdating ? "更新中..." : "更新"}
+						</Button>
+					)}
 					<form action={userPlugin.enabled ? disablePlugin : enablePlugin}>
 						<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
 						<Button
@@ -124,6 +181,7 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 							variant={userPlugin.enabled ? "outline" : "default"}
 							size="sm"
 							className="gap-2"
+							disabled={isUpdating || isPending}
 						>
 							<ToggleLeft className="h-4 w-4" />
 							{userPlugin.enabled ? "無効化" : "有効化"}
@@ -135,6 +193,7 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 						size="sm"
 						className="gap-2"
 						onClick={() => setShowUninstallDialog(true)}
+						disabled={isUpdating || isPending}
 					>
 						<Trash2 className="h-4 w-4" />
 						アンインストール
