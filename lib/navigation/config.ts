@@ -18,6 +18,12 @@ export const desktopNavItems: NavItem[] = [
 		],
 	},
 	{ label: "レポート", href: "/reports", icon: "BarChart", status: "demo" },
+	{
+		label: "プラグイン",
+		href: "/settings/plugins",
+		icon: "Package",
+		status: "enabled",
+	},
 	// {
 	//   label: "自習室",
 	//   href: "/study-room",

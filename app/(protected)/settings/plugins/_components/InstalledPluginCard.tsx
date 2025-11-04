@@ -1,11 +1,17 @@
 "use client";
 
-import { ArrowDownCircle, Shield, ToggleLeft, Trash2 } from "lucide-react";
+import {
+	ArrowDownCircle,
+	Settings,
+	Shield,
+	ToggleLeft,
+	Trash2,
+} from "lucide-react";
 /**
  * Installed Plugin Card Component (Client Component)
  *
  * Displays installed plugin information with enable/disable and uninstall actions.
- * Includes uninstall confirmation dialog and update functionality.
+ * Includes uninstall confirmation dialog, update functionality, and settings dialog.
  */
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -36,6 +42,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
+import { PluginSettingsForm } from "./PluginSettingsForm";
 
 interface InstalledPluginCardProps {
 	userPlugin: UserPlugin & {
@@ -53,8 +60,15 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 	const installedVersion = userPlugin.installedVersion;
 
 	const [showUninstallDialog, setShowUninstallDialog] = useState(false);
+	const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 	const [isPending, startTransition] = useTransition();
 	const [isUpdating, setIsUpdating] = useState(false);
+
+	const hasConfigSchema =
+		metadata.manifest.configSchema &&
+		metadata.manifest.configSchema.type === "object" &&
+		metadata.manifest.configSchema.properties &&
+		Object.keys(metadata.manifest.configSchema.properties).length > 0;
 
 	const handleUninstall = () => {
 		startTransition(async () => {
@@ -174,6 +188,18 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 							{isUpdating ? "更新中..." : "更新"}
 						</Button>
 					)}
+					{hasConfigSchema && (
+						<Button
+							variant="outline"
+							size="sm"
+							className="gap-2"
+							onClick={() => setShowSettingsDialog(true)}
+							disabled={isUpdating || isPending}
+						>
+							<Settings className="h-4 w-4" />
+							設定
+						</Button>
+					)}
 					<form action={userPlugin.enabled ? disablePlugin : enablePlugin}>
 						<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
 						<Button
@@ -231,6 +257,16 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			{/* Settings Dialog */}
+			<PluginSettingsForm
+				pluginId={userPlugin.pluginId}
+				pluginName={metadata.name}
+				configSchema={metadata.manifest.configSchema}
+				defaultConfig={metadata.manifest.defaultConfig}
+				open={showSettingsDialog}
+				onOpenChange={setShowSettingsDialog}
+			/>
 		</>
 	);
 }

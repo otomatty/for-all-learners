@@ -169,7 +169,7 @@
 | **検索・フィルタリング** | ✅ **完了** | `app/(protected)/settings/plugins/_components/PluginFiltersClient.tsx` | 検索バー、フィルター、ソート機能実装済み |
 | **レーティング・レビュー** | ✅ **完了** | `app/(protected)/settings/plugins/_components/*` | レーティング・レビュー投稿・一覧表示・編集・削除機能実装済み |
 | **更新通知** | ✅ **完了** | `app/_actions/plugins.ts`<br>`app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx` | バージョン比較・更新機能実装済み |
-| **設定UI** | ❌ **未実装** | - | 未実装 |
+| **設定UI** | ✅ **完了** | `app/(protected)/settings/plugins/_components/PluginSettingsForm.tsx` | JSON Schemaから動的フォーム生成実装済み |
 | **アンインストール確認** | ✅ **完了** | `app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx` | AlertDialogによる確認ダイアログ実装済み |
 
 ### 詳細
@@ -264,18 +264,27 @@
 
 **推定時間**: 4時間（実装完了）
 
-#### ❌ プラグイン設定UI（未実装）
+#### ✅ プラグイン設定UI（完了）
 
-**未実装**:
-- ❌ 動的設定フォーム生成（JSON Schemaベース）
-- ❌ 各種入力タイプ対応
-- ❌ 設定保存・復元
-- ❌ デフォルト値リセット
-- ❌ 設定プレビュー
+**実装内容**:
+- ✅ 動的設定フォーム生成（JSON Schemaベース）: `PluginSettingsForm` コンポーネント
+- ✅ 各種入力タイプ対応:
+  - String（単一行・複数行テキスト）
+  - Number（数値入力）
+  - Boolean（スイッチ）
+  - Enum（セレクトボックス）
+- ✅ 設定保存・復元機能: `plugin-storage` APIを使用
+- ✅ デフォルト値リセット機能: リセットボタン実装
+- ✅ 設定の読み込み: ダイアログオープン時に保存済み設定を自動読み込み
 
-**備考**: プラグインストレージAPI（`app/_actions/plugin-storage.ts`）は実装済みだが、UI未実装
+**実装ファイル**:
+- `app/(protected)/settings/plugins/_components/PluginSettingsForm.tsx`: 設定フォームコンポーネント
+- `app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx`: 設定ボタン追加
+- `app/_actions/plugin-storage.ts`: 設定保存・読み込みAPI（既存）
 
-**推定時間**: 4時間（未着手）
+**備考**: JSON Schemaから動的にフォームを生成し、react-hook-formとzodを使用してバリデーションを行う。設定はプラグインストレージAPI経由で保存・読み込みされる。プラグインに`configSchema`が定義されている場合のみ設定ボタンが表示される。
+
+**推定時間**: 4時間（実装完了）
 
 #### ✅ アンインストール確認ダイアログ（完了）
 
@@ -321,16 +330,16 @@
 
 **実装計画**: `docs/03_plans/plugin-system/phase2-editor-extensions.md`
 
-### Phase 3: Marketplace UI/UX ⚠️ 部分的完了
+### Phase 3: Marketplace UI/UX ✅ 完了
 
 - ✅ 基本UI（完了）
 - ✅ 検索・フィルタリング（完了）
 - ✅ レーティング・レビュー（完了）
 - ✅ 更新通知（完了）
-- ❌ 設定UI（未実装）
+- ✅ 設定UI（完了）
 - ✅ アンインストール確認（完了）
 
-**完了率**: 約83% (基本UI + 検索・フィルタリング + レーティング・レビュー + 更新通知 + アンインストール確認)
+**完了率**: 100% (6/6)
 
 ---
 
@@ -354,7 +363,7 @@
    - ✅ 検索・フィルタリングUI実装 ✅
    - ✅ レーティング・レビューシステム実装 ✅
    - ✅ 更新通知機能実装 ✅
-   - 設定UI実装
+   - ✅ 設定UI実装 ✅
    - ✅ アンインストール確認ダイアログ実装 ✅
 
 ### 低優先度（将来実装）
@@ -402,4 +411,5 @@
 | 2025-01-05 | Phase 2 Extension Registryを関数型にリファクタリング完了<br>（EditorExtensionRegistry, AIExtensionRegistry, UIExtensionRegistry,<br>DataProcessorExtensionRegistry, IntegrationExtensionRegistryをクラスベース<br>シングルトンから関数型モジュールに移行。244テストケース全てパス） | AI Agent |
 | 2025-01-05 | レーティング・レビューシステム実装完了<br>（plugin_ratings, plugin_reviews, plugin_review_helpfulテーブル作成、<br>Server Actions実装、星評価・レビュー投稿UI、レビュー一覧表示・ページネーション・役立ったボタン実装） | AI Agent |
 | 2025-01-05 | プラグイン更新通知機能実装完了<br>（バージョン比較ロジック、更新検出API、更新処理API、<br>インストール済みプラグインカードに更新バッジ・更新ボタンUI実装） | AI Agent |
+| 2025-01-05 | プラグイン設定UI実装完了<br>（JSON Schemaから動的フォーム生成、各種入力タイプ対応、<br>設定保存・復元、デフォルト値リセット機能実装） | AI Agent |
 
