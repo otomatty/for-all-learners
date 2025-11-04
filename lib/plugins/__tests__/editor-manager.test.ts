@@ -16,14 +16,18 @@ interface EditorWithExtensions extends Editor {
 
 // Mock Editor
 const createMockEditor = (): EditorWithExtensions => {
-	const editor = {
-		chain: vi.fn(() => ({
-			focus: vi.fn(() => ({
-				toggleBold: vi.fn(() => ({
-					run: vi.fn(),
-				})),
-			})),
+	const chainMock = {
+		toggleBold: vi.fn(() => ({
+			run: vi.fn(() => true),
 		})),
+	};
+	const canMock = {
+		toggleBold: vi.fn(() => true),
+	};
+
+	const editor = {
+		chain: vi.fn(() => chainMock),
+		can: vi.fn(() => canMock),
 		getJSON: vi.fn(() => ({ type: "doc", content: [] })),
 		commands: {
 			setContent: vi.fn(),
@@ -216,18 +220,21 @@ describe("EditorManager", () => {
 			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
 			manager.setActiveEditor("test-editor-1");
 
-			// Mock chain command - toggleBold is a direct method on chain, not nested
+			// Mock chain command - toggleBold returns a chain object with run()
+			const runMock = vi.fn(() => true);
 			const chainMock = {
 				toggleBold: vi.fn(() => ({
-					run: vi.fn(),
+					run: runMock,
 				})),
 			};
 			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
 
-			await manager.executeCommand(undefined, "toggleBold");
+			const result = await manager.executeCommand(undefined, "toggleBold");
 
 			expect(mockEditor.chain).toHaveBeenCalled();
 			expect(chainMock.toggleBold).toHaveBeenCalled();
+			expect(runMock).toHaveBeenCalled();
+			expect(result).toBe(true);
 		});
 
 		it("should throw error when editor not found", async () => {
@@ -348,11 +355,11 @@ describe("EditorManager", () => {
 	});
 
 	describe("canExecuteCommand", () => {
-		it("should return true when command exists", async () => {
-			const chainMock = {
-				toggleBold: vi.fn(),
-			} as Record<string, unknown>;
-			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+		it("should return true when command can be executed", async () => {
+			const canMock = {
+				toggleBold: vi.fn(() => true),
+			};
+			(mockEditor.can as ReturnType<typeof vi.fn>).mockReturnValue(canMock);
 
 			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
 
@@ -361,12 +368,32 @@ describe("EditorManager", () => {
 				"toggleBold",
 			);
 
+			expect(mockEditor.can).toHaveBeenCalled();
+			expect(canMock.toggleBold).toHaveBeenCalled();
 			expect(canExecute).toBe(true);
 		});
 
+		it("should return false when command cannot be executed", async () => {
+			const canMock = {
+				toggleBold: vi.fn(() => false),
+			};
+			(mockEditor.can as ReturnType<typeof vi.fn>).mockReturnValue(canMock);
+
+			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
+
+			const canExecute = await manager.canExecuteCommand(
+				"test-editor-1",
+				"toggleBold",
+			);
+
+			expect(mockEditor.can).toHaveBeenCalled();
+			expect(canMock.toggleBold).toHaveBeenCalled();
+			expect(canExecute).toBe(false);
+		});
+
 		it("should return false when command does not exist", async () => {
-			const chainMock = {} as Record<string, unknown>;
-			(mockEditor.chain as ReturnType<typeof vi.fn>).mockReturnValue(chainMock);
+			const canMock = {} as Record<string, unknown>;
+			(mockEditor.can as ReturnType<typeof vi.fn>).mockReturnValue(canMock);
 
 			manager.registerEditor("test-editor-1", mockEditor, baseExtensions);
 
@@ -375,6 +402,7 @@ describe("EditorManager", () => {
 				"nonExistentCommand",
 			);
 
+			expect(mockEditor.can).toHaveBeenCalled();
 			expect(canExecute).toBe(false);
 		});
 
