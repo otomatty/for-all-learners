@@ -235,10 +235,14 @@ export async function getInstalledPlugins(): Promise<
 /**
  * Install a plugin for the current user
  *
- * @param pluginId Plugin ID to install
- * @returns Installed user plugin
+ * @param formData FormData containing pluginId
  */
-export async function installPlugin(pluginId: string): Promise<UserPlugin> {
+export async function installPlugin(formData: FormData): Promise<void> {
+	const pluginId = formData.get("pluginId") as string;
+	if (!pluginId) {
+		throw new Error("Plugin ID is required");
+	}
+
 	let user: { id: string } | null = null;
 	try {
 		const supabase = await createClient();
@@ -293,8 +297,6 @@ export async function installPlugin(pluginId: string): Promise<UserPlugin> {
 		await supabase.rpc("increment_plugin_downloads", {
 			p_plugin_id: pluginId,
 		});
-
-		return mapUserPluginRowToUserPlugin(data);
 	} catch (error) {
 		logger.error(
 			{ error, pluginId, userId: user?.id },
@@ -307,9 +309,14 @@ export async function installPlugin(pluginId: string): Promise<UserPlugin> {
 /**
  * Uninstall a plugin for the current user
  *
- * @param pluginId Plugin ID to uninstall
+ * @param formData FormData containing pluginId
  */
-export async function uninstallPlugin(pluginId: string): Promise<void> {
+export async function uninstallPlugin(formData: FormData): Promise<void> {
+	const pluginId = formData.get("pluginId") as string;
+	if (!pluginId) {
+		throw new Error("Plugin ID is required");
+	}
+
 	let user: { id: string } | null = null;
 	try {
 		const supabase = await createClient();
@@ -362,9 +369,14 @@ export async function uninstallPlugin(pluginId: string): Promise<void> {
 /**
  * Enable a plugin
  *
- * @param pluginId Plugin ID to enable
+ * @param formData FormData containing pluginId
  */
-export async function enablePlugin(pluginId: string): Promise<void> {
+export async function enablePlugin(formData: FormData): Promise<void> {
+	const pluginId = formData.get("pluginId") as string;
+	if (!pluginId) {
+		throw new Error("Plugin ID is required");
+	}
+
 	let user: { id: string } | null = null;
 	try {
 		const supabase = await createClient();
@@ -405,9 +417,14 @@ export async function enablePlugin(pluginId: string): Promise<void> {
 /**
  * Disable a plugin
  *
- * @param pluginId Plugin ID to disable
+ * @param formData FormData containing pluginId
  */
-export async function disablePlugin(pluginId: string): Promise<void> {
+export async function disablePlugin(formData: FormData): Promise<void> {
+	const pluginId = formData.get("pluginId") as string;
+	if (!pluginId) {
+		throw new Error("Plugin ID is required");
+	}
+
 	let user: { id: string } | null = null;
 	try {
 		const supabase = await createClient();
