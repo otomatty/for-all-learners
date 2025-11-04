@@ -36,9 +36,13 @@ import type {
 	EditorExtensionOptions,
 	EditorSelection,
 	NotificationType,
+	PageOptions,
 	PromptTemplateOptions,
 	QuestionGeneratorOptions,
+	SidebarPanelOptions,
+	WidgetOptions,
 } from "./types";
+import { getUIExtensionRegistry } from "./ui-registry";
 
 // ============================================================================
 // Plugin API Interface
@@ -166,7 +170,7 @@ export interface NotificationsAPI {
 }
 
 /**
- * UI API (basic functionality in Phase 1)
+ * UI API (basic functionality in Phase 1, extended in Phase 2)
  */
 export interface UIAPI {
 	/**
@@ -187,6 +191,42 @@ export interface UIAPI {
 	 * @returns Promise that resolves when dialog is closed
 	 */
 	showDialog(options: DialogOptions): Promise<unknown>;
+
+	/**
+	 * Register a widget (Phase 2)
+	 * @param options Widget options
+	 */
+	registerWidget(options: WidgetOptions): Promise<void>;
+
+	/**
+	 * Unregister a widget
+	 * @param widgetId Widget ID to unregister
+	 */
+	unregisterWidget(widgetId: string): Promise<void>;
+
+	/**
+	 * Register a custom page (Phase 2)
+	 * @param options Page options
+	 */
+	registerPage(options: PageOptions): Promise<void>;
+
+	/**
+	 * Unregister a custom page
+	 * @param pageId Page ID to unregister
+	 */
+	unregisterPage(pageId: string): Promise<void>;
+
+	/**
+	 * Register a sidebar panel (Phase 2)
+	 * @param options Panel options
+	 */
+	registerSidebarPanel(options: SidebarPanelOptions): Promise<void>;
+
+	/**
+	 * Unregister a sidebar panel
+	 * @param panelId Panel ID to unregister
+	 */
+	unregisterSidebarPanel(panelId: string): Promise<void>;
 }
 
 /**
@@ -485,6 +525,8 @@ const commandRegistry = new Map<string, Command>();
  * @param pluginId Plugin ID for command registration
  */
 function createUIAPI(pluginId: string): UIAPI {
+	const registry = getUIExtensionRegistry();
+
 	return {
 		async registerCommand(command: Command): Promise<void> {
 			const fullCommandId = `${pluginId}.${command.id}`;
@@ -539,6 +581,99 @@ function createUIAPI(pluginId: string): UIAPI {
 			}
 
 			return undefined;
+		},
+
+		async registerWidget(options: WidgetOptions): Promise<void> {
+			try {
+				registry.registerWidget(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						widgetId: options.id,
+						position: options.position,
+						size: options.size,
+					},
+					"Widget registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, widgetId: options.id },
+					"Failed to register widget",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterWidget(widgetId: string): Promise<void> {
+			try {
+				registry.unregisterWidget(pluginId, widgetId);
+				logger.info({ pluginId, widgetId }, "Widget unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, widgetId },
+					"Failed to unregister widget",
+				);
+				throw error;
+			}
+		},
+
+		async registerPage(options: PageOptions): Promise<void> {
+			try {
+				registry.registerPage(pluginId, options);
+				logger.info(
+					{ pluginId, pageId: options.id, route: options.route.path },
+					"Page registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, pageId: options.id },
+					"Failed to register page",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterPage(pageId: string): Promise<void> {
+			try {
+				registry.unregisterPage(pluginId, pageId);
+				logger.info({ pluginId, pageId }, "Page unregistered");
+			} catch (error) {
+				logger.error({ error, pluginId, pageId }, "Failed to unregister page");
+				throw error;
+			}
+		},
+
+		async registerSidebarPanel(options: SidebarPanelOptions): Promise<void> {
+			try {
+				registry.registerSidebarPanel(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						panelId: options.id,
+						position: options.position,
+					},
+					"Sidebar panel registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, panelId: options.id },
+					"Failed to register sidebar panel",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterSidebarPanel(panelId: string): Promise<void> {
+			try {
+				registry.unregisterSidebarPanel(pluginId, panelId);
+				logger.info({ pluginId, panelId }, "Sidebar panel unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, panelId },
+					"Failed to unregister sidebar panel",
+				);
+				throw error;
+			}
 		},
 	};
 }

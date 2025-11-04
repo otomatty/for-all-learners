@@ -450,3 +450,210 @@ export interface ContentAnalyzerOptions {
 		default?: unknown;
 	}>;
 }
+
+// ============================================================================
+// UI Extension Types (Phase 2)
+// ============================================================================
+
+/**
+ * Widget position on dashboard
+ */
+export type WidgetPosition =
+	| "top-left"
+	| "top-right"
+	| "bottom-left"
+	| "bottom-right";
+
+/**
+ * Widget size
+ */
+export type WidgetSize = "small" | "medium" | "large";
+
+/**
+ * Widget render function - returns React component props or render data
+ * Note: In Web Worker context, this returns serializable data
+ */
+export type WidgetRenderFunction = (
+	context: WidgetContext,
+) => Promise<WidgetRenderResult>;
+
+/**
+ * Widget context passed to render function
+ */
+export interface WidgetContext {
+	/** Plugin ID */
+	pluginId: string;
+	/** Widget ID */
+	widgetId: string;
+	/** User configuration */
+	config?: Record<string, unknown>;
+}
+
+/**
+ * Widget render result (serializable data)
+ */
+export interface WidgetRenderResult {
+	/** Component type identifier */
+	type: string;
+	/** Component props */
+	props?: Record<string, unknown>;
+	/** HTML content (if using HTML rendering) */
+	html?: string;
+}
+
+/**
+ * Widget extension options
+ */
+export interface WidgetOptions {
+	/** Unique widget ID within the plugin */
+	id: string;
+
+	/** Widget display name */
+	name: string;
+
+	/** Widget description */
+	description?: string;
+
+	/** Widget position on dashboard */
+	position: WidgetPosition;
+
+	/** Widget size */
+	size: WidgetSize;
+
+	/** Render function */
+	render: WidgetRenderFunction;
+
+	/** Icon URL or identifier */
+	icon?: string;
+}
+
+/**
+ * Page route definition
+ */
+export interface PageRoute {
+	/** Route path (e.g., "/my-plugin/page") */
+	path: string;
+
+	/** Route name */
+	name: string;
+
+	/** Page title */
+	title: string;
+
+	/** Icon URL or identifier */
+	icon?: string;
+}
+
+/**
+ * Page render function - returns React component props or render data
+ */
+export type PageRenderFunction = (
+	context: PageContext,
+) => Promise<PageRenderResult>;
+
+/**
+ * Page context passed to render function
+ */
+export interface PageContext {
+	/** Plugin ID */
+	pluginId: string;
+	/** Page ID */
+	pageId: string;
+	/** Route parameters */
+	params?: Record<string, string>;
+	/** Query parameters */
+	query?: Record<string, string>;
+	/** User configuration */
+	config?: Record<string, unknown>;
+}
+
+/**
+ * Page render result (serializable data)
+ */
+export interface PageRenderResult {
+	/** Component type identifier */
+	type: string;
+	/** Component props */
+	props?: Record<string, unknown>;
+	/** HTML content (if using HTML rendering) */
+	html?: string;
+}
+
+/**
+ * Custom page extension options
+ */
+export interface PageOptions {
+	/** Unique page ID within the plugin */
+	id: string;
+
+	/** Page route definition */
+	route: PageRoute;
+
+	/** Render function */
+	render: PageRenderFunction;
+
+	/** Page description */
+	description?: string;
+}
+
+/**
+ * Sidebar panel position
+ */
+export type SidebarPanelPosition = "left" | "right";
+
+/**
+ * Sidebar panel render function - returns React component props or render data
+ */
+export type SidebarPanelRenderFunction = (
+	context: SidebarPanelContext,
+) => Promise<SidebarPanelRenderResult>;
+
+/**
+ * Sidebar panel context passed to render function
+ */
+export interface SidebarPanelContext {
+	/** Plugin ID */
+	pluginId: string;
+	/** Panel ID */
+	panelId: string;
+	/** User configuration */
+	config?: Record<string, unknown>;
+}
+
+/**
+ * Sidebar panel render result (serializable data)
+ */
+export interface SidebarPanelRenderResult {
+	/** Component type identifier */
+	type: string;
+	/** Component props */
+	props?: Record<string, unknown>;
+	/** HTML content (if using HTML rendering) */
+	html?: string;
+}
+
+/**
+ * Sidebar panel extension options
+ */
+export interface SidebarPanelOptions {
+	/** Unique panel ID within the plugin */
+	id: string;
+
+	/** Panel display name */
+	name: string;
+
+	/** Panel description */
+	description?: string;
+
+	/** Panel position */
+	position: SidebarPanelPosition;
+
+	/** Render function */
+	render: SidebarPanelRenderFunction;
+
+	/** Icon URL or identifier */
+	icon?: string;
+
+	/** Default open state */
+	defaultOpen?: boolean;
+}

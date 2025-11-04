@@ -6,11 +6,11 @@
 
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as pluginsActions from "@/app/_actions/plugins";
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 import { InstalledPluginCard } from "../InstalledPluginCard";
-import { toast } from "sonner";
 
 // Mock sonner toast
 vi.mock("sonner", () => ({

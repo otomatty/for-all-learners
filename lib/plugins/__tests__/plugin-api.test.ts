@@ -15,9 +15,13 @@ import {
 import type {
 	Command,
 	ContentAnalyzerOptions,
+	PageOptions,
 	QuestionGeneratorOptions,
 	QuestionType,
+	SidebarPanelOptions,
+	WidgetOptions,
 } from "../types";
+import { getUIExtensionRegistry } from "../ui-registry";
 
 describe("PluginAPI", () => {
 	const pluginId = "test-plugin";
@@ -25,6 +29,7 @@ describe("PluginAPI", () => {
 	beforeEach(() => {
 		clearPluginCommands(pluginId);
 		getAIExtensionRegistry().clearPlugin(pluginId);
+		getUIExtensionRegistry().clearPlugin(pluginId);
 		vi.clearAllMocks();
 	});
 
@@ -567,6 +572,208 @@ describe("PluginAPI", () => {
 				const registry = getAIExtensionRegistry();
 				const analyzers = registry.getContentAnalyzers(pluginId);
 				expect(analyzers).toHaveLength(0);
+			});
+		});
+	});
+
+	describe("UI Extensions API", () => {
+		describe("Widget", () => {
+			it("should register a widget", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: WidgetOptions = {
+					id: "test-widget",
+					name: "Test Widget",
+					description: "Test widget description",
+					position: "top-left",
+					size: "medium",
+					render: async (_context) => ({
+						type: "test-widget",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerWidget(options);
+
+				const registry = getUIExtensionRegistry();
+				const widgets = registry.getWidgets(pluginId);
+				expect(widgets).toHaveLength(1);
+				expect(widgets[0].widgetId).toBe("test-widget");
+			});
+
+			it("should throw error when registering duplicate widget", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: WidgetOptions = {
+					id: "test-widget",
+					name: "Test Widget",
+					position: "top-left",
+					size: "medium",
+					render: async (_context) => ({
+						type: "test-widget",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerWidget(options);
+
+				await expect(api.ui.registerWidget(options)).rejects.toThrow();
+			});
+
+			it("should unregister a widget", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: WidgetOptions = {
+					id: "test-widget",
+					name: "Test Widget",
+					position: "top-left",
+					size: "medium",
+					render: async (_context) => ({
+						type: "test-widget",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerWidget(options);
+				await api.ui.unregisterWidget("test-widget");
+
+				const registry = getUIExtensionRegistry();
+				const widgets = registry.getWidgets(pluginId);
+				expect(widgets).toHaveLength(0);
+			});
+		});
+
+		describe("Page", () => {
+			it("should register a page", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: PageOptions = {
+					id: "test-page",
+					route: {
+						path: "/test/page",
+						name: "Test Page",
+						title: "Test Page Title",
+					},
+					render: async (_context) => ({
+						type: "test-page",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerPage(options);
+
+				const registry = getUIExtensionRegistry();
+				const pages = registry.getPages(pluginId);
+				expect(pages).toHaveLength(1);
+				expect(pages[0].pageId).toBe("test-page");
+			});
+
+			it("should throw error when registering duplicate page", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: PageOptions = {
+					id: "test-page",
+					route: {
+						path: "/test/page",
+						name: "Test Page",
+						title: "Test Page Title",
+					},
+					render: async (_context) => ({
+						type: "test-page",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerPage(options);
+
+				await expect(api.ui.registerPage(options)).rejects.toThrow();
+			});
+
+			it("should unregister a page", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: PageOptions = {
+					id: "test-page",
+					route: {
+						path: "/test/page",
+						name: "Test Page",
+						title: "Test Page Title",
+					},
+					render: async (_context) => ({
+						type: "test-page",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerPage(options);
+				await api.ui.unregisterPage("test-page");
+
+				const registry = getUIExtensionRegistry();
+				const pages = registry.getPages(pluginId);
+				expect(pages).toHaveLength(0);
+			});
+		});
+
+		describe("Sidebar Panel", () => {
+			it("should register a sidebar panel", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: SidebarPanelOptions = {
+					id: "test-panel",
+					name: "Test Panel",
+					description: "Test panel description",
+					position: "left",
+					render: async (_context) => ({
+						type: "test-panel",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerSidebarPanel(options);
+
+				const registry = getUIExtensionRegistry();
+				const panels = registry.getSidebarPanels(pluginId);
+				expect(panels).toHaveLength(1);
+				expect(panels[0].panelId).toBe("test-panel");
+			});
+
+			it("should throw error when registering duplicate panel", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: SidebarPanelOptions = {
+					id: "test-panel",
+					name: "Test Panel",
+					position: "left",
+					render: async (_context) => ({
+						type: "test-panel",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerSidebarPanel(options);
+
+				await expect(api.ui.registerSidebarPanel(options)).rejects.toThrow();
+			});
+
+			it("should unregister a sidebar panel", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: SidebarPanelOptions = {
+					id: "test-panel",
+					name: "Test Panel",
+					position: "left",
+					render: async (_context) => ({
+						type: "test-panel",
+						props: {},
+					}),
+				};
+
+				await api.ui.registerSidebarPanel(options);
+				await api.ui.unregisterSidebarPanel("test-panel");
+
+				const registry = getUIExtensionRegistry();
+				const panels = registry.getSidebarPanels(pluginId);
+				expect(panels).toHaveLength(0);
 			});
 		});
 	});

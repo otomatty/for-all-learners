@@ -43,6 +43,7 @@ import {
 	type PluginValidationResult,
 	type WorkerMessage,
 } from "./types";
+import { getUIExtensionRegistry } from "./ui-registry";
 
 // ============================================================================
 // Plugin Loader Class
@@ -235,10 +236,15 @@ export class PluginLoader {
 			aiRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "AI extensions cleared for plugin");
 
-			// Step 5: Cleanup worker
+			// Step 5: Clear UI extensions
+			const uiRegistry = getUIExtensionRegistry();
+			uiRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "UI extensions cleared for plugin");
+
+			// Step 6: Cleanup worker
 			this.cleanupWorker(pluginId);
 
-			// Step 6: Unregister from registry
+			// Step 7: Unregister from registry
 			registry.unregister(pluginId);
 
 			logger.info(
