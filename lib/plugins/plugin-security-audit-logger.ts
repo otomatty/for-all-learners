@@ -17,13 +17,15 @@
  *   └─ lib/plugins/plugin-api.ts
  *
  * Dependencies:
- *   └─ lib/logger.ts
+ *   ├─ lib/logger.ts
+ *   └─ lib/supabase/adminClient.ts
  *
  * Related Documentation:
  *   └─ Issue #96: Plugin System Security Enhancement
  */
 
 import logger from "@/lib/logger";
+import { createAdminClient } from "@/lib/supabase/adminClient";
 
 /**
  * Security audit event types
@@ -175,63 +177,84 @@ class PluginSecurityAuditLogger {
 			...event.context,
 		};
 
+		// Prepare event data for database
+		const eventData: Record<string, unknown> = {};
+
 		// Add event-specific fields
 		if ("namespace" in event && "method" in event) {
 			logContext.namespace = event.namespace;
 			logContext.method = event.method;
 			logContext.requestId = event.requestId;
+			eventData.namespace = event.namespace;
+			eventData.method = event.method;
+			eventData.requestId = event.requestId;
 			if (event.argsSummary) {
 				logContext.argsSummary = event.argsSummary;
+				eventData.argsSummary = event.argsSummary;
 			}
 			if (event.success !== undefined) {
 				logContext.success = event.success;
+				eventData.success = event.success;
 			}
 			if (event.error) {
 				logContext.error = event.error;
+				eventData.error = event.error;
 			}
 		}
 
 		if ("reason" in event) {
 			logContext.reason = event.reason;
-			
+			eventData.reason = event.reason;
+
 			// Add rate limit violation specific fields
 			if ("retryAfter" in event && event.retryAfter !== undefined) {
 				logContext.retryAfter = event.retryAfter;
+				eventData.retryAfter = event.retryAfter;
 			}
 			if ("currentCallCount" in event && event.currentCallCount !== undefined) {
 				logContext.currentCallCount = event.currentCallCount;
+				eventData.currentCallCount = event.currentCallCount;
 			}
 			if ("limit" in event && event.limit !== undefined) {
 				logContext.limit = event.limit;
+				eventData.limit = event.limit;
 			}
 		}
 
 		if ("executionTime" in event) {
 			logContext.executionTime = event.executionTime;
-			
+			eventData.executionTime = event.executionTime;
+
 			// Add execution timeout specific fields
 			if ("maxExecutionTime" in event) {
 				logContext.maxExecutionTime = event.maxExecutionTime;
+				eventData.maxExecutionTime = event.maxExecutionTime;
 			}
 		}
 
 		if ("operation" in event) {
 			logContext.operation = event.operation;
+			eventData.operation = event.operation;
 			if (event.key) {
 				logContext.storageKey = event.key;
+				eventData.storageKey = event.key;
 			}
 			if (event.size !== undefined) {
 				logContext.storageSize = event.size;
+				eventData.storageSize = event.size;
 			}
 			if (event.maxQuota !== undefined) {
 				logContext.maxStorageQuota = event.maxQuota;
+				eventData.maxStorageQuota = event.maxQuota;
 			}
 		}
 
 		if ("errorMessage" in event) {
 			logContext.errorMessage = event.errorMessage;
+			eventData.errorMessage = event.errorMessage;
 			if (event.errorStack) {
 				logContext.errorStack = event.errorStack;
+				eventData.errorStack = event.errorStack;
 			}
 		}
 
@@ -242,6 +265,43 @@ class PluginSecurityAuditLogger {
 		// Log with appropriate level
 		const message = this.getLogMessage(event);
 		logger[logLevel](logContext, message);
+
+		// Save to database asynchronously (don't block on errors)
+		this.saveToDatabase(event, eventData).catch((error) => {
+			logger.error(
+				{ error, pluginId: event.pluginId, eventType: event.eventType },
+				"Failed to save security audit log to database",
+			);
+		});
+	}
+
+	/**
+	 * Save audit event to database
+	 *
+	 * @param event Security audit event
+	 * @param eventData Event data prepared for database
+	 */
+	private async saveToDatabase(
+		event: SecurityAuditEvent,
+		eventData: Record<string, unknown>,
+	): Promise<void> {
+		// Use admin client (service role) to bypass RLS for system logs
+		const supabase = createAdminClient();
+		const { error } = await supabase
+			.from("plugin_security_audit_logs" as never)
+			.insert({
+				plugin_id: event.pluginId,
+				user_id: event.userId || null,
+				event_type: event.eventType,
+				severity: event.severity,
+				event_data: eventData,
+				context: event.context || {},
+				created_at: new Date(event.timestamp).toISOString(),
+			} as never);
+
+		if (error) {
+			throw error;
+		}
 	}
 
 	/**
@@ -516,15 +576,20 @@ class PluginSecurityAuditLogger {
 	private getLogMessage(event: SecurityAuditEvent): string {
 		switch (event.eventType) {
 			case "api_call":
-				return `Plugin API call: ${event.namespace}.${event.method}`;
 			case "api_call_failed":
-				return `Plugin API call failed: ${event.namespace}.${event.method}`;
+				if ("namespace" in event && "method" in event) {
+					return `Plugin API call${event.eventType === "api_call_failed" ? " failed" : ""}: ${event.namespace}.${event.method}`;
+				}
+				return `Plugin API call${event.eventType === "api_call_failed" ? " failed" : ""}: ${event.pluginId}`;
 			case "rate_limit_violation":
 				return `Plugin rate limit violated: ${event.pluginId}`;
 			case "execution_timeout":
 				return `Plugin execution timeout: ${event.pluginId}`;
 			case "storage_access":
-				return `Plugin storage access: ${event.operation}`;
+				if ("operation" in event) {
+					return `Plugin storage access: ${event.operation}`;
+				}
+				return `Plugin storage access: ${event.pluginId}`;
 			case "storage_quota_exceeded":
 				return `Plugin storage quota exceeded: ${event.pluginId}`;
 			case "plugin_error":

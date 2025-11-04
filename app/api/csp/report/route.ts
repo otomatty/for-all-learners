@@ -16,8 +16,8 @@
  *   └─ Issue #96: Plugin System Security Enhancement
  */
 
-import logger from "@/lib/logger";
 import { type NextRequest, NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 /**
  * CSP Violation Report payload structure

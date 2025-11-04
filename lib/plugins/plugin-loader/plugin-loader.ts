@@ -36,8 +36,8 @@ import * as dataProcessorRegistry from "../data-processor-registry";
 import { getEditorManager } from "../editor-manager";
 import * as editorRegistry from "../editor-registry";
 import * as integrationRegistry from "../integration-registry";
-import { getPluginExecutionMonitor } from "../plugin-execution-monitor";
 import { clearPluginCommands } from "../plugin-api";
+import { getPluginExecutionMonitor } from "../plugin-execution-monitor";
 import { getPluginRegistry } from "../plugin-registry";
 import {
 	PluginError,

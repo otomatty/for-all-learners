@@ -100,10 +100,7 @@ class PluginRateLimiter {
 	 * @param userId User ID (optional, defaults to "system" if not provided)
 	 * @returns Rate limit check result
 	 */
-	public checkAPICall(
-		pluginId: string,
-		userId?: string,
-	): RateLimitResult {
+	public checkAPICall(pluginId: string, userId?: string): RateLimitResult {
 		const effectiveUserId = userId || "system";
 		const state = this.getOrCreateState(pluginId, effectiveUserId);
 		const now = Date.now();
@@ -118,9 +115,7 @@ class PluginRateLimiter {
 
 		// Clean old timestamps (older than 1 hour)
 		const oneHourAgo = now - 60 * 60 * 1000;
-		state.callTimestamps = state.callTimestamps.filter(
-			(ts) => ts > oneHourAgo,
-		);
+		state.callTimestamps = state.callTimestamps.filter((ts) => ts > oneHourAgo);
 
 		// Check hourly limit
 		const callsLastHour = state.callTimestamps.length;
@@ -293,4 +288,3 @@ class PluginRateLimiter {
 export function getPluginRateLimiter(): PluginRateLimiter {
 	return PluginRateLimiter.getInstance();
 }
-

@@ -1500,6 +1500,47 @@ export type Database = {
 					},
 				];
 			};
+			plugin_security_audit_logs: {
+				Row: {
+					context: Json | null;
+					created_at: string | null;
+					event_data: Json;
+					event_type: string;
+					id: string;
+					plugin_id: string;
+					severity: string;
+					user_id: string | null;
+				};
+				Insert: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type: string;
+					id?: string;
+					plugin_id: string;
+					severity: string;
+					user_id?: string | null;
+				};
+				Update: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type?: string;
+					id?: string;
+					plugin_id?: string;
+					severity?: string;
+					user_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_security_audit_logs_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			plugin_storage: {
 				Row: {
 					created_at: string | null;

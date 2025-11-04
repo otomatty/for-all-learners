@@ -26,13 +26,13 @@ import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
-import { getPluginRateLimiter } from "./plugin-rate-limiter";
-import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import * as aiRegistry from "./ai-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
 import * as integrationRegistry from "./integration-registry";
+import { getPluginRateLimiter } from "./plugin-rate-limiter";
+import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
 	Command,
 	ContentAnalyzerOptions,

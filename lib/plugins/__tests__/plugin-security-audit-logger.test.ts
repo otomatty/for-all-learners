@@ -6,7 +6,27 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as loggerModule from "@/lib/logger";
+import * as adminClientModule from "@/lib/supabase/adminClient";
 import { getPluginSecurityAuditLogger } from "../plugin-security-audit-logger";
+
+// Mock admin client
+vi.mock("@/lib/supabase/adminClient", () => {
+	const mockInsert = vi.fn().mockResolvedValue({
+		error: null,
+	});
+
+	const mockFrom = vi.fn().mockReturnValue({
+		insert: mockInsert,
+	});
+
+	return {
+		createAdminClient: vi.fn(() => ({
+			from: mockFrom,
+		})),
+		__mockInsert: mockInsert,
+		__mockFrom: mockFrom,
+	};
+});
 
 describe("PluginSecurityAuditLogger", () => {
 	const auditLogger = getPluginSecurityAuditLogger();
@@ -257,6 +277,127 @@ describe("PluginSecurityAuditLogger", () => {
 				}),
 				expect.stringContaining("Plugin terminated"),
 			);
+		});
+	});
+
+	describe("Database persistence", () => {
+		it("should save audit event to database", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			auditLogger.logAPICall(
+				"test-plugin",
+				"storage",
+				"get",
+				["key1"],
+				"req-1",
+				true,
+			);
+
+			// Wait for async database save
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockInsert).toHaveBeenCalled();
+			const insertCall = mockInsert.mock.calls[0][0];
+			expect(insertCall).toMatchObject({
+				plugin_id: "test-plugin",
+				event_type: "api_call",
+				severity: "low",
+			});
+		});
+
+		it("should handle database save errors gracefully", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			// Mock database error
+			mockInsert.mockResolvedValueOnce({
+				error: { message: "Database connection failed" },
+			});
+
+			auditLogger.logAPICall(
+				"test-plugin",
+				"storage",
+				"get",
+				["key1"],
+				"req-1",
+				true,
+			);
+
+			// Wait for async database save and error handling
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Logger should still be called even if database save fails
+			expect(infoSpy).toHaveBeenCalled();
+			// Error should be logged
+			expect(errorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					pluginId: "test-plugin",
+					eventType: "api_call",
+				}),
+				expect.stringContaining("Failed to save security audit log"),
+			);
+		});
+
+		it("should save event data correctly", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			auditLogger.logRateLimitViolation(
+				"test-plugin",
+				"Rate limit exceeded",
+				"user-1",
+				5000,
+				61,
+				60,
+			);
+
+			// Wait for async database save
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockInsert).toHaveBeenCalled();
+			const insertCall = mockInsert.mock.calls[0][0];
+			expect(insertCall.event_data).toMatchObject({
+				reason: "Rate limit exceeded",
+				retryAfter: 5000,
+				currentCallCount: 61,
+				limit: 60,
+			});
+		});
+
+		it("should save context data correctly", async () => {
+			const mockInsert = (
+				adminClientModule as unknown as {
+					__mockInsert: ReturnType<typeof vi.fn>;
+				}
+			).__mockInsert;
+
+			auditLogger.logAPICall(
+				"test-plugin",
+				"storage",
+				"get",
+				["key1"],
+				"req-1",
+				true,
+				"user-1",
+			);
+
+			// Wait for async database save
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(mockInsert).toHaveBeenCalled();
+			const insertCall = mockInsert.mock.calls[0][0];
+			expect(insertCall.user_id).toBe("user-1");
+			expect(insertCall.context).toEqual({});
 		});
 	});
 });
