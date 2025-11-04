@@ -6,7 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as aiRegistry from "../ai-registry";
-import { getDataProcessorExtensionRegistry } from "../data-processor-registry";
+import * as dataProcessorRegistry from "../data-processor-registry";
 import {
 	clearPluginCommands,
 	createPluginAPI,
@@ -34,7 +34,7 @@ describe("PluginAPI", () => {
 		clearPluginCommands(pluginId);
 		aiRegistry.clearPlugin(pluginId);
 		uiRegistry.clearPlugin(pluginId);
-		getDataProcessorExtensionRegistry().clearPlugin(pluginId);
+		dataProcessorRegistry.clearPlugin(pluginId);
 		vi.clearAllMocks();
 	});
 
@@ -611,8 +611,7 @@ describe("PluginAPI", () => {
 
 				await api.data.registerImporter(options);
 
-				const registry = getDataProcessorExtensionRegistry();
-				const importers = registry.getImporters(pluginId);
+				const importers = dataProcessorRegistry.getImporters(pluginId);
 				expect(importers).toHaveLength(1);
 				expect(importers[0].importerId).toBe("test-importer");
 			});
@@ -651,8 +650,7 @@ describe("PluginAPI", () => {
 				await api.data.registerImporter(options);
 				await api.data.unregisterImporter("test-importer");
 
-				const registry = getDataProcessorExtensionRegistry();
-				const importers = registry.getImporters(pluginId);
+				const importers = dataProcessorRegistry.getImporters(pluginId);
 				expect(importers).toHaveLength(0);
 			});
 		});
@@ -678,8 +676,7 @@ describe("PluginAPI", () => {
 
 				await api.data.registerExporter(options);
 
-				const registry = getDataProcessorExtensionRegistry();
-				const exporters = registry.getExporters(pluginId);
+				const exporters = dataProcessorRegistry.getExporters(pluginId);
 				expect(exporters).toHaveLength(1);
 				expect(exporters[0].exporterId).toBe("test-exporter");
 			});
@@ -718,8 +715,7 @@ describe("PluginAPI", () => {
 				await api.data.registerExporter(options);
 				await api.data.unregisterExporter("test-exporter");
 
-				const registry = getDataProcessorExtensionRegistry();
-				const exporters = registry.getExporters(pluginId);
+				const exporters = dataProcessorRegistry.getExporters(pluginId);
 				expect(exporters).toHaveLength(0);
 			});
 		});
@@ -743,8 +739,7 @@ describe("PluginAPI", () => {
 
 				await api.data.registerTransformer(options);
 
-				const registry = getDataProcessorExtensionRegistry();
-				const transformers = registry.getTransformers(pluginId);
+				const transformers = dataProcessorRegistry.getTransformers(pluginId);
 				expect(transformers).toHaveLength(1);
 				expect(transformers[0].transformerId).toBe("test-transformer");
 			});
@@ -787,8 +782,7 @@ describe("PluginAPI", () => {
 				await api.data.registerTransformer(options);
 				await api.data.unregisterTransformer("test-transformer");
 
-				const registry = getDataProcessorExtensionRegistry();
-				const transformers = registry.getTransformers(pluginId);
+				const transformers = dataProcessorRegistry.getTransformers(pluginId);
 				expect(transformers).toHaveLength(0);
 			});
 		});

@@ -26,10 +26,10 @@
 import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
 import * as aiRegistry from "./ai-registry";
-import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
+import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
-import { getIntegrationExtensionRegistry } from "./integration-registry";
+import * as integrationRegistry from "./integration-registry";
 import { clearPluginCommands, createPluginAPI } from "./plugin-api";
 import { getPluginRegistry } from "./plugin-registry";
 import {
@@ -241,12 +241,10 @@ export class PluginLoader {
 			logger.info({ pluginId }, "UI extensions cleared for plugin");
 
 			// Step 6: Clear Data Processor extensions
-			const dataProcessorRegistry = getDataProcessorExtensionRegistry();
 			dataProcessorRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "Data Processor extensions cleared for plugin");
 
 			// Step 7: Clear Integration extensions
-			const integrationRegistry = getIntegrationExtensionRegistry();
 			integrationRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "Integration extensions cleared for plugin");
 

@@ -1,20 +1,18 @@
 /**
  * Data Processor Extension Registry Tests
  *
- * Unit tests for the DataProcessorExtensionRegistry class.
+ * Unit tests for the data processor extension registry functions.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DataProcessorExtensionRegistry } from "../data-processor-registry";
+import * as registry from "../data-processor-registry";
 import type {
 	ExporterOptions,
 	ImporterOptions,
 	TransformerOptions,
 } from "../types";
 
-describe("DataProcessorExtensionRegistry", () => {
-	let registry: DataProcessorExtensionRegistry;
-
+describe("Data Processor Extension Registry", () => {
 	const createMockImporter = (
 		id: string,
 		supportedFormats: Array<"json" | "markdown" | "csv"> = ["json"],
@@ -68,29 +66,11 @@ describe("DataProcessorExtensionRegistry", () => {
 	});
 
 	beforeEach(() => {
-		registry = DataProcessorExtensionRegistry.getInstance();
+		registry.reset();
 	});
 
 	afterEach(() => {
-		registry.clear();
-		DataProcessorExtensionRegistry.reset();
-	});
-
-	describe("Singleton Pattern", () => {
-		it("should return the same instance", () => {
-			const instance1 = DataProcessorExtensionRegistry.getInstance();
-			const instance2 = DataProcessorExtensionRegistry.getInstance();
-
-			expect(instance1).toBe(instance2);
-		});
-
-		it("should reset instance correctly", () => {
-			const instance1 = DataProcessorExtensionRegistry.getInstance();
-			DataProcessorExtensionRegistry.reset();
-			const instance2 = DataProcessorExtensionRegistry.getInstance();
-
-			expect(instance1).not.toBe(instance2);
-		});
+		registry.reset();
 	});
 
 	describe("Importer Registration", () => {

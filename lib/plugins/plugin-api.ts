@@ -27,10 +27,10 @@ import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
 import * as aiRegistry from "./ai-registry";
-import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
+import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
-import { getIntegrationExtensionRegistry } from "./integration-registry";
+import * as integrationRegistry from "./integration-registry";
 import type {
 	Command,
 	ContentAnalyzerOptions,
@@ -1079,12 +1079,10 @@ function createAIAPI(pluginId: string): AIAPI {
  * @returns Data API instance
  */
 function createDataAPI(pluginId: string): DataAPI {
-	const registry = getDataProcessorExtensionRegistry();
-
 	return {
 		async registerImporter(options: ImporterOptions): Promise<void> {
 			try {
-				registry.registerImporter(pluginId, options);
+				dataProcessorRegistry.registerImporter(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1105,7 +1103,7 @@ function createDataAPI(pluginId: string): DataAPI {
 
 		async unregisterImporter(importerId: string): Promise<void> {
 			try {
-				registry.unregisterImporter(pluginId, importerId);
+				dataProcessorRegistry.unregisterImporter(pluginId, importerId);
 				logger.info({ pluginId, importerId }, "Importer unregistered");
 			} catch (error) {
 				logger.error(
@@ -1118,7 +1116,7 @@ function createDataAPI(pluginId: string): DataAPI {
 
 		async registerExporter(options: ExporterOptions): Promise<void> {
 			try {
-				registry.registerExporter(pluginId, options);
+				dataProcessorRegistry.registerExporter(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1139,7 +1137,7 @@ function createDataAPI(pluginId: string): DataAPI {
 
 		async unregisterExporter(exporterId: string): Promise<void> {
 			try {
-				registry.unregisterExporter(pluginId, exporterId);
+				dataProcessorRegistry.unregisterExporter(pluginId, exporterId);
 				logger.info({ pluginId, exporterId }, "Exporter unregistered");
 			} catch (error) {
 				logger.error(
@@ -1152,7 +1150,7 @@ function createDataAPI(pluginId: string): DataAPI {
 
 		async registerTransformer(options: TransformerOptions): Promise<void> {
 			try {
-				registry.registerTransformer(pluginId, options);
+				dataProcessorRegistry.registerTransformer(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1174,7 +1172,7 @@ function createDataAPI(pluginId: string): DataAPI {
 
 		async unregisterTransformer(transformerId: string): Promise<void> {
 			try {
-				registry.unregisterTransformer(pluginId, transformerId);
+				dataProcessorRegistry.unregisterTransformer(pluginId, transformerId);
 				logger.info({ pluginId, transformerId }, "Transformer unregistered");
 			} catch (error) {
 				logger.error(
@@ -1194,12 +1192,10 @@ function createDataAPI(pluginId: string): DataAPI {
  * @returns Integration API instance
  */
 function createIntegrationAPI(pluginId: string): IntegrationAPI {
-	const registry = getIntegrationExtensionRegistry();
-
 	return {
 		async registerOAuthProvider(options: OAuthProviderOptions): Promise<void> {
 			try {
-				registry.registerOAuthProvider(pluginId, options);
+				integrationRegistry.registerOAuthProvider(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1219,7 +1215,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 
 		async unregisterOAuthProvider(providerId: string): Promise<void> {
 			try {
-				registry.unregisterOAuthProvider(pluginId, providerId);
+				integrationRegistry.unregisterOAuthProvider(pluginId, providerId);
 				logger.info({ pluginId, providerId }, "OAuth provider unregistered");
 			} catch (error) {
 				logger.error(
@@ -1232,7 +1228,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 
 		async registerWebhook(options: WebhookOptions): Promise<void> {
 			try {
-				registry.registerWebhook(pluginId, options);
+				integrationRegistry.registerWebhook(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1253,7 +1249,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 
 		async unregisterWebhook(webhookId: string): Promise<void> {
 			try {
-				registry.unregisterWebhook(pluginId, webhookId);
+				integrationRegistry.unregisterWebhook(pluginId, webhookId);
 				logger.info({ pluginId, webhookId }, "Webhook unregistered");
 			} catch (error) {
 				logger.error(
@@ -1266,7 +1262,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 
 		async registerExternalAPI(options: ExternalAPIOptions): Promise<void> {
 			try {
-				registry.registerExternalAPI(pluginId, options);
+				integrationRegistry.registerExternalAPI(pluginId, options);
 				logger.info(
 					{
 						pluginId,
@@ -1287,7 +1283,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 
 		async unregisterExternalAPI(apiId: string): Promise<void> {
 			try {
-				registry.unregisterExternalAPI(pluginId, apiId);
+				integrationRegistry.unregisterExternalAPI(pluginId, apiId);
 				logger.info({ pluginId, apiId }, "External API unregistered");
 			} catch (error) {
 				logger.error(
@@ -1305,7 +1301,7 @@ function createIntegrationAPI(pluginId: string): IntegrationAPI {
 			try {
 				// If apiId is provided, use registered API configuration
 				if (apiId) {
-					const apiEntry = registry.getExternalAPI(pluginId, apiId);
+					const apiEntry = integrationRegistry.getExternalAPI(pluginId, apiId);
 					if (!apiEntry) {
 						throw new Error(`External API ${apiId} not found`);
 					}

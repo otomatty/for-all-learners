@@ -1,20 +1,18 @@
 /**
  * Integration Extension Registry Tests
  *
- * Unit tests for the IntegrationExtensionRegistry class.
+ * Unit tests for the integration extension registry functions.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { IntegrationExtensionRegistry } from "../integration-registry";
+import * as registry from "../integration-registry";
 import type {
 	ExternalAPIOptions,
 	OAuthProviderOptions,
 	WebhookOptions,
 } from "../types";
 
-describe("IntegrationExtensionRegistry", () => {
-	let registry: IntegrationExtensionRegistry;
-
+describe("Integration Extension Registry", () => {
 	const createMockOAuthProvider = (
 		id: string,
 		name: string = "Test Provider",
@@ -65,29 +63,11 @@ describe("IntegrationExtensionRegistry", () => {
 	});
 
 	beforeEach(() => {
-		registry = IntegrationExtensionRegistry.getInstance();
+		registry.reset();
 	});
 
 	afterEach(() => {
-		registry.clear();
-		IntegrationExtensionRegistry.reset();
-	});
-
-	describe("Singleton Pattern", () => {
-		it("should return the same instance", () => {
-			const instance1 = IntegrationExtensionRegistry.getInstance();
-			const instance2 = IntegrationExtensionRegistry.getInstance();
-
-			expect(instance1).toBe(instance2);
-		});
-
-		it("should reset instance correctly", () => {
-			const instance1 = IntegrationExtensionRegistry.getInstance();
-			IntegrationExtensionRegistry.reset();
-			const instance2 = IntegrationExtensionRegistry.getInstance();
-
-			expect(instance1).not.toBe(instance2);
-		});
+		registry.reset();
 	});
 
 	describe("OAuth Provider Registration", () => {
