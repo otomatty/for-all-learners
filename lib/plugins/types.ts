@@ -657,3 +657,198 @@ export interface SidebarPanelOptions {
 	/** Default open state */
 	defaultOpen?: boolean;
 }
+
+// ============================================================================
+// Data Processor Extension Types (Phase 2)
+// ============================================================================
+
+/**
+ * Supported data formats for import/export
+ */
+export type DataFormat =
+	| "json"
+	| "markdown"
+	| "html"
+	| "plain-text"
+	| "csv"
+	| "pdf"
+	| string; // Allow custom formats
+
+/**
+ * Import result data structure
+ */
+export interface ImportResult {
+	/** Imported data as structured format */
+	data: unknown;
+
+	/** Data format that was imported */
+	format: DataFormat;
+
+	/** Number of items imported */
+	itemCount?: number;
+
+	/** Additional metadata about the import */
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Importer function signature
+ */
+export type ImporterFunction = (
+	data: string | ArrayBuffer | Blob,
+	options?: Record<string, unknown>,
+) => Promise<ImportResult>;
+
+/**
+ * Importer extension options
+ */
+export interface ImporterOptions {
+	/** Unique importer ID within the plugin */
+	id: string;
+
+	/** Importer display name */
+	name: string;
+
+	/** Importer description */
+	description?: string;
+
+	/** Supported data formats */
+	supportedFormats: DataFormat[];
+
+	/** File extensions supported (e.g., [".md", ".markdown"]) */
+	fileExtensions?: string[];
+
+	/** MIME types supported (e.g., ["text/markdown"]) */
+	mimeTypes?: string[];
+
+	/** Importer function */
+	importer: ImporterFunction;
+
+	/** Options schema for the importer */
+	options?: Array<{
+		name: string;
+		type: "string" | "number" | "boolean";
+		description?: string;
+		default?: unknown;
+	}>;
+}
+
+/**
+ * Export result data structure
+ */
+export interface ExportResult {
+	/** Exported data */
+	data: string | ArrayBuffer | Blob;
+
+	/** Data format that was exported */
+	format: DataFormat;
+
+	/** Suggested filename */
+	filename?: string;
+
+	/** MIME type for the exported data */
+	mimeType?: string;
+
+	/** Additional metadata about the export */
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Exporter function signature
+ */
+export type ExporterFunction = (
+	data: unknown,
+	options?: Record<string, unknown>,
+) => Promise<ExportResult>;
+
+/**
+ * Exporter extension options
+ */
+export interface ExporterOptions {
+	/** Unique exporter ID within the plugin */
+	id: string;
+
+	/** Exporter display name */
+	name: string;
+
+	/** Exporter description */
+	description?: string;
+
+	/** Supported data formats */
+	supportedFormats: DataFormat[];
+
+	/** Default file extension */
+	defaultExtension?: string;
+
+	/** Default MIME type */
+	defaultMimeType?: string;
+
+	/** Exporter function */
+	exporter: ExporterFunction;
+
+	/** Options schema for the exporter */
+	options?: Array<{
+		name: string;
+		type: "string" | "number" | "boolean";
+		description?: string;
+		default?: unknown;
+	}>;
+}
+
+/**
+ * Transform result data structure
+ */
+export interface TransformResult {
+	/** Transformed data */
+	data: unknown;
+
+	/** Source format */
+	sourceFormat: DataFormat;
+
+	/** Target format */
+	targetFormat: DataFormat;
+
+	/** Additional metadata about the transformation */
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Transformer function signature
+ */
+export type TransformerFunction = (
+	data: unknown,
+	sourceFormat: DataFormat,
+	targetFormat: DataFormat,
+	options?: Record<string, unknown>,
+) => Promise<TransformResult>;
+
+/**
+ * Transformer extension options
+ */
+export interface TransformerOptions {
+	/** Unique transformer ID within the plugin */
+	id: string;
+
+	/** Transformer display name */
+	name: string;
+
+	/** Transformer description */
+	description?: string;
+
+	/** Supported source formats */
+	sourceFormats: DataFormat[];
+
+	/** Supported target formats */
+	targetFormats: DataFormat[];
+
+	/** Transformer function */
+	transformer: TransformerFunction;
+
+	/** Options schema for the transformer */
+	options?: Array<{
+		name: string;
+		type: "string" | "number" | "boolean";
+		description?: string;
+		default?: unknown;
+	}>;
+}

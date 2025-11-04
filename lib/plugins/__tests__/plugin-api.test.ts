@@ -6,6 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAIExtensionRegistry } from "../ai-registry";
+import { getDataProcessorExtensionRegistry } from "../data-processor-registry";
 import {
 	clearPluginCommands,
 	createPluginAPI,
@@ -15,10 +16,13 @@ import {
 import type {
 	Command,
 	ContentAnalyzerOptions,
+	ExporterOptions,
+	ImporterOptions,
 	PageOptions,
 	QuestionGeneratorOptions,
 	QuestionType,
 	SidebarPanelOptions,
+	TransformerOptions,
 	WidgetOptions,
 } from "../types";
 import { getUIExtensionRegistry } from "../ui-registry";
@@ -30,6 +34,7 @@ describe("PluginAPI", () => {
 		clearPluginCommands(pluginId);
 		getAIExtensionRegistry().clearPlugin(pluginId);
 		getUIExtensionRegistry().clearPlugin(pluginId);
+		getDataProcessorExtensionRegistry().clearPlugin(pluginId);
 		vi.clearAllMocks();
 	});
 
@@ -42,6 +47,9 @@ describe("PluginAPI", () => {
 			expect(api.storage).toBeDefined();
 			expect(api.notifications).toBeDefined();
 			expect(api.ui).toBeDefined();
+			expect(api.editor).toBeDefined();
+			expect(api.ai).toBeDefined();
+			expect(api.data).toBeDefined();
 		});
 	});
 
@@ -572,6 +580,222 @@ describe("PluginAPI", () => {
 				const registry = getAIExtensionRegistry();
 				const analyzers = registry.getContentAnalyzers(pluginId);
 				expect(analyzers).toHaveLength(0);
+			});
+		});
+	});
+
+	describe("DataAPI", () => {
+		it("should have Data API methods defined", () => {
+			const api = createPluginAPI(pluginId);
+
+			expect(api.data).toBeDefined();
+			expect(typeof api.data.registerImporter).toBe("function");
+			expect(typeof api.data.unregisterImporter).toBe("function");
+			expect(typeof api.data.registerExporter).toBe("function");
+			expect(typeof api.data.unregisterExporter).toBe("function");
+			expect(typeof api.data.registerTransformer).toBe("function");
+			expect(typeof api.data.unregisterTransformer).toBe("function");
+		});
+
+		describe("Importer", () => {
+			it("should register an importer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ImporterOptions = {
+					id: "test-importer",
+					name: "Test Importer",
+					description: "Test importer description",
+					supportedFormats: ["json"],
+					fileExtensions: [".json"],
+					mimeTypes: ["application/json"],
+					importer: async (_data, _options) => ({
+						data: { imported: true },
+						format: "json",
+						itemCount: 1,
+					}),
+				};
+
+				await api.data.registerImporter(options);
+
+				const registry = getDataProcessorExtensionRegistry();
+				const importers = registry.getImporters(pluginId);
+				expect(importers).toHaveLength(1);
+				expect(importers[0].importerId).toBe("test-importer");
+			});
+
+			it("should throw error when registering duplicate importer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ImporterOptions = {
+					id: "test-importer",
+					name: "Test Importer",
+					supportedFormats: ["json"],
+					importer: async (_data, _options) => ({
+						data: { imported: true },
+						format: "json",
+					}),
+				};
+
+				await api.data.registerImporter(options);
+
+				await expect(api.data.registerImporter(options)).rejects.toThrow();
+			});
+
+			it("should unregister an importer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ImporterOptions = {
+					id: "test-importer",
+					name: "Test Importer",
+					supportedFormats: ["json"],
+					importer: async (_data, _options) => ({
+						data: { imported: true },
+						format: "json",
+					}),
+				};
+
+				await api.data.registerImporter(options);
+				await api.data.unregisterImporter("test-importer");
+
+				const registry = getDataProcessorExtensionRegistry();
+				const importers = registry.getImporters(pluginId);
+				expect(importers).toHaveLength(0);
+			});
+		});
+
+		describe("Exporter", () => {
+			it("should register an exporter", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ExporterOptions = {
+					id: "test-exporter",
+					name: "Test Exporter",
+					description: "Test exporter description",
+					supportedFormats: ["json"],
+					defaultExtension: ".json",
+					defaultMimeType: "application/json",
+					exporter: async (_data, _options) => ({
+						data: JSON.stringify({ exported: true }),
+						format: "json",
+						filename: "export.json",
+						mimeType: "application/json",
+					}),
+				};
+
+				await api.data.registerExporter(options);
+
+				const registry = getDataProcessorExtensionRegistry();
+				const exporters = registry.getExporters(pluginId);
+				expect(exporters).toHaveLength(1);
+				expect(exporters[0].exporterId).toBe("test-exporter");
+			});
+
+			it("should throw error when registering duplicate exporter", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ExporterOptions = {
+					id: "test-exporter",
+					name: "Test Exporter",
+					supportedFormats: ["json"],
+					exporter: async (_data, _options) => ({
+						data: JSON.stringify({ exported: true }),
+						format: "json",
+					}),
+				};
+
+				await api.data.registerExporter(options);
+
+				await expect(api.data.registerExporter(options)).rejects.toThrow();
+			});
+
+			it("should unregister an exporter", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ExporterOptions = {
+					id: "test-exporter",
+					name: "Test Exporter",
+					supportedFormats: ["json"],
+					exporter: async (_data, _options) => ({
+						data: JSON.stringify({ exported: true }),
+						format: "json",
+					}),
+				};
+
+				await api.data.registerExporter(options);
+				await api.data.unregisterExporter("test-exporter");
+
+				const registry = getDataProcessorExtensionRegistry();
+				const exporters = registry.getExporters(pluginId);
+				expect(exporters).toHaveLength(0);
+			});
+		});
+
+		describe("Transformer", () => {
+			it("should register a transformer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: TransformerOptions = {
+					id: "test-transformer",
+					name: "Test Transformer",
+					description: "Test transformer description",
+					sourceFormats: ["json"],
+					targetFormats: ["markdown"],
+					transformer: async (_data, sourceFormat, targetFormat, _options) => ({
+						data: { transformed: true },
+						sourceFormat,
+						targetFormat,
+					}),
+				};
+
+				await api.data.registerTransformer(options);
+
+				const registry = getDataProcessorExtensionRegistry();
+				const transformers = registry.getTransformers(pluginId);
+				expect(transformers).toHaveLength(1);
+				expect(transformers[0].transformerId).toBe("test-transformer");
+			});
+
+			it("should throw error when registering duplicate transformer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: TransformerOptions = {
+					id: "test-transformer",
+					name: "Test Transformer",
+					sourceFormats: ["json"],
+					targetFormats: ["markdown"],
+					transformer: async (_data, sourceFormat, targetFormat, _options) => ({
+						data: { transformed: true },
+						sourceFormat,
+						targetFormat,
+					}),
+				};
+
+				await api.data.registerTransformer(options);
+
+				await expect(api.data.registerTransformer(options)).rejects.toThrow();
+			});
+
+			it("should unregister a transformer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: TransformerOptions = {
+					id: "test-transformer",
+					name: "Test Transformer",
+					sourceFormats: ["json"],
+					targetFormats: ["markdown"],
+					transformer: async (_data, sourceFormat, targetFormat, _options) => ({
+						data: { transformed: true },
+						sourceFormat,
+						targetFormat,
+					}),
+				};
+
+				await api.data.registerTransformer(options);
+				await api.data.unregisterTransformer("test-transformer");
+
+				const registry = getDataProcessorExtensionRegistry();
+				const transformers = registry.getTransformers(pluginId);
+				expect(transformers).toHaveLength(0);
 			});
 		});
 	});

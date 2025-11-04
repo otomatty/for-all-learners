@@ -27,6 +27,7 @@ import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
 import { getAIExtensionRegistry } from "./ai-registry";
+import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import { getEditorExtensionRegistry } from "./editor-registry";
 import type {
@@ -35,11 +36,14 @@ import type {
 	DialogOptions,
 	EditorExtensionOptions,
 	EditorSelection,
+	ExporterOptions,
+	ImporterOptions,
 	NotificationType,
 	PageOptions,
 	PromptTemplateOptions,
 	QuestionGeneratorOptions,
 	SidebarPanelOptions,
+	TransformerOptions,
 	WidgetOptions,
 } from "./types";
 import { getUIExtensionRegistry } from "./ui-registry";
@@ -73,8 +77,8 @@ export interface PluginAPI {
 	/** AI extensions (Phase 2) */
 	ai: AIAPI;
 
-	// Future extension points (Phase 3+)
-	// data?: DataAPI;
+	/** Data processor extensions (Phase 2) */
+	data: DataAPI;
 }
 
 /**
@@ -332,6 +336,47 @@ export interface AIAPI {
 	unregisterContentAnalyzer(analyzerId: string): Promise<void>;
 }
 
+/**
+ * Data Processor API for plugin extensions
+ */
+export interface DataAPI {
+	/**
+	 * Register an importer
+	 * @param options Importer options
+	 */
+	registerImporter(options: ImporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an importer
+	 * @param importerId Importer ID to unregister
+	 */
+	unregisterImporter(importerId: string): Promise<void>;
+
+	/**
+	 * Register an exporter
+	 * @param options Exporter options
+	 */
+	registerExporter(options: ExporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an exporter
+	 * @param exporterId Exporter ID to unregister
+	 */
+	unregisterExporter(exporterId: string): Promise<void>;
+
+	/**
+	 * Register a transformer
+	 * @param options Transformer options
+	 */
+	registerTransformer(options: TransformerOptions): Promise<void>;
+
+	/**
+	 * Unregister a transformer
+	 * @param transformerId Transformer ID to unregister
+	 */
+	unregisterTransformer(transformerId: string): Promise<void>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -353,6 +398,7 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		ui: createUIAPI(pluginId),
 		editor: createEditorAPI(pluginId),
 		ai: createAIAPI(pluginId),
+		data: createDataAPI(pluginId),
 	};
 }
 
@@ -963,6 +1009,121 @@ function createAIAPI(pluginId: string): AIAPI {
 				logger.error(
 					{ error, pluginId, analyzerId },
 					"Failed to unregister content analyzer",
+				);
+				throw error;
+			}
+		},
+	};
+}
+
+/**
+ * Create Data Processor API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns Data API instance
+ */
+function createDataAPI(pluginId: string): DataAPI {
+	const registry = getDataProcessorExtensionRegistry();
+
+	return {
+		async registerImporter(options: ImporterOptions): Promise<void> {
+			try {
+				registry.registerImporter(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						importerId: options.id,
+						name: options.name,
+						supportedFormats: options.supportedFormats,
+					},
+					"Importer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, importerId: options.id },
+					"Failed to register importer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterImporter(importerId: string): Promise<void> {
+			try {
+				registry.unregisterImporter(pluginId, importerId);
+				logger.info({ pluginId, importerId }, "Importer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, importerId },
+					"Failed to unregister importer",
+				);
+				throw error;
+			}
+		},
+
+		async registerExporter(options: ExporterOptions): Promise<void> {
+			try {
+				registry.registerExporter(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						exporterId: options.id,
+						name: options.name,
+						supportedFormats: options.supportedFormats,
+					},
+					"Exporter registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, exporterId: options.id },
+					"Failed to register exporter",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExporter(exporterId: string): Promise<void> {
+			try {
+				registry.unregisterExporter(pluginId, exporterId);
+				logger.info({ pluginId, exporterId }, "Exporter unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, exporterId },
+					"Failed to unregister exporter",
+				);
+				throw error;
+			}
+		},
+
+		async registerTransformer(options: TransformerOptions): Promise<void> {
+			try {
+				registry.registerTransformer(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						transformerId: options.id,
+						name: options.name,
+						sourceFormats: options.sourceFormats,
+						targetFormats: options.targetFormats,
+					},
+					"Transformer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, transformerId: options.id },
+					"Failed to register transformer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterTransformer(transformerId: string): Promise<void> {
+			try {
+				registry.unregisterTransformer(pluginId, transformerId);
+				logger.info({ pluginId, transformerId }, "Transformer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, transformerId },
+					"Failed to unregister transformer",
 				);
 				throw error;
 			}
