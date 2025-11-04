@@ -2,6 +2,7 @@
 
 **作成日**: 2025-11-04  
 **最終更新**: 2025-01-05  
+**リファクタリング**: Phase 2 Extension Registryを関数型にリファクタリング完了  
 **関連Issue**: [#94](https://github.com/otomatty/for-all-learners/issues/94), [#95](https://github.com/otomatty/for-all-learners/issues/95)
 
 ---
@@ -18,18 +19,18 @@
 
 | 拡張ポイント | ステータス | 実装ファイル | 備考 |
 |------------|---------|------------|------|
-| **Editor Extensions** | ✅ **完了** | `lib/plugins/editor-registry.ts`<br>`lib/plugins/editor-manager.ts` | Tiptap拡張の動的登録・操作API実装済み |
-| **AI Extensions** | ✅ **完了** | `lib/plugins/ai-registry.ts`<br>`lib/plugins/plugin-api.ts` | Question Generator/Prompt Template/Content Analyzer API実装済み |
-| **UI Extensions** | ✅ **完了** | `lib/plugins/ui-registry.ts`<br>`lib/plugins/plugin-api.ts` | Widget/Page/Sidebar Panel API実装済み |
-| **Data Processor Extensions** | ✅ **完了** | `lib/plugins/data-processor-registry.ts`<br>`lib/plugins/plugin-api.ts` | Importer/Exporter/Transformer API実装済み |
-| **Integration Extensions** | ✅ **完了** | `lib/plugins/integration-registry.ts`<br>`lib/plugins/plugin-api.ts` | OAuth連携/Webhook/External API呼び出しAPI実装済み |
+| **Editor Extensions** | ✅ **完了** | `lib/plugins/editor-registry.ts`<br>`lib/plugins/editor-manager.ts` | Tiptap拡張の動的登録・操作API実装済み（関数型モジュール） |
+| **AI Extensions** | ✅ **完了** | `lib/plugins/ai-registry.ts`<br>`lib/plugins/plugin-api.ts` | Question Generator/Prompt Template/Content Analyzer API実装済み（関数型モジュール） |
+| **UI Extensions** | ✅ **完了** | `lib/plugins/ui-registry.ts`<br>`lib/plugins/plugin-api.ts` | Widget/Page/Sidebar Panel API実装済み（関数型モジュール） |
+| **Data Processor Extensions** | ✅ **完了** | `lib/plugins/data-processor-registry.ts`<br>`lib/plugins/plugin-api.ts` | Importer/Exporter/Transformer API実装済み（関数型モジュール） |
+| **Integration Extensions** | ✅ **完了** | `lib/plugins/integration-registry.ts`<br>`lib/plugins/plugin-api.ts` | OAuth連携/Webhook/External API呼び出しAPI実装済み（関数型モジュール） |
 
 ### 詳細
 
 #### ✅ Editor Extensions（完了）
 
 **実装内容**:
-- ✅ `EditorExtensionRegistry`: エディタ拡張の登録・管理
+- ✅ `EditorExtensionRegistry`: エディタ拡張の登録・管理（関数型モジュールにリファクタリング済み）
 - ✅ `EditorManager`: エディタインスタンスとプラグイン拡張の統合管理
 - ✅ `EditorAPI`: プラグインからのエディタ操作API
   - `registerExtension()`: カスタムノード/マーク/プラグインの登録
@@ -41,12 +42,14 @@
 
 **テスト**: ✅ 51テストケース全てパス
 
+**備考**: 基本的な実装は完了。プラグインからカスタムエディタ拡張を登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。クラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
+
 **実装計画**: `docs/03_plans/plugin-system/phase2-editor-extensions.md`
 
 #### ✅ AI Extensions（完了）
 
 **実装内容**:
-- ✅ `AIExtensionRegistry`: AI拡張の登録・管理
+- ✅ `AIExtensionRegistry`: AI拡張の登録・管理（関数型モジュールにリファクタリング済み）
   - Question Generator登録・管理
   - Prompt Template登録・管理
   - Content Analyzer登録・管理
@@ -69,12 +72,12 @@
 - `lib/plugins/__tests__/ai-registry.test.ts`: AIExtensionRegistry単体テスト（29テストケース全てパス）
 - `lib/plugins/__tests__/plugin-api.test.ts`: Plugin API統合テスト（AIAPI含む、35テストケース全てパス）
 
-**備考**: 基本的な実装は完了。プラグインからカスタム問題生成器、プロンプトテンプレート、コンテンツアナライザーを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
+**備考**: 基本的な実装は完了。プラグインからカスタム問題生成器、プロンプトテンプレート、コンテンツアナライザーを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。クラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
 
 #### ✅ UI Extensions（完了）
 
 **実装内容**:
-- ✅ `UIExtensionRegistry`: UI拡張の登録・管理
+- ✅ `UIExtensionRegistry`: UI拡張の登録・管理（関数型モジュールにリファクタリング済み）
   - Widget登録・管理（ダッシュボードウィジェット）
   - Page登録・管理（カスタムページ）
   - Sidebar Panel登録・管理（サイドバーパネル）
@@ -97,12 +100,12 @@
 - `lib/plugins/__tests__/ui-registry.test.ts`: UIExtensionRegistry単体テスト（24テストケース全てパス）
 - `lib/plugins/__tests__/plugin-api.test.ts`: Plugin API統合テスト（UIAPI含む、44テストケース全てパス）
 
-**備考**: 基本的な実装は完了。プラグインからカスタムウィジェット、ページ、サイドバーパネルを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
+**備考**: 基本的な実装は完了。プラグインからカスタムウィジェット、ページ、サイドバーパネルを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。クラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
 
 #### ✅ Data Processor Extensions（完了）
 
 **実装内容**:
-- ✅ `DataProcessorExtensionRegistry`: データ処理拡張の登録・管理
+- ✅ `DataProcessorExtensionRegistry`: データ処理拡張の登録・管理（関数型モジュールにリファクタリング済み）
   - Importer登録・管理（データインポート処理）
   - Exporter登録・管理（データエクスポート処理）
   - Transformer登録・管理（データ変換処理）
@@ -124,12 +127,12 @@
 **テスト**: ✅ 実装済み
 - `lib/plugins/__tests__/data-processor-registry.test.ts`: DataProcessorExtensionRegistry単体テスト（38テストケース全てパス）
 
-**備考**: 基本的な実装は完了。プラグインからカスタムインポーター、エクスポーター、トランスフォーマーを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
+**備考**: 基本的な実装は完了。プラグインからカスタムインポーター、エクスポーター、トランスフォーマーを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。クラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
 
 #### ✅ Integration Extensions（完了）
 
 **実装内容**:
-- ✅ `IntegrationExtensionRegistry`: 統合拡張の登録・管理
+- ✅ `IntegrationExtensionRegistry`: 統合拡張の登録・管理（関数型モジュールにリファクタリング済み）
   - OAuth Provider登録・管理（OAuth連携）
   - Webhook登録・管理（Webhook受信）
   - External API登録・管理（外部API呼び出し）
@@ -152,7 +155,7 @@
 **テスト**: ✅ 実装済み
 - `lib/plugins/__tests__/integration-registry.test.ts`: IntegrationExtensionRegistry単体テスト（31テストケース全てパス）
 
-**備考**: 基本的な実装は完了。プラグインからOAuthプロバイダー、Webhook、外部APIを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
+**備考**: 基本的な実装は完了。プラグインからOAuthプロバイダー、Webhook、外部APIを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。クラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
 
 ---
 
@@ -285,7 +288,7 @@
 
 **実装計画**: `docs/03_plans/plugin-system/phase1-core-system.md`
 
-### Phase 2: Extension Points ⚠️ 部分的完了
+### Phase 2: Extension Points ✅ 完了
 
 - ✅ Editor Extensions（完了）
 - ✅ AI Extensions（完了）
@@ -348,9 +351,9 @@
 ### Issue 95の前提条件
 
 - ✅ Phase 1完了（前提条件満たしている）
-- ⚠️ Phase 2完了（Editor Extensionsのみ完了、AI/UI/Data/Integration未完了）
+- ✅ Phase 2完了（全Extension Points実装完了）
 
-**注意**: Issue 95は「Phase 1, Phase 2完了」が前提だが、Phase 2はEditor Extensionsのみ完了している状態。AI/UI/Data/Integration Extensionsは未実装だが、マーケットプレイスUIは独立して実装可能。
+**注意**: Issue 95は「Phase 1, Phase 2完了」が前提。Phase 2はすべてのExtension Points（Editor, AI, UI, Data Processor, Integration）が実装完了している。また、すべてのExtension Registryはクラスベースのシングルトンパターンから関数型モジュールにリファクタリング済み。
 
 ---
 
@@ -375,4 +378,5 @@
 | 2025-01-05 | 検索・フィルタリングUI実装完了（検索バー、フィルター、ソート機能） | AI Agent |
 | 2025-01-05 | Data Processor Extensions実装完了（Importer/Exporter/Transformer API） | AI Agent |
 | 2025-01-05 | Integration Extensions実装完了（OAuth連携/Webhook/External API呼び出しAPI） | AI Agent |
+| 2025-01-05 | Phase 2 Extension Registryを関数型にリファクタリング完了<br>（EditorExtensionRegistry, AIExtensionRegistry, UIExtensionRegistry,<br>DataProcessorExtensionRegistry, IntegrationExtensionRegistryをクラスベース<br>シングルトンから関数型モジュールに移行。244テストケース全てパス） | AI Agent |
 
