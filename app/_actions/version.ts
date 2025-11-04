@@ -85,10 +85,9 @@ ${commitListText}`;
 
 	// Generate release notes using LLM
 	const jsonString = await client.generate(systemPrompt);
-	// JSONパース
-	let _parsed: ReleaseNotesJSON;
+	// JSONパース（バリデーション用）
 	try {
-		_parsed = JSON.parse(jsonString) as ReleaseNotesJSON;
+		JSON.parse(jsonString) as ReleaseNotesJSON;
 	} catch (e) {
 		throw new Error(`Failed to parse release notes JSON: ${e}`);
 	}
