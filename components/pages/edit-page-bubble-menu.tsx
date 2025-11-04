@@ -186,10 +186,7 @@ export function EditPageBubbleMenu({
 									</Tooltip>
 								) : (
 									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="px-2 py-1 hover:bg-accent"
-										>
+										<button type="button" className="px-2 py-1 hover:bg-accent">
 											<Hash className="w-5 h-5" />
 										</button>
 									</DropdownMenuTrigger>

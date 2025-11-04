@@ -38,7 +38,9 @@ export function NoteActivitySection({ activities }: NoteActivitySectionProps) {
 				<h3 className="text-lg font-semibold flex items-center gap-2">
 					{ACTIVITY_ICONS.page_created} ノート活動
 				</h3>
-				<div className="text-sm text-muted-foreground">合計 {totalPages}ページ</div>
+				<div className="text-sm text-muted-foreground">
+					合計 {totalPages}ページ
+				</div>
 			</div>
 
 			<div className="space-y-4">

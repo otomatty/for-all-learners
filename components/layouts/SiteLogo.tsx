@@ -33,7 +33,9 @@ export function Logo({ version, href = "/" }: LogoProps) {
 					height={64}
 				/>
 				{version && (
-					<span className="text-xs text-muted-foreground select-none">v{version}</span>
+					<span className="text-xs text-muted-foreground select-none">
+						v{version}
+					</span>
 				)}
 			</Link>
 		);
@@ -48,7 +50,9 @@ export function Logo({ version, href = "/" }: LogoProps) {
 		<Link href={href} className="flex items-center space-x-2">
 			<Image src={logoSrc} alt="For All Learners" width={72} height={64} />
 			{version && (
-				<span className="text-xs text-muted-foreground select-none">v{version}</span>
+				<span className="text-xs text-muted-foreground select-none">
+					v{version}
+				</span>
 			)}
 		</Link>
 	);

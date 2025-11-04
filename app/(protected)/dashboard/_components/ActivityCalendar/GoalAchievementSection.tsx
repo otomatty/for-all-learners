@@ -54,14 +54,18 @@ export function GoalAchievementSection({
 								<div className="flex items-center justify-between gap-2 mb-1">
 									<span
 										className={`font-medium ${
-											goal.achieved ? "text-green-900 dark:text-green-100" : "text-foreground"
+											goal.achieved
+												? "text-green-900 dark:text-green-100"
+												: "text-foreground"
 										}`}
 									>
 										{goal.goalTitle}
 									</span>
 									<span
 										className={`text-sm font-medium ${
-											goal.achieved ? "text-green-700 dark:text-green-300" : "text-muted-foreground"
+											goal.achieved
+												? "text-green-700 dark:text-green-300"
+												: "text-muted-foreground"
 										}`}
 									>
 										{goal.actualValue}/{goal.targetValue}

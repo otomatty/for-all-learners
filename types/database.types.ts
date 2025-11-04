@@ -1374,6 +1374,125 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			plugin_storage: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					key: string;
+					plugin_id: string;
+					updated_at: string | null;
+					user_id: string;
+					value: Json;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					key: string;
+					plugin_id: string;
+					updated_at?: string | null;
+					user_id: string;
+					value: Json;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					key?: string;
+					plugin_id?: string;
+					updated_at?: string | null;
+					user_id?: string;
+					value?: Json;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_storage_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugins: {
+				Row: {
+					author: string;
+					code_url: string;
+					created_at: string | null;
+					description: string | null;
+					downloads_count: number | null;
+					has_ai_extension: boolean | null;
+					has_data_processor_extension: boolean | null;
+					has_editor_extension: boolean | null;
+					has_integration_extension: boolean | null;
+					has_ui_extension: boolean | null;
+					homepage: string | null;
+					id: string;
+					is_official: boolean | null;
+					is_reviewed: boolean | null;
+					license: string | null;
+					manifest: Json;
+					name: string;
+					plugin_id: string;
+					published_at: string | null;
+					rating_average: number | null;
+					rating_count: number | null;
+					repository: string | null;
+					updated_at: string | null;
+					version: string;
+				};
+				Insert: {
+					author: string;
+					code_url: string;
+					created_at?: string | null;
+					description?: string | null;
+					downloads_count?: number | null;
+					has_ai_extension?: boolean | null;
+					has_data_processor_extension?: boolean | null;
+					has_editor_extension?: boolean | null;
+					has_integration_extension?: boolean | null;
+					has_ui_extension?: boolean | null;
+					homepage?: string | null;
+					id?: string;
+					is_official?: boolean | null;
+					is_reviewed?: boolean | null;
+					license?: string | null;
+					manifest: Json;
+					name: string;
+					plugin_id: string;
+					published_at?: string | null;
+					rating_average?: number | null;
+					rating_count?: number | null;
+					repository?: string | null;
+					updated_at?: string | null;
+					version: string;
+				};
+				Update: {
+					author?: string;
+					code_url?: string;
+					created_at?: string | null;
+					description?: string | null;
+					downloads_count?: number | null;
+					has_ai_extension?: boolean | null;
+					has_data_processor_extension?: boolean | null;
+					has_editor_extension?: boolean | null;
+					has_integration_extension?: boolean | null;
+					has_ui_extension?: boolean | null;
+					homepage?: string | null;
+					id?: string;
+					is_official?: boolean | null;
+					is_reviewed?: boolean | null;
+					license?: string | null;
+					manifest?: Json;
+					name?: string;
+					plugin_id?: string;
+					published_at?: string | null;
+					rating_average?: number | null;
+					rating_count?: number | null;
+					repository?: string | null;
+					updated_at?: string | null;
+					version?: string;
+				};
+				Relationships: [];
+			};
 			questions: {
 				Row: {
 					card_id: string;
@@ -1933,6 +2052,57 @@ export type Database = {
 					},
 				];
 			};
+			user_plugins: {
+				Row: {
+					config: Json | null;
+					enabled: boolean | null;
+					id: string;
+					installed_at: string | null;
+					installed_version: string;
+					last_updated_at: string | null;
+					last_used_at: string | null;
+					plugin_id: string;
+					user_id: string;
+				};
+				Insert: {
+					config?: Json | null;
+					enabled?: boolean | null;
+					id?: string;
+					installed_at?: string | null;
+					installed_version: string;
+					last_updated_at?: string | null;
+					last_used_at?: string | null;
+					plugin_id: string;
+					user_id: string;
+				};
+				Update: {
+					config?: Json | null;
+					enabled?: boolean | null;
+					id?: string;
+					installed_at?: string | null;
+					installed_version?: string;
+					last_updated_at?: string | null;
+					last_used_at?: string | null;
+					plugin_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_plugins_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "user_plugins_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			user_quizlet_sets: {
 				Row: {
 					created_at: string;
@@ -2198,6 +2368,10 @@ export type Database = {
 					updated_at: string;
 				}[];
 			};
+			increment_plugin_downloads: {
+				Args: { p_plugin_id: string };
+				Returns: undefined;
+			};
 			is_admin_user: { Args: never; Returns: boolean };
 			is_superadmin: { Args: never; Returns: boolean };
 			maintain_pdf_jobs: { Args: never; Returns: Json };
@@ -2256,6 +2430,10 @@ export type Database = {
 					worker_id?: string;
 				};
 				Returns: boolean;
+			};
+			update_plugin_rating: {
+				Args: { p_new_rating: number; p_plugin_id: string };
+				Returns: undefined;
 			};
 		};
 		Enums: {
