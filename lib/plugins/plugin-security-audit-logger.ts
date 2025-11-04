@@ -1,0 +1,550 @@
+/**
+ * Plugin Security Audit Logger
+ *
+ * Records security-related events for plugin system including:
+ * - API calls from plugins
+ * - Rate limit violations
+ * - Execution timeouts
+ * - Storage access
+ * - Security violations
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this):
+ *   ├─ lib/plugins/plugin-loader/worker-message-handler.ts
+ *   ├─ lib/plugins/plugin-rate-limiter.ts
+ *   ├─ lib/plugins/plugin-execution-monitor.ts
+ *   └─ lib/plugins/plugin-api.ts
+ *
+ * Dependencies:
+ *   └─ lib/logger.ts
+ *
+ * Related Documentation:
+ *   └─ Issue #96: Plugin System Security Enhancement
+ */
+
+import logger from "@/lib/logger";
+
+/**
+ * Security audit event types
+ */
+export type SecurityAuditEventType =
+	| "api_call"
+	| "api_call_failed"
+	| "rate_limit_violation"
+	| "execution_timeout"
+	| "storage_access"
+	| "storage_quota_exceeded"
+	| "plugin_error"
+	| "plugin_terminated"
+	| "unauthorized_access_attempt";
+
+/**
+ * Security audit event severity levels
+ */
+export type SecurityAuditSeverity = "low" | "medium" | "high" | "critical";
+
+/**
+ * Base security audit event structure
+ */
+interface BaseSecurityAuditEvent {
+	/** Event type */
+	eventType: SecurityAuditEventType;
+	/** Severity level */
+	severity: SecurityAuditSeverity;
+	/** Plugin ID */
+	pluginId: string;
+	/** User ID (if available) */
+	userId?: string;
+	/** Timestamp */
+	timestamp: number;
+	/** Additional context */
+	context?: Record<string, unknown>;
+}
+
+/**
+ * API call audit event
+ */
+export interface APICallAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "api_call" | "api_call_failed";
+	namespace: string;
+	method: string;
+	/** Arguments summary (sanitized, no sensitive data) */
+	argsSummary?: string;
+	/** Whether the call succeeded */
+	success: boolean;
+	/** Error message if failed */
+	error?: string;
+	/** Request ID */
+	requestId: string;
+}
+
+/**
+ * Rate limit violation audit event
+ */
+export interface RateLimitViolationAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "rate_limit_violation";
+	reason: string;
+	/** Retry after time in milliseconds */
+	retryAfter?: number;
+	/** Current call count */
+	currentCallCount?: number;
+	/** Limit that was exceeded */
+	limit?: number;
+}
+
+/**
+ * Execution timeout audit event
+ */
+export interface ExecutionTimeoutAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "execution_timeout";
+	/** Execution time in milliseconds */
+	executionTime: number;
+	/** Maximum allowed execution time */
+	maxExecutionTime: number;
+	reason: string;
+}
+
+/**
+ * Storage access audit event
+ */
+export interface StorageAccessAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "storage_access" | "storage_quota_exceeded";
+	operation: "get" | "set" | "delete" | "clear" | "keys";
+	/** Storage key (may be sanitized) */
+	key?: string;
+	/** Storage size in bytes */
+	size?: number;
+	/** Maximum storage quota */
+	maxQuota?: number;
+}
+
+/**
+ * Plugin error audit event
+ */
+export interface PluginErrorAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "plugin_error";
+	errorMessage: string;
+	errorStack?: string;
+}
+
+/**
+ * Plugin terminated audit event
+ */
+export interface PluginTerminatedAuditEvent extends BaseSecurityAuditEvent {
+	eventType: "plugin_terminated";
+	reason: string;
+	executionTime: number;
+}
+
+/**
+ * Union type for all security audit events
+ */
+export type SecurityAuditEvent =
+	| APICallAuditEvent
+	| RateLimitViolationAuditEvent
+	| ExecutionTimeoutAuditEvent
+	| StorageAccessAuditEvent
+	| PluginErrorAuditEvent
+	| PluginTerminatedAuditEvent
+	| BaseSecurityAuditEvent;
+
+/**
+ * Plugin Security Audit Logger
+ *
+ * Records security-related events for plugin system.
+ * Uses structured logging for easy searching and analysis.
+ */
+class PluginSecurityAuditLogger {
+	/**
+	 * Log a security audit event
+	 *
+	 * @param event Security audit event
+	 */
+	public log(event: SecurityAuditEvent): void {
+		// Determine log level based on severity
+		const logLevel = this.getLogLevel(event.severity);
+
+		// Prepare log context
+		const logContext: Record<string, unknown> = {
+			audit: true,
+			eventType: event.eventType,
+			severity: event.severity,
+			pluginId: event.pluginId,
+			timestamp: new Date(event.timestamp).toISOString(),
+			...event.context,
+		};
+
+		// Add event-specific fields
+		if ("namespace" in event && "method" in event) {
+			logContext.namespace = event.namespace;
+			logContext.method = event.method;
+			logContext.requestId = event.requestId;
+			if (event.argsSummary) {
+				logContext.argsSummary = event.argsSummary;
+			}
+			if (event.success !== undefined) {
+				logContext.success = event.success;
+			}
+			if (event.error) {
+				logContext.error = event.error;
+			}
+		}
+
+		if ("reason" in event) {
+			logContext.reason = event.reason;
+			
+			// Add rate limit violation specific fields
+			if ("retryAfter" in event && event.retryAfter !== undefined) {
+				logContext.retryAfter = event.retryAfter;
+			}
+			if ("currentCallCount" in event && event.currentCallCount !== undefined) {
+				logContext.currentCallCount = event.currentCallCount;
+			}
+			if ("limit" in event && event.limit !== undefined) {
+				logContext.limit = event.limit;
+			}
+		}
+
+		if ("executionTime" in event) {
+			logContext.executionTime = event.executionTime;
+			
+			// Add execution timeout specific fields
+			if ("maxExecutionTime" in event) {
+				logContext.maxExecutionTime = event.maxExecutionTime;
+			}
+		}
+
+		if ("operation" in event) {
+			logContext.operation = event.operation;
+			if (event.key) {
+				logContext.storageKey = event.key;
+			}
+			if (event.size !== undefined) {
+				logContext.storageSize = event.size;
+			}
+			if (event.maxQuota !== undefined) {
+				logContext.maxStorageQuota = event.maxQuota;
+			}
+		}
+
+		if ("errorMessage" in event) {
+			logContext.errorMessage = event.errorMessage;
+			if (event.errorStack) {
+				logContext.errorStack = event.errorStack;
+			}
+		}
+
+		if (event.userId) {
+			logContext.userId = event.userId;
+		}
+
+		// Log with appropriate level
+		const message = this.getLogMessage(event);
+		logger[logLevel](logContext, message);
+	}
+
+	/**
+	 * Log API call
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param namespace API namespace
+	 * @param method API method
+	 * @param args Arguments (will be sanitized)
+	 * @param requestId Request ID
+	 * @param success Whether the call succeeded
+	 * @param error Error message if failed
+	 */
+	public logAPICall(
+		pluginId: string,
+		namespace: string,
+		method: string,
+		args: unknown[],
+		requestId: string,
+		success: boolean,
+		userId?: string,
+		error?: string,
+	): void {
+		const event: APICallAuditEvent = {
+			eventType: success ? "api_call" : "api_call_failed",
+			severity: success ? "low" : "medium",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			namespace,
+			method,
+			argsSummary: this.sanitizeArgs(args),
+			success,
+			error,
+			requestId,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Log rate limit violation
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param reason Reason for violation
+	 * @param retryAfter Retry after time in milliseconds
+	 * @param currentCallCount Current call count
+	 * @param limit Limit that was exceeded
+	 */
+	public logRateLimitViolation(
+		pluginId: string,
+		reason: string,
+		userId?: string,
+		retryAfter?: number,
+		currentCallCount?: number,
+		limit?: number,
+	): void {
+		const event: RateLimitViolationAuditEvent = {
+			eventType: "rate_limit_violation",
+			severity: "high",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			reason,
+			retryAfter,
+			currentCallCount,
+			limit,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Log execution timeout
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param executionTime Execution time in milliseconds
+	 * @param maxExecutionTime Maximum allowed execution time
+	 * @param reason Reason for timeout
+	 */
+	public logExecutionTimeout(
+		pluginId: string,
+		executionTime: number,
+		maxExecutionTime: number,
+		reason: string,
+		userId?: string,
+	): void {
+		const event: ExecutionTimeoutAuditEvent = {
+			eventType: "execution_timeout",
+			severity: "high",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			executionTime,
+			maxExecutionTime,
+			reason,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Log storage access
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param operation Storage operation
+	 * @param key Storage key (optional)
+	 * @param size Storage size in bytes (optional)
+	 * @param maxQuota Maximum storage quota (optional)
+	 */
+	public logStorageAccess(
+		pluginId: string,
+		operation: "get" | "set" | "delete" | "clear" | "keys",
+		userId?: string,
+		key?: string,
+		size?: number,
+		maxQuota?: number,
+	): void {
+		const eventType: "storage_access" | "storage_quota_exceeded" =
+			maxQuota && size && size > maxQuota
+				? "storage_quota_exceeded"
+				: "storage_access";
+
+		const event: StorageAccessAuditEvent = {
+			eventType,
+			severity: eventType === "storage_quota_exceeded" ? "high" : "low",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			operation,
+			key: key ? this.sanitizeKey(key) : undefined,
+			size,
+			maxQuota,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Log plugin error
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param errorMessage Error message
+	 * @param errorStack Error stack (optional)
+	 */
+	public logPluginError(
+		pluginId: string,
+		errorMessage: string,
+		userId?: string,
+		errorStack?: string,
+	): void {
+		const event: PluginErrorAuditEvent = {
+			eventType: "plugin_error",
+			severity: "medium",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			errorMessage,
+			errorStack,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Log plugin termination
+	 *
+	 * @param pluginId Plugin ID
+	 * @param userId User ID (optional)
+	 * @param reason Reason for termination
+	 * @param executionTime Execution time in milliseconds
+	 */
+	public logPluginTerminated(
+		pluginId: string,
+		reason: string,
+		executionTime: number,
+		userId?: string,
+	): void {
+		const event: PluginTerminatedAuditEvent = {
+			eventType: "plugin_terminated",
+			severity: "high",
+			pluginId,
+			userId,
+			timestamp: Date.now(),
+			reason,
+			executionTime,
+		};
+
+		this.log(event);
+	}
+
+	/**
+	 * Sanitize arguments for logging (remove sensitive data)
+	 *
+	 * @param args Arguments array
+	 * @returns Sanitized string summary
+	 */
+	private sanitizeArgs(args: unknown[]): string {
+		if (args.length === 0) {
+			return "[]";
+		}
+
+		// Limit to first 3 arguments and truncate long strings
+		const sanitized = args.slice(0, 3).map((arg) => {
+			if (typeof arg === "string") {
+				// Truncate long strings
+				if (arg.length > 100) {
+					return `${arg.substring(0, 100)}...`;
+				}
+				return arg;
+			}
+			if (typeof arg === "object" && arg !== null) {
+				// Stringify objects but limit size
+				const str = JSON.stringify(arg);
+				if (str.length > 200) {
+					return `${str.substring(0, 200)}...`;
+				}
+				return str;
+			}
+			return String(arg);
+		});
+
+		return JSON.stringify(sanitized);
+	}
+
+	/**
+	 * Sanitize storage key (remove sensitive parts)
+	 *
+	 * @param key Storage key
+	 * @returns Sanitized key
+	 */
+	private sanitizeKey(key: string): string {
+		// For now, just return the key as-is
+		// In production, might want to sanitize sensitive keys
+		if (key.length > 100) {
+			return `${key.substring(0, 100)}...`;
+		}
+		return key;
+	}
+
+	/**
+	 * Get log level based on severity
+	 *
+	 * @param severity Severity level
+	 * @returns Log level
+	 */
+	private getLogLevel(
+		severity: SecurityAuditSeverity,
+	): "info" | "warn" | "error" {
+		switch (severity) {
+			case "critical":
+			case "high":
+				return "error";
+			case "medium":
+				return "warn";
+			default:
+				return "info";
+		}
+	}
+
+	/**
+	 * Get log message based on event type
+	 *
+	 * @param event Security audit event
+	 * @returns Log message
+	 */
+	private getLogMessage(event: SecurityAuditEvent): string {
+		switch (event.eventType) {
+			case "api_call":
+				return `Plugin API call: ${event.namespace}.${event.method}`;
+			case "api_call_failed":
+				return `Plugin API call failed: ${event.namespace}.${event.method}`;
+			case "rate_limit_violation":
+				return `Plugin rate limit violated: ${event.pluginId}`;
+			case "execution_timeout":
+				return `Plugin execution timeout: ${event.pluginId}`;
+			case "storage_access":
+				return `Plugin storage access: ${event.operation}`;
+			case "storage_quota_exceeded":
+				return `Plugin storage quota exceeded: ${event.pluginId}`;
+			case "plugin_error":
+				return `Plugin error: ${event.pluginId}`;
+			case "plugin_terminated":
+				return `Plugin terminated: ${event.pluginId}`;
+			default:
+				return `Security audit event: ${event.eventType}`;
+		}
+	}
+}
+
+/**
+ * Get singleton instance
+ */
+let auditLoggerInstance: PluginSecurityAuditLogger | null = null;
+
+export function getPluginSecurityAuditLogger(): PluginSecurityAuditLogger {
+	if (!auditLoggerInstance) {
+		auditLoggerInstance = new PluginSecurityAuditLogger();
+	}
+	return auditLoggerInstance;
+}

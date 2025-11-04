@@ -27,6 +27,7 @@ import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
 import { getPluginRateLimiter } from "./plugin-rate-limiter";
+import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import * as aiRegistry from "./ai-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
@@ -493,10 +494,14 @@ function createAppAPI(): AppAPI {
  */
 function createStorageAPI(pluginId: string): StorageAPI {
 	const rateLimiter = getPluginRateLimiter();
+	const auditLogger = getPluginSecurityAuditLogger();
 
 	return {
 		async get<T = unknown>(key: string): Promise<T | undefined> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "get", undefined, key);
+
 				// Dynamic import to avoid circular dependencies
 				const { getPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
@@ -526,6 +531,16 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				);
 
 				if (!quotaCheck.allowed) {
+					// Log storage quota exceeded
+					const maxQuota = 10 * 1024 * 1024; // 10MB default
+					auditLogger.logStorageAccess(
+						pluginId,
+						"set",
+						undefined,
+						key,
+						estimatedSize,
+						maxQuota,
+					);
 					throw new Error(quotaCheck.reason || "Storage quota exceeded");
 				}
 
@@ -533,6 +548,15 @@ function createStorageAPI(pluginId: string): StorageAPI {
 					"@/app/_actions/plugin-storage"
 				);
 				await setPluginStorage(pluginId, key, value);
+
+				// Log storage access
+				auditLogger.logStorageAccess(
+					pluginId,
+					"set",
+					undefined,
+					key,
+					estimatedSize,
+				);
 
 				// Update storage usage tracking
 				// Note: This is approximate. For accurate tracking, query database
@@ -548,6 +572,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async delete(key: string): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "delete", undefined, key);
+
 				const { deletePluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
@@ -567,6 +594,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async keys(): Promise<string[]> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "keys");
+
 				const { getPluginStorageKeys } = await import(
 					"@/app/_actions/plugin-storage"
 				);
@@ -582,6 +612,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async clear(): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "clear");
+
 				const { clearPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);

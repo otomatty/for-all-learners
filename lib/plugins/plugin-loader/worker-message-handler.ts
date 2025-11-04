@@ -22,6 +22,7 @@ import { createPluginAPI } from "../plugin-api";
 import { getPluginExecutionMonitor } from "../plugin-execution-monitor";
 import { getPluginRateLimiter } from "../plugin-rate-limiter";
 import { getPluginRegistry } from "../plugin-registry";
+import { getPluginSecurityAuditLogger } from "../plugin-security-audit-logger";
 import type {
 	APICallPayload,
 	APIResponsePayload,
@@ -81,6 +82,16 @@ export function handleWorkerMessage(
 			if (errorPayload.stack) {
 				error.stack = errorPayload.stack;
 			}
+
+			// Log plugin error to security audit log
+			const auditLogger = getPluginSecurityAuditLogger();
+			auditLogger.logPluginError(
+				pluginId,
+				errorPayload.message || "Unknown error",
+				undefined, // userId not available yet
+				errorPayload.stack,
+			);
+
 			logger.error(
 				{ error, pluginId, stack: errorPayload.stack },
 				"Plugin error received",
@@ -115,6 +126,7 @@ async function handleAPICall(
 ): Promise<void> {
 	const rateLimiter = getPluginRateLimiter();
 	const executionMonitor = getPluginExecutionMonitor();
+	const auditLogger = getPluginSecurityAuditLogger();
 	const worker = workers.get(pluginId);
 
 	// Update activity time for execution monitoring
@@ -125,6 +137,16 @@ async function handleAPICall(
 	const rateLimitResult = rateLimiter.checkAPICall(pluginId);
 
 	if (!rateLimitResult.allowed) {
+		// Log rate limit violation
+		auditLogger.logRateLimitViolation(
+			pluginId,
+			rateLimitResult.reason || "Rate limit exceeded",
+			undefined, // userId not available yet
+			rateLimitResult.retryAfter,
+			undefined, // currentCallCount not available
+			undefined, // limit not available
+		);
+
 		// Send rate limit error response
 		if (worker) {
 			const responsePayload: APIResponsePayload = {
@@ -173,6 +195,17 @@ async function handleAPICall(
 		// Call method
 		const result = await methodFn(...args);
 
+		// Log successful API call
+		auditLogger.logAPICall(
+			pluginId,
+			namespace,
+			method,
+			args,
+			requestId,
+			true,
+			undefined, // userId not available yet
+		);
+
 		// Send response
 		if (worker) {
 			const responsePayload: APIResponsePayload = {
@@ -189,6 +222,18 @@ async function handleAPICall(
 			worker.postMessage(response);
 		}
 	} catch (error) {
+		// Log failed API call
+		auditLogger.logAPICall(
+			pluginId,
+			payload.namespace,
+			payload.method,
+			payload.args,
+			requestId,
+			false,
+			undefined, // userId not available yet
+			error instanceof Error ? error.message : String(error),
+		);
+
 		// Send error response
 		if (worker) {
 			const responsePayload: APIResponsePayload = {

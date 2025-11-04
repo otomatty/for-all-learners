@@ -18,7 +18,7 @@
  */
 
 import logger from "@/lib/logger";
-import type { PluginErrorType } from "./types";
+import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 
 /**
  * Plugin execution state
@@ -145,11 +145,30 @@ class PluginExecutionMonitor {
 			return;
 		}
 
+		const executionTime = Date.now() - state.startTime;
+
+		// Log plugin termination to security audit log
+		const auditLogger = getPluginSecurityAuditLogger();
+		auditLogger.logPluginTerminated(pluginId, reason, executionTime);
+
+		// Log execution timeout if applicable
+		if (
+			reason.includes("timeout") ||
+			reason.includes("Maximum execution time")
+		) {
+			auditLogger.logExecutionTimeout(
+				pluginId,
+				executionTime,
+				this.config.maxExecutionTime,
+				reason,
+			);
+		}
+
 		logger.warn(
 			{
 				pluginId,
 				reason,
-				executionTime: Date.now() - state.startTime,
+				executionTime,
 			},
 			"Terminating plugin due to execution limit",
 		);
@@ -158,10 +177,7 @@ class PluginExecutionMonitor {
 		try {
 			state.worker.terminate();
 		} catch (error) {
-			logger.error(
-				{ error, pluginId },
-				"Failed to terminate plugin worker",
-			);
+			logger.error({ error, pluginId }, "Failed to terminate plugin worker");
 		}
 
 		// Stop monitoring
@@ -249,4 +265,3 @@ class PluginExecutionMonitor {
 export function getPluginExecutionMonitor(): PluginExecutionMonitor {
 	return PluginExecutionMonitor.getInstance();
 }
-

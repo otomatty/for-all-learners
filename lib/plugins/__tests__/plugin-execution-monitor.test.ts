@@ -46,16 +46,19 @@ describe("PluginExecutionMonitor", () => {
 			const worker2 = createMockWorker();
 
 			monitor.startMonitoring("test-plugin", worker1);
-			const stats1 = monitor.getExecutionStats("test-plugin");
-
-			// Wait a bit
+			// Wait a bit so executionTime increases
 			await new Promise((resolve) => setTimeout(resolve, 10));
+			const stats1 = monitor.getExecutionStats("test-plugin");
+			const executionTime1 = stats1?.executionTime || 0;
 
+			// Start monitoring again - should reset execution time
 			monitor.startMonitoring("test-plugin", worker2);
 			const stats2 = monitor.getExecutionStats("test-plugin");
+			const executionTime2 = stats2?.executionTime || 0;
 
-			// Stats should be reset (new start time)
-			expect(stats2?.executionTime).toBeLessThan(stats1?.executionTime || 0);
+			// Stats should be reset (new start time), so executionTime2 should be less than executionTime1
+			expect(executionTime2).toBeLessThan(executionTime1);
+			expect(executionTime1).toBeGreaterThan(0); // Make sure first execution time was actually greater than 0
 		});
 	});
 
@@ -64,18 +67,23 @@ describe("PluginExecutionMonitor", () => {
 			const worker = createMockWorker();
 			monitor.startMonitoring("test-plugin", worker);
 
+			// Wait a bit so idleTime increases
+			await new Promise((resolve) => setTimeout(resolve, 10));
 			const stats1 = monitor.getExecutionStats("test-plugin");
 			const idleTime1 = stats1?.idleTime || 0;
 
-			// Wait a bit
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
+			// Update activity should reset idleTime
 			monitor.updateActivity("test-plugin");
 
+			// Wait a bit more
+			await new Promise((resolve) => setTimeout(resolve, 5));
 			const stats2 = monitor.getExecutionStats("test-plugin");
 			const idleTime2 = stats2?.idleTime || 0;
 
+			// idleTime2 should be less than idleTime1 (or at least not greater)
+			// After updateActivity, idleTime resets, so even after waiting, it should be less
 			expect(idleTime2).toBeLessThan(idleTime1);
+			expect(idleTime1).toBeGreaterThan(0); // Make sure first idle time was actually greater than 0
 		});
 
 		it("should not throw if plugin is not monitored", () => {
