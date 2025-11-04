@@ -42,7 +42,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 
@@ -56,7 +55,7 @@ export default async function PluginsPage() {
 		getAvailablePlugins({ limit: 50 }).catch(() => []),
 	]);
 
-	const installedIds = new Set(installedPlugins.map((p) => p.plugin_id));
+	const installedIds = new Set(installedPlugins.map((p) => p.pluginId));
 
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -91,7 +90,7 @@ export default async function PluginsPage() {
 					) : (
 						installedPlugins.map((userPlugin) => (
 							<InstalledPluginCard
-								key={userPlugin.plugin_id}
+								key={userPlugin.pluginId}
 								userPlugin={userPlugin}
 							/>
 						))
@@ -111,9 +110,9 @@ export default async function PluginsPage() {
 					) : (
 						availablePlugins.map((plugin) => (
 							<MarketplacePluginCard
-								key={plugin.plugin_id}
+								key={plugin.pluginId}
 								plugin={plugin}
-								isInstalled={installedIds.has(plugin.plugin_id)}
+								isInstalled={installedIds.has(plugin.pluginId)}
 							/>
 						))
 					)}
@@ -140,7 +139,7 @@ function InstalledPluginCard({
 					<div className="flex-1">
 						<div className="flex items-center gap-2 mb-1">
 							<CardTitle>{metadata.name}</CardTitle>
-							{metadata.is_official && (
+							{metadata.isOfficial && (
 								<Badge variant="default" className="gap-1">
 									<Shield className="h-3 w-3" />
 									公式
@@ -158,7 +157,7 @@ function InstalledPluginCard({
 					</div>
 				</div>
 				<div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-					<span>v{userPlugin.installed_version}</span>
+					<span>v{userPlugin.installedVersion}</span>
 					<span>作成者: {metadata.author}</span>
 				</div>
 			</CardHeader>
@@ -185,7 +184,7 @@ function InstalledPluginCard({
 
 			<CardFooter className="flex gap-2">
 				<form action={userPlugin.enabled ? disablePlugin : enablePlugin}>
-					<input type="hidden" name="pluginId" value={userPlugin.plugin_id} />
+					<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
 					<Button
 						type="submit"
 						variant={userPlugin.enabled ? "outline" : "default"}
@@ -198,7 +197,7 @@ function InstalledPluginCard({
 				</form>
 
 				<form action={uninstallPlugin}>
-					<input type="hidden" name="pluginId" value={userPlugin.plugin_id} />
+					<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
 					<Button
 						type="submit"
 						variant="destructive"
@@ -231,13 +230,13 @@ function MarketplacePluginCard({
 					<div className="flex-1">
 						<div className="flex items-center gap-2 mb-1">
 							<CardTitle>{plugin.name}</CardTitle>
-							{plugin.is_official && (
+							{plugin.isOfficial && (
 								<Badge variant="default" className="gap-1">
 									<Shield className="h-3 w-3" />
 									公式
 								</Badge>
 							)}
-							{plugin.is_reviewed && (
+							{plugin.isReviewed && (
 								<Badge variant="secondary">レビュー済み</Badge>
 							)}
 							{isInstalled && (
@@ -255,12 +254,12 @@ function MarketplacePluginCard({
 					<span>作成者: {plugin.author}</span>
 					<span className="flex items-center gap-1">
 						<Download className="h-3 w-3" />
-						{plugin.downloads_count.toLocaleString()}
+						{plugin.downloadsCount.toLocaleString()}
 					</span>
-					{plugin.rating_average && (
+					{plugin.ratingAverage && (
 						<span className="flex items-center gap-1">
 							<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-							{plugin.rating_average.toFixed(1)}
+							{plugin.ratingAverage.toFixed(1)}
 						</span>
 					)}
 				</div>
@@ -293,7 +292,7 @@ function MarketplacePluginCard({
 					</Button>
 				) : (
 					<form action={installPlugin}>
-						<input type="hidden" name="pluginId" value={plugin.plugin_id} />
+						<input type="hidden" name="pluginId" value={plugin.pluginId} />
 						<Button type="submit" size="sm" className="gap-2">
 							<Download className="h-4 w-4" />
 							インストール
