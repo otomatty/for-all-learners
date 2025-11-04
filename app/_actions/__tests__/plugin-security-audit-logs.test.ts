@@ -64,12 +64,9 @@ describe("Type Definitions", () => {
 
 		for (const sortBy of validSortBy) {
 			expect(sortBy).toBeDefined();
-			expect([
-				"created_at",
-				"severity",
-				"event_type",
-				"plugin_id",
-			]).toContain(sortBy);
+			expect(["created_at", "severity", "event_type", "plugin_id"]).toContain(
+				sortBy,
+			);
 		}
 	});
 
@@ -375,7 +372,8 @@ describe("Error Handling", () => {
 			success: false,
 			logs: [],
 			totalCount: 0,
-			message: "セキュリティ監査ログの取得中にエラーが発生しました。(詳細: test error)",
+			message:
+				"セキュリティ監査ログの取得中にエラーが発生しました。(詳細: test error)",
 		};
 
 		expect(errorResult.success).toBe(false);
@@ -527,4 +525,3 @@ describe("Integration Test Plan (Future Implementation)", () => {
 		expect(true).toBe(true); // Placeholder
 	});
 });
-

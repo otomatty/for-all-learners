@@ -310,6 +310,9 @@
 | **コード実行の安全性** | ✅ **完了** | `lib/plugins/plugin-loader/sandbox-worker-code.ts`<br>`lib/plugins/sandbox-worker.ts` | `eval`/`new Function()`の使用を廃止、Blob URL + `importScripts`に変更 |
 | **Content Security Policy** | ✅ **完了** | `middleware.ts`<br>`lib/utils/csp.ts`<br>`app/api/csp/report/route.ts` | CSPヘッダーの追加（blob: URL許可、worker-src設定）、`unsafe-inline`/`unsafe-eval`削除、Nonceベース実装、CSP違反レポート収集 |
 | **サンドボックス分離** | ✅ **完了** | `lib/plugins/plugin-loader/worker-manager.ts` | Web Workerによる完全な分離実行 |
+| **レート制限** | ✅ **完了** | `lib/plugins/plugin-rate-limiter.ts` | API呼び出し・ストレージ使用・CPU使用のレート制限 |
+| **実行監視** | ✅ **完了** | `lib/plugins/plugin-execution-monitor.ts` | プラグイン実行時間の監視とタイムアウト処理 |
+| **セキュリティ監査ログ** | ✅ **完了** | `lib/plugins/plugin-security-audit-logger.ts`<br>`app/_actions/plugin-security-audit-logs.ts`<br>`app/admin/plugins/security-audit/` | セキュリティイベントのログ記録・データベース保存・管理者UI表示 |
 
 ### 詳細
 
@@ -490,4 +493,5 @@
 | 2025-01-05 | Issue 96対応: プラグインシステムのセキュリティ強化<br>（`eval`/`new Function()`の使用を廃止し、Blob URL + `importScripts`アプローチに変更。<br>CSPヘッダーの追加によりXSS攻撃を防止。`plugin-loader.ts`をモジュール分割し、<br>保守性とテスト性を向上。59テストケース全てパス） | AI Agent |
 | 2025-01-05 | Plugin Loaderのモジュール分割完了<br>（`manifest-validator.ts`, `dependency-resolver.ts`, `worker-manager.ts`,<br>`sandbox-worker-code.ts`, `worker-message-handler.ts`に分割。<br>各モジュールに対応するテストケースを実装。59テストケース全てパス） | AI Agent |
 | 2025-01-05 | Issue 96対応: CSP厳格化完了<br>（`unsafe-inline`と`unsafe-eval`を削除し、NonceベースのCSPを実装。<br>CSP違反レポート収集エンドポイント（`/api/csp/report`）を実装。<br>12テストケース全てパス） | AI Agent |
+| 2025-01-05 | Issue 96対応: セキュリティ監査ログ機能実装完了<br>（セキュリティイベントのデータベース保存、管理者向けUI実装、<br>フィルタリング・検索・ページネーション機能、統計表示機能。<br>46テストケース全てパス） | AI Agent |
 
