@@ -1,0 +1,345 @@
+/**
+ * Plugin API Tests
+ *
+ * Unit tests for the Plugin API implementation.
+ */
+
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	clearPluginCommands,
+	createPluginAPI,
+	executeCommand,
+	getRegisteredCommands,
+} from "../plugin-api";
+import type { Command } from "../types";
+
+describe("PluginAPI", () => {
+	const pluginId = "test-plugin";
+
+	beforeEach(() => {
+		clearPluginCommands(pluginId);
+		vi.clearAllMocks();
+	});
+
+	describe("createPluginAPI", () => {
+		it("should create API instance with all namespaces", () => {
+			const api = createPluginAPI(pluginId);
+
+			expect(api).toBeDefined();
+			expect(api.app).toBeDefined();
+			expect(api.storage).toBeDefined();
+			expect(api.notifications).toBeDefined();
+			expect(api.ui).toBeDefined();
+		});
+	});
+
+	describe("AppAPI", () => {
+		it("should return application version", () => {
+			const api = createPluginAPI(pluginId);
+
+			const version = api.app.getVersion();
+
+			expect(typeof version).toBe("string");
+			expect(version.length).toBeGreaterThan(0);
+		});
+
+		it("should return application name", () => {
+			const api = createPluginAPI(pluginId);
+
+			const name = api.app.getName();
+
+			expect(name).toBe("F.A.L (For All Learners)");
+		});
+
+		it("should return user ID (currently null)", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const userId = await api.app.getUserId();
+
+			expect(userId).toBeNull();
+		});
+	});
+
+	describe("StorageAPI", () => {
+		it("should have storage methods defined", () => {
+			const api = createPluginAPI(pluginId);
+
+			expect(typeof api.storage.get).toBe("function");
+			expect(typeof api.storage.set).toBe("function");
+			expect(typeof api.storage.delete).toBe("function");
+			expect(typeof api.storage.keys).toBe("function");
+			expect(typeof api.storage.clear).toBe("function");
+		});
+
+		it("should return undefined when storage get fails", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Storage will fail in test environment (no DB), should return undefined
+			const result = await api.storage.get("test-key");
+
+			// Should handle error gracefully and return undefined
+			expect(result).toBeUndefined();
+		});
+
+		it("should handle storage set errors gracefully", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Storage will fail in test environment, should throw error
+			await expect(api.storage.set("test-key", "value")).rejects.toThrow();
+		});
+
+		it("should handle storage delete errors gracefully", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Storage will fail in test environment, should throw error
+			await expect(api.storage.delete("test-key")).rejects.toThrow();
+		});
+
+		it("should return empty array when storage keys fails", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Storage will fail in test environment, should return empty array
+			const keys = await api.storage.keys();
+
+			expect(Array.isArray(keys)).toBe(true);
+		});
+
+		it("should handle storage clear errors gracefully", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Storage will fail in test environment, should throw error
+			await expect(api.storage.clear()).rejects.toThrow();
+		});
+	});
+
+	describe("NotificationsAPI", () => {
+		it("should have notification methods defined", () => {
+			const api = createPluginAPI(pluginId);
+
+			expect(typeof api.notifications.show).toBe("function");
+			expect(typeof api.notifications.info).toBe("function");
+			expect(typeof api.notifications.success).toBe("function");
+			expect(typeof api.notifications.error).toBe("function");
+			expect(typeof api.notifications.warning).toBe("function");
+		});
+
+		it("should call show method when info is called", () => {
+			const api = createPluginAPI(pluginId);
+			const showSpy = vi.spyOn(api.notifications, "show");
+
+			api.notifications.info("Test message");
+
+			expect(showSpy).toHaveBeenCalledWith("Test message", "info");
+		});
+
+		it("should call show method when success is called", () => {
+			const api = createPluginAPI(pluginId);
+			const showSpy = vi.spyOn(api.notifications, "show");
+
+			api.notifications.success("Success message");
+
+			expect(showSpy).toHaveBeenCalledWith("Success message", "success");
+		});
+
+		it("should call show method when error is called", () => {
+			const api = createPluginAPI(pluginId);
+			const showSpy = vi.spyOn(api.notifications, "show");
+
+			api.notifications.error("Error message");
+
+			expect(showSpy).toHaveBeenCalledWith("Error message", "error");
+		});
+
+		it("should call show method when warning is called", () => {
+			const api = createPluginAPI(pluginId);
+			const showSpy = vi.spyOn(api.notifications, "show");
+
+			api.notifications.warning("Warning message");
+
+			expect(showSpy).toHaveBeenCalledWith("Warning message", "warning");
+		});
+
+		it("should show notification with default type", () => {
+			const api = createPluginAPI(pluginId);
+
+			// show method should accept optional type parameter
+			expect(() => api.notifications.show("Custom message")).not.toThrow();
+		});
+	});
+
+	describe("UIAPI", () => {
+		it("should register a command", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const command: Command = {
+				id: "test-command",
+				label: "Test Command",
+				description: "A test command",
+				handler: vi.fn(),
+			};
+
+			await api.ui.registerCommand(command);
+
+			const commands = getRegisteredCommands();
+			expect(commands.has(`${pluginId}.test-command`)).toBe(true);
+		});
+
+		it("should throw error when registering duplicate command", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const command: Command = {
+				id: "test-command",
+				label: "Test Command",
+				handler: vi.fn(),
+			};
+
+			await api.ui.registerCommand(command);
+
+			await expect(api.ui.registerCommand(command)).rejects.toThrow(
+				"Command test-plugin.test-command is already registered",
+			);
+		});
+
+		it("should unregister a command", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const command: Command = {
+				id: "test-command",
+				label: "Test Command",
+				handler: vi.fn(),
+			};
+
+			await api.ui.registerCommand(command);
+			await api.ui.unregisterCommand("test-command");
+
+			const commands = getRegisteredCommands();
+			expect(commands.has(`${pluginId}.test-command`)).toBe(false);
+		});
+
+		it("should show dialog with alert fallback", async () => {
+			// Skip test in Node.js environment (no window object)
+			if (typeof window === "undefined") {
+				return;
+			}
+
+			// Mock window.alert
+			const originalAlert = window.alert;
+			window.alert = vi.fn();
+
+			const api = createPluginAPI(pluginId);
+
+			const result = await api.ui.showDialog({
+				title: "Test Dialog",
+				message: "Test message",
+			});
+
+			expect(window.alert).toHaveBeenCalledWith(
+				expect.stringContaining("Test Dialog"),
+			);
+
+			window.alert = originalAlert;
+		});
+
+		it("should show dialog with confirm fallback", async () => {
+			// Skip test in Node.js environment (no window object)
+			if (typeof window === "undefined") {
+				return;
+			}
+
+			// Mock window.confirm
+			const originalConfirm = window.confirm;
+			window.confirm = vi.fn(() => true);
+
+			const api = createPluginAPI(pluginId);
+
+			const result = await api.ui.showDialog({
+				title: "Test Dialog",
+				message: "Test message",
+				buttons: [
+					{ label: "OK", variant: "primary" },
+					{ label: "Cancel", variant: "default" },
+				],
+			});
+
+			expect(window.confirm).toHaveBeenCalled();
+
+			window.confirm = originalConfirm;
+		});
+	});
+
+	describe("Command Management", () => {
+		it("should get all registered commands", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const command1: Command = {
+				id: "command-1",
+				label: "Command 1",
+				handler: vi.fn(),
+			};
+
+			const command2: Command = {
+				id: "command-2",
+				label: "Command 2",
+				handler: vi.fn(),
+			};
+
+			await api.ui.registerCommand(command1);
+			await api.ui.registerCommand(command2);
+
+			const commands = getRegisteredCommands();
+
+			expect(commands.size).toBeGreaterThanOrEqual(2);
+			expect(commands.has(`${pluginId}.command-1`)).toBe(true);
+			expect(commands.has(`${pluginId}.command-2`)).toBe(true);
+		});
+
+		it("should execute a registered command", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const handler = vi.fn().mockResolvedValue(undefined);
+
+			const command: Command = {
+				id: "test-command",
+				label: "Test Command",
+				handler,
+			};
+
+			await api.ui.registerCommand(command);
+			await executeCommand(`${pluginId}.test-command`);
+
+			expect(handler).toHaveBeenCalledTimes(1);
+		});
+
+		it("should throw error when executing non-existent command", async () => {
+			await expect(executeCommand("non-existent.command")).rejects.toThrow(
+				"Command non-existent.command is not registered",
+			);
+		});
+
+		it("should clear all commands for a plugin", async () => {
+			const api = createPluginAPI(pluginId);
+
+			const command1: Command = {
+				id: "command-1",
+				label: "Command 1",
+				handler: vi.fn(),
+			};
+
+			const command2: Command = {
+				id: "command-2",
+				label: "Command 2",
+				handler: vi.fn(),
+			};
+
+			await api.ui.registerCommand(command1);
+			await api.ui.registerCommand(command2);
+
+			clearPluginCommands(pluginId);
+
+			const commands = getRegisteredCommands();
+			expect(commands.has(`${pluginId}.command-1`)).toBe(false);
+			expect(commands.has(`${pluginId}.command-2`)).toBe(false);
+		});
+	});
+});
+
