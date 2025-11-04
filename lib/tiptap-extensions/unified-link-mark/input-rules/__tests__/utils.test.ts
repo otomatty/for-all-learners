@@ -8,18 +8,6 @@ import StarterKit from "@tiptap/starter-kit";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { isInCodeContext } from "../utils";
 
-// Type extension for setContent command
-declare module "@tiptap/core" {
-	interface Commands<ReturnType> {
-		setContent: {
-			setContent: (content: string | Record<string, unknown>) => ReturnType;
-		};
-		setTextSelection: {
-			setTextSelection: (props: { from: number; to: number }) => ReturnType;
-		};
-	}
-}
-
 // Note: happy-dom environment is already set up in vitest.config.mts
 
 describe("isInCodeContext", () => {
