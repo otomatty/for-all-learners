@@ -111,8 +111,41 @@ export async function getAvailablePlugins(options?: {
 		}
 
 		if (options?.extensionPoint) {
+			// Validate extension point and map to database column name
+			const allowedExtensionPoints = [
+				"editor",
+				"ai",
+				"ui",
+				"dataProcessor",
+				"integration",
+			] as const;
+
+			if (
+				!allowedExtensionPoints.includes(
+					options.extensionPoint as (typeof allowedExtensionPoints)[number],
+				)
+			) {
+				throw new Error(
+					`Invalid extension point: ${options.extensionPoint}. Allowed values: ${allowedExtensionPoints.join(", ")}`,
+				);
+			}
+
+			// Map extension point to database column name
+			const extensionPointToColumn: Record<
+				(typeof allowedExtensionPoints)[number],
+				string
+			> = {
+				editor: "has_editor_extension",
+				ai: "has_ai_extension",
+				ui: "has_ui_extension",
+				dataProcessor: "has_data_processor_extension",
+				integration: "has_integration_extension",
+			};
+
 			const column =
-				`has_${options.extensionPoint}_extension` as keyof PluginMetadata;
+				extensionPointToColumn[
+					options.extensionPoint as (typeof allowedExtensionPoints)[number]
+				];
 			query = query.eq(column, true);
 		}
 
@@ -278,7 +311,7 @@ export async function installPlugin(formData: FormData): Promise<void> {
 		}
 
 		// Insert user plugin
-		const { data, error } = await supabase
+		const { error } = await supabase
 			.from("user_plugins")
 			.insert({
 				user_id: user.id,

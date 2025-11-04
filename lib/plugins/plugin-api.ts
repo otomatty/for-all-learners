@@ -22,6 +22,9 @@
 import logger from "@/lib/logger";
 import type { Command, DialogOptions, NotificationType } from "./types";
 
+// Import package.json for version information
+import pkg from "../../package.json";
+
 // ============================================================================
 // Plugin API Interface
 // ============================================================================
@@ -195,8 +198,8 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 function createAppAPI(): AppAPI {
 	return {
 		getVersion(): string {
-			// TODO: Get from package.json or environment variable
-			return "1.0.0";
+			// Get version from package.json
+			return pkg.version;
 		},
 
 		getName(): string {
@@ -226,7 +229,11 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				);
 				const result = await getPluginStorage(pluginId, key);
 				return result as T | undefined;
-			} catch {
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, key, operation: "get" },
+					"Plugin storage get failed",
+				);
 				return undefined;
 			}
 		},
