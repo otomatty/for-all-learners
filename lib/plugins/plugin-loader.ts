@@ -25,9 +25,10 @@
 
 import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
-import { clearPluginCommands, createPluginAPI } from "./plugin-api";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import { getAIExtensionRegistry } from "./ai-registry";
 import { getEditorManager } from "./editor-manager";
+import { getEditorExtensionRegistry } from "./editor-registry";
+import { clearPluginCommands, createPluginAPI } from "./plugin-api";
 import { getPluginRegistry } from "./plugin-registry";
 import {
 	type APICallPayload,
@@ -226,16 +227,18 @@ export class PluginLoader {
 				const editorManager = getEditorManager();
 				editorManager.applyExtensionsToAllEditors();
 
-				logger.info(
-					{ pluginId },
-					"Editor extensions cleared for plugin",
-				);
+				logger.info({ pluginId }, "Editor extensions cleared for plugin");
 			}
 
-			// Step 4: Cleanup worker
+			// Step 4: Clear AI extensions
+			const aiRegistry = getAIExtensionRegistry();
+			aiRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "AI extensions cleared for plugin");
+
+			// Step 5: Cleanup worker
 			this.cleanupWorker(pluginId);
 
-			// Step 5: Unregister from registry
+			// Step 6: Unregister from registry
 			registry.unregister(pluginId);
 
 			logger.info(

@@ -326,3 +326,127 @@ export interface EditorSelection {
 	from: number;
 	to: number;
 }
+
+// ============================================================================
+// AI Extension Types (Phase 2)
+// ============================================================================
+
+/**
+ * Question type for question generation
+ */
+export type QuestionType = "flashcard" | "multiple_choice" | "cloze";
+
+/**
+ * Question difficulty level
+ */
+export type QuestionDifficulty = "easy" | "normal" | "hard";
+
+/**
+ * Question data structure
+ */
+export interface QuestionData {
+	type: QuestionType;
+	question: string;
+	answer: string;
+	options?: string[]; // For multiple choice
+	blanks?: string[]; // For cloze
+}
+
+/**
+ * Question generator function signature
+ */
+export type QuestionGeneratorFunction = (
+	front: string,
+	back: string,
+	type: QuestionType,
+	difficulty?: QuestionDifficulty,
+) => Promise<QuestionData>;
+
+/**
+ * Question generator extension options
+ */
+export interface QuestionGeneratorOptions {
+	/** Unique generator ID within the plugin */
+	id: string;
+
+	/** Generator function */
+	generator: QuestionGeneratorFunction;
+
+	/** Supported question types */
+	supportedTypes: QuestionType[];
+
+	/** Generator description */
+	description?: string;
+}
+
+/**
+ * Prompt template variable definition
+ */
+export interface PromptTemplateVariable {
+	name: string;
+	description: string;
+	required: boolean;
+	default?: string;
+}
+
+/**
+ * Prompt template extension options
+ */
+export interface PromptTemplateOptions {
+	/** Unique template ID within the plugin */
+	id: string;
+
+	/** Template key (used to retrieve the template) */
+	key: string;
+
+	/** Template string (supports {{variable}} syntax) */
+	template: string;
+
+	/** Variable definitions */
+	variables?: PromptTemplateVariable[];
+
+	/** Template description */
+	description?: string;
+}
+
+/**
+ * Content analysis result
+ */
+export interface ContentAnalysisResult {
+	keywords?: string[];
+	summary?: string;
+	entities?: Array<{ name: string; type: string }>;
+	sentiment?: "positive" | "negative" | "neutral";
+	confidence?: number;
+	[key: string]: unknown; // Allow custom fields
+}
+
+/**
+ * Content analyzer function signature
+ */
+export type ContentAnalyzerFunction = (
+	content: string,
+	options?: Record<string, unknown>,
+) => Promise<ContentAnalysisResult>;
+
+/**
+ * Content analyzer extension options
+ */
+export interface ContentAnalyzerOptions {
+	/** Unique analyzer ID within the plugin */
+	id: string;
+
+	/** Analyzer function */
+	analyzer: ContentAnalyzerFunction;
+
+	/** Analyzer description */
+	description?: string;
+
+	/** Supported options */
+	options?: Array<{
+		name: string;
+		type: "string" | "number" | "boolean";
+		description?: string;
+		default?: unknown;
+	}>;
+}

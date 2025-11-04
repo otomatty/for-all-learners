@@ -5,19 +5,26 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getAIExtensionRegistry } from "../ai-registry";
 import {
 	clearPluginCommands,
 	createPluginAPI,
 	executeCommand,
 	getRegisteredCommands,
 } from "../plugin-api";
-import type { Command } from "../types";
+import type {
+	Command,
+	ContentAnalyzerOptions,
+	QuestionGeneratorOptions,
+	QuestionType,
+} from "../types";
 
 describe("PluginAPI", () => {
 	const pluginId = "test-plugin";
 
 	beforeEach(() => {
 		clearPluginCommands(pluginId);
+		getAIExtensionRegistry().clearPlugin(pluginId);
 		vi.clearAllMocks();
 	});
 
@@ -228,7 +235,7 @@ describe("PluginAPI", () => {
 
 			const api = createPluginAPI(pluginId);
 
-			const result = await api.ui.showDialog({
+			await api.ui.showDialog({
 				title: "Test Dialog",
 				message: "Test message",
 			});
@@ -252,7 +259,7 @@ describe("PluginAPI", () => {
 
 			const api = createPluginAPI(pluginId);
 
-			const result = await api.ui.showDialog({
+			await api.ui.showDialog({
 				title: "Test Dialog",
 				message: "Test message",
 				buttons: [
@@ -341,5 +348,226 @@ describe("PluginAPI", () => {
 			expect(commands.has(`${pluginId}.command-2`)).toBe(false);
 		});
 	});
-});
 
+	describe("AIAPI", () => {
+		it("should have AI API methods defined", () => {
+			const api = createPluginAPI(pluginId);
+
+			expect(api.ai).toBeDefined();
+			expect(typeof api.ai.registerQuestionGenerator).toBe("function");
+			expect(typeof api.ai.unregisterQuestionGenerator).toBe("function");
+			expect(typeof api.ai.registerPromptTemplate).toBe("function");
+			expect(typeof api.ai.unregisterPromptTemplate).toBe("function");
+			expect(typeof api.ai.registerContentAnalyzer).toBe("function");
+			expect(typeof api.ai.unregisterContentAnalyzer).toBe("function");
+		});
+
+		describe("Question Generator", () => {
+			it("should register a question generator", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: QuestionGeneratorOptions = {
+					id: "test-generator",
+					generator: async (
+						_front: string,
+						_back: string,
+						type: QuestionType,
+					) => ({
+						type,
+						question: "Test question",
+						answer: "Test answer",
+					}),
+					supportedTypes: ["flashcard"],
+					description: "Test generator",
+				};
+
+				await api.ai.registerQuestionGenerator(options);
+
+				const registry = getAIExtensionRegistry();
+				const generators = registry.getQuestionGenerators(pluginId);
+				expect(generators).toHaveLength(1);
+				expect(generators[0].generatorId).toBe("test-generator");
+			});
+
+			it("should throw error when registering duplicate generator", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: QuestionGeneratorOptions = {
+					id: "test-generator",
+					generator: async (
+						_front: string,
+						_back: string,
+						type: QuestionType,
+					) => ({
+						type,
+						question: "Test question",
+						answer: "Test answer",
+					}),
+					supportedTypes: ["flashcard"],
+				};
+
+				await api.ai.registerQuestionGenerator(options);
+
+				await expect(
+					api.ai.registerQuestionGenerator(options),
+				).rejects.toThrow();
+			});
+
+			it("should unregister a question generator", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: QuestionGeneratorOptions = {
+					id: "test-generator",
+					generator: async (
+						_front: string,
+						_back: string,
+						type: QuestionType,
+					) => ({
+						type,
+						question: "Test question",
+						answer: "Test answer",
+					}),
+					supportedTypes: ["flashcard"],
+				};
+
+				await api.ai.registerQuestionGenerator(options);
+				await api.ai.unregisterQuestionGenerator("test-generator");
+
+				const registry = getAIExtensionRegistry();
+				const generators = registry.getQuestionGenerators(pluginId);
+				expect(generators).toHaveLength(0);
+			});
+		});
+
+		describe("Prompt Template", () => {
+			it("should register a prompt template", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options = {
+					id: "test-template",
+					key: "test-key",
+					template: "Template {{var1}}",
+					variables: [
+						{
+							name: "var1",
+							description: "Variable 1",
+							required: true,
+						},
+					],
+					description: "Test template",
+				};
+
+				await api.ai.registerPromptTemplate(options);
+
+				const registry = getAIExtensionRegistry();
+				const template = registry.getPromptTemplate("test-key");
+				expect(template).toBeDefined();
+				expect(template?.templateId).toBe("test-template");
+			});
+
+			it("should throw error when registering duplicate template key", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options1 = {
+					id: "template-1",
+					key: "shared-key",
+					template: "Template 1",
+				};
+
+				const options2 = {
+					id: "template-2",
+					key: "shared-key",
+					template: "Template 2",
+				};
+
+				await api.ai.registerPromptTemplate(options1);
+
+				await expect(api.ai.registerPromptTemplate(options2)).rejects.toThrow();
+			});
+
+			it("should unregister a prompt template", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options = {
+					id: "test-template",
+					key: "test-key",
+					template: "Template",
+				};
+
+				await api.ai.registerPromptTemplate(options);
+				await api.ai.unregisterPromptTemplate("test-template");
+
+				const registry = getAIExtensionRegistry();
+				const template = registry.getPromptTemplate("test-key");
+				expect(template).toBeUndefined();
+			});
+		});
+
+		describe("Content Analyzer", () => {
+			it("should register a content analyzer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ContentAnalyzerOptions = {
+					id: "test-analyzer",
+					analyzer: async (
+						_content: string,
+						_options?: Record<string, unknown>,
+					) => ({
+						keywords: ["test"],
+						summary: "Test summary",
+						confidence: 0.9,
+					}),
+					description: "Test analyzer",
+				};
+
+				await api.ai.registerContentAnalyzer(options);
+
+				const registry = getAIExtensionRegistry();
+				const analyzers = registry.getContentAnalyzers(pluginId);
+				expect(analyzers).toHaveLength(1);
+				expect(analyzers[0].analyzerId).toBe("test-analyzer");
+			});
+
+			it("should throw error when registering duplicate analyzer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ContentAnalyzerOptions = {
+					id: "test-analyzer",
+					analyzer: async (
+						_content: string,
+						_options?: Record<string, unknown>,
+					) => ({
+						keywords: ["test"],
+						summary: "Test summary",
+					}),
+				};
+
+				await api.ai.registerContentAnalyzer(options);
+
+				await expect(api.ai.registerContentAnalyzer(options)).rejects.toThrow();
+			});
+
+			it("should unregister a content analyzer", async () => {
+				const api = createPluginAPI(pluginId);
+
+				const options: ContentAnalyzerOptions = {
+					id: "test-analyzer",
+					analyzer: async (
+						_content: string,
+						_options?: Record<string, unknown>,
+					) => ({
+						keywords: ["test"],
+						summary: "Test summary",
+					}),
+				};
+
+				await api.ai.registerContentAnalyzer(options);
+				await api.ai.unregisterContentAnalyzer("test-analyzer");
+
+				const registry = getAIExtensionRegistry();
+				const analyzers = registry.getContentAnalyzers(pluginId);
+				expect(analyzers).toHaveLength(0);
+			});
+		});
+	});
+});

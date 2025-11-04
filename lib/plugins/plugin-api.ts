@@ -24,18 +24,21 @@
 
 import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
+// Import package.json for version information
+import pkg from "../../package.json";
+import { getAIExtensionRegistry } from "./ai-registry";
 import { getEditorManager } from "./editor-manager";
 import { getEditorExtensionRegistry } from "./editor-registry";
 import type {
 	Command,
+	ContentAnalyzerOptions,
 	DialogOptions,
 	EditorExtensionOptions,
 	EditorSelection,
 	NotificationType,
+	PromptTemplateOptions,
+	QuestionGeneratorOptions,
 } from "./types";
-
-// Import package.json for version information
-import pkg from "../../package.json";
 
 // ============================================================================
 // Plugin API Interface
@@ -63,8 +66,10 @@ export interface PluginAPI {
 	/** Editor extensions (Phase 2) */
 	editor: EditorAPI;
 
+	/** AI extensions (Phase 2) */
+	ai: AIAPI;
+
 	// Future extension points (Phase 3+)
-	// ai?: AIAPI;
 	// data?: DataAPI;
 }
 
@@ -246,6 +251,47 @@ export interface EditorAPI {
 	canExecuteCommand(command: string, editorId?: string): Promise<boolean>;
 }
 
+/**
+ * AI API for plugin extensions
+ */
+export interface AIAPI {
+	/**
+	 * Register a question generator
+	 * @param options Generator options
+	 */
+	registerQuestionGenerator(options: QuestionGeneratorOptions): Promise<void>;
+
+	/**
+	 * Unregister a question generator
+	 * @param generatorId Generator ID to unregister
+	 */
+	unregisterQuestionGenerator(generatorId: string): Promise<void>;
+
+	/**
+	 * Register a prompt template
+	 * @param options Template options
+	 */
+	registerPromptTemplate(options: PromptTemplateOptions): Promise<void>;
+
+	/**
+	 * Unregister a prompt template
+	 * @param templateId Template ID to unregister
+	 */
+	unregisterPromptTemplate(templateId: string): Promise<void>;
+
+	/**
+	 * Register a content analyzer
+	 * @param options Analyzer options
+	 */
+	registerContentAnalyzer(options: ContentAnalyzerOptions): Promise<void>;
+
+	/**
+	 * Unregister a content analyzer
+	 * @param analyzerId Analyzer ID to unregister
+	 */
+	unregisterContentAnalyzer(analyzerId: string): Promise<void>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -266,6 +312,7 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		notifications: createNotificationsAPI(pluginId),
 		ui: createUIAPI(pluginId),
 		editor: createEditorAPI(pluginId),
+		ai: createAIAPI(pluginId),
 	};
 }
 
@@ -582,10 +629,7 @@ function createEditorAPI(pluginId: string): EditorAPI {
 				const managerInstance = getEditorManager();
 				managerInstance.applyExtensionsToAllEditors();
 
-				logger.info(
-					{ pluginId, extensionId },
-					"Editor extension unregistered",
-				);
+				logger.info({ pluginId, extensionId }, "Editor extension unregistered");
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, extensionId },
@@ -622,10 +666,7 @@ function createEditorAPI(pluginId: string): EditorAPI {
 			}
 		},
 
-		async setContent(
-			content: JSONContent,
-			editorId?: string,
-		): Promise<void> {
+		async setContent(content: JSONContent, editorId?: string): Promise<void> {
 			try {
 				await manager.setContent(editorId, content);
 			} catch (error) {
@@ -677,6 +718,118 @@ function createEditorAPI(pluginId: string): EditorAPI {
 					"Failed to check command availability",
 				);
 				return false;
+			}
+		},
+	};
+}
+
+/**
+ * Create AI API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns AI API instance
+ */
+function createAIAPI(pluginId: string): AIAPI {
+	const registry = getAIExtensionRegistry();
+
+	return {
+		async registerQuestionGenerator(
+			options: QuestionGeneratorOptions,
+		): Promise<void> {
+			try {
+				registry.registerQuestionGenerator(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						generatorId: options.id,
+						supportedTypes: options.supportedTypes,
+					},
+					"Question generator registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, generatorId: options.id },
+					"Failed to register question generator",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterQuestionGenerator(generatorId: string): Promise<void> {
+			try {
+				registry.unregisterQuestionGenerator(pluginId, generatorId);
+				logger.info(
+					{ pluginId, generatorId },
+					"Question generator unregistered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, generatorId },
+					"Failed to unregister question generator",
+				);
+				throw error;
+			}
+		},
+
+		async registerPromptTemplate(
+			options: PromptTemplateOptions,
+		): Promise<void> {
+			try {
+				registry.registerPromptTemplate(pluginId, options);
+				logger.info(
+					{ pluginId, templateId: options.id, key: options.key },
+					"Prompt template registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, templateId: options.id },
+					"Failed to register prompt template",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterPromptTemplate(templateId: string): Promise<void> {
+			try {
+				registry.unregisterPromptTemplate(pluginId, templateId);
+				logger.info({ pluginId, templateId }, "Prompt template unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, templateId },
+					"Failed to unregister prompt template",
+				);
+				throw error;
+			}
+		},
+
+		async registerContentAnalyzer(
+			options: ContentAnalyzerOptions,
+		): Promise<void> {
+			try {
+				registry.registerContentAnalyzer(pluginId, options);
+				logger.info(
+					{ pluginId, analyzerId: options.id },
+					"Content analyzer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, analyzerId: options.id },
+					"Failed to register content analyzer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterContentAnalyzer(analyzerId: string): Promise<void> {
+			try {
+				registry.unregisterContentAnalyzer(pluginId, analyzerId);
+				logger.info({ pluginId, analyzerId }, "Content analyzer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, analyzerId },
+					"Failed to unregister content analyzer",
+				);
+				throw error;
 			}
 		},
 	};

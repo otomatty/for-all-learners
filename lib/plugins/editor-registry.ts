@@ -94,10 +94,7 @@ export class EditorExtensionRegistry {
 	 * @param options Extension options
 	 * @throws Error if extension ID already exists for this plugin
 	 */
-	public register(
-		pluginId: string,
-		options: EditorExtensionOptions,
-	): void {
+	public register(pluginId: string, options: EditorExtensionOptions): void {
 		const pluginExtensions = this.extensions.get(pluginId) ?? [];
 
 		// Check if extension ID already exists
@@ -175,10 +172,7 @@ export class EditorExtensionRegistry {
 				this.extensions.set(pluginId, pluginExtensions);
 			}
 
-			logger.info(
-				{ pluginId, extensionId },
-				"Editor extension unregistered",
-			);
+			logger.info({ pluginId, extensionId }, "Editor extension unregistered");
 			return true;
 		}
 
@@ -323,4 +317,3 @@ export class EditorExtensionRegistry {
 export function getEditorExtensionRegistry(): EditorExtensionRegistry {
 	return EditorExtensionRegistry.getInstance();
 }
-
