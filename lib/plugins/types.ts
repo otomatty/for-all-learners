@@ -852,3 +852,235 @@ export interface TransformerOptions {
 		default?: unknown;
 	}>;
 }
+
+// ============================================================================
+// Integration Extension Types (Phase 2)
+// ============================================================================
+
+/**
+ * OAuth provider configuration
+ */
+export interface OAuthProviderConfig {
+	/** Provider name (e.g., "google", "github", "custom") */
+	name: string;
+
+	/** Authorization URL */
+	authorizationUrl: string;
+
+	/** Token URL */
+	tokenUrl: string;
+
+	/** Client ID */
+	clientId: string;
+
+	/** Client secret (stored securely, not exposed to plugins) */
+	clientSecret?: string;
+
+	/** Scopes requested */
+	scopes?: string[];
+
+	/** Redirect URI */
+	redirectUri?: string;
+
+	/** Additional parameters */
+	additionalParams?: Record<string, string>;
+}
+
+/**
+ * OAuth token response
+ */
+export interface OAuthTokenResponse {
+	accessToken: string;
+	refreshToken?: string;
+	tokenType?: string;
+	expiresIn?: number;
+	scope?: string;
+}
+
+/**
+ * OAuth handler function signature
+ */
+export type OAuthHandlerFunction = (
+	config: OAuthProviderConfig,
+) => Promise<OAuthTokenResponse>;
+
+/**
+ * OAuth provider extension options
+ */
+export interface OAuthProviderOptions {
+	/** Unique provider ID within the plugin */
+	id: string;
+
+	/** Provider display name */
+	name: string;
+
+	/** Provider description */
+	description?: string;
+
+	/** OAuth configuration */
+	config: OAuthProviderConfig;
+
+	/** Handler function for OAuth flow */
+	handler?: OAuthHandlerFunction;
+
+	/** Whether to use default OAuth flow (if handler is not provided) */
+	useDefaultFlow?: boolean;
+}
+
+/**
+ * Webhook event data
+ */
+export interface WebhookEventData {
+	/** Event type */
+	type: string;
+
+	/** Event payload */
+	payload: unknown;
+
+	/** Timestamp */
+	timestamp?: Date;
+
+	/** Additional metadata */
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Webhook handler function signature
+ */
+export type WebhookHandlerFunction = (event: WebhookEventData) => Promise<void>;
+
+/**
+ * Webhook extension options
+ */
+export interface WebhookOptions {
+	/** Unique webhook ID within the plugin */
+	id: string;
+
+	/** Webhook display name */
+	name: string;
+
+	/** Webhook description */
+	description?: string;
+
+	/** Webhook URL path (e.g., "/webhook/my-plugin") */
+	path: string;
+
+	/** Supported HTTP methods */
+	methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH")[];
+
+	/** Handler function */
+	handler: WebhookHandlerFunction;
+
+	/** Secret for webhook verification (optional) */
+	secret?: string;
+
+	/** Required headers */
+	requiredHeaders?: string[];
+}
+
+/**
+ * HTTP method for external API calls
+ */
+export type HttpMethod =
+	| "GET"
+	| "POST"
+	| "PUT"
+	| "DELETE"
+	| "PATCH"
+	| "HEAD"
+	| "OPTIONS";
+
+/**
+ * External API request options
+ */
+export interface ExternalAPIRequestOptions {
+	/** Request URL */
+	url: string;
+
+	/** HTTP method */
+	method?: HttpMethod;
+
+	/** Request headers */
+	headers?: Record<string, string>;
+
+	/** Request body */
+	body?: unknown;
+
+	/** Query parameters */
+	query?: Record<string, string>;
+
+	/** Timeout in milliseconds */
+	timeout?: number;
+
+	/** Whether to use CORS proxy */
+	useProxy?: boolean;
+
+	/** Authentication token */
+	authToken?: string;
+
+	/** Additional options */
+	options?: Record<string, unknown>;
+}
+
+/**
+ * External API response
+ */
+export interface ExternalAPIResponse {
+	/** Response status code */
+	status: number;
+
+	/** Response status text */
+	statusText?: string;
+
+	/** Response headers */
+	headers?: Record<string, string>;
+
+	/** Response data */
+	data: unknown;
+
+	/** Response metadata */
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * External API caller function signature
+ */
+export type ExternalAPICallerFunction = (
+	options: ExternalAPIRequestOptions,
+) => Promise<ExternalAPIResponse>;
+
+/**
+ * External API extension options
+ */
+export interface ExternalAPIOptions {
+	/** Unique API ID within the plugin */
+	id: string;
+
+	/** API display name */
+	name: string;
+
+	/** API description */
+	description?: string;
+
+	/** Base URL */
+	baseUrl?: string;
+
+	/** Default headers */
+	defaultHeaders?: Record<string, string>;
+
+	/** Default timeout */
+	defaultTimeout?: number;
+
+	/** Authentication configuration */
+	auth?: {
+		type: "none" | "bearer" | "basic" | "apiKey";
+		token?: string;
+		apiKey?: string;
+		apiKeyHeader?: string;
+		username?: string;
+		password?: string;
+	};
+
+	/** Custom caller function (optional, uses default if not provided) */
+	caller?: ExternalAPICallerFunction;
+}

@@ -29,6 +29,7 @@ import { getAIExtensionRegistry } from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import { getEditorExtensionRegistry } from "./editor-registry";
+import { getIntegrationExtensionRegistry } from "./integration-registry";
 import { clearPluginCommands, createPluginAPI } from "./plugin-api";
 import { getPluginRegistry } from "./plugin-registry";
 import {
@@ -247,10 +248,15 @@ export class PluginLoader {
 			dataProcessorRegistry.clearPlugin(pluginId);
 			logger.info({ pluginId }, "Data Processor extensions cleared for plugin");
 
-			// Step 7: Cleanup worker
+			// Step 7: Clear Integration extensions
+			const integrationRegistry = getIntegrationExtensionRegistry();
+			integrationRegistry.clearPlugin(pluginId);
+			logger.info({ pluginId }, "Integration extensions cleared for plugin");
+
+			// Step 8: Cleanup worker
 			this.cleanupWorker(pluginId);
 
-			// Step 8: Unregister from registry
+			// Step 9: Unregister from registry
 			registry.unregister(pluginId);
 
 			logger.info(

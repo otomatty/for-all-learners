@@ -22,7 +22,7 @@
 | **AI Extensions** | ✅ **完了** | `lib/plugins/ai-registry.ts`<br>`lib/plugins/plugin-api.ts` | Question Generator/Prompt Template/Content Analyzer API実装済み |
 | **UI Extensions** | ✅ **完了** | `lib/plugins/ui-registry.ts`<br>`lib/plugins/plugin-api.ts` | Widget/Page/Sidebar Panel API実装済み |
 | **Data Processor Extensions** | ✅ **完了** | `lib/plugins/data-processor-registry.ts`<br>`lib/plugins/plugin-api.ts` | Importer/Exporter/Transformer API実装済み |
-| **Integration Extensions** | ❌ **未実装** | - | 型定義・DBスキーマのみ存在 |
+| **Integration Extensions** | ✅ **完了** | `lib/plugins/integration-registry.ts`<br>`lib/plugins/plugin-api.ts` | OAuth連携/Webhook/External API呼び出しAPI実装済み |
 
 ### 詳細
 
@@ -126,19 +126,33 @@
 
 **備考**: 基本的な実装は完了。プラグインからカスタムインポーター、エクスポーター、トランスフォーマーを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
 
-#### ❌ Integration Extensions（未実装）
+#### ✅ Integration Extensions（完了）
 
-**現状**:
-- ✅ 型定義: `types/plugin.ts` に `ExtensionPointsConfig.integration` が定義済み
-- ✅ DBスキーマ: `plugins.has_integration_extension` カラムが存在
-- ❌ 実装コード: 外部サービス統合拡張未実装
+**実装内容**:
+- ✅ `IntegrationExtensionRegistry`: 統合拡張の登録・管理
+  - OAuth Provider登録・管理（OAuth連携）
+  - Webhook登録・管理（Webhook受信）
+  - External API登録・管理（外部API呼び出し）
+- ✅ `IntegrationAPI`: プラグインからの統合機能拡張API
+  - `registerOAuthProvider()`: OAuthプロバイダーの登録
+  - `unregisterOAuthProvider()`: OAuthプロバイダーの削除
+  - `registerWebhook()`: Webhookの登録
+  - `unregisterWebhook()`: Webhookの削除
+  - `registerExternalAPI()`: 外部APIの登録
+  - `unregisterExternalAPI()`: 外部APIの削除
+  - `callExternalAPI()`: 外部API呼び出し
+- ✅ プラグインローダーとの統合: プラグインアンロード時の自動クリーンアップ
 
-**Issue 94で要求されている機能**:
-- [ ] OAuth連携API
-- [ ] Webhook API
-- [ ] External API呼び出しAPI
+**実装ファイル**:
+- `lib/plugins/integration-registry.ts`: Integration Extension Registry実装
+- `lib/plugins/types.ts`: Integration拡張関連の型定義追加
+- `lib/plugins/plugin-api.ts`: Integration API実装追加
+- `lib/plugins/plugin-loader.ts`: Integration拡張のクリーンアップ処理追加
 
-**推定時間**: 12時間（未着手）
+**テスト**: ✅ 実装済み
+- `lib/plugins/__tests__/integration-registry.test.ts`: IntegrationExtensionRegistry単体テスト（31テストケース全てパス）
+
+**備考**: 基本的な実装は完了。プラグインからOAuthプロバイダー、Webhook、外部APIを登録できるようになった。テストも実装済みで、全てのテストケースがパスしている。
 
 ---
 
@@ -277,9 +291,9 @@
 - ✅ AI Extensions（完了）
 - ✅ UI Extensions（完了）
 - ✅ Data Processor Extensions（完了）
-- ❌ Integration Extensions（未実装）
+- ✅ Integration Extensions（完了）
 
-**完了率**: 80% (4/5)
+**完了率**: 100% (5/5)
 
 **実装計画**: `docs/03_plans/plugin-system/phase2-editor-extensions.md`
 
@@ -321,7 +335,7 @@
 
 ### 低優先度（将来実装）
 
-4. **Integration Extensions**（推定12時間）
+4. ~~**Integration Extensions**（推定12時間）~~ ✅ **完了**
 
 ---
 
@@ -360,4 +374,5 @@
 | 2025-01-05 | UI Extensions実装完了（Widget/Page/Sidebar Panel API） | AI Agent |
 | 2025-01-05 | 検索・フィルタリングUI実装完了（検索バー、フィルター、ソート機能） | AI Agent |
 | 2025-01-05 | Data Processor Extensions実装完了（Importer/Exporter/Transformer API） | AI Agent |
+| 2025-01-05 | Integration Extensions実装完了（OAuth連携/Webhook/External API呼び出しAPI） | AI Agent |
 

@@ -30,6 +30,7 @@ import { getAIExtensionRegistry } from "./ai-registry";
 import { getDataProcessorExtensionRegistry } from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import { getEditorExtensionRegistry } from "./editor-registry";
+import { getIntegrationExtensionRegistry } from "./integration-registry";
 import type {
 	Command,
 	ContentAnalyzerOptions,
@@ -37,13 +38,18 @@ import type {
 	EditorExtensionOptions,
 	EditorSelection,
 	ExporterOptions,
+	ExternalAPIOptions,
+	ExternalAPIRequestOptions,
+	ExternalAPIResponse,
 	ImporterOptions,
 	NotificationType,
+	OAuthProviderOptions,
 	PageOptions,
 	PromptTemplateOptions,
 	QuestionGeneratorOptions,
 	SidebarPanelOptions,
 	TransformerOptions,
+	WebhookOptions,
 	WidgetOptions,
 } from "./types";
 import { getUIExtensionRegistry } from "./ui-registry";
@@ -79,6 +85,9 @@ export interface PluginAPI {
 
 	/** Data processor extensions (Phase 2) */
 	data: DataAPI;
+
+	/** Integration extensions (Phase 2) */
+	integration: IntegrationAPI;
 }
 
 /**
@@ -377,6 +386,58 @@ export interface DataAPI {
 	unregisterTransformer(transformerId: string): Promise<void>;
 }
 
+/**
+ * Integration API for plugin extensions
+ */
+export interface IntegrationAPI {
+	/**
+	 * Register an OAuth provider
+	 * @param options OAuth provider options
+	 */
+	registerOAuthProvider(options: OAuthProviderOptions): Promise<void>;
+
+	/**
+	 * Unregister an OAuth provider
+	 * @param providerId Provider ID to unregister
+	 */
+	unregisterOAuthProvider(providerId: string): Promise<void>;
+
+	/**
+	 * Register a webhook
+	 * @param options Webhook options
+	 */
+	registerWebhook(options: WebhookOptions): Promise<void>;
+
+	/**
+	 * Unregister a webhook
+	 * @param webhookId Webhook ID to unregister
+	 */
+	unregisterWebhook(webhookId: string): Promise<void>;
+
+	/**
+	 * Register an external API
+	 * @param options External API options
+	 */
+	registerExternalAPI(options: ExternalAPIOptions): Promise<void>;
+
+	/**
+	 * Unregister an external API
+	 * @param apiId API ID to unregister
+	 */
+	unregisterExternalAPI(apiId: string): Promise<void>;
+
+	/**
+	 * Call an external API
+	 * @param apiId API ID (optional, if not provided, uses default caller)
+	 * @param options Request options
+	 * @returns API response
+	 */
+	callExternalAPI(
+		apiId: string | undefined,
+		options: ExternalAPIRequestOptions,
+	): Promise<ExternalAPIResponse>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -399,6 +460,7 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		editor: createEditorAPI(pluginId),
 		ai: createAIAPI(pluginId),
 		data: createDataAPI(pluginId),
+		integration: createIntegrationAPI(pluginId),
 	};
 }
 
@@ -1129,4 +1191,289 @@ function createDataAPI(pluginId: string): DataAPI {
 			}
 		},
 	};
+}
+
+/**
+ * Create Integration API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns Integration API instance
+ */
+function createIntegrationAPI(pluginId: string): IntegrationAPI {
+	const registry = getIntegrationExtensionRegistry();
+
+	return {
+		async registerOAuthProvider(options: OAuthProviderOptions): Promise<void> {
+			try {
+				registry.registerOAuthProvider(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						providerId: options.id,
+						name: options.name,
+					},
+					"OAuth provider registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, providerId: options.id },
+					"Failed to register OAuth provider",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterOAuthProvider(providerId: string): Promise<void> {
+			try {
+				registry.unregisterOAuthProvider(pluginId, providerId);
+				logger.info({ pluginId, providerId }, "OAuth provider unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, providerId },
+					"Failed to unregister OAuth provider",
+				);
+				throw error;
+			}
+		},
+
+		async registerWebhook(options: WebhookOptions): Promise<void> {
+			try {
+				registry.registerWebhook(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						webhookId: options.id,
+						path: options.path,
+						methods: options.methods,
+					},
+					"Webhook registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, webhookId: options.id },
+					"Failed to register webhook",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterWebhook(webhookId: string): Promise<void> {
+			try {
+				registry.unregisterWebhook(pluginId, webhookId);
+				logger.info({ pluginId, webhookId }, "Webhook unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, webhookId },
+					"Failed to unregister webhook",
+				);
+				throw error;
+			}
+		},
+
+		async registerExternalAPI(options: ExternalAPIOptions): Promise<void> {
+			try {
+				registry.registerExternalAPI(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						apiId: options.id,
+						name: options.name,
+						baseUrl: options.baseUrl,
+					},
+					"External API registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId: options.id },
+					"Failed to register external API",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExternalAPI(apiId: string): Promise<void> {
+			try {
+				registry.unregisterExternalAPI(pluginId, apiId);
+				logger.info({ pluginId, apiId }, "External API unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId },
+					"Failed to unregister external API",
+				);
+				throw error;
+			}
+		},
+
+		async callExternalAPI(
+			apiId: string | undefined,
+			options: ExternalAPIRequestOptions,
+		): Promise<ExternalAPIResponse> {
+			try {
+				// If apiId is provided, use registered API configuration
+				if (apiId) {
+					const apiEntry = registry.getExternalAPI(pluginId, apiId);
+					if (!apiEntry) {
+						throw new Error(`External API ${apiId} not found`);
+					}
+
+					// Merge base URL if provided
+					const url = apiEntry.baseUrl
+						? `${apiEntry.baseUrl}${options.url}`
+						: options.url;
+
+					// Merge headers
+					const headers = {
+						...apiEntry.defaultHeaders,
+						...options.headers,
+					};
+
+					// Add authentication headers if configured
+					if (apiEntry.auth) {
+						if (apiEntry.auth.type === "bearer" && apiEntry.auth.token) {
+							headers.Authorization = `Bearer ${apiEntry.auth.token}`;
+						} else if (
+							apiEntry.auth.type === "apiKey" &&
+							apiEntry.auth.apiKey &&
+							apiEntry.auth.apiKeyHeader
+						) {
+							headers[apiEntry.auth.apiKeyHeader] = apiEntry.auth.apiKey;
+						} else if (
+							apiEntry.auth.type === "basic" &&
+							apiEntry.auth.username &&
+							apiEntry.auth.password
+						) {
+							const credentials = btoa(
+								`${apiEntry.auth.username}:${apiEntry.auth.password}`,
+							);
+							headers.Authorization = `Basic ${credentials}`;
+						}
+					}
+
+					// Use custom caller if provided, otherwise use default
+					if (apiEntry.caller) {
+						return await apiEntry.caller({
+							...options,
+							url,
+							headers,
+							timeout: options.timeout ?? apiEntry.defaultTimeout,
+						});
+					}
+
+					// Default HTTP caller implementation
+					return await defaultHTTPCaller({
+						...options,
+						url,
+						headers,
+						timeout: options.timeout ?? apiEntry.defaultTimeout,
+					});
+				}
+
+				// Use default caller if no apiId provided
+				return await defaultHTTPCaller(options);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId, url: options.url },
+					"Failed to call external API",
+				);
+				throw error;
+			}
+		},
+	};
+}
+
+/**
+ * Default HTTP caller implementation
+ *
+ * @param options Request options
+ * @returns API response
+ */
+async function defaultHTTPCaller(
+	options: ExternalAPIRequestOptions,
+): Promise<ExternalAPIResponse> {
+	const method = options.method ?? "GET";
+
+	// Build URL - handle relative URLs
+	let urlString = options.url;
+	if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+		// Relative URL - use proxy if needed or construct absolute URL
+		if (options.useProxy && typeof window !== "undefined") {
+			// In browser, use proxy endpoint
+			urlString = `/api/proxy?url=${encodeURIComponent(urlString)}`;
+		} else {
+			// For server-side, use the URL as-is or throw error
+			throw new Error(
+				"Relative URLs require useProxy=true in browser context or absolute URL",
+			);
+		}
+	}
+
+	const url = new URL(urlString);
+
+	// Add query parameters
+	if (options.query) {
+		for (const [key, value] of Object.entries(options.query)) {
+			url.searchParams.append(key, value);
+		}
+	}
+
+	// Prepare request options
+	const requestOptions: RequestInit = {
+		method,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	};
+
+	// Add body if provided
+	if (
+		options.body &&
+		(method === "POST" || method === "PUT" || method === "PATCH")
+	) {
+		requestOptions.body = JSON.stringify(options.body);
+	}
+
+	// Add timeout if provided
+	const controller = new AbortController();
+	const timeoutId = options.timeout
+		? setTimeout(() => controller.abort(), options.timeout)
+		: undefined;
+
+	try {
+		const response = await fetch(url.toString(), {
+			...requestOptions,
+			signal: controller.signal,
+		});
+
+		// Parse response data
+		let data: unknown;
+		const contentType = response.headers.get("content-type");
+		if (contentType?.includes("application/json")) {
+			data = await response.json();
+		} else {
+			data = await response.text();
+		}
+
+		// Extract headers
+		const headers: Record<string, string> = {};
+		response.headers.forEach((value, key) => {
+			headers[key] = value;
+		});
+
+		return {
+			status: response.status,
+			statusText: response.statusText,
+			headers,
+			data,
+		};
+	} catch (error) {
+		if (error instanceof Error && error.name === "AbortError") {
+			throw new Error(`Request timeout after ${options.timeout}ms`);
+		}
+		throw error;
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
+	}
 }
