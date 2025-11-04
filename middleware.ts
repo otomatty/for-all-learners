@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { Database } from "@/types/database.types";
+import { buildCSPHeader, generateNonce } from "@/lib/utils/csp";
 
 // Define public routes for unauthenticated users
 const PUBLIC_PATHS = [
@@ -87,6 +88,23 @@ export async function middleware(req: NextRequest) {
 	if (!isAuthenticated && !isPublicPath) {
 		return NextResponse.redirect(new URL("/auth/login", req.url));
 	}
+
+	// Content Security Policy (CSP) for plugin system security
+	// Strict CSP without unsafe-inline and unsafe-eval
+	// Uses nonce-based approach for inline scripts/styles
+	// Generates a new nonce per request for security
+	const nonce = generateNonce();
+	const cspHeader = buildCSPHeader(nonce);
+
+	res.headers.set("Content-Security-Policy", cspHeader);
+
+	// Store nonce in response headers for use in pages/components
+	// Note: Next.js pages can access this via headers() if needed
+	res.headers.set("X-Nonce", nonce);
+	res.headers.set("X-Content-Type-Options", "nosniff");
+	res.headers.set("X-Frame-Options", "DENY");
+	res.headers.set("X-XSS-Protection", "1; mode=block");
+	res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
 	return res;
 }

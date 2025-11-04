@@ -2,8 +2,8 @@
 
 **作成日**: 2025-11-04  
 **最終更新**: 2025-01-05  
-**リファクタリング**: Phase 2 Extension Registryを関数型にリファクタリング完了  
-**関連Issue**: [#94](https://github.com/otomatty/for-all-learners/issues/94), [#95](https://github.com/otomatty/for-all-learners/issues/95)
+**リファクタリング**: Phase 2 Extension Registryを関数型にリファクタリング完了、Plugin Loaderをモジュール分割  
+**関連Issue**: [#94](https://github.com/otomatty/for-all-learners/issues/94), [#95](https://github.com/otomatty/for-all-learners/issues/95), [#96](https://github.com/otomatty/for-all-learners/issues/96)
 
 ---
 
@@ -301,6 +301,62 @@
 
 **備考**: Server Componentからクライアントコンポーネントに分離し、確認ダイアログを追加した。ユーザーが誤ってアンインストールすることを防げる。
 
+## Issue 96: プラグインシステムのセキュリティ強化
+
+### 実装状況
+
+| セキュリティ対策 | ステータス | 実装ファイル | 備考 |
+|------------|---------|------------|------|
+| **コード実行の安全性** | ✅ **完了** | `lib/plugins/plugin-loader/sandbox-worker-code.ts`<br>`lib/plugins/sandbox-worker.ts` | `eval`/`new Function()`の使用を廃止、Blob URL + `importScripts`に変更 |
+| **Content Security Policy** | ✅ **完了** | `middleware.ts`<br>`lib/utils/csp.ts`<br>`app/api/csp/report/route.ts` | CSPヘッダーの追加（blob: URL許可、worker-src設定）、`unsafe-inline`/`unsafe-eval`削除、Nonceベース実装、CSP違反レポート収集 |
+| **サンドボックス分離** | ✅ **完了** | `lib/plugins/plugin-loader/worker-manager.ts` | Web Workerによる完全な分離実行 |
+
+### 詳細
+
+#### ✅ コード実行の安全性向上（完了）
+
+**実装内容**:
+- ✅ `eval()`と`new Function()`の使用を完全に廃止
+- ✅ Blob URL + `importScripts`アプローチに変更
+- ✅ プラグインコードをIIFEでラップしてスコープを分離
+- ✅ `sandbox-worker.ts`と`plugin-loader.ts`の両方で実装
+
+**実装ファイル**:
+- `lib/plugins/sandbox-worker.ts`: Worker内でのプラグインコード実行
+- `lib/plugins/plugin-loader/sandbox-worker-code.ts`: Workerコード生成
+- `lib/plugins/plugin-loader/plugin-loader.ts`: メインローダー
+
+**セキュリティ改善**:
+- プラグインコードはBlob URL経由で`importScripts`により読み込まれる
+- `eval`や`new Function()`による直接的なコード実行を回避
+- IIFEによりプラグインのスコープを完全に分離
+
+#### ✅ Content Security Policy（完了）
+
+**実装内容**:
+- ✅ CSPヘッダーの追加（`middleware.ts`）
+- ✅ `script-src`に`blob:`を許可（プラグインコード読み込み用）
+- ✅ `worker-src`に`blob:`を許可（Web Worker用）
+- ✅ CSP厳格化（`unsafe-inline`と`unsafe-eval`を削除）
+- ✅ Nonceベースのスクリプト/スタイル実行
+- ✅ CSP違反レポート収集（`/api/csp/report`）
+- ✅ その他のセキュリティヘッダーも追加
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+
+**実装ファイル**: 
+- `middleware.ts`: CSPヘッダー設定
+- `lib/utils/csp.ts`: Nonce生成とCSPヘッダー構築
+- `app/api/csp/report/route.ts`: CSP違反レポート収集エンドポイント
+
+**テスト**: ✅ 12テストケース全てパス
+- `lib/utils/__tests__/csp.test.ts`: 8テスト
+- `app/api/csp/report/__tests__/route.test.ts`: 4テスト
+
+**備考**: CSPによりXSS攻撃やコードインジェクション攻撃を防止。`unsafe-inline`と`unsafe-eval`を削除し、Nonceベースの厳格なCSPを実装。プラグインシステムの動作に必要な最小限の権限のみを許可。CSP違反は自動的にログに記録され、セキュリティ監視が可能。
+
 ---
 
 ## 実装進捗サマリー
@@ -308,13 +364,31 @@
 ### Phase 1: コアシステム ✅ 完了
 
 - ✅ プラグインマニフェスト・型定義
-- ✅ プラグインローダー
+- ✅ プラグインローダー（モジュール分割済み）
+  - ✅ `manifest-validator.ts`: マニフェスト検証
+  - ✅ `dependency-resolver.ts`: 依存関係解決
+  - ✅ `worker-manager.ts`: Worker管理
+  - ✅ `sandbox-worker-code.ts`: Workerコード生成
+  - ✅ `worker-message-handler.ts`: Workerメッセージ処理
+  - ✅ `plugin-loader.ts`: メインクラス
+  - ✅ `index.ts`: エクスポート統合
 - ✅ プラグインレジストリ
 - ✅ Web Workerサンドボックス
+  - ✅ セキュリティ強化（Issue 96対応）
+    - ✅ `eval`/`new Function()`の使用を廃止
+    - ✅ Blob URL + `importScripts`アプローチに変更
+    - ✅ CSPヘッダーの追加（`middleware.ts`）
 - ✅ プラグインAPI（App, Storage, Notifications, UI基本）
 - ✅ データベーススキーマ
 - ✅ Server Actions
 - ✅ 基本UI（設定画面）
+
+**テスト**: ✅ 59テストケース全てパス
+- `lib/plugins/plugin-loader/__tests__/manifest-validator.test.ts`: 15テスト
+- `lib/plugins/plugin-loader/__tests__/dependency-resolver.test.ts`: 9テスト
+- `lib/plugins/plugin-loader/__tests__/worker-manager.test.ts`: 12テスト
+- `lib/plugins/plugin-loader/__tests__/sandbox-worker-code.test.ts`: 12テスト
+- `lib/plugins/plugin-loader/__tests__/worker-message-handler.test.ts`: 11テスト
 
 **実装計画**: `docs/03_plans/plugin-system/phase1-core-system.md`
 
@@ -394,6 +468,7 @@
 - [プラグイン開発ガイド](../guides/plugin-development.md) ✅
 - [Issue #94 - Extension Points Implementation](https://github.com/otomatty/for-all-learners/issues/94)
 - [Issue #95 - Marketplace UI/UX](https://github.com/otomatty/for-all-learners/issues/95)
+- [Issue #96 - Plugin System Security Enhancement](https://github.com/otomatty/for-all-learners/issues/96)
 
 ---
 
@@ -412,4 +487,7 @@
 | 2025-01-05 | レーティング・レビューシステム実装完了<br>（plugin_ratings, plugin_reviews, plugin_review_helpfulテーブル作成、<br>Server Actions実装、星評価・レビュー投稿UI、レビュー一覧表示・ページネーション・役立ったボタン実装） | AI Agent |
 | 2025-01-05 | プラグイン更新通知機能実装完了<br>（バージョン比較ロジック、更新検出API、更新処理API、<br>インストール済みプラグインカードに更新バッジ・更新ボタンUI実装） | AI Agent |
 | 2025-01-05 | プラグイン設定UI実装完了<br>（JSON Schemaから動的フォーム生成、各種入力タイプ対応、<br>設定保存・復元、デフォルト値リセット機能実装） | AI Agent |
+| 2025-01-05 | Issue 96対応: プラグインシステムのセキュリティ強化<br>（`eval`/`new Function()`の使用を廃止し、Blob URL + `importScripts`アプローチに変更。<br>CSPヘッダーの追加によりXSS攻撃を防止。`plugin-loader.ts`をモジュール分割し、<br>保守性とテスト性を向上。59テストケース全てパス） | AI Agent |
+| 2025-01-05 | Plugin Loaderのモジュール分割完了<br>（`manifest-validator.ts`, `dependency-resolver.ts`, `worker-manager.ts`,<br>`sandbox-worker-code.ts`, `worker-message-handler.ts`に分割。<br>各モジュールに対応するテストケースを実装。59テストケース全てパス） | AI Agent |
+| 2025-01-05 | Issue 96対応: CSP厳格化完了<br>（`unsafe-inline`と`unsafe-eval`を削除し、NonceベースのCSPを実装。<br>CSP違反レポート収集エンドポイント（`/api/csp/report`）を実装。<br>12テストケース全てパス） | AI Agent |
 

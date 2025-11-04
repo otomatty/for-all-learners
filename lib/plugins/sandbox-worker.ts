@@ -179,6 +179,8 @@ function callHostAPI(
 
 /**
  * Handle INIT message - Initialize plugin
+ *
+ * Security: Uses Blob URL + importScripts instead of eval/new Function
  */
 async function handleInit(payload: InitPayload): Promise<void> {
 	try {
@@ -187,43 +189,95 @@ async function handleInit(payload: InitPayload): Promise<void> {
 		// Create plugin API proxy
 		const api = createPluginAPIProxy();
 
-		// Create a safe execution context
-		const pluginFactory = new Function(
-			"api",
-			"config",
-			`
-      ${code}
-      
-      // Plugin code should export a default function or object
-      if (typeof activate === 'function') {
-        return activate(api, config);
-      }
-      
-      // Or return the plugin object directly
-      return plugin || {};
-    `,
-		);
+		// Create Blob URL for plugin code (avoiding eval)
+		// Wrap plugin code in IIFE to isolate scope and expose activate function
+		const wrappedCode = `
+(function() {
+  'use strict';
+  
+  // Plugin code executed in isolated scope
+  ${code}
+  
+  // Expose activate function or plugin object to global scope for this worker
+  if (typeof activate === 'function') {
+    self.__pluginActivate = activate;
+  } else if (typeof plugin !== 'undefined') {
+    self.__pluginObject = plugin;
+  }
+})();
+`;
 
-		// Execute plugin code
-		const plugin = await pluginFactory(api, config || {});
+		// Create Blob URL
+		const blob = new Blob([wrappedCode], { type: "application/javascript" });
+		const blobUrl = URL.createObjectURL(blob);
 
-		// Store plugin instance
-		pluginInstance = {
-			id: manifest.id,
-			name: manifest.name,
-			version: manifest.version,
-			methods: plugin.methods || {},
-			dispose: plugin.dispose,
-		};
+		try {
+			// Load plugin code using importScripts (safer than eval)
+			// @ts-expect-error - importScripts is available in WorkerGlobalScope but not in TypeScript types
+			self.importScripts(blobUrl);
 
-		// Send success response
-		sendMessage({
-			type: "INIT",
-			payload: {
-				success: true,
-				pluginId: manifest.id,
-			},
-		});
+			// Get plugin from global scope
+			let plugin: {
+				methods?: Record<
+					string,
+					(...args: unknown[]) => unknown | Promise<unknown>
+				>;
+				dispose?: () => void | Promise<void>;
+			} = {};
+
+			// Check for activate function or plugin object on global scope
+			const globalScope = self as unknown as {
+				__pluginActivate?: (
+					api: unknown,
+					config: Record<string, unknown>,
+				) => Promise<{
+					methods?: Record<
+						string,
+						(...args: unknown[]) => unknown | Promise<unknown>
+					>;
+					dispose?: () => void | Promise<void>;
+				}>;
+				__pluginObject?: {
+					methods?: Record<
+						string,
+						(...args: unknown[]) => unknown | Promise<unknown>
+					>;
+					dispose?: () => void | Promise<void>;
+				};
+			};
+
+			if (typeof globalScope.__pluginActivate === "function") {
+				// Call activate function with API and config
+				plugin = (await globalScope.__pluginActivate(api, config || {})) || {};
+			} else if (globalScope.__pluginObject) {
+				plugin = globalScope.__pluginObject;
+			}
+
+			// Clean up global scope
+			delete globalScope.__pluginActivate;
+			delete globalScope.__pluginObject;
+
+			// Store plugin instance
+			pluginInstance = {
+				id: manifest.id,
+				name: manifest.name,
+				version: manifest.version,
+				methods: plugin.methods || {},
+				dispose: plugin.dispose,
+			};
+
+			// Send success response
+			sendMessage({
+				type: "INIT",
+				payload: {
+					success: true,
+					pluginId: manifest.id,
+				},
+			});
+		} finally {
+			// Cleanup blob URL
+			URL.revokeObjectURL(blobUrl);
+		}
 	} catch (error) {
 		// Send error response
 		sendError(error);

@@ -717,9 +717,7 @@ export async function updatePlugin(formData: FormData): Promise<void> {
 
 		// Check if update is available
 		if (!isUpdateAvailable(userPlugin.installed_version, plugin.version)) {
-			throw new Error(
-				`Plugin ${pluginId} is already at the latest version`,
-			);
+			throw new Error(`Plugin ${pluginId} is already at the latest version`);
 		}
 
 		// Update installed version

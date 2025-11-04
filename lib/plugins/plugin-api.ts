@@ -7,7 +7,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ lib/plugins/plugin-loader.ts
+ *   ├─ lib/plugins/plugin-loader/index.ts
  *   └─ lib/plugins/sandbox-worker.ts
  *
  * Dependencies:
@@ -26,6 +26,7 @@ import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
+import { getPluginRateLimiter } from "./plugin-rate-limiter";
 import * as aiRegistry from "./ai-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
@@ -491,6 +492,8 @@ function createAppAPI(): AppAPI {
  * @param pluginId Plugin ID for storage isolation
  */
 function createStorageAPI(pluginId: string): StorageAPI {
+	const rateLimiter = getPluginRateLimiter();
+
 	return {
 		async get<T = unknown>(key: string): Promise<T | undefined> {
 			try {
@@ -511,10 +514,29 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async set(key: string, value: unknown): Promise<void> {
 			try {
+				// Check storage quota before setting
+				// Estimate size by JSON stringifying (approximate)
+				const estimatedSize = new Blob([JSON.stringify(value)]).size;
+
+				// TODO: Get actual userId from plugin context when available
+				const quotaCheck = rateLimiter.checkStorageQuota(
+					pluginId,
+					undefined,
+					estimatedSize,
+				);
+
+				if (!quotaCheck.allowed) {
+					throw new Error(quotaCheck.reason || "Storage quota exceeded");
+				}
+
 				const { setPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await setPluginStorage(pluginId, key, value);
+
+				// Update storage usage tracking
+				// Note: This is approximate. For accurate tracking, query database
+				// TODO: Get actual storage size from database and update rate limiter
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "set" },
@@ -530,6 +552,10 @@ function createStorageAPI(pluginId: string): StorageAPI {
 					"@/app/_actions/plugin-storage"
 				);
 				await deletePluginStorage(pluginId, key);
+
+				// Note: Storage usage tracking would need to be updated here
+				// For accurate tracking, query database after deletion
+				// TODO: Update storage usage tracking after deletion
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "delete" },
@@ -560,6 +586,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 					"@/app/_actions/plugin-storage"
 				);
 				await clearPluginStorage(pluginId);
+
+				// Reset storage usage tracking
+				rateLimiter.recordStorageUsage(pluginId, undefined, 0);
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, operation: "clear" },
