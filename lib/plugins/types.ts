@@ -289,3 +289,40 @@ export type PluginMethodMap = Record<string, AsyncFunction>;
  * Plugin event listener
  */
 export type PluginEventListener = (event: unknown) => void;
+
+// ============================================================================
+// Editor Extension Types (Phase 2)
+// ============================================================================
+
+/**
+ * Editor extension options for plugin registration
+ */
+export interface EditorExtensionOptions {
+	/** Unique extension ID within the plugin */
+	id: string;
+
+	/** Tiptap Extension or array of Extensions */
+	extension: unknown; // Extension | Extension[] - using unknown to avoid circular dependency
+
+	/** Extension type */
+	type: "node" | "mark" | "plugin";
+}
+
+/**
+ * Editor command options
+ */
+export interface EditorCommandOptions {
+	/** Command name to execute */
+	command: string;
+
+	/** Command arguments */
+	args?: unknown[];
+}
+
+/**
+ * Editor selection range
+ */
+export interface EditorSelection {
+	from: number;
+	to: number;
+}

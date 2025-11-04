@@ -37,4 +37,12 @@ declare module "@tiptap/core" {
 			};
 		};
 	}
+
+	interface Editor {
+		/**
+		 * Set editor extensions dynamically
+		 * @param extensions Array of extensions to set
+		 */
+		setExtensions(extensions: unknown[]): void;
+	}
 }

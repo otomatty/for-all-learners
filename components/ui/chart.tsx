@@ -97,6 +97,15 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
+type PayloadItem = {
+	[key: string]: unknown;
+	dataKey?: string;
+	name?: string;
+	value?: number | string;
+	color?: string;
+	payload?: Record<string, unknown>;
+};
+
 const ChartTooltipContent = React.forwardRef<
 	HTMLDivElement,
 	Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, "content"> &
@@ -106,38 +115,17 @@ const ChartTooltipContent = React.forwardRef<
 			indicator?: "line" | "dot" | "dashed";
 			nameKey?: string;
 			labelKey?: string;
-			payload?: Array<{
-				[key: string]: unknown;
-				dataKey?: string;
-				name?: string;
-				value?: number | string;
-				color?: string;
-				payload?: Record<string, unknown>;
-			}>;
+			payload?: Array<PayloadItem>;
 			label?: string | number | React.ReactNode;
 			labelFormatter?: (
 				value: unknown,
-				payload: Array<{
-					[key: string]: unknown;
-					dataKey?: string;
-					name?: string;
-					value?: number | string;
-					color?: string;
-					payload?: Record<string, unknown>;
-				}>,
+				payload: Array<PayloadItem>,
 			) => React.ReactNode;
 			labelClassName?: string;
 			formatter?: (
 				value: number | string,
 				name: string,
-				item: {
-					[key: string]: unknown;
-					dataKey?: string;
-					name?: string;
-					value?: number | string;
-					color?: string;
-					payload?: Record<string, unknown>;
-				},
+				item: PayloadItem,
 				index: number,
 				payload: Record<string, unknown>,
 			) => React.ReactNode;

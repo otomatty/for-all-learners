@@ -12,15 +12,27 @@
  *
  * Dependencies:
  *   ├─ lib/plugins/types.ts
+ *   ├─ lib/plugins/editor-registry.ts
+ *   ├─ lib/plugins/editor-manager.ts
  *   ├─ types/plugin.ts
  *   └─ app/_actions/plugin-storage.ts (via dynamic import)
  *
  * Related Documentation:
- *   └─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   ├─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   └─ Plan: docs/03_plans/plugin-system/phase2-editor-extensions.md
  */
 
+import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
-import type { Command, DialogOptions, NotificationType } from "./types";
+import { getEditorManager } from "./editor-manager";
+import { getEditorExtensionRegistry } from "./editor-registry";
+import type {
+	Command,
+	DialogOptions,
+	EditorExtensionOptions,
+	EditorSelection,
+	NotificationType,
+} from "./types";
 
 // Import package.json for version information
 import pkg from "../../package.json";
@@ -48,8 +60,10 @@ export interface PluginAPI {
 	/** UI extensions (basic functionality in Phase 1) */
 	ui: UIAPI;
 
-	// Future extension points (Phase 2+)
-	// editor?: EditorAPI;
+	/** Editor extensions (Phase 2) */
+	editor: EditorAPI;
+
+	// Future extension points (Phase 3+)
 	// ai?: AIAPI;
 	// data?: DataAPI;
 }
@@ -170,6 +184,68 @@ export interface UIAPI {
 	showDialog(options: DialogOptions): Promise<unknown>;
 }
 
+/**
+ * Editor API (Phase 2)
+ */
+export interface EditorAPI {
+	/**
+	 * Register a custom Tiptap extension (Node, Mark, or Plugin)
+	 * @param options Extension options
+	 */
+	registerExtension(options: EditorExtensionOptions): Promise<void>;
+
+	/**
+	 * Unregister an extension
+	 * @param extensionId Extension ID to unregister
+	 */
+	unregisterExtension(extensionId: string): Promise<void>;
+
+	/**
+	 * Execute an editor command
+	 * @param command Command name
+	 * @param args Command arguments
+	 * @returns Command result
+	 */
+	executeCommand(command: string, ...args: unknown[]): Promise<unknown>;
+
+	/**
+	 * Get editor content as JSON
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns Editor content as JSONContent
+	 */
+	getContent(editorId?: string): Promise<JSONContent>;
+
+	/**
+	 * Set editor content
+	 * @param content Content to set
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 */
+	setContent(content: JSONContent, editorId?: string): Promise<void>;
+
+	/**
+	 * Get editor selection
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns Selection range or null if no selection
+	 */
+	getSelection(editorId?: string): Promise<EditorSelection | null>;
+
+	/**
+	 * Set editor selection
+	 * @param from Selection start position
+	 * @param to Selection end position
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 */
+	setSelection(from: number, to: number, editorId?: string): Promise<void>;
+
+	/**
+	 * Check if a command is available
+	 * @param command Command name
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns True if command can be executed
+	 */
+	canExecuteCommand(command: string, editorId?: string): Promise<boolean>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -189,6 +265,7 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		storage: createStorageAPI(pluginId),
 		notifications: createNotificationsAPI(pluginId),
 		ui: createUIAPI(pluginId),
+		editor: createEditorAPI(pluginId),
 	};
 }
 
@@ -464,4 +541,143 @@ export function clearPluginCommands(pluginId: string): void {
 			"Plugin commands cleared",
 		);
 	}
+}
+
+/**
+ * Create Editor API implementation
+ *
+ * @param pluginId Plugin ID for extension registration
+ */
+function createEditorAPI(pluginId: string): EditorAPI {
+	const registry = getEditorExtensionRegistry();
+	const manager = getEditorManager();
+
+	return {
+		async registerExtension(options: EditorExtensionOptions): Promise<void> {
+			try {
+				registry.register(pluginId, options);
+
+				// Apply extensions to all registered editors
+				const managerInstance = getEditorManager();
+				managerInstance.applyExtensionsToAllEditors();
+
+				logger.info(
+					{ pluginId, extensionId: options.id, type: options.type },
+					"Editor extension registered and applied",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId: options.id },
+					"Failed to register editor extension",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExtension(extensionId: string): Promise<void> {
+			try {
+				registry.unregister(pluginId, extensionId);
+
+				// Reapply extensions to all registered editors
+				const managerInstance = getEditorManager();
+				managerInstance.applyExtensionsToAllEditors();
+
+				logger.info(
+					{ pluginId, extensionId },
+					"Editor extension unregistered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId },
+					"Failed to unregister editor extension",
+				);
+				throw error;
+			}
+		},
+
+		async executeCommand(
+			command: string,
+			...args: unknown[]
+		): Promise<unknown> {
+			try {
+				return await manager.executeCommand(undefined, command, ...args);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, command, args },
+					"Failed to execute editor command",
+				);
+				throw error;
+			}
+		},
+
+		async getContent(editorId?: string): Promise<JSONContent> {
+			try {
+				return await manager.getContent(editorId);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, editorId },
+					"Failed to get editor content",
+				);
+				throw error;
+			}
+		},
+
+		async setContent(
+			content: JSONContent,
+			editorId?: string,
+		): Promise<void> {
+			try {
+				await manager.setContent(editorId, content);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, editorId },
+					"Failed to set editor content",
+				);
+				throw error;
+			}
+		},
+
+		async getSelection(editorId?: string): Promise<EditorSelection | null> {
+			try {
+				return await manager.getSelection(editorId);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, editorId },
+					"Failed to get editor selection",
+				);
+				throw error;
+			}
+		},
+
+		async setSelection(
+			from: number,
+			to: number,
+			editorId?: string,
+		): Promise<void> {
+			try {
+				await manager.setSelection(editorId, from, to);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, editorId, from, to },
+					"Failed to set editor selection",
+				);
+				throw error;
+			}
+		},
+
+		async canExecuteCommand(
+			command: string,
+			editorId?: string,
+		): Promise<boolean> {
+			try {
+				return await manager.canExecuteCommand(editorId, command);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, command, editorId },
+					"Failed to check command availability",
+				);
+				return false;
+			}
+		},
+	};
 }

@@ -8,10 +8,11 @@ import Typography from "@tiptap/extension-typography";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
 import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { Button } from "@/components/ui/button"; // Buttonをインポート
+import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
@@ -35,8 +36,9 @@ const TiptapEditor = ({
 }: TiptapEditorProps) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const editor = useEditor({
-		extensions: [
+	// Memoize base extensions to prevent unnecessary re-renders
+	const baseExtensions = useMemo(
+		() => [
 			StarterKit.configure({
 				// 必要に応じてStarterKitのオプションを設定
 				// 例: heading: { levels: [1, 2, 3] }
@@ -70,6 +72,11 @@ const TiptapEditor = ({
 				debug: false, // Set to true for development debugging
 			}),
 		],
+		[placeholder],
+	);
+
+	const editor = useEditor({
+		extensions: baseExtensions,
 		content: content ? JSON.parse(content) : undefined, // JSON文字列をパース
 		onUpdate: ({ editor }) => {
 			onChange(JSON.stringify(editor.getJSON())); // JSON文字列として変更を通知
@@ -81,6 +88,31 @@ const TiptapEditor = ({
 			},
 		},
 	});
+
+	// Register editor with editor manager
+	useEffect(() => {
+		if (!editor) return;
+
+		const editorId = `tiptap-editor-${userId}`;
+		const editorManager = getEditorManager();
+
+		// Register editor with base extensions
+		editorManager.registerEditor(editorId, editor, baseExtensions);
+		editorManager.setActiveEditor(editorId);
+
+		// Set active editor on focus
+		const handleFocus = () => {
+			editorManager.setActiveEditor(editorId);
+		};
+
+		editor.on("focus", handleFocus);
+
+		// Cleanup: unregister editor on unmount
+		return () => {
+			editor.off("focus", handleFocus);
+			editorManager.unregisterEditor(editorId);
+		};
+	}, [editor, userId, baseExtensions]);
 
 	// ユーザーアイコンレンダリングの追加
 	useUserIconRenderer(editor);

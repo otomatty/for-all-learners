@@ -13,16 +13,21 @@
  * Dependencies:
  *   ├─ lib/plugins/plugin-registry.ts
  *   ├─ lib/plugins/plugin-api.ts
+ *   ├─ lib/plugins/editor-registry.ts
+ *   ├─ lib/plugins/editor-manager.ts
  *   ├─ lib/plugins/types.ts
  *   └─ types/plugin.ts
  *
  * Related Documentation:
- *   └─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   ├─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   └─ Plan: docs/03_plans/plugin-system/phase2-editor-extensions.md
  */
 
 import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
 import { clearPluginCommands, createPluginAPI } from "./plugin-api";
+import { getEditorExtensionRegistry } from "./editor-registry";
+import { getEditorManager } from "./editor-manager";
 import { getPluginRegistry } from "./plugin-registry";
 import {
 	type APICallPayload,
@@ -212,10 +217,25 @@ export class PluginLoader {
 			// Step 2: Clear commands
 			clearPluginCommands(pluginId);
 
-			// Step 3: Cleanup worker
+			// Step 3: Clear editor extensions
+			const extensionRegistry = getEditorExtensionRegistry();
+			if (extensionRegistry.hasExtensions(pluginId)) {
+				extensionRegistry.clearPlugin(pluginId);
+
+				// Reapply extensions to all editors
+				const editorManager = getEditorManager();
+				editorManager.applyExtensionsToAllEditors();
+
+				logger.info(
+					{ pluginId },
+					"Editor extensions cleared for plugin",
+				);
+			}
+
+			// Step 4: Cleanup worker
 			this.cleanupWorker(pluginId);
 
-			// Step 4: Unregister from registry
+			// Step 5: Unregister from registry
 			registry.unregister(pluginId);
 
 			logger.info(
