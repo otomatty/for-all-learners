@@ -25,6 +25,7 @@ import * as buildPluginModule from "../build-plugin";
 import { main } from "../cli";
 import * as createPluginModule from "../create-plugin";
 import * as devPluginModule from "../dev-plugin";
+import * as generateTypesModule from "../generate-types";
 import * as testPluginModule from "../test-plugin";
 
 // Mock child process exit
@@ -59,6 +60,10 @@ vi.mock("../test-plugin", () => ({
 
 vi.mock("../dev-plugin", () => ({
 	devPlugin: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../generate-types", () => ({
+	generateTypes: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("CLI", () => {
@@ -183,6 +188,21 @@ describe("CLI", () => {
 				"Usage: bun run plugins:dev <plugin-id>",
 			);
 			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("generate-types command", () => {
+		it("should call generateTypes", async () => {
+			await main("generate-types", []);
+
+			expect(generateTypesModule.generateTypes).toHaveBeenCalled();
+		});
+
+		it("should not require arguments", async () => {
+			await main("generate-types", []);
+
+			expect(generateTypesModule.generateTypes).toHaveBeenCalled();
+			expect(mockExit).not.toHaveBeenCalled();
 		});
 	});
 

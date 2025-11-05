@@ -24,6 +24,7 @@ import logger from "../../lib/logger";
 import { buildPlugin } from "./build-plugin";
 import { createPlugin } from "./create-plugin";
 import { devPlugin } from "./dev-plugin";
+import { generateTypes } from "./generate-types";
 import { testPlugin } from "./test-plugin";
 
 // Helper functions for CLI output (logger wrapper for user-facing messages)
@@ -88,6 +89,11 @@ export async function main(
 			break;
 		}
 
+		case "generate-types": {
+			await generateTypes();
+			break;
+		}
+
 		case "help":
 		case "--help":
 		case "-h": {
@@ -102,12 +108,14 @@ Commands:
   build <plugin-id>       Build a plugin
   test <plugin-id>        Run plugin tests
   dev <plugin-id>         Start development mode with hot reload
+  generate-types          Generate TypeScript type definitions package
 
 Examples:
   bun run plugins:create my-plugin
   bun run plugins:build my-plugin
   bun run plugins:test my-plugin
   bun run plugins:dev my-plugin
+  bun run plugins:generate-types
 
 For more information, see:
   docs/03_plans/plugin-system/phase4-development-tools.md

@@ -17,7 +17,8 @@
 		"plugins:build": "bun run scripts/plugins/cli.ts build",
 		"plugins:test": "bun run scripts/plugins/cli.ts test",
 		"plugins:dev": "bun run scripts/plugins/cli.ts dev",
-		"plugins:help": "bun run scripts/plugins/cli.ts help"
+		"plugins:help": "bun run scripts/plugins/cli.ts help",
+		"plugins:generate-types": "bun run scripts/plugins/generate-types.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.68.0",

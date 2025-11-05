@@ -1,0 +1,29 @@
+{
+  "name": "@fal/plugin-types",
+  "version": "0.2.0",
+  "description": "TypeScript type definitions for F.A.L plugin development",
+  "main": "index.d.ts",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "fal",
+    "for-all-learners",
+    "plugin",
+    "types",
+    "typescript",
+    "type-definitions"
+  ],
+  "author": "F.A.L Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/otomatty/for-all-learners.git",
+    "directory": "packages/plugin-types"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

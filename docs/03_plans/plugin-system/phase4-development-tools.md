@@ -166,25 +166,26 @@ bun run plugins:dev my-plugin
 - `lib/plugins/debug-tools.ts`: デバッグユーティリティ
 - `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI
 
-#### 1.5 TypeScript型定義の自動生成（推定: 2時間）
+#### 1.5 TypeScript型定義の自動生成（推定: 2時間）✅ **完了**
 
 **目的**: プラグインAPIの型定義を自動生成し、開発体験を向上
 
 **実装内容**:
 
-- [ ] `scripts/plugins/generate-types.ts`: 型定義生成スクリプト
-  - [ ] `lib/plugins/plugin-api.ts` から型を抽出
-  - [ ] `lib/plugins/types.ts` から型を抽出
-  - [ ] `@fal/plugin-types` パッケージとして出力
+- [x] `scripts/plugins/generate-types.ts`: 型定義生成スクリプト ✅
+  - [x] `lib/plugins/plugin-api.ts` から型を抽出 ✅
+  - [x] `lib/plugins/types.ts` から型を抽出 ✅
+  - [x] `@fal/plugin-types` パッケージとして出力 ✅
 
-- [ ] `packages/plugin-types/`: プラグイン開発者向け型定義パッケージ
-  - [ ] `package.json`
-  - [ ] `index.d.ts`: 型定義エクスポート
-  - [ ] README.md
+- [x] `packages/plugin-types/`: プラグイン開発者向け型定義パッケージ ✅
+  - [x] `package.json` ✅
+  - [x] `index.d.ts`: 型定義エクスポート ✅
+  - [x] `README.md` ✅
+  - [x] `tsconfig.json` ✅
 
 **実装ファイル**:
-- `scripts/plugins/generate-types.ts`: 型定義生成
-- `packages/plugin-types/`: 型定義パッケージ
+- `scripts/plugins/generate-types.ts`: 型定義生成 ✅
+- `packages/plugin-types/`: 型定義パッケージ ✅
 
 **使用例**:
 ```bash
@@ -194,6 +195,8 @@ bun run plugins:generate-types
 # プラグイン開発時にインストール
 npm install @fal/plugin-types
 ```
+
+**実装日**: 2025-11-05
 
 ---
 
