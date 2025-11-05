@@ -128,6 +128,7 @@ function copyTemplateFiles(
 	// Copy and process files
 	const files = [
 		"src/index.ts",
+		"src/types.ts",
 		"plugin.json",
 		"package.json",
 		"tsconfig.json",

@@ -1,109 +1,145 @@
 /**
- * Plugin System Internal Types
+ * Plugin API Type Definitions
  *
- * This file defines internal types used by the plugin system implementation.
- * These types are used by plugin-loader, plugin-registry, and plugin-api.
+ * This file contains type definitions for the F.A.L Plugin API.
+ * These types are provided for TypeScript type checking and IntelliSense support.
+ *
+ * Note: These are type definitions only. The actual API implementation
+ * is provided by the host application at runtime.
  *
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ lib/plugins/plugin-api.ts
- *   ├─ lib/plugins/plugin-loader.ts
- *   ├─ lib/plugins/plugin-registry.ts
- *   └─ lib/plugins/sandbox-worker.ts
+ *   └─ src/index.ts (plugin entry point)
  *
- * Dependencies:
- *   └─ types/plugin.ts (base plugin types)
+ * Dependencies: None (type definitions only)
  *
  * Related Documentation:
- *   └─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
+ *   └─ Guide: docs/guides/plugin-development.md
  */
 
-import type {
-	ExtensionPoint,
-	LoadedPlugin,
-	PluginManifest,
-} from "@/types/plugin";
-
 // ============================================================================
-// Worker Message Protocol
+// Base Types
 // ============================================================================
 
 /**
- * Message types for communication between host and worker
+ * Notification type
  */
-export type WorkerMessageType =
-	| "INIT" // Initialize plugin in worker
-	| "CALL_METHOD" // Call plugin method
-	| "DISPOSE" // Dispose plugin
-	| "API_CALL" // Plugin calling host API
-	| "API_RESPONSE" // Host responding to API call
-	| "EVENT" // Plugin emitting event
-	| "ERROR" // Error occurred
-	| "CONSOLE_LOG"; // Console log from worker
+export type NotificationType = "info" | "success" | "error" | "warning";
 
 /**
- * Base message structure
+ * JSON Content type (from Tiptap)
  */
-export interface WorkerMessage<T = unknown> {
-	type: WorkerMessageType;
-	requestId?: string; // For request-response matching
-	payload: T;
-}
-
-/**
- * INIT message payload
- */
-export interface InitPayload {
-	manifest: PluginManifest;
-	code: string; // Plugin code as string
-	config?: Record<string, unknown>; // User configuration
-}
-
-/**
- * CALL_METHOD message payload
- */
-export interface CallMethodPayload {
-	method: string;
-	args: unknown[];
-}
-
-/**
- * API_CALL message payload (worker → host)
- */
-export interface APICallPayload {
-	namespace: string; // e.g., "storage", "notifications"
-	method: string;
-	args: unknown[];
-}
-
-/**
- * API_RESPONSE message payload (host → worker)
- */
-export interface APIResponsePayload {
-	success: boolean;
-	result?: unknown;
-	error?: string;
-}
-
-/**
- * EVENT message payload
- */
-export interface EventPayload {
-	eventName: string;
-	data: unknown;
-}
-
-/**
- * ERROR message payload
- */
-export interface ErrorPayload {
-	message: string;
-	stack?: string;
+export interface JSONContent {
+	[key: string]: unknown;
 }
 
 // ============================================================================
-// Plugin API Types
+// Application API
+// ============================================================================
+
+/**
+ * Application API
+ */
+export interface AppAPI {
+	/**
+	 * Get application version
+	 */
+	getVersion(): string;
+
+	/**
+	 * Get application name
+	 */
+	getName(): string;
+
+	/**
+	 * Get current user ID (if authenticated)
+	 */
+	getUserId(): Promise<string | null>;
+}
+
+// ============================================================================
+// Storage API
+// ============================================================================
+
+/**
+ * Storage API (plugin-specific key-value storage)
+ */
+export interface StorageAPI {
+	/**
+	 * Get value from storage
+	 * @param key Storage key
+	 * @returns Value or undefined if not found
+	 */
+	get<T = unknown>(key: string): Promise<T | undefined>;
+
+	/**
+	 * Set value in storage
+	 * @param key Storage key
+	 * @param value Value to store (must be JSON-serializable)
+	 */
+	set(key: string, value: unknown): Promise<void>;
+
+	/**
+	 * Delete value from storage
+	 * @param key Storage key
+	 */
+	delete(key: string): Promise<void>;
+
+	/**
+	 * Get all keys in storage
+	 * @returns Array of keys
+	 */
+	keys(): Promise<string[]>;
+
+	/**
+	 * Clear all data from storage
+	 */
+	clear(): Promise<void>;
+}
+
+// ============================================================================
+// Notifications API
+// ============================================================================
+
+/**
+ * Notifications API
+ */
+export interface NotificationsAPI {
+	/**
+	 * Show notification to user
+	 * @param message Notification message
+	 * @param type Notification type (info, success, error, warning)
+	 */
+	show(message: string, type?: NotificationType): void;
+
+	/**
+	 * Show info notification
+	 * @param message Message to display
+	 */
+	info(message: string): void;
+
+	/**
+	 * Show success notification
+	 * @param message Message to display
+	 */
+	success(message: string): void;
+
+	/**
+	 * Show error notification
+	 * @param message Message to display
+	 */
+	error(message: string): void;
+
+	/**
+	 * Show warning notification
+	 * @param message Message to display
+	 */
+	warning(message: string): void;
+}
+
+// ============================================================================
+// UI API
 // ============================================================================
 
 /**
@@ -119,6 +155,15 @@ export interface Command {
 }
 
 /**
+ * Dialog button definition
+ */
+export interface DialogButton {
+	label: string;
+	variant?: "default" | "primary" | "destructive";
+	onClick?: () => void | Promise<void>;
+}
+
+/**
  * Dialog options for UI extension
  */
 export interface DialogOptions {
@@ -131,182 +176,76 @@ export interface DialogOptions {
 }
 
 /**
- * Dialog button definition
+ * UI API (basic functionality in Phase 1, extended in Phase 2)
  */
-export interface DialogButton {
-	label: string;
-	variant?: "default" | "primary" | "destructive";
-	onClick?: () => void | Promise<void>;
-}
+export interface UIAPI {
+	/**
+	 * Register a command that users can invoke
+	 * @param command Command definition
+	 */
+	registerCommand(command: Command): Promise<void>;
 
-/**
- * Notification type
- */
-export type NotificationType = "info" | "success" | "error" | "warning";
+	/**
+	 * Unregister a command
+	 * @param commandId Command ID to unregister
+	 */
+	unregisterCommand(commandId: string): Promise<void>;
 
-// ============================================================================
-// Plugin Loader Types
-// ============================================================================
+	/**
+	 * Show dialog to user
+	 * @param options Dialog options
+	 * @returns Promise that resolves when dialog is closed
+	 */
+	showDialog(options: DialogOptions): Promise<unknown>;
 
-/**
- * Plugin load options
- */
-export interface PluginLoadOptions {
-	/** User configuration for the plugin */
-	config?: Record<string, unknown>;
+	/**
+	 * Register a widget (Phase 2)
+	 * @param options Widget options
+	 */
+	registerWidget(options: WidgetOptions): Promise<void>;
 
-	/** Whether to enable the plugin immediately after loading */
-	enableImmediately?: boolean;
+	/**
+	 * Unregister a widget
+	 * @param widgetId Widget ID to unregister
+	 */
+	unregisterWidget(widgetId: string): Promise<void>;
 
-	/** Timeout for loading (ms) */
-	timeout?: number;
+	/**
+	 * Register a custom page (Phase 2)
+	 * @param options Page options
+	 */
+	registerPage(options: PageOptions): Promise<void>;
 
-	/** Signature verification options */
-	/** Base64-encoded signature (from database) */
-	signature?: string | null;
-	/** Base64-encoded public key (from database) */
-	publicKey?: string | null;
-	/** Signature algorithm (from database) */
-	signatureAlgorithm?: string | null;
-	/** Timestamp when the plugin was signed (from database, optional) */
-	signedAt?: number | string | null;
-	/** Whether to require signature (default: false for backward compatibility) */
-	requireSignature?: boolean;
-}
+	/**
+	 * Unregister a custom page
+	 * @param pageId Page ID to unregister
+	 */
+	unregisterPage(pageId: string): Promise<void>;
 
-/**
- * Plugin load result
- */
-export interface PluginLoadResult {
-	success: boolean;
-	plugin?: LoadedPlugin;
-	error?: string;
-}
+	/**
+	 * Register a sidebar panel (Phase 2)
+	 * @param options Panel options
+	 */
+	registerSidebarPanel(options: SidebarPanelOptions): Promise<void>;
 
-/**
- * Plugin validation result
- */
-export interface PluginValidationResult {
-	valid: boolean;
-	errors: string[];
-	warnings: string[];
-}
-
-// ============================================================================
-// Plugin Registry Types
-// ============================================================================
-
-/**
- * Plugin registry filter options
- */
-export interface PluginFilterOptions {
-	/** Filter by extension point */
-	extensionPoint?: ExtensionPoint;
-
-	/** Filter by enabled state */
-	enabled?: boolean;
-
-	/** Search query (name, description, author) */
-	query?: string;
-}
-
-/**
- * Plugin registry statistics
- */
-export interface PluginRegistryStats {
-	totalPlugins: number;
-	enabledPlugins: number;
-	disabledPlugins: number;
-	pluginsByExtensionPoint: Record<ExtensionPoint, number>;
+	/**
+	 * Unregister a sidebar panel
+	 * @param panelId Panel ID to unregister
+	 */
+	unregisterSidebarPanel(panelId: string): Promise<void>;
 }
 
 // ============================================================================
-// Error Types
+// Editor API
 // ============================================================================
 
 /**
- * Plugin error types
+ * Editor selection range
  */
-export enum PluginErrorType {
-	INVALID_MANIFEST = "INVALID_MANIFEST",
-	MISSING_DEPENDENCY = "MISSING_DEPENDENCY",
-	LOAD_FAILED = "LOAD_FAILED",
-	INIT_FAILED = "INIT_FAILED",
-	EXECUTION_FAILED = "EXECUTION_FAILED",
-	API_CALL_FAILED = "API_CALL_FAILED",
-	TIMEOUT = "TIMEOUT",
-	SANDBOX_VIOLATION = "SANDBOX_VIOLATION",
-	INVALID_SIGNATURE = "INVALID_SIGNATURE",
+export interface EditorSelection {
+	from: number;
+	to: number;
 }
-
-/**
- * Plugin error class
- */
-export class PluginError extends Error {
-	constructor(
-		public type: PluginErrorType,
-		message: string,
-		public pluginId?: string,
-		public cause?: Error,
-	) {
-		super(message);
-		this.name = "PluginError";
-	}
-}
-
-// ============================================================================
-// Dependency Resolution Types
-// ============================================================================
-
-/**
- * Dependency graph node
- */
-export interface DependencyNode {
-	pluginId: string;
-	dependencies: string[];
-	dependents: string[];
-}
-
-/**
- * Dependency resolution result
- */
-export interface DependencyResolutionResult {
-	/** Load order (topological sort) */
-	loadOrder: string[];
-
-	/** Circular dependencies detected */
-	circularDependencies: string[][];
-
-	/** Missing dependencies */
-	missingDependencies: Array<{
-		pluginId: string;
-		requiredPlugin: string;
-		requiredVersion: string;
-	}>;
-}
-
-// ============================================================================
-// Utility Types
-// ============================================================================
-
-/**
- * Async function type
- */
-export type AsyncFunction<T = unknown> = (...args: unknown[]) => Promise<T>;
-
-/**
- * Plugin method map
- */
-export type PluginMethodMap = Record<string, AsyncFunction>;
-
-/**
- * Plugin event listener
- */
-export type PluginEventListener = (event: unknown) => void;
-
-// ============================================================================
-// Editor Extension Types (Phase 2)
-// ============================================================================
 
 /**
  * Editor extension options for plugin registration
@@ -323,26 +262,69 @@ export interface EditorExtensionOptions {
 }
 
 /**
- * Editor command options
+ * Editor API (Phase 2)
  */
-export interface EditorCommandOptions {
-	/** Command name to execute */
-	command: string;
+export interface EditorAPI {
+	/**
+	 * Register a custom Tiptap extension (Node, Mark, or Plugin)
+	 * @param options Extension options
+	 */
+	registerExtension(options: EditorExtensionOptions): Promise<void>;
 
-	/** Command arguments */
-	args?: unknown[];
-}
+	/**
+	 * Unregister an extension
+	 * @param extensionId Extension ID to unregister
+	 */
+	unregisterExtension(extensionId: string): Promise<void>;
 
-/**
- * Editor selection range
- */
-export interface EditorSelection {
-	from: number;
-	to: number;
+	/**
+	 * Execute an editor command
+	 * @param command Command name
+	 * @param args Command arguments
+	 * @returns Command result
+	 */
+	executeCommand(command: string, ...args: unknown[]): Promise<unknown>;
+
+	/**
+	 * Get editor content as JSON
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns Editor content as JSONContent
+	 */
+	getContent(editorId?: string): Promise<JSONContent>;
+
+	/**
+	 * Set editor content
+	 * @param content Content to set
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 */
+	setContent(content: JSONContent, editorId?: string): Promise<void>;
+
+	/**
+	 * Get editor selection
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns Selection range or null if no selection
+	 */
+	getSelection(editorId?: string): Promise<EditorSelection | null>;
+
+	/**
+	 * Set editor selection
+	 * @param from Selection start position
+	 * @param to Selection end position
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 */
+	setSelection(from: number, to: number, editorId?: string): Promise<void>;
+
+	/**
+	 * Check if a command is available
+	 * @param command Command name
+	 * @param editorId Optional editor ID (defaults to active editor)
+	 * @returns True if command can be executed
+	 */
+	canExecuteCommand(command: string, editorId?: string): Promise<boolean>;
 }
 
 // ============================================================================
-// AI Extension Types (Phase 2)
+// AI API
 // ============================================================================
 
 /**
@@ -465,8 +447,49 @@ export interface ContentAnalyzerOptions {
 	}>;
 }
 
+/**
+ * AI API for plugin extensions
+ */
+export interface AIAPI {
+	/**
+	 * Register a question generator
+	 * @param options Generator options
+	 */
+	registerQuestionGenerator(options: QuestionGeneratorOptions): Promise<void>;
+
+	/**
+	 * Unregister a question generator
+	 * @param generatorId Generator ID to unregister
+	 */
+	unregisterQuestionGenerator(generatorId: string): Promise<void>;
+
+	/**
+	 * Register a prompt template
+	 * @param options Template options
+	 */
+	registerPromptTemplate(options: PromptTemplateOptions): Promise<void>;
+
+	/**
+	 * Unregister a prompt template
+	 * @param templateId Template ID to unregister
+	 */
+	unregisterPromptTemplate(templateId: string): Promise<void>;
+
+	/**
+	 * Register a content analyzer
+	 * @param options Analyzer options
+	 */
+	registerContentAnalyzer(options: ContentAnalyzerOptions): Promise<void>;
+
+	/**
+	 * Unregister a content analyzer
+	 * @param analyzerId Analyzer ID to unregister
+	 */
+	unregisterContentAnalyzer(analyzerId: string): Promise<void>;
+}
+
 // ============================================================================
-// UI Extension Types (Phase 2)
+// Widget & Page Types
 // ============================================================================
 
 /**
@@ -482,14 +505,6 @@ export type WidgetPosition =
  * Widget size
  */
 export type WidgetSize = "small" | "medium" | "large";
-
-/**
- * Widget render function - returns React component props or render data
- * Note: In Web Worker context, this returns serializable data
- */
-export type WidgetRenderFunction = (
-	context: WidgetContext,
-) => Promise<WidgetRenderResult>;
 
 /**
  * Widget context passed to render function
@@ -514,6 +529,14 @@ export interface WidgetRenderResult {
 	/** HTML content (if using HTML rendering) */
 	html?: string;
 }
+
+/**
+ * Widget render function - returns React component props or render data
+ * Note: In Web Worker context, this returns serializable data
+ */
+export type WidgetRenderFunction = (
+	context: WidgetContext,
+) => Promise<WidgetRenderResult>;
 
 /**
  * Widget extension options
@@ -559,13 +582,6 @@ export interface PageRoute {
 }
 
 /**
- * Page render function - returns React component props or render data
- */
-export type PageRenderFunction = (
-	context: PageContext,
-) => Promise<PageRenderResult>;
-
-/**
  * Page context passed to render function
  */
 export interface PageContext {
@@ -594,6 +610,13 @@ export interface PageRenderResult {
 }
 
 /**
+ * Page render function - returns React component props or render data
+ */
+export type PageRenderFunction = (
+	context: PageContext,
+) => Promise<PageRenderResult>;
+
+/**
  * Custom page extension options
  */
 export interface PageOptions {
@@ -614,13 +637,6 @@ export interface PageOptions {
  * Sidebar panel position
  */
 export type SidebarPanelPosition = "left" | "right";
-
-/**
- * Sidebar panel render function - returns React component props or render data
- */
-export type SidebarPanelRenderFunction = (
-	context: SidebarPanelContext,
-) => Promise<SidebarPanelRenderResult>;
 
 /**
  * Sidebar panel context passed to render function
@@ -645,6 +661,13 @@ export interface SidebarPanelRenderResult {
 	/** HTML content (if using HTML rendering) */
 	html?: string;
 }
+
+/**
+ * Sidebar panel render function - returns React component props or render data
+ */
+export type SidebarPanelRenderFunction = (
+	context: SidebarPanelContext,
+) => Promise<SidebarPanelRenderResult>;
 
 /**
  * Sidebar panel extension options
@@ -673,7 +696,7 @@ export interface SidebarPanelOptions {
 }
 
 // ============================================================================
-// Data Processor Extension Types (Phase 2)
+// Data Processor API
 // ============================================================================
 
 /**
@@ -867,8 +890,49 @@ export interface TransformerOptions {
 	}>;
 }
 
+/**
+ * Data Processor API for plugin extensions
+ */
+export interface DataAPI {
+	/**
+	 * Register an importer
+	 * @param options Importer options
+	 */
+	registerImporter(options: ImporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an importer
+	 * @param importerId Importer ID to unregister
+	 */
+	unregisterImporter(importerId: string): Promise<void>;
+
+	/**
+	 * Register an exporter
+	 * @param options Exporter options
+	 */
+	registerExporter(options: ExporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an exporter
+	 * @param exporterId Exporter ID to unregister
+	 */
+	unregisterExporter(exporterId: string): Promise<void>;
+
+	/**
+	 * Register a transformer
+	 * @param options Transformer options
+	 */
+	registerTransformer(options: TransformerOptions): Promise<void>;
+
+	/**
+	 * Unregister a transformer
+	 * @param transformerId Transformer ID to unregister
+	 */
+	unregisterTransformer(transformerId: string): Promise<void>;
+}
+
 // ============================================================================
-// Integration Extension Types (Phase 2)
+// Integration API
 // ============================================================================
 
 /**
@@ -1100,8 +1164,60 @@ export interface ExternalAPIOptions {
 }
 
 /**
- * Calendar Extension Types
+ * Integration API for plugin extensions
  */
+export interface IntegrationAPI {
+	/**
+	 * Register an OAuth provider
+	 * @param options OAuth provider options
+	 */
+	registerOAuthProvider(options: OAuthProviderOptions): Promise<void>;
+
+	/**
+	 * Unregister an OAuth provider
+	 * @param providerId Provider ID to unregister
+	 */
+	unregisterOAuthProvider(providerId: string): Promise<void>;
+
+	/**
+	 * Register a webhook
+	 * @param options Webhook options
+	 */
+	registerWebhook(options: WebhookOptions): Promise<void>;
+
+	/**
+	 * Unregister a webhook
+	 * @param webhookId Webhook ID to unregister
+	 */
+	unregisterWebhook(webhookId: string): Promise<void>;
+
+	/**
+	 * Register an external API
+	 * @param options External API options
+	 */
+	registerExternalAPI(options: ExternalAPIOptions): Promise<void>;
+
+	/**
+	 * Unregister an external API
+	 * @param apiId API ID to unregister
+	 */
+	unregisterExternalAPI(apiId: string): Promise<void>;
+
+	/**
+	 * Call an external API
+	 * @param apiId API ID (optional, if not provided, uses default caller)
+	 * @param options Request options
+	 * @returns API response
+	 */
+	callExternalAPI(
+		apiId: string | undefined,
+		options: ExternalAPIRequestOptions,
+	): Promise<ExternalAPIResponse>;
+}
+
+// ============================================================================
+// Calendar API
+// ============================================================================
 
 /**
  * Calendar extension data for a specific date
@@ -1141,4 +1257,60 @@ export interface CalendarExtensionOptions {
 	description?: string;
 	/** Function to get daily data for a specific date */
 	getDailyData: (date: string) => Promise<CalendarExtensionData | null>;
+}
+
+/**
+ * Calendar API for plugin extensions
+ */
+export interface CalendarAPI {
+	/**
+	 * Register a calendar extension
+	 * @param options Calendar extension options
+	 */
+	registerExtension(options: CalendarExtensionOptions): Promise<void>;
+
+	/**
+	 * Unregister a calendar extension
+	 * @param extensionId Extension ID to unregister
+	 */
+	unregisterExtension(extensionId: string): Promise<void>;
+}
+
+// ============================================================================
+// Main Plugin API
+// ============================================================================
+
+/**
+ * Main API interface exposed to plugins
+ *
+ * This is the API that plugins can use to interact with the host application.
+ * All methods are async and communicate via postMessage when in Web Worker context.
+ */
+export interface PluginAPI {
+	/** Application information */
+	app: AppAPI;
+
+	/** Plugin-specific storage */
+	storage: StorageAPI;
+
+	/** Notification system */
+	notifications: NotificationsAPI;
+
+	/** UI extensions (basic functionality in Phase 1) */
+	ui: UIAPI;
+
+	/** Editor extensions (Phase 2) */
+	editor: EditorAPI;
+
+	/** AI extensions (Phase 2) */
+	ai: AIAPI;
+
+	/** Data processor extensions (Phase 2) */
+	data: DataAPI;
+
+	/** Integration extensions (Phase 2) */
+	integration: IntegrationAPI;
+
+	/** Calendar extensions (Phase 2) */
+	calendar: CalendarAPI;
 }

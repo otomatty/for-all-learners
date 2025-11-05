@@ -15,6 +15,8 @@
  *   └─ Guide: docs/guides/plugin-development.md
  */
 
+import type { PluginAPI } from "./types";
+
 /**
  * Plugin activation function
  *
@@ -23,7 +25,7 @@
  * @returns Plugin instance with dispose method
  */
 async function activate(
-	api: any, // PluginAPI - types not available in worker context
+	api: PluginAPI,
 	_config?: Record<string, unknown>,
 ): Promise<{
 	methods?: Record<string, (...args: unknown[]) => unknown | Promise<unknown>>;
@@ -35,9 +37,9 @@ async function activate(
 	// Register a command
 	await api.ui.registerCommand({
 		id: "{{PLUGIN_ID}}-hello",
-		name: "Hello World",
+		label: "Hello World",
 		description: "サンプルコマンドです",
-		async execute() {
+		handler: async () => {
 			const appName = api.app.getName();
 			api.notifications.info(
 				`Hello from {{PLUGIN_NAME}}! Running on ${appName}`,
