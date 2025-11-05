@@ -27,6 +27,7 @@ import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
 import * as aiRegistry from "./ai-registry";
+import * as calendarRegistry from "./calendar-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
@@ -34,6 +35,7 @@ import * as integrationRegistry from "./integration-registry";
 import { getPluginRateLimiter } from "./plugin-rate-limiter";
 import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
+	CalendarExtensionOptions,
 	Command,
 	ContentAnalyzerOptions,
 	DialogOptions,
@@ -89,6 +91,9 @@ export interface PluginAPI {
 
 	/** Integration extensions (Phase 2) */
 	integration: IntegrationAPI;
+
+	/** Calendar extensions (Phase 2) */
+	calendar: CalendarAPI;
 }
 
 /**
@@ -439,6 +444,23 @@ export interface IntegrationAPI {
 	): Promise<ExternalAPIResponse>;
 }
 
+/**
+ * Calendar API for plugin extensions
+ */
+export interface CalendarAPI {
+	/**
+	 * Register a calendar extension
+	 * @param options Calendar extension options
+	 */
+	registerExtension(options: CalendarExtensionOptions): Promise<void>;
+
+	/**
+	 * Unregister a calendar extension
+	 * @param extensionId Extension ID to unregister
+	 */
+	unregisterExtension(extensionId: string): Promise<void>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -462,6 +484,7 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		ai: createAIAPI(pluginId),
 		data: createDataAPI(pluginId),
 		integration: createIntegrationAPI(pluginId),
+		calendar: createCalendarAPI(pluginId),
 	};
 }
 
@@ -1562,4 +1585,50 @@ async function defaultHTTPCaller(
 			clearTimeout(timeoutId);
 		}
 	}
+}
+
+/**
+ * Create Calendar API implementation
+ *
+ * @param pluginId Plugin ID making the API call
+ * @returns Calendar API instance
+ */
+function createCalendarAPI(pluginId: string): CalendarAPI {
+	return {
+		async registerExtension(options: CalendarExtensionOptions): Promise<void> {
+			try {
+				calendarRegistry.registerCalendarExtension(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						extensionId: options.id,
+						name: options.name,
+					},
+					"Calendar extension registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId: options.id },
+					"Failed to register calendar extension",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExtension(extensionId: string): Promise<void> {
+			try {
+				calendarRegistry.unregisterCalendarExtension(pluginId, extensionId);
+				logger.info(
+					{ pluginId, extensionId },
+					"Calendar extension unregistered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId },
+					"Failed to unregister calendar extension",
+				);
+				throw error;
+			}
+		},
+	};
 }

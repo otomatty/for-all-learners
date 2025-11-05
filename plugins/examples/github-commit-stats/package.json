@@ -1,0 +1,7 @@
+{
+	"name": "@fal/github-commit-stats",
+	"version": "1.0.0",
+	"description": "GitHubコミット行数をカレンダーに表示し、ダッシュボードに統計を表示するプラグイン",
+	"type": "module",
+	"private": true
+}

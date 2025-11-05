@@ -6,6 +6,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as aiRegistry from "../ai-registry";
+import * as calendarRegistry from "../calendar-registry";
 import * as dataProcessorRegistry from "../data-processor-registry";
 import {
 	clearPluginCommands,
@@ -14,6 +15,7 @@ import {
 	getRegisteredCommands,
 } from "../plugin-api";
 import type {
+	CalendarExtensionOptions,
 	Command,
 	ContentAnalyzerOptions,
 	ExporterOptions,
@@ -35,6 +37,7 @@ describe("PluginAPI", () => {
 		aiRegistry.clearPlugin(pluginId);
 		uiRegistry.clearPlugin(pluginId);
 		dataProcessorRegistry.clearPlugin(pluginId);
+		calendarRegistry.clearPluginExtensions(pluginId);
 		vi.clearAllMocks();
 	});
 
@@ -50,6 +53,7 @@ describe("PluginAPI", () => {
 			expect(api.editor).toBeDefined();
 			expect(api.ai).toBeDefined();
 			expect(api.data).toBeDefined();
+			expect(api.calendar).toBeDefined();
 		});
 	});
 
@@ -981,6 +985,82 @@ describe("PluginAPI", () => {
 				const panels = uiRegistry.getSidebarPanels(pluginId);
 				expect(panels).toHaveLength(0);
 			});
+		});
+	});
+
+	describe("CalendarAPI", () => {
+		it("should register a calendar extension", async () => {
+			const api = createPluginAPI(pluginId);
+			const options: CalendarExtensionOptions = {
+				id: "test-extension",
+				name: "Test Extension",
+				description: "Test extension description",
+				getDailyData: vi.fn().mockResolvedValue({
+					badge: "Test Badge",
+					tooltip: "Test tooltip",
+				}),
+			};
+
+			await api.calendar.registerExtension(options);
+
+			const extensions = calendarRegistry.getCalendarExtensions(pluginId);
+			expect(extensions).toHaveLength(1);
+			expect(extensions[0].extensionId).toBe("test-extension");
+			expect(extensions[0].name).toBe("Test Extension");
+		});
+
+		it("should throw error when registering duplicate extension ID", async () => {
+			const api = createPluginAPI(pluginId);
+			const options: CalendarExtensionOptions = {
+				id: "test-extension",
+				name: "Test Extension",
+				getDailyData: vi.fn().mockResolvedValue(null),
+			};
+
+			await api.calendar.registerExtension(options);
+
+			await expect(api.calendar.registerExtension(options)).rejects.toThrow(
+				"Calendar extension test-extension already registered",
+			);
+		});
+
+		it("should unregister a calendar extension", async () => {
+			const api = createPluginAPI(pluginId);
+			const options: CalendarExtensionOptions = {
+				id: "test-extension",
+				name: "Test Extension",
+				getDailyData: vi.fn().mockResolvedValue(null),
+			};
+
+			await api.calendar.registerExtension(options);
+			await api.calendar.unregisterExtension("test-extension");
+
+			const extensions = calendarRegistry.getCalendarExtensions(pluginId);
+			expect(extensions).toHaveLength(0);
+		});
+
+		it("should handle errors when registering extension", async () => {
+			const api = createPluginAPI(pluginId);
+			const options: CalendarExtensionOptions = {
+				id: "test-extension",
+				name: "Test Extension",
+				getDailyData: vi.fn().mockResolvedValue(null),
+			};
+
+			// Register first time
+			await api.calendar.registerExtension(options);
+
+			// Try to register again (should fail)
+			await expect(api.calendar.registerExtension(options)).rejects.toThrow();
+		});
+
+		it("should handle errors when unregistering extension", async () => {
+			const api = createPluginAPI(pluginId);
+
+			// Unregistering non-existent extension should not throw
+			await expect(
+				api.calendar.unregisterExtension("non-existent"),
+			).resolves.not.toThrow();
 		});
 	});
 });

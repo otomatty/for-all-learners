@@ -1500,6 +1500,75 @@ export type Database = {
 					},
 				];
 			};
+			plugin_security_alerts: {
+				Row: {
+					acknowledged_at: string | null;
+					acknowledged_by: string | null;
+					alert_data: Json;
+					alert_type: string;
+					context: Json | null;
+					created_at: string | null;
+					description: string;
+					id: string;
+					plugin_id: string | null;
+					resolved_at: string | null;
+					severity: string;
+					status: string;
+					title: string;
+					updated_at: string | null;
+					user_id: string | null;
+				};
+				Insert: {
+					acknowledged_at?: string | null;
+					acknowledged_by?: string | null;
+					alert_data?: Json;
+					alert_type: string;
+					context?: Json | null;
+					created_at?: string | null;
+					description: string;
+					id?: string;
+					plugin_id?: string | null;
+					resolved_at?: string | null;
+					severity: string;
+					status?: string;
+					title: string;
+					updated_at?: string | null;
+					user_id?: string | null;
+				};
+				Update: {
+					acknowledged_at?: string | null;
+					acknowledged_by?: string | null;
+					alert_data?: Json;
+					alert_type?: string;
+					context?: Json | null;
+					created_at?: string | null;
+					description?: string;
+					id?: string;
+					plugin_id?: string | null;
+					resolved_at?: string | null;
+					severity?: string;
+					status?: string;
+					title?: string;
+					updated_at?: string | null;
+					user_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_security_alerts_acknowledged_by_fkey";
+						columns: ["acknowledged_by"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "plugin_security_alerts_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			plugin_security_audit_logs: {
 				Row: {
 					context: Json | null;

@@ -12,6 +12,7 @@ import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
 import { ActivityCalendar } from "./_components/ActivityCalendar";
 import { GoalSummary } from "./_components/GoalSummary";
+import { PluginWidgetsSection } from "./_components/PluginWidgetsSection";
 import { QuickActionTiles } from "./_components/QuickActionTiles";
 
 export default async function DashboardPage({
@@ -88,6 +89,9 @@ export default async function DashboardPage({
 
 				{/* クイックアクション */}
 				<QuickActionTiles decks={decksWithDueCount} />
+
+				{/* プラグインWidget */}
+				<PluginWidgetsSection />
 			</div>
 		</Container>
 	);

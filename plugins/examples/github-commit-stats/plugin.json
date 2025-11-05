@@ -1,0 +1,34 @@
+{
+	"id": "com.fal.examples.github-commit-stats",
+	"name": "GitHubコミット統計",
+	"version": "1.0.0",
+	"description": "GitHubコミット行数をカレンダーに表示し、ダッシュボードに統計を表示するプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": true,
+		"ui": true,
+		"integration": true
+	},
+	"configSchema": {
+		"type": "object",
+		"properties": {
+			"owner": {
+				"type": "string",
+				"description": "GitHubリポジトリのオーナー名",
+				"required": true
+			},
+			"repo": {
+				"type": "string",
+				"description": "GitHubリポジトリ名",
+				"required": true
+			}
+		},
+		"required": ["owner", "repo"]
+	},
+	"defaultConfig": {
+		"owner": "",
+		"repo": ""
+	},
+	"keywords": ["github", "commits", "statistics", "calendar", "widget"]
+}

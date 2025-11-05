@@ -1097,3 +1097,47 @@ export interface ExternalAPIOptions {
 	/** Custom caller function (optional, uses default if not provided) */
 	caller?: ExternalAPICallerFunction;
 }
+
+/**
+ * Calendar Extension Types
+ */
+
+/**
+ * Calendar extension data for a specific date
+ */
+export interface CalendarExtensionData {
+	/** Badge text to display on calendar cell */
+	badge?: string;
+	/** Badge color (CSS color value or Tailwind class) */
+	badgeColor?: string;
+	/** Tooltip text for calendar cell */
+	tooltip?: string;
+	/** Detail sections for day detail panel */
+	detailSections?: CalendarDetailSection[];
+}
+
+/**
+ * Calendar detail section for day detail panel
+ */
+export interface CalendarDetailSection {
+	/** Section title */
+	title: string;
+	/** Section content (text or structured data) */
+	content: string | Record<string, unknown>;
+	/** Optional icon identifier */
+	icon?: string;
+}
+
+/**
+ * Calendar extension options
+ */
+export interface CalendarExtensionOptions {
+	/** Unique extension ID within the plugin */
+	id: string;
+	/** Extension display name */
+	name: string;
+	/** Extension description */
+	description?: string;
+	/** Function to get daily data for a specific date */
+	getDailyData: (date: string) => Promise<CalendarExtensionData | null>;
+}

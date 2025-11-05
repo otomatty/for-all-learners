@@ -7,19 +7,17 @@ import { PluginSignaturesTable } from "./_components/PluginSignaturesTable";
 import { SignatureFilters } from "./_components/SignatureFilters";
 import { SignatureStatsCards } from "./_components/SignatureStatsCards";
 import { SignatureVerificationLogsTable } from "./_components/SignatureVerificationLogsTable";
-import {
-	type ParsedSignatureSearchParams,
-	parseSignatureSearchParams,
-} from "./_utils";
+import { parseSignatureSearchParams } from "./_utils";
 
 interface PluginSignaturesPageProps {
-	searchParams?: { [key: string]: string | string[] | undefined };
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function PluginSignaturesPage({
 	searchParams,
 }: PluginSignaturesPageProps) {
-	const parsedParams = parseSignatureSearchParams(searchParams);
+	const resolvedSearchParams = await searchParams;
+	const parsedParams = parseSignatureSearchParams(resolvedSearchParams);
 
 	const [pluginsResult, logsResult] = await Promise.all([
 		getPluginSignatures({
@@ -53,8 +51,8 @@ export default async function PluginSignaturesPage({
 
 	const plugins = pluginsResult.plugins || [];
 	const totalCount = pluginsResult.totalCount || 0;
-	const totalPages = Math.ceil(totalCount / parsedParams.limit);
-
+	const _totalPages = Math.ceil(totalCount / parsedParams.limit);
+	_totalPages;
 	const logs = logsResult.logs || [];
 
 	// Calculate stats
