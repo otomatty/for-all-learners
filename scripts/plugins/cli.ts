@@ -26,9 +26,6 @@ import { createPlugin } from "./create-plugin";
 import { devPlugin } from "./dev-plugin";
 import { testPlugin } from "./test-plugin";
 
-const command = process.argv[2];
-const args = process.argv.slice(3);
-
 // Helper functions for CLI output (logger wrapper for user-facing messages)
 function cliLog(message: string): void {
 	logger.info(message);
@@ -38,7 +35,13 @@ function cliError(message: string): void {
 	logger.error(message);
 }
 
-async function main() {
+export async function main(
+	commandOverride?: string,
+	argsOverride?: string[],
+): Promise<void> {
+	const command = commandOverride ?? process.argv[2];
+	const args = argsOverride ?? process.argv.slice(3);
+
 	switch (command) {
 		case "create":
 		case "new": {
@@ -124,7 +127,10 @@ For more information, see:
 	}
 }
 
-main().catch((error) => {
-	logger.error({ error }, "Fatal error");
-	process.exit(1);
-});
+// Only run main if this file is executed directly (not imported)
+if (import.meta.main) {
+	main().catch((error) => {
+		logger.error({ error }, "Fatal error");
+		process.exit(1);
+	});
+}
