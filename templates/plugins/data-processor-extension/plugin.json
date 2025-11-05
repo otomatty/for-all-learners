@@ -1,0 +1,16 @@
+{
+	"id": "{{PLUGIN_ID}}",
+	"name": "{{PLUGIN_NAME}}",
+	"version": "{{PLUGIN_VERSION}}",
+	"description": "{{PLUGIN_DESCRIPTION}}",
+	"author": "{{PLUGIN_AUTHOR}}",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": false,
+		"dataProcessor": true,
+		"integration": false
+	},
+	"keywords": ["data", "importer", "exporter", "transformer", "sample"]
+}

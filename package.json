@@ -6,13 +6,18 @@
 		"dev": "next dev --turbopack",
 		"build": "next build --webpack",
 		"start": "next start",
-		"lint": "biome check --write ./app ./components ./lib ./hooks ./types ./stores ./middleware.ts",
-		"lint:ci": "biome check --diagnostic-level=error ./app ./components ./lib ./hooks ./types ./stores ./middleware.ts",
+		"lint": "biome check --write ./app ./components ./lib ./hooks ./types ./stores ./scripts ./middleware.ts",
+		"lint:ci": "biome check --diagnostic-level=error ./app ./components ./lib ./hooks ./types ./stores ./scripts ./middleware.ts",
 		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts",
 		"test": "npx vitest run",
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest --coverage",
-		"test:watch": "vitest --watch"
+		"test:watch": "vitest --watch",
+		"plugins:create": "bun run scripts/plugins/cli.ts create",
+		"plugins:build": "bun run scripts/plugins/cli.ts build",
+		"plugins:test": "bun run scripts/plugins/cli.ts test",
+		"plugins:dev": "bun run scripts/plugins/cli.ts dev",
+		"plugins:help": "bun run scripts/plugins/cli.ts help"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.68.0",
