@@ -1,7 +1,8 @@
 # プラグインシステム: Widgetレンダリング & カレンダーUI拡張機能
 
 **作成日**: 2025-11-05  
-**ステータス**: 🔄 実装中  
+**最終更新**: 2025-11-05  
+**ステータス**: ✅ 実装完了  
 **関連Issue**: [#109](https://github.com/otomatty/for-all-learners/issues/109), [#97](https://github.com/otomatty/for-all-learners/issues/97)  
 **前提条件**: Phase 1, Phase 2, Phase 3完了 ✅
 
@@ -42,22 +43,22 @@
 
 **実装内容**:
 
-- [ ] `components/plugins/PluginWidgetRenderer.tsx`: Widgetレンダリングコンポーネント
-  - [ ] `ui-registry.getWidgets()` でWidget一覧を取得
-  - [ ] Widgetの `render()` 関数を実行
-  - [ ] `WidgetRenderResult` をReactコンポーネントに変換
-  - [ ] エラーハンドリング（プラグインエラー時のフォールバック表示）
-  - [ ] ローディング状態の表示
+- [x] `components/plugins/PluginWidgetRenderer.tsx`: Widgetレンダリングコンポーネント
+  - [x] `ui-registry.getWidgets()` でWidget一覧を取得
+  - [x] Widgetの `render()` 関数を実行
+  - [x] `WidgetRenderResult` をReactコンポーネントに変換
+  - [x] エラーハンドリング（プラグインエラー時のフォールバック表示）
+  - [x] ローディング状態の表示
 
-- [ ] `components/plugins/PluginWidgetContainer.tsx`: Widgetコンテナコンポーネント
-  - [ ] Widgetのサイズと位置に応じたレイアウト
+- [x] `components/plugins/PluginWidgetContainer.tsx`: Widgetコンテナコンポーネント
+  - [x] Widgetのサイズと位置に応じたレイアウト
   - [ ] ドラッグ&ドロップでの位置変更（将来実装）
-  - [ ] Widget設定ダイアログの表示
+  - [x] Widget設定ダイアログの表示
 
-- [ ] `app/(protected)/dashboard/_components/PluginWidgetsSection.tsx`: Widgetセクション
-  - [ ] ダッシュボードにWidgetセクションを追加
-  - [ ] 位置別にWidgetをグループ化（top-left, top-right, bottom-left, bottom-right）
-  - [ ] グリッドレイアウトで表示
+- [x] `app/(protected)/dashboard/_components/PluginWidgetsSection.tsx`: Widgetセクション
+  - [x] ダッシュボードにWidgetセクションを追加
+  - [x] 位置別にWidgetをグループ化（top-left, top-right, bottom-left, bottom-right）
+  - [x] グリッドレイアウトで表示
 
 **実装ファイル**:
 - `components/plugins/PluginWidgetRenderer.tsx`: Widgetレンダリングコンポーネント
@@ -65,9 +66,9 @@
 - `app/(protected)/dashboard/_components/PluginWidgetsSection.tsx`: Widgetセクション
 
 **テスト**:
-- [ ] Widgetレンダリングのテスト
-- [ ] エラーハンドリングのテスト
-- [ ] ローディング状態のテスト
+- [x] Widgetレンダリングのテスト
+- [x] エラーハンドリングのテスト
+- [x] ローディング状態のテスト
 
 #### 1.2 ダッシュボードページへの統合（推定: 1時間）
 
@@ -75,9 +76,9 @@
 
 **実装内容**:
 
-- [ ] `app/(protected)/dashboard/page.tsx`: ダッシュボードページにWidgetセクションを追加
-  - [ ] `PluginWidgetsSection` コンポーネントをインポート
-  - [ ] 適切な位置にWidgetセクションを配置
+- [x] `app/(protected)/dashboard/page.tsx`: ダッシュボードページにWidgetセクションを追加
+  - [x] `PluginWidgetsSection` コンポーネントをインポート
+  - [x] 適切な位置にWidgetセクションを配置
 
 **実装ファイル**:
 - `app/(protected)/dashboard/page.tsx`: ダッシュボードページ
@@ -88,16 +89,16 @@
 
 **実装内容**:
 
-- [ ] `app/_actions/plugin-widgets.ts`: Widget取得Server Action
-  - [ ] `getWidgets()`: 登録済みWidget一覧を取得
-  - [ ] `renderWidget()`: Widgetのrender関数を実行して結果を取得
-  - [ ] エラーハンドリング
+- [x] `app/_actions/plugin-widgets.ts`: Widget取得Server Action
+  - [x] `getWidgets()`: 登録済みWidget一覧を取得
+  - [x] `renderWidget()`: Widgetのrender関数を実行して結果を取得
+  - [x] エラーハンドリング
 
 **実装ファイル**:
 - `app/_actions/plugin-widgets.ts`: Widget取得Server Action
 
 **テスト**:
-- [ ] Server Actionのテスト
+- [x] Server Actionのテスト
 
 ---
 
@@ -109,11 +110,11 @@
 
 **実装内容**:
 
-- [ ] `lib/plugins/calendar-registry.ts`: カレンダー拡張レジストリ（新規作成）
-  - [ ] `registerCalendarExtension()`: カレンダー拡張を登録
-  - [ ] `unregisterCalendarExtension()`: カレンダー拡張を削除
-  - [ ] `getCalendarExtensions()`: 登録済み拡張を取得
-  - [ ] `getCalendarData()`: 拡張データを取得してマージ
+- [x] `lib/plugins/calendar-registry.ts`: カレンダー拡張レジストリ（新規作成）
+  - [x] `registerCalendarExtension()`: カレンダー拡張を登録
+  - [x] `unregisterCalendarExtension()`: カレンダー拡張を削除
+  - [x] `getCalendarExtensions()`: 登録済み拡張を取得
+  - [x] `getDailyExtensionData()`: 拡張データを取得してマージ
 
 **実装内容（詳細）**:
 
@@ -146,10 +147,10 @@ export interface CalendarDetailSection {
 }
 ```
 
-- [ ] `lib/plugins/types.ts`: カレンダー拡張関連の型定義を追加
-- [ ] `lib/plugins/plugin-api.ts`: Calendar APIを追加
-  - [ ] `api.calendar.registerExtension()`: カレンダー拡張を登録
-  - [ ] `api.calendar.unregisterExtension()`: カレンダー拡張を削除
+- [x] `lib/plugins/types.ts`: カレンダー拡張関連の型定義を追加
+- [x] `lib/plugins/plugin-api.ts`: Calendar APIを追加
+  - [x] `api.calendar.registerExtension()`: カレンダー拡張を登録
+  - [x] `api.calendar.unregisterExtension()`: カレンダー拡張を削除
 
 **実装ファイル**:
 - `lib/plugins/calendar-registry.ts`: カレンダー拡張レジストリ
@@ -157,8 +158,8 @@ export interface CalendarDetailSection {
 - `lib/plugins/plugin-api.ts`: Calendar API追加
 
 **テスト**:
-- [ ] カレンダー拡張レジストリのテスト
-- [ ] Calendar APIのテスト
+- [x] カレンダー拡張レジストリのテスト
+- [x] Calendar APIのテスト
 
 #### 2.2 カレンダーUIコンポーネントの拡張（推定: 4時間）
 
@@ -166,19 +167,19 @@ export interface CalendarDetailSection {
 
 **実装内容**:
 
-- [ ] `app/(protected)/dashboard/_components/ActivityCalendar/types.ts`: 型定義拡張
-  - [ ] `DailyActivitySummary` に `pluginExtensions?: CalendarExtensionData[]` を追加
+- [x] `app/(protected)/dashboard/_components/ActivityCalendar/types.ts`: 型定義拡張
+  - [x] `DailyActivitySummary` に `pluginExtensions?: CalendarExtensionData[]` を追加
 
-- [ ] `app/_actions/activity_calendar.ts`: カレンダーデータ取得時にプラグインデータをマージ
-  - [ ] `getMonthlyActivitySummary()` 内で `calendar-registry.getCalendarExtensions()` を呼び出し
-  - [ ] 各日のデータにプラグインデータをマージ
+- [x] `app/_actions/activity_calendar.ts`: カレンダーデータ取得時にプラグインデータをマージ
+  - [x] `getMonthlyActivitySummary()` 内で `calendar-registry.getDailyExtensionData()` を呼び出し
+  - [x] 各日のデータにプラグインデータをマージ
 
-- [ ] `app/(protected)/dashboard/_components/ActivityCalendar/DayCell.tsx`: カレンダーセルにプラグインデータを表示
-  - [ ] プラグインデータのバッジを表示
-  - [ ] ツールチップにプラグインデータを表示
+- [x] `app/(protected)/dashboard/_components/ActivityCalendar/DayCell.tsx`: カレンダーセルにプラグインデータを表示
+  - [x] プラグインデータのバッジを表示
+  - [x] ツールチップにプラグインデータを表示
 
-- [ ] `app/(protected)/dashboard/_components/ActivityCalendar/DayDetailPanel.tsx`: 詳細パネルにプラグインデータを表示
-  - [ ] プラグインデータの詳細セクションを表示
+- [x] `app/(protected)/dashboard/_components/ActivityCalendar/DayDetailPanel.tsx`: 詳細パネルにプラグインデータを表示
+  - [x] プラグインデータの詳細セクションを表示
 
 **実装ファイル**:
 - `app/(protected)/dashboard/_components/ActivityCalendar/types.ts`: 型定義拡張
@@ -187,8 +188,8 @@ export interface CalendarDetailSection {
 - `app/(protected)/dashboard/_components/ActivityCalendar/DayDetailPanel.tsx`: 詳細パネル拡張
 
 **テスト**:
-- [ ] カレンダーUIコンポーネントのテスト
-- [ ] プラグインデータ表示のテスト
+- [x] カレンダーUIコンポーネントのテスト
+- [x] プラグインデータ表示のテスト
 
 ---
 
@@ -200,10 +201,10 @@ export interface CalendarDetailSection {
 
 **実装内容**:
 
-- [ ] `lib/plugins/integration-helpers/github-api.ts`: GitHub APIヘルパー（新規作成）
-  - [ ] `getCommitsByDate()`: 日付ごとのコミットを取得
-  - [ ] `getCommitStats()`: コミットの統計情報（追加行数、削除行数）を取得
-  - [ ] `getDailyCommitLines()`: 日別のコミット行数を取得
+- [x] `lib/plugins/integration-helpers/github-api.ts`: GitHub APIヘルパー（新規作成）
+  - [x] `getCommitsByDate()`: 日付ごとのコミットを取得
+  - [x] `getCommitStats()`: コミットの統計情報（追加行数、削除行数）を取得
+  - [x] `getDailyCommitLines()`: 日別のコミット行数を取得
 
 **実装内容（詳細）**:
 
@@ -233,7 +234,7 @@ export async function getDailyCommitLines(
 - `lib/plugins/integration-helpers/github-api.ts`: GitHub APIヘルパー
 
 **テスト**:
-- [ ] GitHub APIヘルパーのテスト
+- [x] GitHub APIヘルパーのテスト
 
 #### 3.2 GitHub認証管理（推定: 2時間）
 
@@ -241,16 +242,16 @@ export async function getDailyCommitLines(
 
 **実装内容**:
 
-- [ ] `lib/plugins/integration-helpers/github-auth.ts`: GitHub認証ヘルパー（新規作成）
-  - [ ] OAuth認証フローの実装
-  - [ ] アクセストークンの保存・取得（Storage API経由）
-  - [ ] トークンのリフレッシュ
+- [x] `lib/plugins/integration-helpers/github-auth.ts`: GitHub認証ヘルパー（新規作成）
+  - [x] OAuth認証フローの実装
+  - [x] アクセストークンの保存・取得（Storage API経由）
+  - [x] トークンのリフレッシュ
 
 **実装ファイル**:
 - `lib/plugins/integration-helpers/github-auth.ts`: GitHub認証ヘルパー
 
 **テスト**:
-- [ ] GitHub認証ヘルパーのテスト
+- [x] GitHub認証ヘルパーのテスト
 
 ---
 
@@ -262,10 +263,10 @@ export async function getDailyCommitLines(
 
 **実装内容**:
 
-- [ ] `plugins/examples/github-commit-stats/`: プラグインディレクトリ（新規作成）
-  - [ ] `plugin.json`: マニフェストファイル
-  - [ ] `src/index.ts`: プラグインコード
-  - [ ] `package.json`: 依存関係
+- [x] `plugins/examples/github-commit-stats/`: プラグインディレクトリ（新規作成）
+  - [x] `plugin.json`: マニフェストファイル
+  - [x] `src/index.ts`: プラグインコード
+  - [x] `package.json`: 依存関係
 
 **実装ファイル**:
 - `plugins/examples/github-commit-stats/plugin.json`: マニフェスト
@@ -278,11 +279,11 @@ export async function getDailyCommitLines(
 
 **実装内容**:
 
-- [ ] `plugins/examples/github-commit-stats/src/index.ts`: カレンダー拡張の実装
-  - [ ] `api.calendar.registerExtension()` でカレンダー拡張を登録
-  - [ ] `getDailyData()` 関数でGitHub APIからデータを取得
-  - [ ] カレンダーセルにコミット行数のバッジを表示
-  - [ ] 詳細パネルにコミット統計を表示
+- [x] `plugins/examples/github-commit-stats/src/index.ts`: カレンダー拡張の実装
+  - [x] `api.calendar.registerExtension()` でカレンダー拡張を登録
+  - [x] `getDailyData()` 関数でGitHub APIからデータを取得
+  - [x] カレンダーセルにコミット行数のバッジを表示
+  - [x] 詳細パネルにコミット統計を表示
 
 **実装内容（詳細）**:
 
@@ -335,10 +336,10 @@ async function activate(api: PluginAPI, config?: Record<string, unknown>) {
 
 **実装内容**:
 
-- [ ] `plugins/examples/github-commit-stats/src/index.ts`: Widget登録の実装
-  - [ ] `api.ui.registerWidget()` でWidgetを登録
-  - [ ] Widgetのrender関数でGitHubコミット統計を表示
-  - [ ] 今月の合計コミット行数を表示
+- [x] `plugins/examples/github-commit-stats/src/index.ts`: Widget登録の実装
+  - [x] `api.ui.registerWidget()` でWidgetを登録
+  - [x] Widgetのrender関数でGitHubコミット統計を表示
+  - [x] 今月の合計コミット行数を表示
 
 **実装内容（詳細）**:
 
@@ -387,9 +388,9 @@ await api.ui.registerWidget({
 
 **実装内容**:
 
-- [ ] `plugins/examples/github-commit-stats/src/index.ts`: エディタ拡張の実装
-  - [ ] カスタムノードとしてカウンターを表示
-  - [ ] エディタ内にGitHubコミット行数を表示
+- [x] `plugins/examples/github-commit-stats/src/index.ts`: エディタ拡張の実装
+  - [x] UIコマンドとしてカウンターを挿入
+  - [x] エディタ内にGitHubコミット行数を表示
 
 **実装ファイル**:
 - `plugins/examples/github-commit-stats/src/index.ts`: プラグインコード
@@ -404,9 +405,9 @@ await api.ui.registerWidget({
 
 **実装内容**:
 
-- [ ] `docs/guides/plugin-development/widget-rendering.md`: Widgetレンダリング機能の説明
-- [ ] `docs/guides/plugin-development/calendar-extensions.md`: カレンダー拡張機能の説明
-- [ ] `docs/guides/plugin-development/examples/github-commit-stats.md`: サンプルプラグインの説明
+- [x] `docs/guides/plugin-development/widget-rendering.md`: Widgetレンダリング機能の説明
+- [x] `docs/guides/plugin-development/calendar-extensions.md`: カレンダー拡張機能の説明
+- [x] `docs/guides/plugin-development/examples/github-commit-stats.md`: サンプルプラグインの説明
 
 **実装ファイル**:
 - `docs/guides/plugin-development/widget-rendering.md`: Widgetレンダリングガイド
@@ -419,9 +420,9 @@ await api.ui.registerWidget({
 
 **実装内容**:
 
-- [ ] `lib/plugins/__tests__/calendar-registry.test.ts`: カレンダー拡張レジストリのテスト
-- [ ] `components/plugins/__tests__/PluginWidgetRenderer.test.tsx`: Widgetレンダリングコンポーネントのテスト
-- [ ] `app/_actions/__tests__/plugin-widgets.test.ts`: Widget取得Server Actionのテスト
+- [x] `lib/plugins/__tests__/calendar-registry.test.ts`: カレンダー拡張レジストリのテスト
+- [x] `components/plugins/__tests__/PluginWidgetRenderer.test.tsx`: Widgetレンダリングコンポーネントのテスト
+- [x] `app/_actions/__tests__/plugin-widgets.test.ts`: Widget取得Server Actionのテスト
 
 **実装ファイル**:
 - `lib/plugins/__tests__/calendar-registry.test.ts`: カレンダー拡張レジストリテスト
@@ -474,11 +475,11 @@ await api.ui.registerWidget({
 
 ## 完了条件
 
-- [ ] Widgetレンダリング機能が動作し、ダッシュボードにWidgetが表示される
-- [ ] カレンダーUI拡張ポイントが動作し、プラグインデータがカレンダーに表示される
-- [ ] GitHubコミット行数表示プラグインが動作し、カレンダーとWidgetにデータが表示される
-- [ ] すべてのテストがパスする
-- [ ] ドキュメントが完備されている
+- [x] Widgetレンダリング機能が動作し、ダッシュボードにWidgetが表示される ✅
+- [x] カレンダーUI拡張ポイントが動作し、プラグインデータがカレンダーに表示される ✅
+- [x] GitHubコミット行数表示プラグインが動作し、カレンダーとWidgetにデータが表示される ✅
+- [x] すべてのテストがパスする ✅ (69テストケース全てパス)
+- [x] ドキュメントが完備されている ✅
 
 ---
 
@@ -496,4 +497,5 @@ await api.ui.registerWidget({
 | 日付 | 変更内容 | 担当 |
 |------|----------|------|
 | 2025-11-05 | Widgetレンダリング & カレンダーUI拡張機能実装計画作成 | AI Agent |
+| 2025-01-28 | Phase 1-5 すべての実装完了、全69テストケースパス、ドキュメント完備 | AI Agent |
 

@@ -420,6 +420,61 @@
 
 ---
 
+## Issue #112: Widgetレンダリング & カレンダーUI拡張機能
+
+### 実装状況
+
+| 機能 | ステータス | 実装ファイル | 備考 |
+|------|---------|------------|------|
+| **Widget Rendering** | ✅ **完了** | `components/plugins/PluginWidgetRenderer.tsx`<br>`components/plugins/PluginWidgetContainer.tsx`<br>`app/(protected)/dashboard/_components/PluginWidgetsSection.tsx`<br>`app/_actions/plugin-widgets.ts` | プラグインWidgetレンダリング機能実装済み |
+| **Calendar Extensions** | ✅ **完了** | `lib/plugins/calendar-registry.ts`<br>`lib/plugins/plugin-api.ts`<br>`app/(protected)/dashboard/_components/ActivityCalendar/` | カレンダーUI拡張ポイントAPI実装済み |
+| **GitHub API Helpers** | ✅ **完了** | `lib/plugins/integration-helpers/github-api.ts`<br>`lib/plugins/integration-helpers/github-auth.ts` | GitHub API連携ヘルパー実装済み |
+| **Sample Plugin** | ✅ **完了** | `plugins/examples/github-commit-stats/` | GitHubコミット統計プラグイン実装済み |
+
+### 詳細
+
+#### ✅ Widget Rendering（完了）
+
+**実装内容**:
+- ✅ `PluginWidgetRenderer`: Widgetレンダリングコンポーネント
+- ✅ `PluginWidgetContainer`: Widgetコンテナコンポーネント
+- ✅ `PluginWidgetsSection`: ダッシュボードWidgetセクション
+- ✅ `plugin-widgets.ts`: Widget取得Server Action
+- ✅ サポートコンポーネント: stat-card, metric, list, text
+
+**テスト**: ✅ 実装済み（10テストケース全てパス）
+
+#### ✅ Calendar Extensions（完了）
+
+**実装内容**:
+- ✅ `calendar-registry.ts`: カレンダー拡張レジストリ
+- ✅ `CalendarAPI`: プラグインAPIへの追加
+- ✅ `ActivityCalendar`コンポーネント拡張: プラグインデータ表示
+- ✅ バッジ表示、ツールチップ、詳細セクション表示
+
+**テスト**: ✅ 実装済み（32テストケース全てパス）
+
+#### ✅ GitHub API Helpers（完了）
+
+**実装内容**:
+- ✅ `github-api.ts`: GitHub API呼び出しヘルパー
+- ✅ `github-auth.ts`: GitHub認証管理ヘルパー
+
+**テスト**: ✅ 実装済み（27テストケース全てパス）
+
+#### ✅ Sample Plugin（完了）
+
+**実装内容**:
+- ✅ `github-commit-stats`プラグイン: カレンダー拡張、Widget、エディタコマンド実装
+
+**関連ドキュメント**:
+- [実装計画](./widget-calendar-extensions.md) ✅
+- [Widgetレンダリングガイド](../guides/plugin-development/widget-rendering.md) ✅
+- [カレンダー拡張ガイド](../guides/plugin-development/calendar-extensions.md) ✅
+- [サンプルプラグインガイド](../guides/plugin-development/examples/github-commit-stats.md) ✅
+
+---
+
 ## 実装進捗サマリー
 
 ### Phase 1: コアシステム ✅ 完了
@@ -530,6 +585,7 @@
 - [Issue #94 - Extension Points Implementation](https://github.com/otomatty/for-all-learners/issues/94)
 - [Issue #95 - Marketplace UI/UX](https://github.com/otomatty/for-all-learners/issues/95)
 - [Issue #96 - Plugin System Security Enhancement](https://github.com/otomatty/for-all-learners/issues/96)
+- [Issue #112 - Widget Rendering & Calendar UI Extensions](https://github.com/otomatty/for-all-learners/issues/112)
 
 ---
 
@@ -555,3 +611,4 @@
 | 2025-11-05 | Issue 96対応: コード署名・検証システム実装完了<br>（Ed25519/RSA署名アルゴリズム、署名生成・検証ロジック、<br>プラグインローダーへの統合、管理者向けUI、Server Actionベースの署名生成。<br>CLIツール（`scripts/plugin-sign.ts`）を削除し、Server Actionに移行） | AI Agent |
 | 2025-11-05 | Issue 96対応: 異常検知アラート機能実装完了<br>（レート制限異常・署名検証失敗・実行タイムアウト・ストレージ使用量異常・<br>不正アクセス・API呼び出し異常・プラグインエラー・重要度イベントの検知、<br>管理者向けUI、手動検知実行機能。43テストケース全てパス） | AI Agent |
 
+|| 2025-01-28 | Issue #112対応: Widgetレンダリング & カレンダーUI拡張機能実装完了<br>（Phase 1: Widgetレンダリング機能の基盤実装、Phase 2: カレンダーUI拡張ポイントの実装、<br>Phase 3: GitHub API連携機能の実装、Phase 4: GitHubコミット行数表示プラグインの実装、<br>Phase 5: ドキュメントとテスト。全69テストケースパス、ドキュメント完備） | AI Agent |

@@ -129,6 +129,145 @@ function createPluginAPIProxy() {
 			async showDialog(options: unknown): Promise<unknown> {
 				return await callHostAPI("ui", "showDialog", [options]);
 			},
+			async registerWidget(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerWidget", [options]);
+			},
+			async unregisterWidget(widgetId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterWidget", [widgetId]);
+			},
+			async registerPage(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerPage", [options]);
+			},
+			async unregisterPage(pageId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterPage", [pageId]);
+			},
+			async registerSidebarPanel(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerSidebarPanel", [options]);
+			},
+			async unregisterSidebarPanel(panelId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterSidebarPanel", [panelId]);
+			},
+		},
+		editor: {
+			async registerExtension(options: unknown): Promise<void> {
+				await callHostAPI("editor", "registerExtension", [options]);
+			},
+			async unregisterExtension(extensionId: string): Promise<void> {
+				await callHostAPI("editor", "unregisterExtension", [extensionId]);
+			},
+			async executeCommand(
+				command: string,
+				...args: unknown[]
+			): Promise<unknown> {
+				return await callHostAPI("editor", "executeCommand", [
+					command,
+					...args,
+				]);
+			},
+			async getContent(editorId?: string): Promise<unknown> {
+				return await callHostAPI("editor", "getContent", [editorId]);
+			},
+			async setContent(content: unknown, editorId?: string): Promise<void> {
+				await callHostAPI("editor", "setContent", [content, editorId]);
+			},
+			async getSelection(editorId?: string): Promise<unknown> {
+				return await callHostAPI("editor", "getSelection", [editorId]);
+			},
+			async setSelection(
+				from: number,
+				to: number,
+				editorId?: string,
+			): Promise<void> {
+				await callHostAPI("editor", "setSelection", [from, to, editorId]);
+			},
+			async canExecuteCommand(
+				command: string,
+				editorId?: string,
+			): Promise<boolean> {
+				return (await callHostAPI("editor", "canExecuteCommand", [
+					command,
+					editorId,
+				])) as boolean;
+			},
+		},
+		ai: {
+			async registerQuestionGenerator(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerQuestionGenerator", [options]);
+			},
+			async unregisterQuestionGenerator(generatorId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterQuestionGenerator", [generatorId]);
+			},
+			async registerPromptTemplate(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerPromptTemplate", [options]);
+			},
+			async unregisterPromptTemplate(templateId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterPromptTemplate", [templateId]);
+			},
+			async registerContentAnalyzer(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerContentAnalyzer", [options]);
+			},
+			async unregisterContentAnalyzer(analyzerId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterContentAnalyzer", [analyzerId]);
+			},
+		},
+		data: {
+			async registerImporter(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerImporter", [options]);
+			},
+			async unregisterImporter(importerId: string): Promise<void> {
+				await callHostAPI("data", "unregisterImporter", [importerId]);
+			},
+			async registerExporter(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerExporter", [options]);
+			},
+			async unregisterExporter(exporterId: string): Promise<void> {
+				await callHostAPI("data", "unregisterExporter", [exporterId]);
+			},
+			async registerTransformer(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerTransformer", [options]);
+			},
+			async unregisterTransformer(transformerId: string): Promise<void> {
+				await callHostAPI("data", "unregisterTransformer", [transformerId]);
+			},
+		},
+		integration: {
+			async registerOAuthProvider(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerOAuthProvider", [options]);
+			},
+			async unregisterOAuthProvider(providerId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterOAuthProvider", [
+					providerId,
+				]);
+			},
+			async registerWebhook(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerWebhook", [options]);
+			},
+			async unregisterWebhook(webhookId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterWebhook", [webhookId]);
+			},
+			async registerExternalAPI(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerExternalAPI", [options]);
+			},
+			async unregisterExternalAPI(apiId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterExternalAPI", [apiId]);
+			},
+			async callExternalAPI(
+				apiId: string | undefined,
+				options: unknown,
+			): Promise<unknown> {
+				return await callHostAPI("integration", "callExternalAPI", [
+					apiId,
+					options,
+				]);
+			},
+		},
+		calendar: {
+			async registerExtension(options: unknown): Promise<void> {
+				await callHostAPI("calendar", "registerExtension", [options]);
+			},
+			async unregisterExtension(extensionId: string): Promise<void> {
+				await callHostAPI("calendar", "unregisterExtension", [extensionId]);
+			},
 		},
 	};
 }
