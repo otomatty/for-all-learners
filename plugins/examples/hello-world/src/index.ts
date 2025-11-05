@@ -20,7 +20,7 @@
  *   └─ Guide: docs/guides/plugin-development.md
  */
 
-import type { PluginAPI } from "@fal/plugin-types";
+import type { PluginAPI } from "../../../../packages/plugin-types";
 
 /**
  * Plugin activation function
@@ -125,9 +125,7 @@ async function activate(
 		 */
 		async dispose() {
 			// Unregister commands
-			await api.ui.unregisterCommand(
-				"com.fal.examples.hello-world-greet",
-			);
+			await api.ui.unregisterCommand("com.fal.examples.hello-world-greet");
 			await api.ui.unregisterCommand(
 				"com.fal.examples.hello-world-show-storage",
 			);
@@ -139,4 +137,3 @@ async function activate(
 
 // Export the activation function
 export default activate;
-

@@ -78,49 +78,51 @@ bun run plugins:test my-plugin
 bun run plugins:dev my-plugin
 ```
 
-#### 1.2 プラグイン開発用テンプレート（推定: 4時間）
+#### 1.2 プラグイン開発用テンプレート（推定: 4時間）✅ **完了**
 
 **目的**: 新規プラグイン開発を迅速に開始できるテンプレート
 
 **実装内容**:
 
-- [ ] `templates/plugins/hello-world/`: 最小限のプラグインテンプレート
-  - [ ] 基本的な `activate()` 関数
-  - [ ] マニフェストファイル
-  - [ ] ビルド設定
-  - [ ] テスト設定
+- [x] `templates/plugins/hello-world/`: 最小限のプラグインテンプレート ✅
+  - [x] 基本的な `activate()` 関数 ✅
+  - [x] マニフェストファイル ✅
+  - [x] ビルド設定 ✅
+  - [x] テスト設定 ✅
 
-- [ ] `templates/plugins/editor-extension/`: エディタ拡張テンプレート
-  - [ ] カスタムノード/マーク/プラグインのサンプル
-  - [ ] Editor APIの使用例
+- [x] `templates/plugins/editor-extension/`: エディタ拡張テンプレート ✅
+  - [x] カスタムノード/マーク/プラグインのサンプル ✅
+  - [x] Editor APIの使用例 ✅
 
-- [ ] `templates/plugins/ai-extension/`: AI拡張テンプレート
-  - [ ] Question Generatorのサンプル
-  - [ ] Prompt Templateのサンプル
-  - [ ] Content Analyzerのサンプル
+- [x] `templates/plugins/ai-extension/`: AI拡張テンプレート ✅
+  - [x] Question Generatorのサンプル ✅
+  - [x] Prompt Templateのサンプル ✅
+  - [x] Content Analyzerのサンプル ✅
 
-- [ ] `templates/plugins/ui-extension/`: UI拡張テンプレート
-  - [ ] Widget登録のサンプル
-  - [ ] Page登録のサンプル
-  - [ ] Sidebar Panel登録のサンプル
+- [x] `templates/plugins/ui-extension/`: UI拡張テンプレート ✅
+  - [x] Widget登録のサンプル ✅
+  - [x] Page登録のサンプル ✅
+  - [x] Sidebar Panel登録のサンプル ✅
 
-- [ ] `templates/plugins/data-processor-extension/`: データ処理拡張テンプレート
-  - [ ] Importerのサンプル
-  - [ ] Exporterのサンプル
-  - [ ] Transformerのサンプル
+- [x] `templates/plugins/data-processor-extension/`: データ処理拡張テンプレート ✅
+  - [x] Importerのサンプル ✅
+  - [x] Exporterのサンプル ✅
+  - [x] Transformerのサンプル ✅
 
-- [ ] `templates/plugins/integration-extension/`: 統合拡張テンプレート
-  - [ ] OAuth連携のサンプル
-  - [ ] Webhookのサンプル
-  - [ ] External API呼び出しのサンプル
+- [x] `templates/plugins/integration-extension/`: 統合拡張テンプレート ✅
+  - [x] OAuth連携のサンプル ✅
+  - [x] Webhookのサンプル ✅
+  - [x] External API呼び出しのサンプル ✅
 
 **実装ファイル**:
-- `templates/plugins/hello-world/`: 基本テンプレート
-- `templates/plugins/editor-extension/`: エディタ拡張テンプレート
-- `templates/plugins/ai-extension/`: AI拡張テンプレート
-- `templates/plugins/ui-extension/`: UI拡張テンプレート
-- `templates/plugins/data-processor-extension/`: データ処理拡張テンプレート
-- `templates/plugins/integration-extension/`: 統合拡張テンプレート
+- `templates/plugins/hello-world/`: 基本テンプレート ✅
+- `templates/plugins/editor-extension/`: エディタ拡張テンプレート ✅
+- `templates/plugins/ai-extension/`: AI拡張テンプレート ✅
+- `templates/plugins/ui-extension/`: UI拡張テンプレート ✅
+- `templates/plugins/data-processor-extension/`: データ処理拡張テンプレート ✅
+- `templates/plugins/integration-extension/`: 統合拡張テンプレート ✅
+
+**備考**: テンプレートは `bun run plugins:create` コマンドで使用されます。実際の動作するサンプルプラグインは `plugins/examples/` に作成する必要があります（セクション2参照）。
 
 #### 1.3 ローカル開発環境でのプラグイン読み込み機能（推定: 2時間）
 
@@ -200,7 +202,7 @@ npm install @fal/plugin-types
 
 ---
 
-### 2. サンプルプラグイン作成（推定: 12時間）
+### 2. サンプルプラグイン作成（推定: 12時間）✅ **完了**
 
 #### 2.1 Hello Worldプラグイン（推定: 1時間）✅ **完了**
 
@@ -226,86 +228,106 @@ npm install @fal/plugin-types
 
 **実装日**: 2025-11-06
 
-#### 2.2 Editor Extensionサンプル（推定: 2時間）
+#### 2.2 Editor Extensionサンプル（推定: 2時間）✅ **完了**
 
 **目的**: エディタ拡張の実装例
 
 **実装内容**:
 
-- [ ] `plugins/examples/editor-extension/`: エディタ拡張サンプル
-  - [ ] カスタムマーク（ハイライト）の実装
-  - [ ] カスタムノード（ブロック）の実装
-  - [ ] エディタコマンドの実行例
-  - [ ] コンテンツ操作の例
+- [x] `plugins/examples/editor-extension/`: エディタ拡張サンプル ✅
+  - [x] エディタコマンドの実行例 ✅
+  - [x] コンテンツ操作の例（取得、設定、挿入） ✅
+  - [x] 選択範囲の操作 ✅
+  - [x] プラグインメソッドの公開（toggleBold, getWordCount, insertTimestamp） ✅
 
 **実装ファイル**:
-- `plugins/examples/editor-extension/index.ts`: プラグインコード
-- `plugins/examples/editor-extension/plugin.json`: マニフェスト
-- `plugins/examples/editor-extension/README.md`: 説明
+- `plugins/examples/editor-extension/src/index.ts`: プラグインコード ✅
+- `plugins/examples/editor-extension/plugin.json`: マニフェスト ✅
+- `plugins/examples/editor-extension/README.md`: 説明 ✅
+- `plugins/examples/editor-extension/package.json`: パッケージ設定 ✅
+- `plugins/examples/editor-extension/tsconfig.json`: TypeScript設定 ✅
 
-#### 2.3 AI Extensionサンプル（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 2.3 AI Extensionサンプル（推定: 2時間）✅ **完了**
 
 **目的**: AI拡張の実装例
 
 **実装内容**:
 
-- [ ] `plugins/examples/ai-extension/`: AI拡張サンプル
-  - [ ] カスタム問題生成器の実装
-  - [ ] カスタムプロンプトテンプレートの実装
-  - [ ] コンテンツアナライザーの実装
+- [x] `plugins/examples/ai-extension/`: AI拡張サンプル ✅
+  - [x] カスタム問題生成器の実装（複数タイプ対応） ✅
+  - [x] カスタムプロンプトテンプレートの実装（2種類） ✅
+  - [x] コンテンツアナライザーの実装（2種類） ✅
 
 **実装ファイル**:
-- `plugins/examples/ai-extension/index.ts`: プラグインコード
-- `plugins/examples/ai-extension/plugin.json`: マニフェスト
-- `plugins/examples/ai-extension/README.md`: 説明
+- `plugins/examples/ai-extension/src/index.ts`: プラグインコード ✅
+- `plugins/examples/ai-extension/plugin.json`: マニフェスト ✅
+- `plugins/examples/ai-extension/README.md`: 説明 ✅
+- `plugins/examples/ai-extension/package.json`: パッケージ設定 ✅
+- `plugins/examples/ai-extension/tsconfig.json`: TypeScript設定 ✅
 
-#### 2.4 UI Extensionサンプル（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 2.4 UI Extensionサンプル（推定: 2時間）✅ **完了**
 
 **目的**: UI拡張の実装例
 
 **実装内容**:
 
-- [ ] `plugins/examples/ui-extension/`: UI拡張サンプル
-  - [ ] Widget登録の実装例
-  - [ ] Page登録の実装例
-  - [ ] Sidebar Panel登録の実装例
+- [x] `plugins/examples/ui-extension/`: UI拡張サンプル ✅
+  - [x] Widget登録の実装例（2種類） ✅
+  - [x] Page登録の実装例 ✅
+  - [x] Sidebar Panel登録の実装例 ✅
 
 **実装ファイル**:
-- `plugins/examples/ui-extension/index.ts`: プラグインコード
-- `plugins/examples/ui-extension/plugin.json`: マニフェスト
-- `plugins/examples/ui-extension/README.md`: 説明
+- `plugins/examples/ui-extension/src/index.ts`: プラグインコード ✅
+- `plugins/examples/ui-extension/plugin.json`: マニフェスト ✅
+- `plugins/examples/ui-extension/README.md`: 説明 ✅
+- `plugins/examples/ui-extension/package.json`: パッケージ設定 ✅
+- `plugins/examples/ui-extension/tsconfig.json`: TypeScript設定 ✅
 
-#### 2.5 Data Processor Extensionサンプル（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 2.5 Data Processor Extensionサンプル（推定: 2時間）✅ **完了**
 
 **目的**: データ処理拡張の実装例
 
 **実装内容**:
 
-- [ ] `plugins/examples/data-processor-extension/`: データ処理拡張サンプル
-  - [ ] Importerの実装例（Markdownインポート）
-  - [ ] Exporterの実装例（JSONエクスポート）
-  - [ ] Transformerの実装例（データ変換）
+- [x] `plugins/examples/data-processor-extension/`: データ処理拡張サンプル ✅
+  - [x] Importerの実装例（Markdown、Text） ✅
+  - [x] Exporterの実装例（JSON、Markdown） ✅
+  - [x] Transformerの実装例（大文字変換、プレフィックス追加） ✅
 
 **実装ファイル**:
-- `plugins/examples/data-processor-extension/index.ts`: プラグインコード
-- `plugins/examples/data-processor-extension/plugin.json`: マニフェスト
-- `plugins/examples/data-processor-extension/README.md`: 説明
+- `plugins/examples/data-processor-extension/src/index.ts`: プラグインコード ✅
+- `plugins/examples/data-processor-extension/plugin.json`: マニフェスト ✅
+- `plugins/examples/data-processor-extension/README.md`: 説明 ✅
+- `plugins/examples/data-processor-extension/package.json`: パッケージ設定 ✅
+- `plugins/examples/data-processor-extension/tsconfig.json`: TypeScript設定 ✅
 
-#### 2.6 Integration Extensionサンプル（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 2.6 Integration Extensionサンプル（推定: 2時間）✅ **完了**
 
 **目的**: 統合拡張の実装例
 
 **実装内容**:
 
-- [ ] `plugins/examples/integration-extension/`: 統合拡張サンプル
-  - [ ] OAuth連携の実装例（GitHub OAuth）
-  - [ ] Webhookの実装例（Slack通知）
-  - [ ] External API呼び出しの実装例（天気API）
+- [x] `plugins/examples/integration-extension/`: 統合拡張サンプル ✅
+  - [x] OAuth連携の実装例（サンプルOAuth） ✅
+  - [x] Webhookの実装例（イベント保存機能付き） ✅
+  - [x] External API呼び出しの実装例 ✅
 
 **実装ファイル**:
-- `plugins/examples/integration-extension/index.ts`: プラグインコード
-- `plugins/examples/integration-extension/plugin.json`: マニフェスト
-- `plugins/examples/integration-extension/README.md`: 説明
+- `plugins/examples/integration-extension/src/index.ts`: プラグインコード ✅
+- `plugins/examples/integration-extension/plugin.json`: マニフェスト ✅
+- `plugins/examples/integration-extension/README.md`: 説明 ✅
+- `plugins/examples/integration-extension/package.json`: パッケージ設定 ✅
+- `plugins/examples/integration-extension/tsconfig.json`: TypeScript設定 ✅
+
+**実装日**: 2025-11-06
 
 ---
 

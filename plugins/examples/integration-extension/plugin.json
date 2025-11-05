@@ -1,0 +1,36 @@
+{
+	"id": "com.fal.examples.integration-extension",
+	"name": "Integration Extension サンプル",
+	"version": "1.0.0",
+	"description": "統合拡張機能の実装例を示すサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": false,
+		"dataProcessor": false,
+		"integration": true
+	},
+	"keywords": [
+		"integration",
+		"oauth",
+		"webhook",
+		"external-api",
+		"sample",
+		"example"
+	],
+	"configSchema": {
+		"type": "object",
+		"properties": {
+			"clientId": {
+				"type": "string",
+				"description": "OAuth Client ID（サンプル用）",
+				"required": false
+			}
+		}
+	},
+	"defaultConfig": {
+		"clientId": ""
+	}
+}

@@ -1,7 +1,7 @@
 {
-	"name": "@fal/example-hello-world",
+	"name": "@fal/example-editor-extension",
 	"version": "1.0.0",
-	"description": "Hello World plugin for F.A.L",
+	"description": "Editor Extension sample plugin for F.A.L",
 	"type": "module",
 	"scripts": {
 		"build": "tsc && esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=browser --target=es2020"
