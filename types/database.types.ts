@@ -1500,6 +1500,89 @@ export type Database = {
 					},
 				];
 			};
+			plugin_security_audit_logs: {
+				Row: {
+					context: Json | null;
+					created_at: string | null;
+					event_data: Json;
+					event_type: string;
+					id: string;
+					plugin_id: string;
+					severity: string;
+					user_id: string | null;
+				};
+				Insert: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type: string;
+					id?: string;
+					plugin_id: string;
+					severity: string;
+					user_id?: string | null;
+				};
+				Update: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type?: string;
+					id?: string;
+					plugin_id?: string;
+					severity?: string;
+					user_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_security_audit_logs_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_signature_verifications: {
+				Row: {
+					error_message: string | null;
+					id: string;
+					plugin_id: string;
+					user_id: string | null;
+					verification_result: string;
+					verified_at: string | null;
+				};
+				Insert: {
+					error_message?: string | null;
+					id?: string;
+					plugin_id: string;
+					user_id?: string | null;
+					verification_result: string;
+					verified_at?: string | null;
+				};
+				Update: {
+					error_message?: string | null;
+					id?: string;
+					plugin_id?: string;
+					user_id?: string | null;
+					verification_result?: string;
+					verified_at?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_signature_verifications_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_signature_verifications_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			plugin_storage: {
 				Row: {
 					created_at: string | null;
@@ -1558,10 +1641,14 @@ export type Database = {
 					manifest: Json;
 					name: string;
 					plugin_id: string;
+					public_key: string | null;
 					published_at: string | null;
 					rating_average: number | null;
 					rating_count: number | null;
 					repository: string | null;
+					signature: string | null;
+					signature_algorithm: string | null;
+					signed_at: string | null;
 					updated_at: string | null;
 					version: string;
 				};
@@ -1584,10 +1671,14 @@ export type Database = {
 					manifest: Json;
 					name: string;
 					plugin_id: string;
+					public_key?: string | null;
 					published_at?: string | null;
 					rating_average?: number | null;
 					rating_count?: number | null;
 					repository?: string | null;
+					signature?: string | null;
+					signature_algorithm?: string | null;
+					signed_at?: string | null;
 					updated_at?: string | null;
 					version: string;
 				};
@@ -1610,10 +1701,14 @@ export type Database = {
 					manifest?: Json;
 					name?: string;
 					plugin_id?: string;
+					public_key?: string | null;
 					published_at?: string | null;
 					rating_average?: number | null;
 					rating_count?: number | null;
 					repository?: string | null;
+					signature?: string | null;
+					signature_algorithm?: string | null;
+					signed_at?: string | null;
 					updated_at?: string | null;
 					version?: string;
 				};

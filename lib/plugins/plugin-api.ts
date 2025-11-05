@@ -7,7 +7,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ lib/plugins/plugin-loader.ts
+ *   ├─ lib/plugins/plugin-loader/index.ts
  *   └─ lib/plugins/sandbox-worker.ts
  *
  * Dependencies:
@@ -31,6 +31,8 @@ import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
 import * as integrationRegistry from "./integration-registry";
+import { getPluginRateLimiter } from "./plugin-rate-limiter";
+import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
 	Command,
 	ContentAnalyzerOptions,
@@ -491,9 +493,15 @@ function createAppAPI(): AppAPI {
  * @param pluginId Plugin ID for storage isolation
  */
 function createStorageAPI(pluginId: string): StorageAPI {
+	const rateLimiter = getPluginRateLimiter();
+	const auditLogger = getPluginSecurityAuditLogger();
+
 	return {
 		async get<T = unknown>(key: string): Promise<T | undefined> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "get", undefined, key);
+
 				// Dynamic import to avoid circular dependencies
 				const { getPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
@@ -511,10 +519,48 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async set(key: string, value: unknown): Promise<void> {
 			try {
+				// Check storage quota before setting
+				// Estimate size by JSON stringifying (approximate)
+				const estimatedSize = new Blob([JSON.stringify(value)]).size;
+
+				// TODO: Get actual userId from plugin context when available
+				const quotaCheck = rateLimiter.checkStorageQuota(
+					pluginId,
+					undefined,
+					estimatedSize,
+				);
+
+				if (!quotaCheck.allowed) {
+					// Log storage quota exceeded
+					const maxQuota = 10 * 1024 * 1024; // 10MB default
+					auditLogger.logStorageAccess(
+						pluginId,
+						"set",
+						undefined,
+						key,
+						estimatedSize,
+						maxQuota,
+					);
+					throw new Error(quotaCheck.reason || "Storage quota exceeded");
+				}
+
 				const { setPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await setPluginStorage(pluginId, key, value);
+
+				// Log storage access
+				auditLogger.logStorageAccess(
+					pluginId,
+					"set",
+					undefined,
+					key,
+					estimatedSize,
+				);
+
+				// Update storage usage tracking
+				// Note: This is approximate. For accurate tracking, query database
+				// TODO: Get actual storage size from database and update rate limiter
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "set" },
@@ -526,10 +572,17 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async delete(key: string): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "delete", undefined, key);
+
 				const { deletePluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await deletePluginStorage(pluginId, key);
+
+				// Note: Storage usage tracking would need to be updated here
+				// For accurate tracking, query database after deletion
+				// TODO: Update storage usage tracking after deletion
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "delete" },
@@ -541,6 +594,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async keys(): Promise<string[]> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "keys");
+
 				const { getPluginStorageKeys } = await import(
 					"@/app/_actions/plugin-storage"
 				);
@@ -556,10 +612,16 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async clear(): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "clear");
+
 				const { clearPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await clearPluginStorage(pluginId);
+
+				// Reset storage usage tracking
+				rateLimiter.recordStorageUsage(pluginId, undefined, 0);
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, operation: "clear" },

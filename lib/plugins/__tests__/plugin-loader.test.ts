@@ -6,10 +6,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PluginManifest } from "@/types/plugin";
-import { PluginLoader } from "../plugin-loader";
+import { PluginLoader, validateManifest } from "../plugin-loader";
 import { getPluginRegistry } from "../plugin-registry";
+import { generateEd25519KeyPair } from "../plugin-signature/key-manager";
 
-// Mock Worker
 global.Worker = vi.fn().mockImplementation(() => ({
 	postMessage: vi.fn(),
 	terminate: vi.fn(),
@@ -72,16 +72,7 @@ describe("PluginLoader", () => {
 		it("should validate correct manifest", async () => {
 			const manifest = createMockManifest("test-plugin");
 
-			// Access private method via type casting for testing
-			const result = (
-				loader as unknown as {
-					validateManifest: (m: PluginManifest) => {
-						valid: boolean;
-						errors: string[];
-						warnings: string[];
-					};
-				}
-			).validateManifest(manifest);
+			const result = validateManifest(manifest);
 
 			expect(result.valid).toBe(true);
 			expect(result.errors).toHaveLength(0);
@@ -93,15 +84,7 @@ describe("PluginLoader", () => {
 				name: "",
 			} as PluginManifest;
 
-			const result = (
-				loader as unknown as {
-					validateManifest: (m: PluginManifest) => {
-						valid: boolean;
-						errors: string[];
-						warnings: string[];
-					};
-				}
-			).validateManifest(invalidManifest);
+			const result = validateManifest(invalidManifest);
 
 			expect(result.valid).toBe(false);
 			expect(result.errors.length).toBeGreaterThan(0);
@@ -124,27 +107,12 @@ describe("PluginLoader", () => {
 		it("should reject loading duplicate plugin", async () => {
 			const manifest = createMockManifest("test-plugin");
 
-			// Mock successful first load
-			vi.spyOn(
-				loader as unknown as {
-					validateManifest: (m: PluginManifest) => {
-						valid: boolean;
-						errors: string[];
-						warnings: string[];
-					};
-				},
-				"validateManifest",
-			).mockReturnValue({
-				valid: true,
-				errors: [],
-				warnings: [],
-			});
-
+			// Register plugin first
 			getPluginRegistry().register({
 				manifest,
 				enabled: true,
 				loadedAt: new Date(),
-			});
+			} as any);
 
 			const result = await loader.loadPlugin(manifest, mockPluginCode);
 
@@ -168,6 +136,53 @@ describe("PluginLoader", () => {
 			// Full integration test would require more setup
 
 			expect(global.Worker).toBeDefined();
+		});
+	});
+
+	describe("Signature Verification", () => {
+		// Note: Full integration tests for signature verification are in plugin-signature-verifier.test.ts
+		// These tests verify the integration with PluginLoader, specifically error handling
+
+		it("should reject plugin with invalid signature when requireSignature is true", async () => {
+			const manifest = createMockManifest("test-plugin");
+			const keyPair = generateEd25519KeyPair();
+
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				signature: "invalid_signature",
+				publicKey: keyPair.publicKey,
+				signatureAlgorithm: "ed25519",
+				requireSignature: true,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error).toContain("signature verification failed");
+		});
+
+		it("should reject plugin when signature is missing but required", async () => {
+			const manifest = createMockManifest("test-plugin");
+
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				requireSignature: true,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error).toContain("signature verification failed");
+		});
+
+		it("should not perform verification when signature is not provided and not required", async () => {
+			const manifest = createMockManifest("test-plugin-signature-optional");
+
+			// This test verifies that signature verification is skipped when not provided
+			// The actual loading may still fail due to Worker initialization, but
+			// the signature verification step should not be executed
+			const result = await loader.loadPlugin(manifest, mockPluginCode, {
+				requireSignature: false,
+			});
+
+			// If it fails, it should be due to Worker/initialization, not signature verification
+			if (!result.success) {
+				expect(result.error).not.toContain("signature verification");
+			}
 		});
 	});
 });
