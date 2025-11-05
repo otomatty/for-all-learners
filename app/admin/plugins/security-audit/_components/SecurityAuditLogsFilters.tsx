@@ -86,13 +86,13 @@ export function SecurityAuditLogsFilters({
 			params.delete("userId");
 		}
 
-		if (eventType) {
+		if (eventType && eventType !== "") {
 			params.set("eventType", eventType);
 		} else {
 			params.delete("eventType");
 		}
 
-		if (severity) {
+		if (severity && severity !== "") {
 			params.set("severity", severity);
 		} else {
 			params.delete("severity");
@@ -188,12 +188,11 @@ export function SecurityAuditLogsFilters({
 
 				<div className="space-y-2">
 					<Label htmlFor={eventTypeId}>イベントタイプ</Label>
-					<Select value={eventType} onValueChange={setEventType}>
+					<Select value={eventType || undefined} onValueChange={setEventType}>
 						<SelectTrigger id={eventTypeId}>
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">すべて</SelectItem>
 							{eventTypes.map((type) => (
 								<SelectItem key={type.value} value={type.value}>
 									{type.label}
@@ -205,12 +204,11 @@ export function SecurityAuditLogsFilters({
 
 				<div className="space-y-2">
 					<Label htmlFor={severityId}>重要度</Label>
-					<Select value={severity} onValueChange={setSeverity}>
+					<Select value={severity || undefined} onValueChange={setSeverity}>
 						<SelectTrigger id={severityId}>
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">すべて</SelectItem>
 							{severities.map((sev) => (
 								<SelectItem key={sev.value} value={sev.value}>
 									{sev.label}

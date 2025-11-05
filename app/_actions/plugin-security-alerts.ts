@@ -160,11 +160,7 @@ export async function getPluginSecurityAlerts(
 			userId: row.user_id,
 			alertData: (row.alert_data as Record<string, unknown>) || {},
 			context: (row.context as Record<string, unknown>) || {},
-			status: row.status as
-				| "open"
-				| "acknowledged"
-				| "resolved"
-				| "dismissed",
+			status: row.status as "open" | "acknowledged" | "resolved" | "dismissed",
 			acknowledgedBy: row.acknowledged_by,
 			acknowledgedAt: row.acknowledged_at
 				? new Date(row.acknowledged_at)
@@ -362,4 +358,3 @@ export async function getAlertStatistics(): Promise<{
 		};
 	}
 }
-

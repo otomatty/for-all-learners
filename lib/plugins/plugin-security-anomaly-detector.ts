@@ -164,15 +164,9 @@ export class PluginSecurityAnomalyDetector {
 				...criticalEvents,
 			);
 
-			logger.info(
-				{ alertCount: alerts.length },
-				"Anomaly detection completed",
-			);
+			logger.info({ alertCount: alerts.length }, "Anomaly detection completed");
 		} catch (error) {
-			logger.error(
-				{ error },
-				"Failed to detect security anomalies",
-			);
+			logger.error({ error }, "Failed to detect security anomalies");
 		}
 
 		return alerts;
@@ -398,10 +392,7 @@ export class PluginSecurityAnomalyDetector {
 			.order("created_at", { ascending: false });
 
 		if (error || !data) {
-			logger.error(
-				{ error },
-				"Failed to query unauthorized access attempts",
-			);
+			logger.error({ error }, "Failed to query unauthorized access attempts");
 			return [];
 		}
 
@@ -598,9 +589,7 @@ export class PluginSecurityAnomalyDetector {
 			// Filter out alerts that already exist
 			const newAlerts = alerts.filter(
 				(alert) =>
-					!existingKeys.has(
-						`${alert.alertType}:${alert.pluginId || "system"}`,
-					),
+					!existingKeys.has(`${alert.alertType}:${alert.pluginId || "system"}`),
 			);
 
 			if (newAlerts.length === 0) {
@@ -665,4 +654,3 @@ export function getAnomalyDetector(): PluginSecurityAnomalyDetector {
 	}
 	return detectorInstance;
 }
-

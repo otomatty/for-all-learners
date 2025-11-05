@@ -1,8 +1,8 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SecurityAlertsPaginationProps {
 	currentPage: number;
@@ -54,4 +54,3 @@ export function SecurityAlertsPagination({
 		</div>
 	);
 }
-

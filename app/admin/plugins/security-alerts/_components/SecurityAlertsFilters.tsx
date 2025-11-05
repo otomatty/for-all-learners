@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Search, X } from "lucide-react";
 
 interface SecurityAlertsFiltersProps {
 	initialFilters: {
@@ -116,11 +116,7 @@ export function SecurityAlertsFilters({
 								setStatus(undefined);
 							} else {
 								setStatus(
-									value as
-										| "open"
-										| "acknowledged"
-										| "resolved"
-										| "dismissed",
+									value as "open" | "acknowledged" | "resolved" | "dismissed",
 								);
 							}
 						}}
@@ -146,9 +142,7 @@ export function SecurityAlertsFilters({
 							if (value === "all") {
 								setSeverity(undefined);
 							} else {
-								setSeverity(
-									value as "low" | "medium" | "high" | "critical",
-								);
+								setSeverity(value as "low" | "medium" | "high" | "critical");
 							}
 						}}
 					>
@@ -182,9 +176,7 @@ export function SecurityAlertsFilters({
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">すべて</SelectItem>
-							<SelectItem value="rate_limit_spike">
-								レート制限急増
-							</SelectItem>
+							<SelectItem value="rate_limit_spike">レート制限急増</SelectItem>
 							<SelectItem value="signature_failure_spike">
 								署名検証失敗急増
 							</SelectItem>
@@ -197,9 +189,7 @@ export function SecurityAlertsFilters({
 							<SelectItem value="unauthorized_access_spike">
 								不正アクセス試行急増
 							</SelectItem>
-							<SelectItem value="api_call_anomaly">
-								API呼び出し異常
-							</SelectItem>
+							<SelectItem value="api_call_anomaly">API呼び出し異常</SelectItem>
 							<SelectItem value="plugin_error_spike">
 								プラグインエラー急増
 							</SelectItem>
@@ -245,4 +235,3 @@ export function SecurityAlertsFilters({
 		</div>
 	);
 }
-

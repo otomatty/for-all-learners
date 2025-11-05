@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import {
 	ArrowUpDown,
 	CheckCircle2,
 	Key,
-	XCircle,
 	PenSquare,
+	XCircle,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import type { PluginSignatureInfo } from "@/app/_actions/plugin-signatures";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

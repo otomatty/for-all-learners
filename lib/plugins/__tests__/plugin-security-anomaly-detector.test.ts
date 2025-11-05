@@ -11,8 +11,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as loggerModule from "@/lib/logger";
 import {
-	getAnomalyDetector,
 	type AlertData,
+	getAnomalyDetector,
 } from "../plugin-security-anomaly-detector";
 
 // Mock admin client

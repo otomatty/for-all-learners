@@ -1,20 +1,20 @@
+import { RefreshCw } from "lucide-react";
 import { Suspense } from "react";
 import {
-	getPluginSecurityAlerts,
 	getAlertStatistics,
+	getPluginSecurityAlerts,
 	runAnomalyDetection,
 } from "@/app/_actions/plugin-security-alerts";
+import { Button } from "@/components/ui/button";
 import { SecurityAlertsFilters } from "./_components/SecurityAlertsFilters";
 import { SecurityAlertsPagination } from "./_components/SecurityAlertsPagination";
 import { SecurityAlertsStatsCards } from "./_components/SecurityAlertsStatsCards";
 import { SecurityAlertsTable } from "./_components/SecurityAlertsTable";
 import {
+	calculateAlertStatistics,
 	type ParsedSecurityAlertsSearchParams,
 	parseSecurityAlertsSearchParams,
-	calculateAlertStatistics,
 } from "./_utils";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 
 interface SecurityAlertsPageProps {
 	searchParams?: { [key: string]: string | string[] | undefined };
@@ -153,4 +153,3 @@ export default async function SecurityAlertsPage({
 		</div>
 	);
 }
-

@@ -1,7 +1,7 @@
 # プラグイン機能実装状況まとめ
 
 **作成日**: 2025-11-04  
-**最終更新**: 2025-01-05  
+**最終更新**: 2025-11-05  
 **リファクタリング**: Phase 2 Extension Registryを関数型にリファクタリング完了、Plugin Loaderをモジュール分割  
 **関連Issue**: [#94](https://github.com/otomatty/for-all-learners/issues/94), [#95](https://github.com/otomatty/for-all-learners/issues/95), [#96](https://github.com/otomatty/for-all-learners/issues/96)
 
@@ -313,7 +313,8 @@
 | **レート制限** | ✅ **完了** | `lib/plugins/plugin-rate-limiter.ts` | API呼び出し・ストレージ使用・CPU使用のレート制限 |
 | **実行監視** | ✅ **完了** | `lib/plugins/plugin-execution-monitor.ts` | プラグイン実行時間の監視とタイムアウト処理 |
 | **セキュリティ監査ログ** | ✅ **完了** | `lib/plugins/plugin-security-audit-logger.ts`<br>`app/_actions/plugin-security-audit-logs.ts`<br>`app/admin/plugins/security-audit/` | セキュリティイベントのログ記録・データベース保存・管理者UI表示 |
-| **コード署名・検証** | ✅ **完了** | `lib/plugins/plugin-signature/`<br>`database/migrations/20251105_03_plugin_signatures.sql`<br>`app/admin/plugins/signatures/`<br>`scripts/plugin-sign.ts` | Phase 1-3完了: 基盤実装・検証システム・UI・管理機能実装済み |
+| **コード署名・検証** | ✅ **完了** | `lib/plugins/plugin-signature/`<br>`database/migrations/20251105_03_plugin_signatures.sql`<br>`app/admin/plugins/signatures/`<br>`app/_actions/plugin-signatures.ts` | Phase 1-3完了: 基盤実装・検証システム・UI・管理機能実装済み（Server Actionベースで署名生成） |
+| **異常検知アラート** | ✅ **完了** | `lib/plugins/plugin-security-anomaly-detector.ts`<br>`database/migrations/20251105_04_plugin_security_alerts.sql`<br>`app/_actions/plugin-security-alerts.ts`<br>`app/admin/plugins/security-alerts/` | レート制限異常・署名検証失敗・実行タイムアウト・ストレージ使用量異常・不正アクセス・API呼び出し異常・プラグインエラー・重要度イベントの検知とアラート生成。43テストケース全てパス |
 
 ### 詳細
 
@@ -360,6 +361,62 @@
 - `app/api/csp/report/__tests__/route.test.ts`: 4テスト
 
 **備考**: CSPによりXSS攻撃やコードインジェクション攻撃を防止。`unsafe-inline`と`unsafe-eval`を削除し、Nonceベースの厳格なCSPを実装。プラグインシステムの動作に必要な最小限の権限のみを許可。CSP違反は自動的にログに記録され、セキュリティ監視が可能。
+
+#### ✅ コード署名・検証（完了）
+
+**実装内容**:
+- ✅ Ed25519/RSA署名アルゴリズムのサポート
+- ✅ プラグインコードのハッシュ計算（SHA-256）
+- ✅ 署名データの構築（pluginId, version, codeHash, timestamp, author）
+- ✅ 署名生成・検証ロジック
+- ✅ プラグインローダーへの統合（検証失敗時は読み込み拒否）
+- ✅ データベースマイグレーション（`plugin_signatures`テーブル）
+- ✅ 管理者向けUI（署名状態表示・署名生成機能）
+- ✅ Server Actionベースの署名生成（CLIツールから移行）
+
+**実装ファイル**:
+- `lib/plugins/plugin-signature/signer.ts`: 署名生成ロジック
+- `lib/plugins/plugin-signature/verifier.ts`: 署名検証ロジック
+- `lib/plugins/plugin-signature/key-manager.ts`: 鍵ペア生成・管理
+- `lib/plugins/plugin-signature/types.ts`: 型定義
+- `database/migrations/20251105_03_plugin_signatures.sql`: データベーススキーマ
+- `app/_actions/plugin-signatures.ts`: Server Actions（署名生成・鍵ペア生成）
+- `app/admin/plugins/signatures/`: 管理者向けUI
+
+**テスト**: ✅ 署名生成・検証のテストケース実装済み
+
+**備考**: プラグインコードの改ざんを防止し、プラグインの真正性を保証。署名なしプラグインまたは無効な署名のプラグインは実行を拒否。CLIツール（`scripts/plugin-sign.ts`）は削除し、Server Actionベースの署名生成に移行済み。
+
+#### ✅ 異常検知アラート（完了）
+
+**実装内容**:
+- ✅ レート制限異常の検知（API呼び出し・ストレージ使用・CPU使用の急激な増加）
+- ✅ 署名検証失敗のスパイク検知
+- ✅ 実行タイムアウトの異常検知
+- ✅ ストレージ使用量の異常検知
+- ✅ 不正アクセス試行の検知
+- ✅ API呼び出しの異常パターン検知
+- ✅ プラグインエラーのスパイク検知
+- ✅ 重要度（critical）イベントの即座検知
+- ✅ アラートのデータベース保存（`plugin_security_alerts`テーブル）
+- ✅ 管理者向けUI（アラート一覧・フィルタリング・ステータス更新）
+- ✅ 手動検知実行機能
+
+**実装ファイル**:
+- `lib/plugins/plugin-security-anomaly-detector.ts`: 異常検知ロジック
+- `database/migrations/20251105_04_plugin_security_alerts.sql`: データベーススキーマ
+- `app/_actions/plugin-security-alerts.ts`: Server Actions（アラート取得・ステータス更新・手動検知実行）
+- `app/admin/plugins/security-alerts/`: 管理者向けUI
+  - `_components/SecurityAlertsStatsCards.tsx`: 統計カード
+  - `_components/SecurityAlertsFilters.tsx`: フィルターUI
+  - `_components/SecurityAlertsTable.tsx`: アラート一覧テーブル
+  - `_components/SecurityAlertsPagination.tsx`: ページネーション
+
+**テスト**: ✅ 43テストケース全てパス
+- `lib/plugins/__tests__/plugin-security-anomaly-detector.test.ts`: 異常検知ロジックのテスト
+- `app/_actions/__tests__/plugin-security-alerts.test.ts`: Server Actionsのテスト
+
+**備考**: セキュリティ監査ログ（`plugin_security_audit_logs`）を分析し、異常パターンを自動検知。検知されたアラートは管理者向けUIで確認・管理可能。重複アラートの防止機能も実装済み。
 
 ---
 
@@ -495,4 +552,6 @@
 | 2025-01-05 | Plugin Loaderのモジュール分割完了<br>（`manifest-validator.ts`, `dependency-resolver.ts`, `worker-manager.ts`,<br>`sandbox-worker-code.ts`, `worker-message-handler.ts`に分割。<br>各モジュールに対応するテストケースを実装。59テストケース全てパス） | AI Agent |
 | 2025-01-05 | Issue 96対応: CSP厳格化完了<br>（`unsafe-inline`と`unsafe-eval`を削除し、NonceベースのCSPを実装。<br>CSP違反レポート収集エンドポイント（`/api/csp/report`）を実装。<br>12テストケース全てパス） | AI Agent |
 | 2025-01-05 | Issue 96対応: セキュリティ監査ログ機能実装完了<br>（セキュリティイベントのデータベース保存、管理者向けUI実装、<br>フィルタリング・検索・ページネーション機能、統計表示機能。<br>46テストケース全てパス） | AI Agent |
+| 2025-11-05 | Issue 96対応: コード署名・検証システム実装完了<br>（Ed25519/RSA署名アルゴリズム、署名生成・検証ロジック、<br>プラグインローダーへの統合、管理者向けUI、Server Actionベースの署名生成。<br>CLIツール（`scripts/plugin-sign.ts`）を削除し、Server Actionに移行） | AI Agent |
+| 2025-11-05 | Issue 96対応: 異常検知アラート機能実装完了<br>（レート制限異常・署名検証失敗・実行タイムアウト・ストレージ使用量異常・<br>不正アクセス・API呼び出し異常・プラグインエラー・重要度イベントの検知、<br>管理者向けUI、手動検知実行機能。43テストケース全てパス） | AI Agent |
 

@@ -175,4 +175,3 @@ export function SignatureFilters({ initialFilters }: SignatureFiltersProps) {
 		</div>
 	);
 }
-

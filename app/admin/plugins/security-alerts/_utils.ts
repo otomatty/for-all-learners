@@ -68,10 +68,12 @@ export function parseSecurityAlertsSearchParams(searchParams?: {
 /**
  * Calculate alert statistics
  */
-export function calculateAlertStatistics(alerts: Array<{
-	status: string;
-	severity: string;
-}>): {
+export function calculateAlertStatistics(
+	alerts: Array<{
+		status: string;
+		severity: string;
+	}>,
+): {
 	totalAlerts: number;
 	openAlerts: number;
 	acknowledgedAlerts: number;
@@ -93,4 +95,3 @@ export function calculateAlertStatistics(alerts: Array<{
 		lowAlerts: alerts.filter((a) => a.severity === "low").length,
 	};
 }
-

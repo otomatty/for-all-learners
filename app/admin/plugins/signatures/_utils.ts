@@ -49,4 +49,3 @@ export function parseSignatureSearchParams(searchParams?: {
 		algorithm,
 	};
 }
-

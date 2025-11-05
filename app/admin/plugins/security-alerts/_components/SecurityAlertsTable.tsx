@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUpDown, AlertTriangle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import {
+	AlertTriangle,
+	ArrowUpDown,
+	CheckCircle2,
+	Clock,
+	XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import type { PluginSecurityAlert } from "@/app/_actions/plugin-security-alerts";
 import { updateAlertStatus } from "@/app/_actions/plugin-security-alerts";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +29,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
 
 interface SecurityAlertsTableProps {
 	alerts: PluginSecurityAlert[];
@@ -297,4 +303,3 @@ export function SecurityAlertsTable({
 		</div>
 	);
 }
-

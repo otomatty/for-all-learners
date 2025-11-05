@@ -82,38 +82,47 @@ export function SecurityAuditLogsTable({
 
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
-		return date.toLocaleString("ja-JP", {
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			second: "2-digit",
-		});
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		const hours = String(date.getHours()).padStart(2, "0");
+		const minutes = String(date.getMinutes()).padStart(2, "0");
+		const seconds = String(date.getSeconds()).padStart(2, "0");
+		return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 	};
 
-	const getEventDetails = (log: SecurityAuditLogEntry) => {
+	const getEventDetails = (log: SecurityAuditLogEntry): string => {
 		const { eventData } = log;
 		if (log.eventType === "api_call" || log.eventType === "api_call_failed") {
-			return `${eventData.namespace || ""}.${eventData.method || ""}`;
+			const namespace = String(eventData.namespace || "");
+			const method = String(eventData.method || "");
+			return `${namespace}.${method}`;
 		}
 		if (log.eventType === "rate_limit_violation") {
-			return eventData.reason || "";
+			return String(eventData.reason || "");
 		}
 		if (log.eventType === "execution_timeout") {
-			return `${eventData.executionTime || 0}ms / ${eventData.maxExecutionTime || 0}ms`;
+			const executionTime = Number(eventData.executionTime) || 0;
+			const maxExecutionTime = Number(eventData.maxExecutionTime) || 0;
+			return `${executionTime}ms / ${maxExecutionTime}ms`;
 		}
 		if (
 			log.eventType === "storage_access" ||
 			log.eventType === "storage_quota_exceeded"
 		) {
-			return `${eventData.operation || ""}${eventData.storageKey ? ` (${eventData.storageKey})` : ""}`;
+			const operation = String(eventData.operation || "");
+			const storageKey = eventData.storageKey
+				? String(eventData.storageKey)
+				: "";
+			return storageKey ? `${operation} (${storageKey})` : operation;
 		}
 		if (log.eventType === "plugin_error") {
-			return eventData.errorMessage || "";
+			return String(eventData.errorMessage || "");
 		}
 		if (log.eventType === "plugin_terminated") {
-			return `${eventData.reason || ""} (${eventData.executionTime || 0}ms)`;
+			const reason = String(eventData.reason || "");
+			const executionTime = Number(eventData.executionTime) || 0;
+			return `${reason} (${executionTime}ms)`;
 		}
 		return "";
 	};

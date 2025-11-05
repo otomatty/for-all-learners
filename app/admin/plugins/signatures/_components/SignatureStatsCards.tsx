@@ -87,4 +87,3 @@ export function SignatureStatsCards({ stats }: SignatureStatsCardsProps) {
 		</div>
 	);
 }
-

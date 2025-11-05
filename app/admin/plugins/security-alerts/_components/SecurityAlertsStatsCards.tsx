@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SecurityAlertsStatsCardsProps {
 	stats: {
@@ -77,4 +77,3 @@ export function SecurityAlertsStatsCards({
 		</div>
 	);
 }
-

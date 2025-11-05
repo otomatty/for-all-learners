@@ -1,8 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { generatePluginSignature } from "@/app/_actions/plugin-signatures";
-import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -21,8 +22,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
 
 interface SignPluginDialogProps {
 	open: boolean;

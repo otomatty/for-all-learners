@@ -11,13 +11,14 @@ import {
 } from "./_utils";
 
 interface SecurityAuditLogsPageProps {
-	searchParams?: { [key: string]: string | string[] | undefined };
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function SecurityAuditLogsPage({
 	searchParams,
 }: SecurityAuditLogsPageProps) {
-	const parsedParams = parseSecurityAuditLogsSearchParams(searchParams);
+	const resolvedSearchParams = await searchParams;
+	const parsedParams = parseSecurityAuditLogsSearchParams(resolvedSearchParams);
 
 	const options: GetSecurityAuditLogsOptions = {
 		page: parsedParams.page,
@@ -33,10 +34,7 @@ export default async function SecurityAuditLogsPage({
 		},
 	};
 
-	const [result, stats] = await Promise.all([
-		getSecurityAuditLogs(options),
-		getSecurityAuditStats(),
-	]);
+	const result = await getSecurityAuditLogs(options);
 
 	if (!result.success) {
 		return (
@@ -82,47 +80,23 @@ export default async function SecurityAuditLogsPage({
 						</div>
 					}
 				>
-					<SecurityAuditStatsCards stats={stats} />
+					<SecurityAuditStatsCardsWrapper />
 				</Suspense>
 
-				<Suspense
-					fallback={
-						<div className="p-4 border rounded-lg bg-card text-card-foreground">
-							フィルターを読み込み中...
-						</div>
-					}
-				>
-					<SecurityAuditLogsFilters initialFilters={initialFilters} />
-				</Suspense>
+				<SecurityAuditLogsFilters initialFilters={initialFilters} />
 
 				{logs.length > 0 ? (
 					<>
-						<Suspense
-							fallback={
-								<div className="rounded-md border p-8 text-center">
-									テーブルを読み込み中...
-								</div>
-							}
-						>
-							<SecurityAuditLogsTable
-								logs={logs}
-								currentSortBy={parsedParams.sortBy}
-								currentSortOrder={parsedParams.sortOrder}
-							/>
-						</Suspense>
+						<SecurityAuditLogsTable
+							logs={logs}
+							currentSortBy={parsedParams.sortBy}
+							currentSortOrder={parsedParams.sortOrder}
+						/>
 						{totalPages > 1 && (
-							<Suspense
-								fallback={
-									<div className="text-center">
-										ページネーションを読み込み中...
-									</div>
-								}
-							>
-								<SecurityAuditLogsPagination
-									currentPage={parsedParams.page}
-									totalPages={totalPages}
-								/>
-							</Suspense>
+							<SecurityAuditLogsPagination
+								currentPage={parsedParams.page}
+								totalPages={totalPages}
+							/>
 						)}
 						<div className="text-sm text-muted-foreground">
 							全 {totalCount} 件中{" "}
@@ -147,4 +121,13 @@ export default async function SecurityAuditLogsPage({
 			</div>
 		</div>
 	);
+}
+
+/**
+ * Wrapper component for SecurityAuditStatsCards that fetches stats
+ * This is needed to use Suspense for proper loading states
+ */
+async function SecurityAuditStatsCardsWrapper() {
+	const stats = await getSecurityAuditStats();
+	return <SecurityAuditStatsCards stats={stats} />;
 }
