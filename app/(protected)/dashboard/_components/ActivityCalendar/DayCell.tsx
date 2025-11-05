@@ -57,6 +57,28 @@ export function DayCell({ day, isSelected, onClick }: DayCellProps) {
 
 			{/* 活動サマリー */}
 			<ActivityIndicator summary={day} />
+
+			{/* プラグイン拡張バッジ */}
+			{day.pluginExtensions && day.pluginExtensions.length > 0 && (
+				<div className="flex flex-wrap gap-1 mt-1">
+					{day.pluginExtensions.map((ext, index) => {
+						if (!ext.badge) return null;
+						return (
+							<span
+								key={index}
+								className={cn(
+									"text-xs px-1.5 py-0.5 rounded",
+									ext.badgeColor ||
+										"bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+								)}
+								title={ext.tooltip || ext.badge}
+							>
+								{ext.badge}
+							</span>
+						);
+					})}
+				</div>
+			)}
 		</button>
 	);
 }

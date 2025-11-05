@@ -24,6 +24,7 @@ import type {
 	NoteStats,
 } from "@/app/(protected)/dashboard/_components/ActivityCalendar/types";
 import logger from "@/lib/logger";
+import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -477,12 +478,28 @@ export async function getMonthlyActivitySummary(
 
 		const activityLevel = determineActivityLevel(learning, notes);
 
+		// Get plugin extension data for this date
+		let pluginExtensions: CalendarExtensionData[] | undefined;
+		try {
+			pluginExtensions = await getDailyExtensionData(dateStr);
+			if (pluginExtensions.length === 0) {
+				pluginExtensions = undefined;
+			}
+		} catch (error) {
+			logger.error(
+				{ error, date: dateStr },
+				"Failed to get plugin extension data",
+			);
+			// Continue without plugin data if there's an error
+		}
+
 		days.push({
 			date: dateStr,
 			isToday: isToday(currentDate),
 			activityLevel,
 			learning,
 			notes,
+			pluginExtensions,
 		});
 
 		currentDate.setDate(currentDate.getDate() + 1);
@@ -546,10 +563,26 @@ export async function getDayActivityDetail(
 		calculateNoteStats(userId, date),
 	]);
 
+	// Get plugin extension data for this date
+	let pluginExtensions: CalendarExtensionData[] | undefined;
+	try {
+		pluginExtensions = await getDailyExtensionData(dateStr);
+		if (pluginExtensions.length === 0) {
+			pluginExtensions = undefined;
+		}
+	} catch (error) {
+		logger.error(
+			{ error, date: dateStr },
+			"Failed to get plugin extension data",
+		);
+		// Continue without plugin data if there's an error
+	}
+
 	const summary: DailyActivitySummary = {
 		date: dateStr,
 		isToday: isToday(date),
 		activityLevel: determineActivityLevel(learning, notes),
+		pluginExtensions,
 		learning,
 		notes,
 	};

@@ -16,9 +16,9 @@
  *   └─ Plan: docs/03_plans/plugin-system/widget-calendar-extensions.md
  */
 
-import { StatCard } from "./StatCard";
-import { Metric } from "./Metric";
 import { List } from "./List";
+import { Metric } from "./Metric";
+import { StatCard } from "./StatCard";
 import { Text } from "./Text";
 
 export type WidgetComponentType =

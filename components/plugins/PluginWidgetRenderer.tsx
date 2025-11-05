@@ -21,7 +21,7 @@
 import { useEffect, useState } from "react";
 import type { WidgetRenderResult } from "@/lib/plugins/types";
 import { getWidgets } from "@/lib/plugins/ui-registry";
-import { WidgetRenderer, type WidgetComponentType } from "./widget-renderers";
+import { type WidgetComponentType, WidgetRenderer } from "./widget-renderers";
 
 interface PluginWidgetRendererProps {
 	pluginId: string;
