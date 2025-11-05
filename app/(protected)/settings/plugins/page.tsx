@@ -88,24 +88,36 @@ export default async function PluginsPage({
 
 	const installedIds = new Set(installedPlugins.map((p) => p.pluginId));
 
+	// Validate tab parameter - redirect development tab to dev page
+	const tab = params.tab ?? "installed";
+	const validTab =
+		tab === "installed" || tab === "marketplace" ? tab : "installed";
+
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-6xl">
-			<div className="mb-8">
-				<h1 className="text-3xl font-bold mb-2">プラグイン</h1>
-				<p className="text-muted-foreground">
-					プラグインをインストールして機能を拡張できます
-				</p>
+			<div className="mb-8 flex items-start justify-between gap-4">
+				<div className="flex-1">
+					<h1 className="text-3xl font-bold mb-2">プラグイン</h1>
+					<p className="text-muted-foreground">
+						プラグインをインストールして機能を拡張できます
+					</p>
+				</div>
+				<Button asChild variant="outline" className="shrink-0">
+					<Link href="/settings/plugins/dev">
+						<Code2 className="mr-2 h-4 w-4" />
+						開発環境
+					</Link>
+				</Button>
 			</div>
 
-			<Tabs defaultValue={params.tab ?? "installed"} className="w-full">
-				<TabsList className="grid w-full grid-cols-3 mb-8">
+			<Tabs defaultValue={validTab} className="w-full">
+				<TabsList className="grid w-full grid-cols-2 mb-8">
 					<TabsTrigger value="installed">
 						インストール済み ({installedPlugins.length})
 					</TabsTrigger>
 					<TabsTrigger value="marketplace">
 						マーケットプレイス ({sortedPlugins.length})
 					</TabsTrigger>
-					<TabsTrigger value="development">開発環境</TabsTrigger>
 				</TabsList>
 
 				{/* Installed Plugins Tab */}
@@ -165,55 +177,6 @@ export default async function PluginsPage({
 							/>
 						))
 					)}
-				</TabsContent>
-
-				{/* Development Environment Tab */}
-				<TabsContent value="development" className="space-y-4">
-					<Card>
-						<CardContent className="pt-6">
-							<div className="space-y-4">
-								<div className="flex items-center gap-2 mb-4">
-									<Code2 className="h-5 w-5 text-muted-foreground" />
-									<h2 className="text-xl font-semibold">プラグイン開発環境</h2>
-								</div>
-								<p className="text-muted-foreground mb-6">
-									ローカルでプラグインを開発・デバッグするための開発環境です。
-									プラグインの作成、テスト、デバッグが可能です。
-								</p>
-								<div className="flex flex-col sm:flex-row gap-4">
-									<Button asChild variant="default" className="flex-1">
-										<Link href="/settings/plugins/dev">
-											<Code2 className="mr-2 h-4 w-4" />
-											ローカルプラグイン管理
-										</Link>
-									</Button>
-									<Button asChild variant="outline" className="flex-1">
-										<Link href="/settings/plugins/dev/debug">
-											<Package className="mr-2 h-4 w-4" />
-											デバッグツール
-										</Link>
-									</Button>
-								</div>
-								<div className="mt-6 pt-6 border-t">
-									<h3 className="font-medium mb-2">開発環境の使い方</h3>
-									<ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-										<li>
-											ローカルプラグイン管理:
-											プラグインの読み込み、再読み込み、アンロード
-										</li>
-										<li>
-											デバッグツール:
-											プラグインのログ、エラー、パフォーマンスメトリクスの確認
-										</li>
-										<li>
-											CLIツール:
-											プラグインの作成、ビルド、テスト、開発モードの実行
-										</li>
-									</ul>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
 				</TabsContent>
 			</Tabs>
 		</div>

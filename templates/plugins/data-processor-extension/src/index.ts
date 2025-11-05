@@ -40,12 +40,23 @@ async function activate(
 		name: "Sample Importer",
 		description: "サンプルインポーター",
 		supportedFormats: ["markdown", "text"],
-		async import(_data, format) {
+		async import(
+			_data: string | ArrayBuffer | Blob,
+			_options?: Record<string, unknown>,
+		): Promise<{
+			data: unknown;
+			format: "json" | "markdown" | "html" | "csv" | "text";
+			itemCount?: number;
+			metadata?: Record<string, unknown>;
+		}> {
 			// Example: Import data
+			const format =
+				(_options?.format as "json" | "markdown" | "html" | "csv" | "text") ??
+				"text";
 			api.notifications.info(`Importing ${format} data...`);
 			return {
-				success: true,
 				data: { imported: true, format },
+				format,
 			};
 		},
 	});
@@ -56,12 +67,24 @@ async function activate(
 		name: "Sample Exporter",
 		description: "サンプルエクスポーター",
 		supportedFormats: ["json", "csv"],
-		async export(data, format) {
+		async export(
+			data: unknown,
+			_options?: Record<string, unknown>,
+		): Promise<{
+			data: string | ArrayBuffer | Blob;
+			format: "json" | "markdown" | "html" | "csv" | "text";
+			filename?: string;
+			mimeType?: string;
+			metadata?: Record<string, unknown>;
+		}> {
 			// Example: Export data
+			const format =
+				(_options?.format as "json" | "markdown" | "html" | "csv" | "text") ??
+				"json";
 			api.notifications.info(`Exporting to ${format}...`);
 			return {
-				success: true,
 				data: JSON.stringify(data),
+				format,
 			};
 		},
 	});
@@ -71,13 +94,29 @@ async function activate(
 		id: "{{PLUGIN_ID}}-transformer",
 		name: "Sample Transformer",
 		description: "サンプルトランスフォーマー",
-		async transform(data, _options) {
+		sourceFormats: ["json", "markdown"],
+		targetFormats: ["json", "markdown"],
+		async transformer(
+			data: unknown,
+			sourceFormat: "json" | "markdown" | "html" | "csv" | "text",
+			targetFormat: "json" | "markdown" | "html" | "csv" | "text",
+			_options?: Record<string, unknown>,
+		): Promise<{
+			data: unknown;
+			sourceFormat: "json" | "markdown" | "html" | "csv" | "text";
+			targetFormat: "json" | "markdown" | "html" | "csv" | "text";
+			metadata?: Record<string, unknown>;
+		}> {
 			// Example: Transform data
 			api.notifications.info("Transforming data...");
 			return {
-				...data,
-				transformed: true,
-				timestamp: new Date().toISOString(),
+				data: {
+					...(typeof data === "object" && data !== null ? data : {}),
+					transformed: true,
+					timestamp: new Date().toISOString(),
+				},
+				sourceFormat,
+				targetFormat,
 			};
 		},
 	});

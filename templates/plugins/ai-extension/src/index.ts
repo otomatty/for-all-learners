@@ -40,16 +40,25 @@ async function activate(
 		name: "Sample Question Generator",
 		description: "サンプル問題生成器",
 		supportedTypes: ["multiple-choice", "short-answer"],
-		async generator(_content, _optionss) {
+		async generator(
+			_front: string,
+			_back: string,
+			_type: "flashcard" | "multiple_choice" | "cloze",
+			_difficulty?: "easy" | "normal" | "hard",
+		): Promise<{
+			type: "flashcard" | "multiple_choice" | "cloze";
+			question: string;
+			answer: string;
+			options?: string[];
+			blanks?: string[];
+		}> {
 			// Example: Generate questions from content
-			return [
-				{
-					type: "multiple-choice",
-					question: "サンプル問題です",
-					choices: ["選択肢1", "選択肢2", "選択肢3", "選択肢4"],
-					correctAnswer: 0,
-				},
-			];
+			return {
+				type: "multiple_choice",
+				question: "サンプル問題です",
+				answer: "選択肢1",
+				options: ["選択肢1", "選択肢2", "選択肢3", "選択肢4"],
+			};
 		},
 	});
 
@@ -69,7 +78,10 @@ async function activate(
 		id: "{{PLUGIN_ID}}-sample-analyzer",
 		name: "Sample Content Analyzer",
 		description: "サンプルコンテンツアナライザー",
-		async analyzer(content) {
+		async analyzer(
+			content: string,
+			_options?: Record<string, unknown>,
+		): Promise<Record<string, unknown>> {
 			// Example: Analyze content
 			return {
 				wordCount: content.split(/\s+/).length,
@@ -83,7 +95,11 @@ async function activate(
 			/**
 			 * Example method
 			 */
-			async analyzeContent(content: string) {
+			async analyzeContent(...args: unknown[]) {
+				const content = args[0];
+				if (typeof content !== "string") {
+					throw new Error("analyzeContent requires a string argument");
+				}
 				const result = await api.ai.analyzeContent(content, {
 					analyzerId: "{{PLUGIN_ID}}-sample-analyzer",
 				});

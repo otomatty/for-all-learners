@@ -61,10 +61,15 @@ async function activate(
 		id: "{{PLUGIN_ID}}-webhook",
 		name: "Sample Webhook",
 		description: "サンプルWebhook",
-		url: "https://example.com/webhook",
-		events: ["event1", "event2"],
-		async handler(event, _payload) {
-			api.notifications.info(`Webhook received: ${event}`);
+		path: "/webhook/{{PLUGIN_ID}}",
+		methods: ["POST"],
+		async handler(event: {
+			type: string;
+			payload: unknown;
+			timestamp?: Date;
+			metadata?: Record<string, unknown>;
+		}): Promise<void> {
+			api.notifications.info(`Webhook received: ${event.type}`);
 		},
 	});
 
