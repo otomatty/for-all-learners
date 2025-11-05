@@ -16,8 +16,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CalendarExtensionOptions } from "../types";
 import * as registry from "../calendar-registry";
+import type { CalendarExtensionOptions } from "../types";
 
 describe("Calendar Extension Registry", () => {
 	const createMockExtension = (

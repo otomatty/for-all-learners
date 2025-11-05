@@ -18,8 +18,8 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { DailyActivitySummary } from "../types";
 import { DayCell } from "../DayCell";
+import type { DailyActivitySummary } from "../types";
 
 describe("DayCell", () => {
 	const createMockDay = (
