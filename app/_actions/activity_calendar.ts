@@ -25,6 +25,7 @@ import type {
 } from "@/app/(protected)/dashboard/_components/ActivityCalendar/types";
 import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
+import type { CalendarExtensionData } from "@/lib/plugins/types";
 import { createClient } from "@/lib/supabase/server";
 
 /**

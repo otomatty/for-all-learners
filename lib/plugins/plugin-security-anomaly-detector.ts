@@ -19,10 +19,8 @@
 
 import logger from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/adminClient";
-import type {
-	SecurityAuditEventType,
-	SecurityAuditSeverity,
-} from "./plugin-security-audit-logger";
+import type { Json } from "@/types/database.types";
+import type { SecurityAuditSeverity } from "./plugin-security-audit-logger";
 
 /**
  * Alert type definitions
@@ -605,8 +603,8 @@ export class PluginSecurityAnomalyDetector {
 				description: alert.description,
 				plugin_id: alert.pluginId || null,
 				user_id: alert.userId || null,
-				alert_data: alert.alertData,
-				context: alert.context || {},
+				alert_data: alert.alertData as Json,
+				context: (alert.context || {}) as Json,
 				status: "open",
 			}));
 

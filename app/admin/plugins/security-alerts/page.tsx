@@ -12,18 +12,18 @@ import { SecurityAlertsStatsCards } from "./_components/SecurityAlertsStatsCards
 import { SecurityAlertsTable } from "./_components/SecurityAlertsTable";
 import {
 	calculateAlertStatistics,
-	type ParsedSecurityAlertsSearchParams,
 	parseSecurityAlertsSearchParams,
 } from "./_utils";
 
 interface SecurityAlertsPageProps {
-	searchParams?: { [key: string]: string | string[] | undefined };
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function SecurityAlertsPage({
 	searchParams,
 }: SecurityAlertsPageProps) {
-	const parsedParams = parseSecurityAlertsSearchParams(searchParams);
+	const resolvedSearchParams = await searchParams;
+	const parsedParams = parseSecurityAlertsSearchParams(resolvedSearchParams);
 
 	const [alertsResult, statsResult] = await Promise.all([
 		getPluginSecurityAlerts({
@@ -67,13 +67,18 @@ export default async function SecurityAlertsPage({
 		pluginId: parsedParams.pluginId,
 	};
 
+	// Wrapper function for form action (form actions must return void)
+	async function handleRunAnomalyDetection(_formData?: FormData) {
+		await runAnomalyDetection();
+	}
+
 	return (
 		<div className="container mx-auto py-8 px-4 md:px-6">
 			<div className="flex items-center justify-between mb-6">
 				<h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
 					プラグインセキュリティアラート
 				</h1>
-				<form action={runAnomalyDetection}>
+				<form action={handleRunAnomalyDetection}>
 					<Button type="submit" variant="outline" size="sm">
 						<RefreshCw className="mr-2 h-4 w-4" />
 						異常検知を実行
