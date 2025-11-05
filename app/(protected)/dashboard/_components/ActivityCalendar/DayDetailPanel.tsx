@@ -154,10 +154,13 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 									return null;
 								}
 								return (
-									<div key={index} className="space-y-2">
+									<div
+										key={`${ext.tooltip || ext.badge || "ext"}-${index}`}
+										className="space-y-2"
+									>
 										{ext.detailSections.map((section, sectionIndex) => (
 											<div
-												key={sectionIndex}
+												key={`${section.title}-${sectionIndex}`}
 												className="p-3 bg-muted rounded-lg"
 											>
 												<div className="flex items-center gap-2 mb-2">

@@ -162,9 +162,101 @@ export async function getCommitStats(
 }
 
 /**
+ * Get monthly commits with statistics for a date range
+ *
+ * Fetches all commits for the date range and calculates statistics per day.
+ * This is optimized to avoid N+1 queries by fetching all commits in one call,
+ * then fetching stats for each commit in parallel.
+ *
+ * @param owner Repository owner
+ * @param repo Repository name
+ * @param startDate Start date (YYYY-MM-DD)
+ * @param endDate End date (YYYY-MM-DD)
+ * @param api Integration API instance
+ * @returns Map of date string to commit statistics
+ */
+export async function getMonthlyCommitsWithStats(
+	owner: string,
+	repo: string,
+	startDate: string,
+	endDate: string,
+	api: IntegrationAPI,
+): Promise<Map<string, GitHubCommitStats>> {
+	const startDateObj = new Date(startDate);
+	startDateObj.setHours(0, 0, 0, 0);
+	const startDateISO = startDateObj.toISOString();
+
+	const endDateObj = new Date(endDate);
+	endDateObj.setHours(23, 59, 59, 999);
+	const endDateISO = endDateObj.toISOString();
+
+	// Fetch all commits for the date range in one call
+	const commits = await getCommitsByDate(
+		owner,
+		repo,
+		startDateISO,
+		endDateISO,
+		api,
+	);
+
+	// Group commits by date and fetch stats in parallel
+	const dateStatsMap = new Map<string, GitHubCommitStats>();
+
+	// Initialize stats for all dates in range
+	const currentDate = new Date(startDateObj);
+	while (currentDate <= endDateObj) {
+		const dateStr = currentDate.toISOString().split("T")[0];
+		dateStatsMap.set(dateStr, {
+			date: dateStr,
+			commits: 0,
+			additions: 0,
+			deletions: 0,
+			netLines: 0,
+		});
+		currentDate.setDate(currentDate.getDate() + 1);
+	}
+
+	// Fetch stats for all commits in parallel
+	const statsPromises = commits.map((commit) =>
+		getCommitStats(owner, repo, commit.sha, api)
+			.then((stats) => ({
+				commit,
+				stats,
+			}))
+			.catch(() => ({
+				commit,
+				stats: { additions: 0, deletions: 0, total: 0 },
+			})),
+	);
+
+	const statsResults = await Promise.all(statsPromises);
+
+	// Aggregate statistics by date
+	for (const { commit, stats } of statsResults) {
+		const commitDate = new Date(commit.commit.author.date);
+		const commitDateStr = commitDate.toISOString().split("T")[0];
+
+		// Only include commits within the date range
+		if (commitDateStr >= startDate && commitDateStr <= endDate) {
+			const dailyStats = dateStatsMap.get(commitDateStr);
+			if (dailyStats) {
+				dailyStats.commits += 1;
+				dailyStats.additions += stats.additions;
+				dailyStats.deletions += stats.deletions;
+				dailyStats.netLines = dailyStats.additions - dailyStats.deletions;
+			}
+		}
+	}
+
+	return dateStatsMap;
+}
+
+/**
  * Get daily commit lines for a specific date
  *
  * Fetches all commits for the date and calculates total additions, deletions, and net lines.
+ * Note: This function has N+1 query issues. For batch operations (e.g., monthly stats),
+ * use `getMonthlyCommitsWithStats` instead.
  *
  * @param owner Repository owner
  * @param repo Repository name

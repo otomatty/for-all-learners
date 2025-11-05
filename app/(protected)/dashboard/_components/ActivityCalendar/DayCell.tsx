@@ -65,7 +65,7 @@ export function DayCell({ day, isSelected, onClick }: DayCellProps) {
 						if (!ext.badge) return null;
 						return (
 							<span
-								key={index}
+								key={`${ext.badge}-${index}`}
 								className={cn(
 									"text-xs px-1.5 py-0.5 rounded",
 									ext.badgeColor ||

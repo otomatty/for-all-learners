@@ -250,29 +250,81 @@ async function _activate(
 				const firstDay = new Date(year, month - 1, 1);
 				const lastDay = new Date(year, month, 0);
 
-				// Get stats for all days in the month
-				const days: string[] = [];
-				for (
-					let d = new Date(firstDay);
-					d <= lastDay;
-					d.setDate(d.getDate() + 1)
-				) {
-					days.push(d.toISOString().split("T")[0]);
+				const startDateISO = firstDay.toISOString().split("T")[0];
+				const endDateISO = lastDay.toISOString().split("T")[0];
+
+				// Optimize: Fetch all commits for the month in one call, then get stats in parallel
+				const startDate = new Date(firstDay);
+				startDate.setHours(0, 0, 0, 0);
+				const startDateISOFull = startDate.toISOString();
+
+				const endDate = new Date(lastDay);
+				endDate.setHours(23, 59, 59, 999);
+				const endDateISOFull = endDate.toISOString();
+
+				// Fetch all commits for the month in one call
+				const commitsResponse = await api.integration.callExternalAPI(
+					"github-api",
+					{
+						method: "GET",
+						url: `/repos/${owner}/${repo}/commits`,
+						query: {
+							since: startDateISOFull,
+							until: endDateISOFull,
+							per_page: "100",
+						},
+					},
+				);
+
+				if (commitsResponse.status !== 200) {
+					return {
+						type: "text",
+						props: {
+							content: "GitHubコミット統計の取得に失敗しました",
+							variant: "danger",
+						},
+					};
 				}
 
-				const statsPromises = days.map((date) => getDailyCommitLines(date));
-				const allStats = await Promise.all(statsPromises);
+				const commits = commitsResponse.data || [];
 
-				const totalCommits = allStats.reduce(
-					(sum, stats) => sum + stats.commits,
+				// Filter commits that occurred within the month
+				const commitsInMonth = commits.filter((commit: any) => {
+					const commitDate = new Date(commit.commit?.author?.date || "");
+					const commitDateStr = commitDate.toISOString().split("T")[0];
+					return commitDateStr >= startDateISO && commitDateStr <= endDateISO;
+				});
+
+				// Fetch stats for all commits in parallel
+				const statsPromises = commitsInMonth.map(async (commit: any) => {
+					try {
+						const statsResponse = await api.integration.callExternalAPI(
+							"github-api",
+							{
+								method: "GET",
+								url: `/repos/${owner}/${repo}/commits/${commit.sha}`,
+							},
+						);
+
+						if (statsResponse.status === 200 && statsResponse.data?.stats) {
+							return statsResponse.data.stats;
+						}
+						return { additions: 0, deletions: 0, total: 0 };
+					} catch {
+						return { additions: 0, deletions: 0, total: 0 };
+					}
+				});
+
+				const statsResults = await Promise.all(statsPromises);
+
+				// Aggregate statistics
+				const totalCommits = commitsInMonth.length;
+				const totalAdditions = statsResults.reduce(
+					(sum: number, stats: any) => sum + (stats.additions || 0),
 					0,
 				);
-				const totalAdditions = allStats.reduce(
-					(sum, stats) => sum + stats.additions,
-					0,
-				);
-				const totalDeletions = allStats.reduce(
-					(sum, stats) => sum + stats.deletions,
+				const totalDeletions = statsResults.reduce(
+					(sum: number, stats: any) => sum + (stats.deletions || 0),
 					0,
 				);
 				const netLines = totalAdditions - totalDeletions;

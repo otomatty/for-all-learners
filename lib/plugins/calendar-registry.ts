@@ -166,19 +166,29 @@ export function getCalendarExtensions(
 /**
  * Get daily data from all registered calendar extensions
  *
+ * Uses Promise.allSettled to ensure that one failing extension doesn't
+ * prevent other extensions from returning their data.
+ *
  * @param date Date string (YYYY-MM-DD)
- * @returns Array of calendar extension data (filtered to remove nulls)
+ * @returns Array of calendar extension data (filtered to remove nulls and failed results)
  */
 export async function getDailyExtensionData(
 	date: string,
 ): Promise<CalendarExtensionData[]> {
 	const extensions = getCalendarExtensions();
-	const results = await Promise.all(
+	const results = await Promise.allSettled(
 		extensions.map((ext) => ext.getDailyData(date)),
 	);
 
-	// Filter out null results
-	return results.filter((data): data is CalendarExtensionData => data !== null);
+	// Filter out null results and failed promises
+	return results
+		.filter(
+			(
+				result,
+			): result is PromiseFulfilledResult<CalendarExtensionData | null> =>
+				result.status === "fulfilled" && result.value !== null,
+		)
+		.map((result) => result.value as CalendarExtensionData);
 }
 
 // ============================================================================

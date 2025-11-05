@@ -136,8 +136,8 @@ export async function verifyGitHubToken(
 /**
  * Get or refresh GitHub token
  *
- * Checks if token exists and is valid. If expired or invalid, attempts to refresh.
- * For now, this is a placeholder - actual refresh logic would depend on OAuth flow.
+ * Checks if token exists and is valid. If expired or invalid, it is deleted.
+ * Note: Token refresh logic is not implemented yet and would depend on OAuth flow.
  *
  * @param storage Storage API instance
  * @param api Integration API instance

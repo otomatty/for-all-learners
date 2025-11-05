@@ -12,7 +12,7 @@
  *
  * Dependencies:
  *   ├─ components/plugins/PluginWidgetContainer.tsx
- *   └─ app/_actions/plugin-widgets.ts
+ *   └─ lib/plugins/ui-registry.ts
  *
  * Related Documentation:
  *   └─ Plan: docs/03_plans/plugin-system/widget-calendar-extensions.md
