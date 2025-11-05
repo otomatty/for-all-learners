@@ -184,7 +184,7 @@ describe("Calendar Extension Registry", () => {
 			expect(data[0].badge).toBe("Badge ext-1");
 		});
 
-		it("should handle errors in getDailyData", async () => {
+		it("should handle errors in getDailyData gracefully", async () => {
 			const pluginId = "test-plugin";
 			const ext1 = createMockExtension("ext-1");
 			const ext2: CalendarExtensionOptions = {
@@ -196,10 +196,13 @@ describe("Calendar Extension Registry", () => {
 			registry.registerCalendarExtension(pluginId, ext1);
 			registry.registerCalendarExtension(pluginId, ext2);
 
-			// Should throw error when any extension fails
-			await expect(
-				registry.getDailyExtensionData("2025-01-01"),
-			).rejects.toThrow("Data fetch failed");
+			// Should return successful extensions even if some fail (Promise.allSettled behavior)
+			const data = await registry.getDailyExtensionData("2025-01-01");
+
+			// Should only return data from successful extension
+			expect(data).toHaveLength(1);
+			expect(data[0].badge).toBe("Badge ext-1");
+			expect(ext2.getDailyData).toHaveBeenCalled();
 		});
 	});
 

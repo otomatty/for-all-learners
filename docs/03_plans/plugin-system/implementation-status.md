@@ -581,11 +581,15 @@
 
 - [Phase 1実装計画](./phase1-core-system.md) ✅
 - [Phase 2実装計画](./phase2-editor-extensions.md) ✅
+- [Widget & Calendar拡張実装計画](./widget-calendar-extensions.md) ✅
+- [今後の実装計画](./future-implementation-plan.md) 📋
 - [プラグイン開発ガイド](../guides/plugin-development.md) ✅
 - [Issue #94 - Extension Points Implementation](https://github.com/otomatty/for-all-learners/issues/94)
 - [Issue #95 - Marketplace UI/UX](https://github.com/otomatty/for-all-learners/issues/95)
 - [Issue #96 - Plugin System Security Enhancement](https://github.com/otomatty/for-all-learners/issues/96)
 - [Issue #112 - Widget Rendering & Calendar UI Extensions](https://github.com/otomatty/for-all-learners/issues/112)
+- [Issue #109 - Phase 4: Plugin Development Tools & Sample Plugins](https://github.com/otomatty/for-all-learners/issues/109)
+- [Issue #97 - Phase 5: Official Plugins Development](https://github.com/otomatty/for-all-learners/issues/97)
 
 ---
 
