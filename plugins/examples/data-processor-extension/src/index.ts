@@ -157,12 +157,13 @@ async function activate(
 		transformer: async (content: JSONContent): Promise<JSONContent> => {
 			return transformContent(content, (node) => {
 				if (node.type === "paragraph") {
+					const existingContent = node.content;
+					const contentArray = Array.isArray(existingContent)
+						? existingContent
+						: [];
 					return {
 						...node,
-						content: [
-							{ type: "text", text: "[追加] " },
-							...(node.content || []),
-						],
+						content: [{ type: "text", text: "[追加] " }, ...contentArray],
 					};
 				}
 				return node;
@@ -323,26 +324,26 @@ function transformText(
  */
 function transformContent(
 	content: unknown,
-	transformFn: (node: unknown) => unknown,
+	transformFn: (node: JSONContent) => JSONContent,
 ): JSONContent {
 	if (!content || typeof content !== "object") {
 		return content as JSONContent;
 	}
 
-	const obj = content as Record<string, unknown>;
+	const obj = content as JSONContent;
 	const transformed = transformFn(obj);
 
 	if (transformed && typeof transformed === "object") {
-		const result = transformed as Record<string, unknown>;
+		const result = transformed as JSONContent;
 		if (result.content && Array.isArray(result.content)) {
 			result.content = result.content.map((item) =>
 				transformContent(item, transformFn),
 			);
 		}
-		return result as JSONContent;
+		return result;
 	}
 
-	return transformed as JSONContent;
+	return transformed;
 }
 
 // Export the activation function

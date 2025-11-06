@@ -47,8 +47,14 @@ function findPluginDir(pluginId: string): string | null {
 
 /**
  * Run plugin tests
+ *
+ * @param pluginId Plugin ID
+ * @param args Additional arguments (e.g., --coverage)
  */
-export async function testPlugin(pluginId: string): Promise<void> {
+export async function testPlugin(
+	pluginId: string,
+	args: string[] = [],
+): Promise<void> {
 	logger.info({ pluginId }, "Running tests for plugin");
 
 	// Find plugin directory
@@ -72,14 +78,26 @@ export async function testPlugin(pluginId: string): Promise<void> {
 
 		logger.info({ pluginDir }, "Plugin directory");
 
+		// Check for coverage flag
+		const coverage = args.includes("--coverage") || args.includes("-c");
+		const testCommand = coverage
+			? "bunx vitest run --coverage"
+			: "bunx vitest run";
+
 		// Run vitest
 		logger.info("Running tests with Vitest...");
-		execSync("bunx vitest run", {
+		if (coverage) {
+			logger.info("Coverage report will be generated");
+		}
+		execSync(testCommand, {
 			cwd: pluginDir,
 			stdio: "inherit",
 		});
 
 		logger.info("Tests completed");
+		if (coverage) {
+			logger.info("Coverage report generated in coverage/ directory");
+		}
 	} catch (error) {
 		logger.error({ error }, "Test execution failed");
 		if (error instanceof Error) {
