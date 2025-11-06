@@ -25,7 +25,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logger from "@/lib/logger";
 
 interface GitHubUserSelectorProps {
 	value?: string;
@@ -71,31 +70,30 @@ export function GitHubUserSelector({
 		setError(null);
 
 		try {
-			// Fetch user's repositories from GitHub API
-			const response = await fetch(
-				`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`,
-				{
-					headers: {
-						Accept: "application/vnd.github.v3+json",
-						Authorization: `Bearer ${githubToken}`,
-					},
+			// Use Next.js API route to avoid CORS issues
+			const apiUrl = `/api/github/repos?username=${encodeURIComponent(username)}&token=${encodeURIComponent(githubToken)}`;
+
+			const response = await fetch(apiUrl, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
 				},
-			);
+			});
 
 			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error(`ユーザー "${username}" が見つかりません`);
-				} else if (response.status === 401) {
-					throw new Error("GitHub認証トークンが無効です");
-				}
-				throw new Error(`GitHub API エラー: ${response.statusText}`);
+				const errorData = await response.json().catch(() => ({}));
+				const errorMessage =
+					errorData.error || `エラーが発生しました (${response.status})`;
+				throw new Error(errorMessage);
 			}
 
-			const repos = await response.json();
+			const data = await response.json();
 
-			if (!Array.isArray(repos)) {
+			if (!data.repos || !Array.isArray(data.repos)) {
 				throw new Error("予期しないレスポンス形式");
 			}
+
+			const repos = data.repos;
 
 			// Transform to simpler format
 			const repoList = repos.map(
@@ -113,18 +111,32 @@ export function GitHubUserSelector({
 			// Update value
 			onChange(username.trim());
 
-			logger.info(
-				{ username, repoCount: repoList.length },
-				"GitHub repositories fetched successfully",
-			);
+			// Log success in development only
+			if (process.env.NODE_ENV === "development") {
+				// biome-ignore lint/suspicious/noConsole: Development logging only
+				console.log(
+					`[GitHubUserSelector] Successfully fetched ${repoList.length} repositories for user: ${username}`,
+				);
+			}
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : "リポジトリの取得に失敗しました";
+			let errorMessage = "リポジトリの取得に失敗しました";
+
+			if (err instanceof Error) {
+				errorMessage = err.message;
+			} else if (typeof err === "string") {
+				errorMessage = err;
+			}
+
 			setError(errorMessage);
-			logger.error(
-				{ error: err, username },
-				"Failed to fetch GitHub repositories",
-			);
+
+			// Log error in development only
+			if (process.env.NODE_ENV === "development") {
+				// biome-ignore lint/suspicious/noConsole: Development error logging only
+				console.error(
+					`[GitHubUserSelector] Failed to fetch repositories for user: ${username}`,
+					err,
+				);
+			}
 		} finally {
 			setIsLoading(false);
 		}
