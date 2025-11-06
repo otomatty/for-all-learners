@@ -44,7 +44,103 @@ export function getSandboxWorkerCode(): string {
     API_CALL: 'API_CALL',
     API_RESPONSE: 'API_RESPONSE',
     EVENT: 'EVENT',
-    ERROR: 'ERROR'
+    ERROR: 'ERROR',
+    CONSOLE_LOG: 'CONSOLE_LOG'
+  };
+  
+  // Override console methods to forward logs to main thread
+  const originalConsole = {
+    log: console.log,
+    error: console.error,
+    warn: console.warn,
+    info: console.info,
+    debug: console.debug
+  };
+  
+  console.log = function(...args) {
+    self.postMessage({
+      type: MessageTypes.CONSOLE_LOG,
+      payload: {
+        level: 'log',
+        args: args.map(arg => {
+          // Serialize arguments for postMessage
+          try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+      }
+    });
+    originalConsole.log.apply(console, args);
+  };
+  
+  console.error = function(...args) {
+    self.postMessage({
+      type: MessageTypes.CONSOLE_LOG,
+      payload: {
+        level: 'error',
+        args: args.map(arg => {
+          try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+      }
+    });
+    originalConsole.error.apply(console, args);
+  };
+  
+  console.warn = function(...args) {
+    self.postMessage({
+      type: MessageTypes.CONSOLE_LOG,
+      payload: {
+        level: 'warn',
+        args: args.map(arg => {
+          try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+      }
+    });
+    originalConsole.warn.apply(console, args);
+  };
+  
+  console.info = function(...args) {
+    self.postMessage({
+      type: MessageTypes.CONSOLE_LOG,
+      payload: {
+        level: 'info',
+        args: args.map(arg => {
+          try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+      }
+    });
+    originalConsole.info.apply(console, args);
+  };
+  
+  console.debug = function(...args) {
+    self.postMessage({
+      type: MessageTypes.CONSOLE_LOG,
+      payload: {
+        level: 'debug',
+        args: args.map(arg => {
+          try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          } catch {
+            return String(arg);
+          }
+        })
+      }
+    });
+    originalConsole.debug.apply(console, args);
   };
   
   // Call host API via postMessage

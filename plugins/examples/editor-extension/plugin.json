@@ -1,0 +1,16 @@
+{
+	"id": "com.fal.examples.editor-extension",
+	"name": "Editor Extension サンプル",
+	"version": "1.0.0",
+	"description": "エディタ拡張機能の実装例を示すサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": true,
+		"ai": false,
+		"ui": true,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": ["editor", "extension", "tiptap", "sample", "example"]
+}

@@ -39,7 +39,8 @@ export type WorkerMessageType =
 	| "API_CALL" // Plugin calling host API
 	| "API_RESPONSE" // Host responding to API call
 	| "EVENT" // Plugin emitting event
-	| "ERROR"; // Error occurred
+	| "ERROR" // Error occurred
+	| "CONSOLE_LOG"; // Console log from worker
 
 /**
  * Base message structure

@@ -76,6 +76,45 @@ export function handleWorkerMessage(
 			break;
 		}
 
+		case "CONSOLE_LOG": {
+			const consolePayload = message.payload as {
+				level: "log" | "error" | "warn" | "info" | "debug";
+				args: string[];
+			};
+			const messageText = consolePayload.args.join(" ");
+
+			// Log to debug tools (async import to avoid circular dependency)
+			// Use void to explicitly ignore the promise (fire and forget)
+			void import("../debug-tools")
+				.then(({ logPluginMessage }) => {
+					logPluginMessage(
+						pluginId,
+						consolePayload.level === "error"
+							? "error"
+							: consolePayload.level === "warn"
+								? "warn"
+								: consolePayload.level === "debug"
+									? "debug"
+									: "info",
+						messageText,
+					);
+				})
+				.catch((error) => {
+					// Silently fail if debug tools are not available
+					logger.debug({ error, pluginId }, "Failed to log to debug tools");
+				});
+
+			// Also log to main logger
+			if (consolePayload.level === "error") {
+				logger.error({ pluginId }, `[Plugin Console] ${messageText}`);
+			} else if (consolePayload.level === "warn") {
+				logger.warn({ pluginId }, `[Plugin Console] ${messageText}`);
+			} else {
+				logger.debug({ pluginId }, `[Plugin Console] ${messageText}`);
+			}
+			break;
+		}
+
 		case "ERROR": {
 			const errorPayload = message.payload as ErrorPayload;
 			const error = new Error(errorPayload.message || "Unknown error");
@@ -92,11 +131,30 @@ export function handleWorkerMessage(
 				errorPayload.stack,
 			);
 
+			// Log to debug tools (async import to avoid circular dependency)
+			const registry = getPluginRegistry();
+			const plugin = registry.get(pluginId);
+			void import("../debug-tools")
+				.then(({ logPluginError }) => {
+					logPluginError(
+						pluginId,
+						errorPayload.message || "Unknown error",
+						errorPayload.stack,
+						plugin?.manifest.name,
+					);
+				})
+				.catch((error) => {
+					// Silently fail if debug tools are not available
+					logger.debug(
+						{ error, pluginId },
+						"Failed to log error to debug tools",
+					);
+				});
+
 			logger.error(
 				{ error, pluginId, stack: errorPayload.stack },
 				"Plugin error received",
 			);
-			const registry = getPluginRegistry();
 			registry.setError(pluginId, errorPayload.message || "Unknown error");
 			break;
 		}

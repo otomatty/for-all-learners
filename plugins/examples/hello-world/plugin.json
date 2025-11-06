@@ -1,0 +1,16 @@
+{
+	"id": "com.fal.examples.hello-world",
+	"name": "Hello World",
+	"version": "1.0.0",
+	"description": "プラグインシステムの基本構造を説明する最小限のサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": true,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": ["hello-world", "sample", "example", "tutorial"]
+}

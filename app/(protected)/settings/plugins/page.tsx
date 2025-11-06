@@ -17,11 +17,13 @@
  *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
-import { Package } from "lucide-react";
+import { Code2, Package } from "lucide-react";
+import Link from "next/link";
 import {
 	getAvailablePlugins,
 	getInstalledPluginsWithUpdates,
 } from "@/app/_actions/plugins";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
@@ -86,16 +88,29 @@ export default async function PluginsPage({
 
 	const installedIds = new Set(installedPlugins.map((p) => p.pluginId));
 
+	// Validate tab parameter - redirect development tab to dev page
+	const tab = params.tab ?? "installed";
+	const validTab =
+		tab === "installed" || tab === "marketplace" ? tab : "installed";
+
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-6xl">
-			<div className="mb-8">
-				<h1 className="text-3xl font-bold mb-2">プラグイン</h1>
-				<p className="text-muted-foreground">
-					プラグインをインストールして機能を拡張できます
-				</p>
+			<div className="mb-8 flex items-start justify-between gap-4">
+				<div className="flex-1">
+					<h1 className="text-3xl font-bold mb-2">プラグイン</h1>
+					<p className="text-muted-foreground">
+						プラグインをインストールして機能を拡張できます
+					</p>
+				</div>
+				<Button asChild variant="outline" className="shrink-0">
+					<Link href="/settings/plugins/dev">
+						<Code2 className="mr-2 h-4 w-4" />
+						開発環境
+					</Link>
+				</Button>
 			</div>
 
-			<Tabs defaultValue={params.tab ?? "installed"} className="w-full">
+			<Tabs defaultValue={validTab} className="w-full">
 				<TabsList className="grid w-full grid-cols-2 mb-8">
 					<TabsTrigger value="installed">
 						インストール済み ({installedPlugins.length})

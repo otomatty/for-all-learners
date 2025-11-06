@@ -1,0 +1,16 @@
+{
+	"id": "{{PLUGIN_ID}}",
+	"name": "{{PLUGIN_NAME}}",
+	"version": "{{PLUGIN_VERSION}}",
+	"description": "{{PLUGIN_DESCRIPTION}}",
+	"author": "{{PLUGIN_AUTHOR}}",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": true,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": ["ui", "widget", "page", "sidebar", "sample"]
+}

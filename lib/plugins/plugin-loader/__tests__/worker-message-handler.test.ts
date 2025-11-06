@@ -246,10 +246,107 @@ describe("handleWorkerMessage", () => {
 		});
 	});
 
+	describe("CONSOLE_LOG message", () => {
+		it("should handle CONSOLE_LOG message with info level", async () => {
+			const message = {
+				type: "CONSOLE_LOG" as const,
+				payload: {
+					level: "info" as const,
+					args: ["Test message", "additional", "args"],
+				},
+			};
+
+			handleWorkerMessage("test-plugin", message, workers);
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Should not throw or send response
+			expect(mockWorker.postMessage).not.toHaveBeenCalled();
+		});
+
+		it("should handle CONSOLE_LOG message with error level", async () => {
+			const message = {
+				type: "CONSOLE_LOG" as const,
+				payload: {
+					level: "error" as const,
+					args: ["Error message"],
+				},
+			};
+
+			handleWorkerMessage("test-plugin", message, workers);
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Should not throw or send response
+			expect(mockWorker.postMessage).not.toHaveBeenCalled();
+		});
+
+		it("should handle CONSOLE_LOG message with warn level", async () => {
+			const message = {
+				type: "CONSOLE_LOG" as const,
+				payload: {
+					level: "warn" as const,
+					args: ["Warning message"],
+				},
+			};
+
+			handleWorkerMessage("test-plugin", message, workers);
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Should not throw or send response
+			expect(mockWorker.postMessage).not.toHaveBeenCalled();
+		});
+
+		it("should handle CONSOLE_LOG message with debug level", async () => {
+			const message = {
+				type: "CONSOLE_LOG" as const,
+				payload: {
+					level: "debug" as const,
+					args: ["Debug message"],
+				},
+			};
+
+			handleWorkerMessage("test-plugin", message, workers);
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Should not throw or send response
+			expect(mockWorker.postMessage).not.toHaveBeenCalled();
+		});
+
+		it("should handle CONSOLE_LOG message when debug tools import fails", async () => {
+			// Mock import to fail - use type assertion to allow assignment
+			// Note: We can't directly mock global.import, so we test that the error is handled gracefully
+			// by checking that the function doesn't throw even if the import fails internally
+			const message = {
+				type: "CONSOLE_LOG" as const,
+				payload: {
+					level: "info" as const,
+					args: ["Test message"],
+				},
+			};
+
+			// Should not throw even if import fails
+			// The actual import failure would be handled by the catch block in the handler
+			expect(() => {
+				handleWorkerMessage("test-plugin", message, workers);
+			}).not.toThrow();
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+		});
+	});
+
 	describe("ERROR message", () => {
-		it("should handle ERROR message and set error in registry", () => {
+		it("should handle ERROR message and set error in registry", async () => {
 			const mockRegistry = {
 				setError: vi.fn(),
+				get: vi.fn().mockReturnValue(null),
 			};
 
 			getPluginRegistrySpy.mockReturnValue(mockRegistry as any);
@@ -264,6 +361,9 @@ describe("handleWorkerMessage", () => {
 
 			handleWorkerMessage("test-plugin", message, workers);
 
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			expect(getPluginRegistrySpy).toHaveBeenCalled();
 			expect(mockRegistry.setError).toHaveBeenCalledWith(
 				"test-plugin",
@@ -271,9 +371,10 @@ describe("handleWorkerMessage", () => {
 			);
 		});
 
-		it("should handle ERROR message without stack", () => {
+		it("should handle ERROR message without stack", async () => {
 			const mockRegistry = {
 				setError: vi.fn(),
+				get: vi.fn().mockReturnValue(null),
 			};
 
 			getPluginRegistrySpy.mockReturnValue(mockRegistry as any);
@@ -287,15 +388,19 @@ describe("handleWorkerMessage", () => {
 
 			handleWorkerMessage("test-plugin", message, workers);
 
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			expect(mockRegistry.setError).toHaveBeenCalledWith(
 				"test-plugin",
 				"Plugin error",
 			);
 		});
 
-		it("should handle ERROR message without message", () => {
+		it("should handle ERROR message without message", async () => {
 			const mockRegistry = {
 				setError: vi.fn(),
+				get: vi.fn().mockReturnValue(null),
 			};
 
 			getPluginRegistrySpy.mockReturnValue(mockRegistry as any);
@@ -306,6 +411,9 @@ describe("handleWorkerMessage", () => {
 			};
 
 			handleWorkerMessage("test-plugin", message, workers);
+
+			// Wait for async import to complete
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(mockRegistry.setError).toHaveBeenCalledWith(
 				"test-plugin",

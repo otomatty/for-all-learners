@@ -1,0 +1,16 @@
+{
+	"id": "{{PLUGIN_ID}}",
+	"name": "{{PLUGIN_NAME}}",
+	"version": "{{PLUGIN_VERSION}}",
+	"description": "{{PLUGIN_DESCRIPTION}}",
+	"author": "{{PLUGIN_AUTHOR}}",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": true,
+		"ui": false,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": ["ai", "question-generator", "prompt-template", "sample"]
+}
