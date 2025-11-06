@@ -290,6 +290,54 @@ describe("testPlugin", () => {
 			);
 		});
 
+		it("should run vitest with coverage when --coverage flag is provided", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("plugins/examples")) {
+					return true;
+				}
+				if (path.includes("__tests__")) {
+					return true;
+				}
+				return false;
+			});
+
+			await testPlugin("com.example.test-plugin", ["--coverage"]);
+
+			expect(mockExecSync).toHaveBeenCalledWith(
+				"bunx vitest run --coverage",
+				expect.objectContaining({
+					cwd: expect.stringContaining("plugins/examples"),
+					stdio: "inherit",
+				}),
+			);
+			expect(infoSpy).toHaveBeenCalledWith("Coverage report will be generated");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Coverage report generated in coverage/ directory",
+			);
+		});
+
+		it("should run vitest with coverage when -c flag is provided", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("plugins/examples")) {
+					return true;
+				}
+				if (path.includes("__tests__")) {
+					return true;
+				}
+				return false;
+			});
+
+			await testPlugin("com.example.test-plugin", ["-c"]);
+
+			expect(mockExecSync).toHaveBeenCalledWith(
+				"bunx vitest run --coverage",
+				expect.objectContaining({
+					cwd: expect.stringContaining("plugins/examples"),
+					stdio: "inherit",
+				}),
+			);
+		});
+
 		it("should set correct working directory", async () => {
 			mockExistsSync.mockImplementation((path: string) => {
 				if (path.includes("plugins/examples/com-example-test-plugin")) {

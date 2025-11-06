@@ -157,6 +157,16 @@ describe("CLI", () => {
 
 			expect(testPluginModule.testPlugin).toHaveBeenCalledWith(
 				"com.example.my-plugin",
+				[],
+			);
+		});
+
+		it("should call testPlugin with coverage flag", async () => {
+			await main("test", ["com.example.my-plugin", "--coverage"]);
+
+			expect(testPluginModule.testPlugin).toHaveBeenCalledWith(
+				"com.example.my-plugin",
+				["--coverage"],
 			);
 		});
 
@@ -165,7 +175,7 @@ describe("CLI", () => {
 
 			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
 			expect(infoSpy).toHaveBeenCalledWith(
-				"Usage: bun run plugins:test <plugin-id>",
+				expect.stringContaining("Usage: bun run plugins:test"),
 			);
 			expect(mockExit).toHaveBeenCalledWith(1);
 		});

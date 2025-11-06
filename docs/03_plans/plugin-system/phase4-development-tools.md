@@ -28,40 +28,42 @@
 
 ### 1. プラグイン開発ツール
 
-#### 1.1 CLIツール（推定: 6時間）
+#### 1.1 CLIツール（推定: 6時間）✅ **完了**
 
 **目的**: プラグインの生成、ビルド、テストを支援するCLIツール
 
 **実装内容**:
 
-- [ ] `scripts/plugins/create-plugin.ts`: プラグイン生成コマンド
-  - [ ] プラグイン名、ID、拡張ポイントを入力
-  - [ ] テンプレートからプロジェクト構造を生成
-  - [ ] `package.json`, `tsconfig.json`, ビルド設定を自動生成
-  - [ ] 基本的なマニフェストファイル（`plugin.json`）を生成
+- [x] `scripts/plugins/create-plugin.ts`: プラグイン生成コマンド ✅
+  - [x] プラグイン名、ID、拡張ポイントを入力（デフォルト値を使用） ✅
+  - [x] テンプレートからプロジェクト構造を生成 ✅
+  - [x] `package.json`, `tsconfig.json`, ビルド設定を自動生成 ✅
+  - [x] 基本的なマニフェストファイル（`plugin.json`）を生成 ✅
 
-- [ ] `scripts/plugins/build-plugin.ts`: プラグインビルドコマンド
-  - [ ] esbuildによるバンドル
-  - [ ] 型チェック
-  - [ ] マニフェスト検証
-  - [ ] 出力ディレクトリへの配置
+- [x] `scripts/plugins/build-plugin.ts`: プラグインビルドコマンド ✅
+  - [x] esbuildによるバンドル ✅
+  - [x] 型チェック ✅
+  - [x] マニフェスト検証 ✅
+  - [x] 出力ディレクトリへの配置 ✅
 
-- [ ] `scripts/plugins/test-plugin.ts`: プラグインテストコマンド
-  - [ ] Vitestによるテスト実行
-  - [ ] プラグインAPIのモック
-  - [ ] カバレッジレポート
+- [x] `scripts/plugins/test-plugin.ts`: プラグインテストコマンド ✅
+  - [x] Vitestによるテスト実行 ✅
+  - [x] プラグインAPIのモック（テストファイル側で実装） ✅
+  - [x] カバレッジレポート（`--coverage`オプション） ✅
 
-- [ ] `scripts/plugins/dev-plugin.ts`: 開発モードコマンド
-  - [ ] ウォッチモードでのビルド
-  - [ ] ローカル開発環境への自動読み込み
-  - [ ] ホットリロード
+- [x] `scripts/plugins/dev-plugin.ts`: 開発モードコマンド ✅
+  - [x] ウォッチモードでのビルド ✅
+  - [ ] ローカル開発環境への自動読み込み（Phase 4.3で実装予定）
+  - [ ] ホットリロード（Phase 4.3で実装予定）
 
 **実装ファイル**:
-- `scripts/plugins/create-plugin.ts`: プラグイン生成
-- `scripts/plugins/build-plugin.ts`: ビルド
-- `scripts/plugins/test-plugin.ts`: テスト
-- `scripts/plugins/dev-plugin.ts`: 開発モード
-- `scripts/plugins/cli.ts`: CLIエントリーポイント
+- `scripts/plugins/create-plugin.ts`: プラグイン生成 ✅
+- `scripts/plugins/build-plugin.ts`: ビルド ✅
+- `scripts/plugins/test-plugin.ts`: テスト ✅
+- `scripts/plugins/dev-plugin.ts`: 開発モード ✅
+- `scripts/plugins/cli.ts`: CLIエントリーポイント ✅
+
+**実装日**: 2025-11-06
 
 **使用例**:
 ```bash
@@ -124,49 +126,57 @@ bun run plugins:dev my-plugin
 
 **備考**: テンプレートは `bun run plugins:create` コマンドで使用されます。実際の動作するサンプルプラグインは `plugins/examples/` に作成する必要があります（セクション2参照）。
 
-#### 1.3 ローカル開発環境でのプラグイン読み込み機能（推定: 2時間）
+#### 1.3 ローカル開発環境でのプラグイン読み込み機能（推定: 2時間）✅ **完了**
 
 **目的**: 開発中のプラグインをローカルで簡単にテストできる環境
 
 **実装内容**:
 
-- [ ] `app/_actions/plugins-dev.ts`: 開発用Server Actions
-  - [ ] ローカルプラグインの読み込み
-  - [ ] プラグインの再読み込み（ホットリロード）
-  - [ ] 開発モードフラグの管理
+- [x] `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅
+  - [x] ローカルプラグインの読み込み ✅
+  - [x] プラグインの再読み込み（ホットリロード） ✅
+  - [x] 開発モードフラグの管理 ✅
 
-- [ ] `app/(protected)/settings/plugins/dev/page.tsx`: 開発用プラグイン管理ページ
-  - [ ] ローカルプラグインの一覧表示
-  - [ ] プラグインの追加/削除
-  - [ ] プラグインの再読み込みボタン
+- [x] `app/(protected)/settings/plugins/dev/page.tsx`: 開発用プラグイン管理ページ ✅
+  - [x] ローカルプラグインの一覧表示 ✅
+  - [x] プラグインの追加/削除 ✅
+  - [x] プラグインの再読み込みボタン ✅
 
 **実装ファイル**:
-- `app/_actions/plugins-dev.ts`: 開発用Server Actions
-- `app/(protected)/settings/plugins/dev/page.tsx`: 開発用UI
+- `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅
+- `app/(protected)/settings/plugins/dev/page.tsx`: 開発用UI ✅
+- `app/(protected)/settings/plugins/dev/_components/LocalPluginCard.tsx`: プラグインカードコンポーネント ✅
 
-#### 1.4 デバッグツール（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 1.4 デバッグツール（推定: 2時間）✅ **完了**
 
 **目的**: プラグイン開発時のデバッグを支援
 
 **実装内容**:
 
-- [ ] `lib/plugins/debug-tools.ts`: デバッグユーティリティ
-  - [ ] プラグイン実行ログの収集
-  - [ ] エラー追跡
-  - [ ] パフォーマンス測定
+- [x] `lib/plugins/debug-tools.ts`: デバッグユーティリティ ✅
+  - [x] プラグイン実行ログの収集 ✅
+  - [x] エラー追跡 ✅
+  - [x] パフォーマンス測定 ✅
 
-- [ ] `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI
-  - [ ] プラグインログの表示
-  - [ ] エラー一覧
-  - [ ] パフォーマンスメトリクス
+- [x] `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅
+  - [x] プラグインログの表示 ✅
+  - [x] エラー一覧 ✅
+  - [x] パフォーマンスメトリクス ✅
 
-- [ ] ブラウザ開発者ツールとの統合
-  - [ ] Worker内のconsole.logをメインスレッドに転送
-  - [ ] エラースタックトレースの表示
+- [x] ブラウザ開発者ツールとの統合 ✅
+  - [x] Worker内のconsole.logをメインスレッドに転送 ✅
+  - [x] エラースタックトレースの表示 ✅
 
 **実装ファイル**:
-- `lib/plugins/debug-tools.ts`: デバッグユーティリティ
-- `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI
+- `lib/plugins/debug-tools.ts`: デバッグユーティリティ ✅
+- `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅
+- `app/(protected)/settings/plugins/dev/debug/_components/PluginDebugView.tsx`: デバッグビューコンポーネント ✅
+- `lib/plugins/plugin-loader/sandbox-worker-code.ts`: Worker内console.logの転送 ✅
+- `lib/plugins/plugin-loader/worker-message-handler.ts`: メッセージハンドラー ✅
+
+**実装日**: 2025-11-06
 
 #### 1.5 TypeScript型定義の自動生成（推定: 2時間）✅ **完了**
 
@@ -331,148 +341,165 @@ npm install @fal/plugin-types
 
 ---
 
-### 3. ドキュメント強化（推定: 8時間）
+### 3. ドキュメント強化（推定: 8時間）✅ **完了**
 
-#### 3.1 プラグイン開発チュートリアル（推定: 3時間）
+#### 3.1 プラグイン開発チュートリアル（推定: 3時間）✅ **完了**
 
 **目的**: プラグイン開発の初心者向けチュートリアル
 
 **実装内容**:
 
-- [ ] `docs/guides/plugin-development/tutorial-getting-started.md`: はじめに
-  - [ ] プラグインシステムの概要
-  - [ ] 開発環境のセットアップ
-  - [ ] 最初のプラグイン作成
+- [x] `docs/guides/plugin-development/tutorial-getting-started.md`: はじめに ✅
+  - [x] プラグインシステムの概要 ✅
+  - [x] 開発環境のセットアップ ✅
+  - [x] 最初のプラグイン作成 ✅
 
-- [ ] `docs/guides/plugin-development/tutorial-editor-extension.md`: エディタ拡張チュートリアル
-  - [ ] カスタムマークの作成
-  - [ ] カスタムノードの作成
-  - [ ] エディタコマンドの実装
+- [x] `docs/guides/plugin-development/tutorial-editor-extension.md`: エディタ拡張チュートリアル ✅
+  - [x] カスタムマークの作成 ✅
+  - [x] カスタムノードの作成 ✅
+  - [x] エディタコマンドの実装 ✅
 
-- [ ] `docs/guides/plugin-development/tutorial-ai-extension.md`: AI拡張チュートリアル
-  - [ ] 問題生成器の作成
-  - [ ] プロンプトテンプレートの作成
+- [x] `docs/guides/plugin-development/tutorial-ai-extension.md`: AI拡張チュートリアル ✅
+  - [x] 問題生成器の作成 ✅
+  - [x] プロンプトテンプレートの作成 ✅
 
-- [ ] `docs/guides/plugin-development/tutorial-ui-extension.md`: UI拡張チュートリアル
-  - [ ] Widgetの作成
-  - [ ] Pageの作成
+- [x] `docs/guides/plugin-development/tutorial-ui-extension.md`: UI拡張チュートリアル ✅
+  - [x] Widgetの作成 ✅
+  - [x] Pageの作成 ✅
 
-#### 3.2 APIリファレンスの充実（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 3.2 APIリファレンスの充実（推定: 2時間）✅ **完了**
 
 **目的**: プラグインAPIの詳細なリファレンス
 
 **実装内容**:
 
-- [ ] `docs/guides/plugin-development/api-reference.md`: APIリファレンス
-  - [ ] App API
-  - [ ] Storage API
-  - [ ] Notifications API
-  - [ ] UI API
-  - [ ] Editor API
-  - [ ] AI API
-  - [ ] Data API
-  - [ ] Integration API
+- [x] `docs/guides/plugin-development/api-reference.md`: APIリファレンス ✅
+  - [x] App API ✅
+  - [x] Storage API ✅
+  - [x] Notifications API ✅
+  - [x] UI API ✅
+  - [x] Editor API ✅
+  - [x] AI API ✅
+  - [x] Data API ✅
+  - [x] Integration API ✅
+  - [x] Calendar API ✅
 
-- [ ] 各APIの詳細な説明
-  - [ ] メソッドシグネチャ
-  - [ ] パラメータの説明
-  - [ ] 戻り値の説明
-  - [ ] 使用例
+- [x] 各APIの詳細な説明 ✅
+  - [x] メソッドシグネチャ ✅
+  - [x] パラメータの説明 ✅
+  - [x] 戻り値の説明 ✅
+  - [x] 使用例 ✅
 
-#### 3.3 ベストプラクティスガイド（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 3.3 ベストプラクティスガイド（推定: 2時間）✅ **完了**
 
 **目的**: プラグイン開発のベストプラクティスをまとめたガイド
 
 **実装内容**:
 
-- [ ] `docs/guides/plugin-development/best-practices.md`: ベストプラクティス
-  - [ ] セキュリティのベストプラクティス
-  - [ ] パフォーマンスのベストプラクティス
-  - [ ] エラーハンドリングのベストプラクティス
-  - [ ] テストのベストプラクティス
-  - [ ] コード品質のベストプラクティス
+- [x] `docs/guides/plugin-development/best-practices.md`: ベストプラクティス ✅
+  - [x] セキュリティのベストプラクティス ✅
+  - [x] パフォーマンスのベストプラクティス ✅
+  - [x] エラーハンドリングのベストプラクティス ✅
+  - [x] テストのベストプラクティス ✅
+  - [x] コード品質のベストプラクティス ✅
 
-#### 3.4 トラブルシューティングガイド（推定: 1時間）
+**実装日**: 2025-11-06
+
+#### 3.4 トラブルシューティングガイド（推定: 1時間）✅ **完了**
 
 **目的**: よくある問題と解決方法をまとめたガイド
 
 **実装内容**:
 
-- [ ] `docs/guides/plugin-development/troubleshooting.md`: トラブルシューティング
-  - [ ] よくあるエラーと解決方法
-  - [ ] デバッグ方法
-  - [ ] パフォーマンス問題の解決
-  - [ ] セキュリティ問題の解決
+- [x] `docs/guides/plugin-development/troubleshooting.md`: トラブルシューティング ✅
+  - [x] よくあるエラーと解決方法 ✅
+  - [x] デバッグ方法 ✅
+  - [x] パフォーマンス問題の解決 ✅
+  - [x] セキュリティ問題の解決 ✅
+
+**実装日**: 2025-11-06
 
 ---
 
-### 4. テストと品質保証（推定: 8時間）
+### 4. テストと品質保証（推定: 8時間）✅ **完了**
 
-#### 4.1 プラグイン用テストフレームワーク（推定: 3時間）
+#### 4.1 プラグイン用テストフレームワーク（推定: 3時間）✅ **完了**
 
 **目的**: プラグイン開発者向けのテストフレームワーク
 
 **実装内容**:
 
-- [ ] `lib/plugins/testing/plugin-test-utils.ts`: テストユーティリティ
-  - [ ] プラグインAPIのモック
-  - [ ] プラグインのアクティベーション/デアクティベーション
-  - [ ] テスト用のヘルパー関数
+- [x] `lib/plugins/testing/plugin-test-utils.ts`: テストユーティリティ ✅
+  - [x] プラグインAPIのモック ✅
+  - [x] プラグインのアクティベーション/デアクティベーション ✅
+  - [x] テスト用のヘルパー関数 ✅
 
-- [ ] `lib/plugins/testing/plugin-test-runner.ts`: テストランナー
-  - [ ] プラグインのテスト実行
-  - [ ] カバレッジレポート生成
+- [x] テストランナー（既存の`test-plugin.ts`を使用） ✅
+  - [x] プラグインのテスト実行 ✅
+  - [x] カバレッジレポート生成 ✅
 
 **実装ファイル**:
-- `lib/plugins/testing/plugin-test-utils.ts`: テストユーティリティ
-- `lib/plugins/testing/plugin-test-runner.ts`: テストランナー
+- `lib/plugins/testing/plugin-test-utils.ts`: テストユーティリティ ✅
+- `scripts/plugins/test-plugin.ts`: テストランナー（既存） ✅
 
-#### 4.2 コード品質チェックツール（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 4.2 コード品質チェックツール（推定: 2時間）✅ **完了**
 
 **目的**: プラグインコードの品質をチェックするツール
 
 **実装内容**:
 
-- [ ] `scripts/plugins/lint-plugin.ts`: リントツール
-  - [ ] ESLint/Biomeによるコード品質チェック
-  - [ ] プラグイン固有のルール
+- [x] `scripts/plugins/lint-plugin.ts`: リントツール ✅
+  - [x] Biomeによるコード品質チェック ✅
+  - [x] プラグイン固有のルール ✅
 
-- [ ] `scripts/plugins/validate-plugin.ts`: 検証ツール
-  - [ ] マニフェスト検証
-  - [ ] 型チェック
-  - [ ] 依存関係チェック
+- [x] `scripts/plugins/validate-plugin.ts`: 検証ツール ✅
+  - [x] マニフェスト検証 ✅
+  - [x] 型チェック ✅
+  - [x] 依存関係チェック ✅
 
 **実装ファイル**:
-- `scripts/plugins/lint-plugin.ts`: リントツール
-- `scripts/plugins/validate-plugin.ts`: 検証ツール
+- `scripts/plugins/lint-plugin.ts`: リントツール ✅
+- `scripts/plugins/validate-plugin.ts`: 検証ツール ✅
 
-#### 4.3 セキュリティチェックツール（推定: 2時間）
+**実装日**: 2025-11-06
+
+#### 4.3 セキュリティチェックツール（推定: 2時間）✅ **完了**
 
 **目的**: プラグインコードのセキュリティをチェックするツール
 
 **実装内容**:
 
-- [ ] `scripts/plugins/security-check.ts`: セキュリティチェックツール
-  - [ ] 危険なAPIの使用チェック
-  - [ ] サンドボックス違反の検出
-  - [ ] 依存関係の脆弱性チェック
+- [x] `scripts/plugins/security-check.ts`: セキュリティチェックツール ✅
+  - [x] 危険なAPIの使用チェック ✅
+  - [x] サンドボックス違反の検出 ✅
+  - [x] 依存関係の脆弱性チェック ✅
 
 **実装ファイル**:
-- `scripts/plugins/security-check.ts`: セキュリティチェック
+- `scripts/plugins/security-check.ts`: セキュリティチェック ✅
 
-#### 4.4 パフォーマンステストツール（推定: 1時間）
+**実装日**: 2025-11-06
+
+#### 4.4 パフォーマンステストツール（推定: 1時間）✅ **完了**
 
 **目的**: プラグインのパフォーマンスを測定するツール
 
 **実装内容**:
 
-- [ ] `scripts/plugins/benchmark-plugin.ts`: ベンチマークツール
-  - [ ] プラグインの起動時間測定
-  - [ ] API呼び出しのパフォーマンス測定
-  - [ ] メモリ使用量測定
+- [x] `scripts/plugins/benchmark-plugin.ts`: ベンチマークツール ✅
+  - [x] プラグインの起動時間測定 ✅
+  - [x] API呼び出しのパフォーマンス測定 ✅
+  - [x] メモリ使用量測定 ✅
 
 **実装ファイル**:
-- `scripts/plugins/benchmark-plugin.ts`: ベンチマークツール
+- `scripts/plugins/benchmark-plugin.ts`: ベンチマークツール ✅
+
+**実装日**: 2025-11-06
 
 ---
 
