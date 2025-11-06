@@ -13,22 +13,31 @@
 	"configSchema": {
 		"type": "object",
 		"properties": {
-			"owner": {
+			"github_oauth_token": {
 				"type": "string",
-				"description": "GitHubリポジトリのオーナー名",
+				"description": "GitHub認証トークン（Personal Access Token）",
+				"ui:widget": "password",
 				"required": true
 			},
-			"repo": {
+			"githubUser": {
 				"type": "string",
-				"description": "GitHubリポジトリ名",
+				"description": "GitHubユーザー名（このユーザーのリポジトリを取得します）",
+				"ui:widget": "githubUserSelector",
+				"required": true
+			},
+			"selectedRepos": {
+				"type": "string",
+				"description": "監視するリポジトリ（複数選択可能）",
+				"ui:widget": "githubRepoSelector",
 				"required": true
 			}
 		},
-		"required": ["owner", "repo"]
+		"required": ["github_oauth_token", "githubUser", "selectedRepos"]
 	},
 	"defaultConfig": {
-		"owner": "",
-		"repo": ""
+		"github_oauth_token": "",
+		"githubUser": "",
+		"selectedRepos": "[]"
 	},
 	"keywords": ["github", "commits", "statistics", "calendar", "widget"]
 }

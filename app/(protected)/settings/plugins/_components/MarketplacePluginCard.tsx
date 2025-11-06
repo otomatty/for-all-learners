@@ -21,8 +21,11 @@
  */
 
 import { Download, Eye, Shield, Star } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { installPlugin } from "@/app/_actions/plugins";
+import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +56,39 @@ export function MarketplacePluginCard({
 	isInstalled,
 }: MarketplacePluginCardProps) {
 	const [showDetails, setShowDetails] = useState(false);
+	const router = useRouter();
+	const [isPending, startTransition] = useTransition();
+	const { loadPlugin } = useLoadPlugin();
+
+	const handleInstall = async () => {
+		startTransition(async () => {
+			try {
+				// Install plugin (database registration only)
+				const formData = new FormData();
+				formData.append("pluginId", plugin.pluginId);
+				await installPlugin(formData);
+
+				// Load plugin in browser
+				const loadResult = await loadPlugin(plugin);
+
+				if (loadResult.success) {
+					toast.success(`${plugin.name} をインストールしました`);
+					router.refresh();
+				} else {
+					toast.error(
+						`インストールしましたが、プラグインの読み込みに失敗しました: ${loadResult.error}`,
+					);
+					router.refresh();
+				}
+			} catch (error) {
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "プラグインのインストールに失敗しました",
+				);
+			}
+		});
+	};
 
 	return (
 		<Card>
@@ -137,13 +173,15 @@ export function MarketplacePluginCard({
 						インストール済み
 					</Button>
 				) : (
-					<form action={installPlugin}>
-						<input type="hidden" name="pluginId" value={plugin.pluginId} />
-						<Button type="submit" size="sm" className="gap-2">
-							<Download className="h-4 w-4" />
-							インストール
-						</Button>
-					</form>
+					<Button
+						onClick={handleInstall}
+						disabled={isPending}
+						size="sm"
+						className="gap-2"
+					>
+						<Download className="h-4 w-4" />
+						{isPending ? "インストール中..." : "インストール"}
+					</Button>
 				)}
 			</CardFooter>
 		</Card>

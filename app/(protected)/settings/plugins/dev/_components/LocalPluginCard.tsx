@@ -1,9 +1,10 @@
 "use client";
 
-import { Power, PowerOff, RefreshCw } from "lucide-react";
+import { Power, PowerOff, RefreshCw, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { publishPlugin } from "@/app/_actions/plugin-publish";
 import {
 	type LocalPluginInfo,
 	loadLocalPlugin,
@@ -34,6 +35,7 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [isReloading, setIsReloading] = useState(false);
+	const [isPublishing, setIsPublishing] = useState(false);
 
 	const handleLoad = () => {
 		startTransition(async () => {
@@ -98,6 +100,29 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 		});
 	};
 
+	const handlePublish = () => {
+		setIsPublishing(true);
+		startTransition(async () => {
+			try {
+				const result = await publishPlugin(plugin.id);
+				if (result.success) {
+					toast.success(result.message || "プラグインを公開しました");
+					router.refresh();
+				} else {
+					toast.error(result.message || "プラグインの公開に失敗しました");
+				}
+			} catch (error) {
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "プラグインの公開に失敗しました",
+				);
+			} finally {
+				setIsPublishing(false);
+			}
+		});
+	};
+
 	return (
 		<Card>
 			<CardHeader>
@@ -146,7 +171,7 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 					</div>
 				</div>
 			</CardContent>
-			<CardFooter className="flex gap-2">
+			<CardFooter className="flex gap-2 flex-wrap">
 				{plugin.isLoaded ? (
 					<>
 						<Button
@@ -181,6 +206,17 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 						読み込む
 					</Button>
 				)}
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={handlePublish}
+					disabled={isPublishing || isPending}
+				>
+					<Upload
+						className={`h-4 w-4 mr-2 ${isPublishing ? "animate-spin" : ""}`}
+					/>
+					公開
+				</Button>
 			</CardFooter>
 		</Card>
 	);
