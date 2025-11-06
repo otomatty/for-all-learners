@@ -17,8 +17,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
+import { fileURLToPath } from "node:url";
 import logger from "../../lib/logger";
 import { PluginLoader } from "../../lib/plugins/plugin-loader";
 import { validateManifest } from "../../lib/plugins/plugin-loader/manifest-validator";

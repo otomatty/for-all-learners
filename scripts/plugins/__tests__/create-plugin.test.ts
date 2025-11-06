@@ -334,5 +334,49 @@ describe("createPlugin", () => {
 			// Should not throw error
 			expect(mockWriteFileSync).toHaveBeenCalled();
 		});
+
+		it("should default to hello-world template when no template args provided", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("templates/plugins/hello-world")) {
+					return true;
+				}
+				if (path.includes("plugins/examples")) {
+					return false;
+				}
+				return true;
+			});
+			mockReadFileSync.mockReturnValue("{{PLUGIN_NAME}}");
+
+			// Call with empty args array (no template specified)
+			await createPlugin("my-plugin", []);
+
+			// Should use hello-world template
+			expect(mockReadFileSync).toHaveBeenCalledWith(
+				expect.stringContaining("templates/plugins/hello-world"),
+				"utf-8",
+			);
+		});
+
+		it("should default to hello-world template when only flag args provided", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("templates/plugins/hello-world")) {
+					return true;
+				}
+				if (path.includes("plugins/examples")) {
+					return false;
+				}
+				return true;
+			});
+			mockReadFileSync.mockReturnValue("{{PLUGIN_NAME}}");
+
+			// Call with only flag args (no positional template arg)
+			await createPlugin("my-plugin", ["--some-flag"]);
+
+			// Should use hello-world template as default
+			expect(mockReadFileSync).toHaveBeenCalledWith(
+				expect.stringContaining("templates/plugins/hello-world"),
+				"utf-8",
+			);
+		});
 	});
 });

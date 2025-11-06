@@ -1,9 +1,10 @@
 # F.A.L プラグイン開発ガイド
 
-**最終更新**: 2025-11-04  
+**最終更新**: 2025-11-06  
 **対象**: プラグイン開発者  
 **前提知識**: TypeScript, Web Workers, React  
-**Phase 2対応**: ✅ エディタ拡張システム対応済み
+**Phase 2対応**: ✅ エディタ拡張システム対応済み  
+**Phase 4対応**: ✅ 開発ツールとサンプルプラグイン対応済み
 
 ---
 
@@ -12,18 +13,20 @@
 1. [概要](#概要)
 2. [プラグインシステムの基本](#プラグインシステムの基本)
 3. [プラグインの作成](#プラグインの作成)
-4. [マニフェストの定義](#マニフェストの定義)
-5. [プラグインAPI](#プラグインapi)
+4. [CLI開発ツール](#cli開発ツール) ✅
+5. [マニフェストの定義](#マニフェストの定義)
+6. [プラグインAPI](#プラグインapi)
    - [App API](#app-api)
    - [Storage API](#storage-api)
    - [Notifications API](#notifications-api)
    - [UI API](#ui-api-phase-1)
    - [Editor API](#editor-api-phase-2) ✅
-6. [拡張ポイント](#拡張ポイント)
-7. [開発環境のセットアップ](#開発環境のセットアップ)
-8. [デバッグとテスト](#デバッグとテスト)
-9. [公開とマーケットプレイス](#公開とマーケットプレイス)
-10. [FAQ](#faq)
+7. [拡張ポイント](#拡張ポイント)
+8. [開発環境のセットアップ](#開発環境のセットアップ)
+9. [デバッグとテスト](#デバッグとテスト)
+10. [サンプルプラグイン](#サンプルプラグイン) ✅
+11. [公開とマーケットプレイス](#公開とマーケットプレイス)
+12. [FAQ](#faq)
 
 ## 詳細ドキュメント
 
@@ -96,7 +99,34 @@ F.A.L プラグインシステムは、ユーザーがアプリケーション�
 
 ## プラグインの作成
 
-### 1. プロジェクトのセットアップ
+プラグインを作成する方法は2つあります：
+
+1. **CLIツールを使用（推奨）**: テンプレートから自動生成
+2. **手動作成**: ゼロからプロジェクトを作成
+
+### 方法1: CLIツールを使用（推奨）
+
+F.A.L にはプラグイン開発を支援するCLIツールが用意されています。これを使用すると、テンプレートから必要なファイルが自動生成されます。
+
+```bash
+# プラグインを生成
+bun run plugins:create my-plugin
+
+# テンプレートを指定（オプション）
+bun run plugins:create my-plugin --template=hello-world
+```
+
+利用可能なテンプレート：
+- `hello-world`: 基本的なプラグイン（デフォルト）
+- `editor-extension`: エディタ拡張テンプレート
+- `ai-extension`: AI拡張テンプレート
+- `ui-extension`: UI拡張テンプレート
+- `data-processor-extension`: データ処理拡張テンプレート
+- `integration-extension`: 統合拡張テンプレート
+
+詳細は [CLI開発ツール](#cli開発ツール) セクションを参照してください。
+
+### 方法2: 手動作成
 
 ```bash
 # プラグインプロジェクトを作成
@@ -274,6 +304,159 @@ export default activate;
 
 ```bash
 npm run build
+```
+
+---
+
+## CLI開発ツール
+
+F.A.L にはプラグイン開発を効率化するためのCLIツールが用意されています。これらのツールを使用することで、プラグインの生成、ビルド、テスト、品質チェックなどを簡単に実行できます。
+
+### 利用可能なコマンド
+
+#### プラグインの生成
+
+```bash
+# 基本的なプラグインを生成
+bun run plugins:create <plugin-name>
+
+# テンプレートを指定して生成
+bun run plugins:create <plugin-name> --template=<template-name>
+```
+
+利用可能なテンプレート：
+- `hello-world`: 最小限のプラグイン（基本API使用例）
+- `editor-extension`: エディタ拡張プラグイン
+- `ai-extension`: AI機能拡張プラグイン
+- `ui-extension`: UI拡張プラグイン
+- `data-processor-extension`: データ処理拡張プラグイン
+- `integration-extension`: 統合拡張プラグイン
+
+#### プラグインのビルド
+
+```bash
+# プラグインをビルド
+bun run plugins:build <plugin-id>
+
+# 例: hello-worldプラグインをビルド
+bun run plugins:build com.example.hello-world
+```
+
+ビルドプロセス：
+1. TypeScriptの型チェック
+2. esbuildによるバンドル
+3. マニフェスト検証
+4. 出力ディレクトリへの配置
+
+#### プラグインのテスト
+
+```bash
+# プラグインのテストを実行
+bun run plugins:test <plugin-id>
+
+# カバレッジレポート付きで実行
+bun run plugins:test <plugin-id> --coverage
+# または
+bun run plugins:test <plugin-id> -c
+```
+
+テストは Vitest を使用して実行されます。プラグインの `__tests__` ディレクトリ内のテストファイルが実行されます。
+
+#### 開発モード
+
+```bash
+# 開発モードを起動（ウォッチモード）
+bun run plugins:dev <plugin-id>
+```
+
+開発モードでは：
+- ファイル変更時に自動ビルド
+- ローカル開発環境での自動読み込み（準備中）
+
+#### プラグインの検証
+
+```bash
+# プラグインの検証（マニフェスト、型、依存関係）
+bun run plugins:validate <plugin-id>
+```
+
+検証内容：
+- マニフェストファイルの検証
+- TypeScriptの型チェック
+- 依存関係のチェック
+
+#### コード品質チェック
+
+```bash
+# リントチェック
+bun run plugins:lint <plugin-id>
+
+# 自動修正
+bun run plugins:lint <plugin-id> --fix
+```
+
+Biome を使用してコード品質をチェックします。
+
+#### セキュリティチェック
+
+```bash
+# セキュリティチェック
+bun run plugins:security-check <plugin-id>
+```
+
+チェック内容：
+- 危険なAPIの使用チェック（DOMアクセス、eval等）
+- サンドボックス違反の検出
+- 依存関係の脆弱性チェック
+
+#### パフォーマンステスト
+
+```bash
+# ベンチマークテスト
+bun run plugins:benchmark <plugin-id>
+```
+
+測定内容：
+- プラグインの起動時間
+- API呼び出しのパフォーマンス
+- メモリ使用量
+
+#### 型定義の生成
+
+```bash
+# TypeScript型定義を生成
+bun run plugins:generate-types
+```
+
+プラグイン開発者向けの型定義パッケージ（`@fal/plugin-types`）を生成します。
+
+### ヘルプの表示
+
+```bash
+# コマンド一覧とヘルプを表示
+bun run plugins:help
+```
+
+### 使用例
+
+```bash
+# 1. プラグインを生成
+bun run plugins:create my-first-plugin --template=hello-world
+
+# 2. プラグインをビルド
+bun run plugins:build com.example.my-first-plugin
+
+# 3. プラグインをテスト
+bun run plugins:test com.example.my-first-plugin --coverage
+
+# 4. セキュリティチェック
+bun run plugins:security-check com.example.my-first-plugin
+
+# 5. パフォーマンステスト
+bun run plugins:benchmark com.example.my-first-plugin
+
+# 6. 開発モードで起動
+bun run plugins:dev com.example.my-first-plugin
 ```
 
 ---
@@ -513,7 +696,25 @@ await api.editor.setSelection(5, 10);
 2. プラグインをビルド
 3. ビルドしたプラグインを手動でインストール
 
-### 開発サーバー
+### CLIツールを使用した開発（推奨）
+
+CLIツールを使用することで、開発を効率化できます：
+
+```bash
+# 1. プラグインを生成
+bun run plugins:create my-plugin
+
+# 2. 開発モードで起動（ウォッチモード）
+bun run plugins:dev my-plugin
+
+# 別のターミナルで F.A.L を起動
+cd /path/to/for-all-learners
+bun dev
+```
+
+### 手動ビルド
+
+CLIツールを使用しない場合：
 
 ```bash
 # プラグインを watch モードでビルド
@@ -522,6 +723,13 @@ npm run watch
 # 別のターミナルで F.A.L を起動
 cd /path/to/for-all-learners
 bun dev
+```
+
+または、CLIツールを使用：
+
+```bash
+# プラグインをビルド
+bun run plugins:build <plugin-id>
 ```
 
 ---
@@ -538,16 +746,72 @@ bun dev
 
 ### テスト
 
+プラグインのテストは Vitest を使用します。CLIツールを使用してテストを実行できます：
+
+```bash
+# テストを実行
+bun run plugins:test <plugin-id>
+
+# カバレッジレポート付きで実行
+bun run plugins:test <plugin-id> --coverage
+```
+
+テストコードの例：
+
 ```typescript
 // プラグインのテスト (Vitest使用)
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import activate from '../src/index';
+
+// モックAPIの作成（テスト用）
+function createMockAPI() {
+  return {
+    app: {
+      getVersion: () => '1.0.0',
+      getName: () => 'F.A.L Test',
+      getUserId: async () => 'test-user-123',
+    },
+    storage: {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+      keys: vi.fn(() => Promise.resolve([])),
+      clear: vi.fn(),
+    },
+    notifications: {
+      show: vi.fn(),
+      info: vi.fn(),
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+    },
+    ui: {
+      registerCommand: vi.fn(),
+      unregisterCommand: vi.fn(),
+      showDialog: vi.fn(),
+    },
+    // 他のAPIも同様にモック
+  };
+}
 
 describe('My Plugin', () => {
-  it('should do something', () => {
-    // テストコード
+  it('should activate successfully', async () => {
+    const api = createMockAPI();
+    const result = await activate(api);
+    expect(result).toBeDefined();
+  });
+
+  it('should register commands', async () => {
+    const api = createMockAPI();
+    await activate(api);
+    
+    // コマンドが登録されたことを確認
+    expect(api.ui.registerCommand).toHaveBeenCalled();
   });
 });
 ```
+
+テストユーティリティの詳細については、[ベストプラクティス](./plugin-development/best-practices.md) を参照してください。
 
 ---
 
@@ -593,11 +857,147 @@ describe('My Plugin', () => {
 
 ## サンプルプラグイン
 
-公式サンプルプラグインは以下のリポジトリで公開予定です：
+F.A.L には各拡張ポイントの実装例を示すサンプルプラグインが用意されています。これらのプラグインは `plugins/examples/` ディレクトリに配置されています。
 
-- `fal-plugin-example-simple` - シンプルなプラグイン
-- `fal-plugin-example-storage` - ストレージ活用例
-- `fal-plugin-example-commands` - コマンド登録例
+### Hello World プラグイン
+
+**プラグインID**: `com.example.hello-world`  
+**場所**: `plugins/examples/hello-world/`
+
+プラグインシステムの基本構造を説明する最小限のサンプルです。
+
+**主な機能**:
+- プラグインのアクティベーションと通知表示
+- コマンド登録（"Hello World を実行"、"ストレージ内容を表示"）
+- Storage APIの使用（挨拶回数の保存）
+- プラグインメソッドの公開（`getGreetingCount()`, `resetGreetingCount()`）
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.hello-world
+
+# プラグインをテスト
+bun run plugins:test com.example.hello-world
+```
+
+### Editor Extension サンプル
+
+**プラグインID**: `com.example.editor-extension`  
+**場所**: `plugins/examples/editor-extension/`
+
+エディタ拡張の実装例を示すサンプルです。
+
+**主な機能**:
+- エディタコマンドの実行例
+- コンテンツ操作（取得、設定、挿入）
+- 選択範囲の操作
+- プラグインメソッドの公開（`toggleBold()`, `getWordCount()`, `insertTimestamp()`）
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.editor-extension
+
+# プラグインをテスト
+bun run plugins:test com.example.editor-extension
+```
+
+### AI Extension サンプル
+
+**プラグインID**: `com.example.ai-extension`  
+**場所**: `plugins/examples/ai-extension/`
+
+AI機能拡張の実装例を示すサンプルです。
+
+**主な機能**:
+- カスタム問題生成器の実装（複数タイプ対応）
+- カスタムプロンプトテンプレートの実装（2種類）
+- コンテンツアナライザーの実装（2種類）
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.ai-extension
+
+# プラグインをテスト
+bun run plugins:test com.example.ai-extension
+```
+
+### UI Extension サンプル
+
+**プラグインID**: `com.example.ui-extension`  
+**場所**: `plugins/examples/ui-extension/`
+
+UI拡張の実装例を示すサンプルです。
+
+**主な機能**:
+- Widget登録の実装例（2種類）
+- Page登録の実装例
+- Sidebar Panel登録の実装例
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.ui-extension
+
+# プラグインをテスト
+bun run plugins:test com.example.ui-extension
+```
+
+### Data Processor Extension サンプル
+
+**プラグインID**: `com.example.data-processor-extension`  
+**場所**: `plugins/examples/data-processor-extension/`
+
+データ処理拡張の実装例を示すサンプルです。
+
+**主な機能**:
+- Importerの実装例（Markdown、Text）
+- Exporterの実装例（JSON、Markdown）
+- Transformerの実装例（大文字変換、プレフィックス追加）
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.data-processor-extension
+
+# プラグインをテスト
+bun run plugins:test com.example.data-processor-extension
+```
+
+### Integration Extension サンプル
+
+**プラグインID**: `com.example.integration-extension`  
+**場所**: `plugins/examples/integration-extension/`
+
+外部統合拡張の実装例を示すサンプルです。
+
+**主な機能**:
+- OAuth連携の実装例（サンプルOAuth）
+- Webhookの実装例（イベント保存機能付き）
+- External API呼び出しの実装例
+
+**使用方法**:
+```bash
+# プラグインをビルド
+bun run plugins:build com.example.integration-extension
+
+# プラグインをテスト
+bun run plugins:test com.example.integration-extension
+```
+
+### サンプルプラグインの確認方法
+
+すべてのサンプルプラグインは `plugins/examples/` ディレクトリに配置されています。各プラグインには以下のファイルが含まれています：
+
+- `src/index.ts`: プラグインコード
+- `plugin.json`: マニフェストファイル
+- `README.md`: プラグインの説明と使用方法
+- `package.json`: パッケージ設定
+- `tsconfig.json`: TypeScript設定
+
+サンプルプラグインのコードを参照することで、各拡張ポイントの実装方法を学習できます。
 
 ---
 

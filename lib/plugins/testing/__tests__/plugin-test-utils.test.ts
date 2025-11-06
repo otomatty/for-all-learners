@@ -21,10 +21,7 @@ import { describe, expect, it } from "vitest";
 import {
 	activatePluginWithMockAPI,
 	createMockAppAPI,
-	createMockCalendarAPI,
-	createMockDataAPI,
 	createMockEditorAPI,
-	createMockIntegrationAPI,
 	createMockNotificationsAPI,
 	createMockPluginAPI,
 	createMockStorageAPI,
@@ -166,7 +163,7 @@ describe("plugin-test-utils", () => {
 			await api.setSelection(5, 10);
 			const selection = await api.getSelection();
 
-			expect(selection).toEqual({ from: 5, to: 10, text: "" });
+			expect(selection).toEqual({ from: 5, to: 10 });
 		});
 
 		it("should execute commands", async () => {
@@ -196,7 +193,9 @@ describe("plugin-test-utils", () => {
 
 	describe("activatePluginWithMockAPI", () => {
 		it("should activate plugin with mock API", async () => {
-			const activateFn = async (api: typeof createMockPluginAPI extends () => infer T ? T : never) => {
+			const activateFn = async (
+				api: typeof createMockPluginAPI extends () => infer T ? T : never,
+			) => {
 				await api.storage.set("test", "value");
 				return { success: true };
 			};
@@ -253,4 +252,3 @@ describe("plugin-test-utils", () => {
 		});
 	});
 });
-

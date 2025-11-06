@@ -16,10 +16,10 @@
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
  */
 
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 import logger from "../../lib/logger";
 import { validateManifest } from "../../lib/plugins/plugin-loader/manifest-validator";
 import type { PluginManifest } from "../../types/plugin";

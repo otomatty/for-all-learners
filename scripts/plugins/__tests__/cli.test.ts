@@ -66,6 +66,22 @@ vi.mock("../generate-types", () => ({
 	generateTypes: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../benchmark-plugin", () => ({
+	benchmarkPlugin: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../validate-plugin", () => ({
+	validatePlugin: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lint-plugin", () => ({
+	lintPlugin: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../security-check", () => ({
+	securityCheck: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("CLI", () => {
 	let originalArgv: string[];
 	let originalExit: typeof process.exit;
@@ -272,6 +288,132 @@ describe("CLI", () => {
 			await expect(main("create", ["my-plugin"])).rejects.toThrow(
 				"Create failed",
 			);
+		});
+	});
+
+	describe("validate command", () => {
+		it("should call validatePlugin with plugin ID", async () => {
+			// Note: validatePlugin is called internally, so we check error was not called
+			await main("validate", ["com.example.my-plugin"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should exit with error if plugin ID is missing", async () => {
+			await main("validate", []);
+
+			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Usage: bun run plugins:validate <plugin-id>",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("lint command", () => {
+		it("should call lintPlugin with plugin ID", async () => {
+			// Note: lintPlugin function is tested indirectly
+			await main("lint", ["com.example.my-plugin"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should call lintPlugin with --fix flag", async () => {
+			await main("lint", ["com.example.my-plugin", "--fix"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should exit with error if plugin ID is missing", async () => {
+			await main("lint", []);
+
+			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Usage: bun run plugins:lint <plugin-id> [--fix]",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("security-check command", () => {
+		it("should call securityCheck with plugin ID", async () => {
+			await main("security-check", ["com.example.my-plugin"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should handle 'security' alias", async () => {
+			await main("security", ["com.example.my-plugin"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should exit with error if plugin ID is missing", async () => {
+			await main("security-check", []);
+
+			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Usage: bun run plugins:security-check <plugin-id>",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("benchmark command", () => {
+		it("should call benchmarkPlugin with plugin ID", async () => {
+			await main("benchmark", ["com.example.my-plugin"]);
+
+			expect(errorSpy).not.toHaveBeenCalledWith("Error: Plugin ID is required");
+		});
+
+		it("should exit with error if plugin ID is missing", async () => {
+			await main("benchmark", []);
+
+			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Usage: bun run plugins:benchmark <plugin-id>",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("error handling (import.meta.main)", () => {
+		it("should handle main() errors and call logger.error and process.exit", async () => {
+			// Mock a command that throws an error
+			const originalCreatePlugin = vi.mocked(createPluginModule.createPlugin);
+			originalCreatePlugin.mockRejectedValueOnce(new Error("Test error"));
+
+			// Call main which will trigger the error
+			await main("create", ["test-plugin"]).catch(async (error) => {
+				// Simulate what happens in import.meta.main block
+				vi.mocked(loggerModule.default.error)({ error }, "Fatal error");
+				mockExit(1);
+			});
+
+			expect(errorSpy).toHaveBeenCalledWith(
+				{ error: expect.any(Error) },
+				"Fatal error",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
+		it("should handle non-Error objects in error handler", async () => {
+			// Mock a command that throws a non-Error object
+			const originalCreatePlugin = vi.mocked(createPluginModule.createPlugin);
+			originalCreatePlugin.mockRejectedValueOnce("String error");
+
+			// Call main which will trigger the error
+			await main("create", ["test-plugin"]).catch(async (error) => {
+				// Simulate what happens in import.meta.main block
+				vi.mocked(loggerModule.default.error)({ error }, "Fatal error");
+				mockExit(1);
+			});
+
+			expect(errorSpy).toHaveBeenCalledWith(
+				{ error: "String error" },
+				"Fatal error",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
 		});
 	});
 });

@@ -18,7 +18,11 @@
 		"plugins:test": "bun run scripts/plugins/cli.ts test",
 		"plugins:dev": "bun run scripts/plugins/cli.ts dev",
 		"plugins:help": "bun run scripts/plugins/cli.ts help",
-		"plugins:generate-types": "bun run scripts/plugins/generate-types.ts"
+		"plugins:generate-types": "bun run scripts/plugins/generate-types.ts",
+		"plugins:validate": "bun run scripts/plugins/cli.ts validate",
+		"plugins:lint": "bun run scripts/plugins/cli.ts lint",
+		"plugins:security-check": "bun run scripts/plugins/cli.ts security-check",
+		"plugins:benchmark": "bun run scripts/plugins/cli.ts benchmark"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.68.0",
@@ -133,6 +137,7 @@
 		"@types/react-dom": "^19.2.2",
 		"@types/sanitize-html": "^2.16.0",
 		"@types/uuid": "^10.0.0",
+		"@vitest/coverage-v8": "^4.0.7",
 		"@vitest/mocker": "^4.0.6",
 		"@vitest/ui": "^4.0.6",
 		"happy-dom": "^20.0.10",

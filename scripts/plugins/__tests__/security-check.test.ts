@@ -86,8 +86,14 @@ describe("securityCheck", () => {
 	describe("plugin directory", () => {
 		it("should exit if plugin not found", async () => {
 			mockExistsSync.mockReturnValue(false);
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await securityCheck("com.example.test-plugin");
+			await expect(securityCheck("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -122,8 +128,14 @@ describe("securityCheck", () => {
 			mockReadFileSync.mockReturnValue(
 				"const element = document.getElementById('test');",
 			);
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await securityCheck("com.example.test-plugin");
+			await expect(securityCheck("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -140,8 +152,14 @@ describe("securityCheck", () => {
 
 		it("should detect eval usage", async () => {
 			mockReadFileSync.mockReturnValue("eval('console.log(1)');");
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await securityCheck("com.example.test-plugin");
+			await expect(securityCheck("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -158,8 +176,14 @@ describe("securityCheck", () => {
 
 		it("should detect fetch usage", async () => {
 			mockReadFileSync.mockReturnValue("fetch('https://example.com');");
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await securityCheck("com.example.test-plugin");
+			await expect(securityCheck("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -196,6 +220,27 @@ describe("securityCheck", () => {
 
 			await securityCheck("com.example.test-plugin");
 
+			expect(infoSpy).toHaveBeenCalledWith("No dangerous API usage detected");
+		});
+
+		it("should find plugin using kebab-case directory", async () => {
+			// Mock existsSync to return true for kebab-case path
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("com-example-test-plugin")) {
+					return true;
+				}
+				if (path.includes("plugins/examples")) {
+					return false;
+				}
+				if (path.includes("src")) {
+					return false;
+				}
+				return false;
+			});
+
+			await securityCheck("com.example.test-plugin");
+
+			// Should not throw error and should complete successfully
 			expect(infoSpy).toHaveBeenCalledWith("No dangerous API usage detected");
 		});
 	});
@@ -272,6 +317,67 @@ describe("securityCheck", () => {
 
 			expect(infoSpy).toHaveBeenCalledWith(
 				"No known vulnerabilities in dependencies",
+			);
+		});
+
+		it("should handle invalid package.json structure", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("plugins/examples")) {
+					return true;
+				}
+				if (path.includes("src")) {
+					return false;
+				}
+				if (path.includes("package.json")) {
+					return true;
+				}
+				return false;
+			});
+			// Return invalid JSON (array instead of object)
+			mockReadFileSync.mockReturnValue("[]");
+
+			await securityCheck("com.example.test-plugin");
+
+			expect(warnSpy).toHaveBeenCalledWith("Invalid package.json structure");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"No known vulnerabilities in dependencies",
+			);
+		});
+	});
+
+	describe("file reading error handling", () => {
+		beforeEach(() => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("plugins/examples")) {
+					return true;
+				}
+				if (path.includes("src")) {
+					return true;
+				}
+				return false;
+			});
+		});
+
+		it("should handle file read errors gracefully", async () => {
+			mockReaddirSync.mockReturnValue([
+				{
+					isFile: () => true,
+					name: "index.ts",
+				},
+			]);
+			mockReadFileSync.mockImplementation(() => {
+				throw new Error("Permission denied");
+			});
+
+			await securityCheck("com.example.test-plugin");
+
+			// Should not crash, but may log warnings
+			expect(warnSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					file: expect.any(String),
+					error: expect.any(Error),
+				}),
+				"Failed to read file for security check",
 			);
 		});
 	});

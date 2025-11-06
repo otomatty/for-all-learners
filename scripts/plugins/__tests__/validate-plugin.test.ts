@@ -17,7 +17,6 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as loggerModule from "@/lib/logger";
 import * as manifestValidatorModule from "@/lib/plugins/plugin-loader/manifest-validator";
@@ -108,8 +107,14 @@ describe("validatePlugin", () => {
 	describe("plugin directory", () => {
 		it("should exit if plugin not found", async () => {
 			mockExistsSync.mockReturnValue(false);
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -137,16 +142,18 @@ describe("validatePlugin", () => {
 				return false;
 			});
 			mockReadFileSync.mockReturnValue("{}");
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: [],
-			});
+			}));
 
 			await validatePlugin("com.example.test-plugin");
 
 			expect(infoSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ pluginDir: expect.stringContaining("com-example-test-plugin") }),
+				expect.objectContaining({
+					pluginDir: expect.stringContaining("com-example-test-plugin"),
+				}),
 				"Plugin directory",
 			);
 		});
@@ -181,11 +188,11 @@ describe("validatePlugin", () => {
 					main: "src/index.ts",
 				}),
 			);
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: [],
-			});
+			}));
 
 			await validatePlugin("com.example.test-plugin");
 
@@ -193,15 +200,57 @@ describe("validatePlugin", () => {
 			expect(infoSpy).toHaveBeenCalledWith("Manifest validation passed");
 		});
 
+		it("should handle manifest JSON parse errors", async () => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes("plugins/examples")) {
+					return true;
+				}
+				if (path.includes("plugin.json")) {
+					return true;
+				}
+				return false;
+			});
+			mockReadFileSync.mockImplementation((path: string) => {
+				if (path.includes("plugin.json")) {
+					return "invalid json {";
+				}
+				return "{}";
+			});
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
+
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
+
+			expect(errorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					errors: expect.arrayContaining([
+						expect.stringContaining("Invalid JSON in manifest"),
+					]),
+				}),
+				"Manifest validation failed",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
 		it("should exit if manifest validation fails", async () => {
 			mockReadFileSync.mockReturnValue("{}");
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: false,
 				errors: ["Invalid manifest"],
 				warnings: [],
+			}));
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
 			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({ errors: ["Invalid manifest"] }),
@@ -212,11 +261,11 @@ describe("validatePlugin", () => {
 
 		it("should warn if manifest has warnings", async () => {
 			mockReadFileSync.mockReturnValue("{}");
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: ["Warning message"],
-			});
+			}));
 
 			await validatePlugin("com.example.test-plugin");
 
@@ -227,17 +276,30 @@ describe("validatePlugin", () => {
 		});
 
 		it("should exit if manifest file not found", async () => {
+			// Reset and override mock from beforeEach
+			mockExistsSync.mockReset();
 			mockExistsSync.mockImplementation((path: string) => {
-				if (path.includes("plugins/examples")) {
+				// Plugin directory exists
+				if (
+					path.includes("plugins/examples") &&
+					!path.includes("plugin.json")
+				) {
 					return true;
 				}
+				// plugin.json does not exist
 				if (path.includes("plugin.json")) {
 					return false;
 				}
 				return false;
 			});
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalled();
 			expect(mockExit).toHaveBeenCalledWith(1);
@@ -262,11 +324,11 @@ describe("validatePlugin", () => {
 				return false;
 			});
 			mockReadFileSync.mockReturnValue("{}");
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: [],
-			});
+			}));
 		});
 
 		it("should pass type checking", async () => {
@@ -288,33 +350,71 @@ describe("validatePlugin", () => {
 			mockExecSync.mockImplementation(() => {
 				throw new Error("Type error");
 			});
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ errors: expect.arrayContaining([expect.stringContaining("Type error")]) }),
+				expect.objectContaining({
+					errors: expect.arrayContaining([
+						expect.stringContaining("Type error"),
+					]),
+				}),
 				"Type checking failed",
 			);
 			expect(mockExit).toHaveBeenCalledWith(1);
 		});
 
 		it("should exit if tsconfig.json not found", async () => {
+			// Override mock from beforeEach to ensure tsconfig.json is not found
 			mockExistsSync.mockImplementation((path: string) => {
-				if (path.includes("plugins/examples")) {
+				// Plugin directory exists
+				if (
+					path.includes("plugins/examples") &&
+					!path.includes("tsconfig.json")
+				) {
 					return true;
 				}
+				// plugin.json exists
 				if (path.includes("plugin.json")) {
 					return true;
 				}
+				// tsconfig.json does not exist
 				if (path.includes("tsconfig.json")) {
 					return false;
 				}
 				return false;
 			});
+			// Setup required mocks for manifest validation
+			mockReadFileSync.mockReturnValue("{}");
+			validateManifestSpy.mockImplementation(() => ({
+				valid: true,
+				errors: [],
+				warnings: [],
+			}));
+			mockExecSync.mockReturnValue(Buffer.from(""));
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
-			expect(errorSpy).toHaveBeenCalled();
+			expect(errorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					errors: expect.arrayContaining([
+						expect.stringContaining("tsconfig.json not found"),
+					]),
+				}),
+				"Type checking failed",
+			);
 			expect(mockExit).toHaveBeenCalledWith(1);
 		});
 	});
@@ -354,11 +454,11 @@ describe("validatePlugin", () => {
 				}
 				return "{}";
 			});
-			validateManifestSpy.mockReturnValue({
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: [],
-			});
+			}));
 			mockExecSync.mockReturnValue(Buffer.from(""));
 		});
 
@@ -404,6 +504,57 @@ describe("validatePlugin", () => {
 		});
 
 		it("should exit if package.json not found", async () => {
+			// Override mock from beforeEach to ensure package.json is not found
+			mockExistsSync.mockImplementation((path: string) => {
+				// Plugin directory exists
+				if (
+					path.includes("plugins/examples") &&
+					!path.includes("package.json")
+				) {
+					return true;
+				}
+				// plugin.json exists
+				if (path.includes("plugin.json")) {
+					return true;
+				}
+				// tsconfig.json exists
+				if (path.includes("tsconfig.json")) {
+					return true;
+				}
+				// package.json does not exist
+				if (path.includes("package.json")) {
+					return false;
+				}
+				return false;
+			});
+			mockReadFileSync.mockReturnValue("{}");
+			validateManifestSpy.mockImplementation(() => ({
+				valid: true,
+				errors: [],
+				warnings: [],
+			}));
+			mockExecSync.mockReturnValue(Buffer.from(""));
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
+
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
+
+			expect(errorSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					errors: expect.arrayContaining([
+						expect.stringContaining("package.json not found"),
+					]),
+				}),
+				"Dependency check failed",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
+		it("should handle package.json parse errors", async () => {
 			mockExistsSync.mockImplementation((path: string) => {
 				if (path.includes("plugins/examples")) {
 					return true;
@@ -415,26 +566,43 @@ describe("validatePlugin", () => {
 					return true;
 				}
 				if (path.includes("package.json")) {
-					return false;
+					return true;
 				}
 				return false;
 			});
-			mockReadFileSync.mockReturnValue("{}");
-			validateManifestSpy.mockReturnValue({
+			mockReadFileSync.mockImplementation((path: string) => {
+				if (path.includes("plugin.json")) {
+					return "{}";
+				}
+				if (path.includes("package.json")) {
+					return "invalid json {";
+				}
+				return "{}";
+			});
+			validateManifestSpy.mockImplementation(() => ({
 				valid: true,
 				errors: [],
 				warnings: [],
-			});
+			}));
 			mockExecSync.mockReturnValue(Buffer.from(""));
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await validatePlugin("com.example.test-plugin");
+			await expect(validatePlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ errors: expect.arrayContaining([expect.stringContaining("package.json not found")]) }),
+				expect.objectContaining({
+					errors: expect.arrayContaining([
+						expect.stringContaining("Invalid package.json"),
+					]),
+				}),
 				"Dependency check failed",
 			);
 			expect(mockExit).toHaveBeenCalledWith(1);
 		});
 	});
 });
-

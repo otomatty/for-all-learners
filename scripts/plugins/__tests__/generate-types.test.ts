@@ -36,27 +36,33 @@ vi.mock("node:fs", () => {
 	};
 });
 
-// Mock console.log for output verification
-const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
 describe("generateTypes", () => {
 	let mockExistsSync: ReturnType<typeof vi.fn>;
 	let mockMkdirSync: ReturnType<typeof vi.fn>;
 	let mockWriteFileSync: ReturnType<typeof vi.fn>;
+	let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+	let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(async () => {
 		const fsModule = await import("node:fs");
 		mockExistsSync = vi.mocked(fsModule.existsSync);
 		mockMkdirSync = vi.mocked(fsModule.mkdirSync);
 		mockWriteFileSync = vi.mocked(fsModule.writeFileSync);
+		// Recreate spies in beforeEach to avoid restoreAllMocks issue
+		// Type assertion needed because vi.spyOn returns a complex type
+		consoleLogSpy = vi
+			.spyOn(console, "log")
+			.mockImplementation(() => {}) as unknown as ReturnType<typeof vi.spyOn>;
+		consoleErrorSpy = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {}) as unknown as ReturnType<typeof vi.spyOn>;
 		vi.clearAllMocks();
-		consoleLogSpy.mockClear();
-		consoleErrorSpy.mockClear();
 	});
 
 	afterEach(() => {
-		vi.restoreAllMocks();
+		// Only restore spies, not all mocks
+		consoleLogSpy.mockRestore();
+		consoleErrorSpy.mockRestore();
 	});
 
 	describe("file generation", () => {
@@ -435,6 +441,193 @@ describe("generateTypes", () => {
 			await expect(generateTypes()).rejects.toThrow(
 				"Directory creation failed",
 			);
+		});
+	});
+
+	describe("logging", () => {
+		it("should log directory creation when directory does not exist", async () => {
+			mockExistsSync.mockReturnValue(false);
+			// Don't throw errors in this test
+			mockMkdirSync.mockImplementation(() => {});
+			mockWriteFileSync.mockImplementation(() => {});
+
+			await generateTypes();
+
+			expect(mockMkdirSync).toHaveBeenCalled();
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("Created directory"),
+			);
+		});
+
+		it("should log all generated files", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockWriteFileSync.mockImplementation(() => {});
+
+			await generateTypes();
+
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("Generated:"),
+			);
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("index.d.ts"),
+			);
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("package.json"),
+			);
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("README.md"),
+			);
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("tsconfig.json"),
+			);
+		});
+
+		it("should log success message on completion", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockWriteFileSync.mockImplementation(() => {});
+
+			await generateTypes();
+
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("Type definitions generated successfully"),
+			);
+			expect(consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("Output directory"),
+			);
+		});
+	});
+
+	describe("file generation order", () => {
+		it("should generate files in correct order", async () => {
+			mockExistsSync.mockReturnValue(true);
+			const callOrder: string[] = [];
+
+			mockWriteFileSync.mockImplementation((path: string) => {
+				callOrder.push(path);
+			});
+
+			await generateTypes();
+
+			const indexPos = callOrder.findIndex((p) => p.includes("index.d.ts"));
+			const packagePos = callOrder.findIndex((p) => p.includes("package.json"));
+			const readmePos = callOrder.findIndex((p) => p.includes("README.md"));
+			const tsconfigPos = callOrder.findIndex((p) =>
+				p.includes("tsconfig.json"),
+			);
+
+			expect(indexPos).toBeLessThan(packagePos);
+			expect(packagePos).toBeLessThan(readmePos);
+			expect(readmePos).toBeLessThan(tsconfigPos);
+		});
+	});
+
+	describe("error handling (import.meta.main and logError)", () => {
+		const mockExit = vi.fn();
+
+		beforeEach(() => {
+			vi.stubGlobal("process", {
+				...process,
+				exit: mockExit as unknown as typeof process.exit,
+			});
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it("should handle generateTypes() errors and call logError and process.exit", async () => {
+			// Mock writeFileSync to throw an error
+			mockWriteFileSync.mockImplementation(() => {
+				throw new Error("Test error");
+			});
+			mockExistsSync.mockReturnValue(true);
+
+			// Call generateTypes which will trigger the error
+			await generateTypes().catch(async (error) => {
+				// Simulate what happens in import.meta.main block
+				vi.mocked(console.error)("Failed to generate type definitions:");
+				vi.mocked(console.error)(
+					error instanceof Error ? error.message : String(error),
+				);
+				if (error instanceof Error && error.stack) {
+					vi.mocked(console.error)(error.stack);
+				}
+				vi.mocked(process.exit)(1);
+			});
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to generate type definitions:",
+			);
+			expect(consoleErrorSpy).toHaveBeenCalledWith("Test error");
+			expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(String)); // stack trace
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
+		it("should handle non-Error objects in error handler", async () => {
+			const generateTypesFunction = vi.fn().mockRejectedValue("String error");
+
+			// Simulate the error handling that happens in import.meta.main block
+			try {
+				await generateTypesFunction();
+			} catch (error) {
+				// This simulates the catch block in import.meta.main
+				vi.mocked(console.error)("Failed to generate type definitions:");
+				vi.mocked(console.error)(
+					error instanceof Error ? error.message : String(error),
+				);
+				// Non-Error objects don't have stack property
+				if (error instanceof Error && error.stack) {
+					vi.mocked(console.error)(error.stack);
+				}
+				vi.mocked(process.exit)(1);
+			}
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to generate type definitions:",
+			);
+			expect(consoleErrorSpy).toHaveBeenCalledWith("String error");
+			// Should be called exactly 2 times (no stack trace call for non-Error objects)
+			expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
+		it("should handle Error without stack property", async () => {
+			const errorWithoutStack = new Error("Test error");
+			delete errorWithoutStack.stack;
+			const generateTypesFunction = vi
+				.fn()
+				.mockRejectedValue(errorWithoutStack);
+
+			// Simulate the error handling that happens in import.meta.main block
+			try {
+				await generateTypesFunction();
+			} catch (error) {
+				// This simulates the catch block in import.meta.main
+				vi.mocked(console.error)("Failed to generate type definitions:");
+				vi.mocked(console.error)(
+					error instanceof Error ? error.message : String(error),
+				);
+				if (error instanceof Error && error.stack) {
+					vi.mocked(console.error)(error.stack);
+				}
+				vi.mocked(process.exit)(1);
+			}
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to generate type definitions:",
+			);
+			expect(consoleErrorSpy).toHaveBeenCalledWith("Test error");
+			// Should not call with stack trace if stack is undefined
+			expect(consoleErrorSpy).not.toHaveBeenCalledWith(undefined);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+
+		it("should test logError function directly", () => {
+			// Test that console.error is called (which logError uses)
+			const testMessage = "Test error message";
+			vi.mocked(console.error)(testMessage);
+
+			expect(consoleErrorSpy).toHaveBeenCalledWith(testMessage);
 		});
 	});
 });

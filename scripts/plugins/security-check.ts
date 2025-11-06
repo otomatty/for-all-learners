@@ -15,7 +15,7 @@
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import logger from "../../lib/logger";

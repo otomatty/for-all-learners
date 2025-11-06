@@ -87,8 +87,14 @@ describe("lintPlugin", () => {
 	describe("plugin directory", () => {
 		it("should exit if plugin not found", async () => {
 			mockExistsSync.mockReturnValue(false);
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await lintPlugin("com.example.test-plugin");
+			await expect(lintPlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -113,7 +119,9 @@ describe("lintPlugin", () => {
 			await lintPlugin("com.example.test-plugin");
 
 			expect(infoSpy).toHaveBeenCalledWith(
-				expect.objectContaining({ pluginDir: expect.stringContaining("com-example-test-plugin") }),
+				expect.objectContaining({
+					pluginDir: expect.stringContaining("com-example-test-plugin"),
+				}),
 				"Plugin directory",
 			);
 		});
@@ -122,15 +130,27 @@ describe("lintPlugin", () => {
 	describe("source directory", () => {
 		beforeEach(() => {
 			mockExistsSync.mockImplementation((path: string) => {
-				if (path.includes("plugins/examples")) {
+				// Plugin directory exists
+				if (path.includes("plugins/examples") && !path.includes("src")) {
 					return true;
+				}
+				// src directory does not exist
+				if (path.includes("src")) {
+					return false;
 				}
 				return false;
 			});
 		});
 
 		it("should exit if src directory not found", async () => {
-			await lintPlugin("com.example.test-plugin");
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
+
+			await expect(lintPlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -185,8 +205,14 @@ describe("lintPlugin", () => {
 			mockExecSync.mockImplementation(() => {
 				throw new Error("Lint error");
 			});
+			// Mock exit to prevent actual exit and stop execution
+			mockExit.mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
 
-			await lintPlugin("com.example.test-plugin");
+			await expect(lintPlugin("com.example.test-plugin")).rejects.toThrow(
+				"process.exit called",
+			);
 
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.objectContaining({ error: expect.any(Error) }),
@@ -196,4 +222,3 @@ describe("lintPlugin", () => {
 		});
 	});
 });
-

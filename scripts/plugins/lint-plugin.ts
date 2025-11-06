@@ -15,10 +15,10 @@
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
  */
 
+import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 import logger from "../../lib/logger";
 
 const __filename = fileURLToPath(import.meta.url);
