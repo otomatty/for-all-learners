@@ -1,11 +1,14 @@
 "use client";
 
 import {
+	AlertTriangle,
 	Grip,
 	History,
+	Lock,
 	type LucideIcon,
 	Mail,
 	Milestone,
+	Shield,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -28,6 +31,9 @@ const iconMap: Record<string, LucideIcon> = {
 	History,
 	Milestone,
 	Mail,
+	Shield,
+	AlertTriangle,
+	Lock,
 };
 
 export interface AdminNavItem {
@@ -68,6 +74,24 @@ export function AdminNav() {
 			icon: "Mail",
 			status: "enabled",
 		},
+		{
+			href: "/admin/plugins/security-audit",
+			label: "セキュリティ監査",
+			icon: "Shield",
+			status: "enabled",
+		},
+		{
+			href: "/admin/plugins/security-alerts",
+			label: "セキュリティアラート",
+			icon: "AlertTriangle",
+			status: "enabled",
+		},
+		{
+			href: "/admin/plugins/signatures",
+			label: "コード署名",
+			icon: "Lock",
+			status: "enabled",
+		},
 	];
 
 	useEffect(() => {
@@ -105,7 +129,8 @@ export function AdminNav() {
 					<div className="p-2 grid grid-cols-2 gap-2">
 						{navItems.map((item) => {
 							const IconComponent = getIconComponent(item.icon);
-							const isActive = pathname === item.href;
+							const isActive =
+								pathname === item.href || pathname.startsWith(`${item.href}/`);
 
 							return (
 								<Link

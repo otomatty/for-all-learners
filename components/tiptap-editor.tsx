@@ -13,6 +13,7 @@ import { toast } from "sonner"; // toastをインポート
 import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
 import { Button } from "@/components/ui/button"; // Buttonをインポート
 import { getEditorManager } from "@/lib/plugins/editor-manager";
+import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
@@ -37,8 +38,10 @@ const TiptapEditor = ({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	// Memoize base extensions to prevent unnecessary re-renders
-	const baseExtensions = useMemo(
-		() => [
+	// Note: Plugin extensions are included at editor creation time
+	// because TipTap does not support dynamic extension updates after initialization
+	const baseExtensions = useMemo(() => {
+		const baseExts = [
 			StarterKit.configure({
 				// 必要に応じてStarterKitのオプションを設定
 				// 例: heading: { levels: [1, 2, 3] }
@@ -71,9 +74,13 @@ const TiptapEditor = ({
 				enabled: true,
 				debug: false, // Set to true for development debugging
 			}),
-		],
-		[placeholder],
-	);
+		];
+
+		// Include plugin extensions at editor creation time
+		// TipTap does not support dynamic extension updates after initialization
+		const pluginExtensions = getTiptapExtensions();
+		return [...baseExts, ...pluginExtensions];
+	}, [placeholder]);
 
 	const editor = useEditor({
 		extensions: baseExtensions,

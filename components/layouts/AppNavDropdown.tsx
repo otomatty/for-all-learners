@@ -6,6 +6,7 @@ import {
 	Grip,
 	LayoutList,
 	type LucideIcon,
+	Package,
 	Target,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ const iconMap: Record<string, LucideIcon> = {
 	Target,
 	BookOpen,
 	BarChart,
+	Package,
 };
 
 interface AppNavDropdownProps {

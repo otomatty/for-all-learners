@@ -129,6 +129,145 @@ function createPluginAPIProxy() {
 			async showDialog(options: unknown): Promise<unknown> {
 				return await callHostAPI("ui", "showDialog", [options]);
 			},
+			async registerWidget(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerWidget", [options]);
+			},
+			async unregisterWidget(widgetId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterWidget", [widgetId]);
+			},
+			async registerPage(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerPage", [options]);
+			},
+			async unregisterPage(pageId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterPage", [pageId]);
+			},
+			async registerSidebarPanel(options: unknown): Promise<void> {
+				await callHostAPI("ui", "registerSidebarPanel", [options]);
+			},
+			async unregisterSidebarPanel(panelId: string): Promise<void> {
+				await callHostAPI("ui", "unregisterSidebarPanel", [panelId]);
+			},
+		},
+		editor: {
+			async registerExtension(options: unknown): Promise<void> {
+				await callHostAPI("editor", "registerExtension", [options]);
+			},
+			async unregisterExtension(extensionId: string): Promise<void> {
+				await callHostAPI("editor", "unregisterExtension", [extensionId]);
+			},
+			async executeCommand(
+				command: string,
+				...args: unknown[]
+			): Promise<unknown> {
+				return await callHostAPI("editor", "executeCommand", [
+					command,
+					...args,
+				]);
+			},
+			async getContent(editorId?: string): Promise<unknown> {
+				return await callHostAPI("editor", "getContent", [editorId]);
+			},
+			async setContent(content: unknown, editorId?: string): Promise<void> {
+				await callHostAPI("editor", "setContent", [content, editorId]);
+			},
+			async getSelection(editorId?: string): Promise<unknown> {
+				return await callHostAPI("editor", "getSelection", [editorId]);
+			},
+			async setSelection(
+				from: number,
+				to: number,
+				editorId?: string,
+			): Promise<void> {
+				await callHostAPI("editor", "setSelection", [from, to, editorId]);
+			},
+			async canExecuteCommand(
+				command: string,
+				editorId?: string,
+			): Promise<boolean> {
+				return (await callHostAPI("editor", "canExecuteCommand", [
+					command,
+					editorId,
+				])) as boolean;
+			},
+		},
+		ai: {
+			async registerQuestionGenerator(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerQuestionGenerator", [options]);
+			},
+			async unregisterQuestionGenerator(generatorId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterQuestionGenerator", [generatorId]);
+			},
+			async registerPromptTemplate(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerPromptTemplate", [options]);
+			},
+			async unregisterPromptTemplate(templateId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterPromptTemplate", [templateId]);
+			},
+			async registerContentAnalyzer(options: unknown): Promise<void> {
+				await callHostAPI("ai", "registerContentAnalyzer", [options]);
+			},
+			async unregisterContentAnalyzer(analyzerId: string): Promise<void> {
+				await callHostAPI("ai", "unregisterContentAnalyzer", [analyzerId]);
+			},
+		},
+		data: {
+			async registerImporter(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerImporter", [options]);
+			},
+			async unregisterImporter(importerId: string): Promise<void> {
+				await callHostAPI("data", "unregisterImporter", [importerId]);
+			},
+			async registerExporter(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerExporter", [options]);
+			},
+			async unregisterExporter(exporterId: string): Promise<void> {
+				await callHostAPI("data", "unregisterExporter", [exporterId]);
+			},
+			async registerTransformer(options: unknown): Promise<void> {
+				await callHostAPI("data", "registerTransformer", [options]);
+			},
+			async unregisterTransformer(transformerId: string): Promise<void> {
+				await callHostAPI("data", "unregisterTransformer", [transformerId]);
+			},
+		},
+		integration: {
+			async registerOAuthProvider(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerOAuthProvider", [options]);
+			},
+			async unregisterOAuthProvider(providerId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterOAuthProvider", [
+					providerId,
+				]);
+			},
+			async registerWebhook(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerWebhook", [options]);
+			},
+			async unregisterWebhook(webhookId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterWebhook", [webhookId]);
+			},
+			async registerExternalAPI(options: unknown): Promise<void> {
+				await callHostAPI("integration", "registerExternalAPI", [options]);
+			},
+			async unregisterExternalAPI(apiId: string): Promise<void> {
+				await callHostAPI("integration", "unregisterExternalAPI", [apiId]);
+			},
+			async callExternalAPI(
+				apiId: string | undefined,
+				options: unknown,
+			): Promise<unknown> {
+				return await callHostAPI("integration", "callExternalAPI", [
+					apiId,
+					options,
+				]);
+			},
+		},
+		calendar: {
+			async registerExtension(options: unknown): Promise<void> {
+				await callHostAPI("calendar", "registerExtension", [options]);
+			},
+			async unregisterExtension(extensionId: string): Promise<void> {
+				await callHostAPI("calendar", "unregisterExtension", [extensionId]);
+			},
 		},
 	};
 }
@@ -179,6 +318,8 @@ function callHostAPI(
 
 /**
  * Handle INIT message - Initialize plugin
+ *
+ * Security: Uses Blob URL + importScripts instead of eval/new Function
  */
 async function handleInit(payload: InitPayload): Promise<void> {
 	try {
@@ -187,43 +328,95 @@ async function handleInit(payload: InitPayload): Promise<void> {
 		// Create plugin API proxy
 		const api = createPluginAPIProxy();
 
-		// Create a safe execution context
-		const pluginFactory = new Function(
-			"api",
-			"config",
-			`
-      ${code}
-      
-      // Plugin code should export a default function or object
-      if (typeof activate === 'function') {
-        return activate(api, config);
-      }
-      
-      // Or return the plugin object directly
-      return plugin || {};
-    `,
-		);
+		// Create Blob URL for plugin code (avoiding eval)
+		// Wrap plugin code in IIFE to isolate scope and expose activate function
+		const wrappedCode = `
+(function() {
+  'use strict';
+  
+  // Plugin code executed in isolated scope
+  ${code}
+  
+  // Expose activate function or plugin object to global scope for this worker
+  if (typeof activate === 'function') {
+    self.__pluginActivate = activate;
+  } else if (typeof plugin !== 'undefined') {
+    self.__pluginObject = plugin;
+  }
+})();
+`;
 
-		// Execute plugin code
-		const plugin = await pluginFactory(api, config || {});
+		// Create Blob URL
+		const blob = new Blob([wrappedCode], { type: "application/javascript" });
+		const blobUrl = URL.createObjectURL(blob);
 
-		// Store plugin instance
-		pluginInstance = {
-			id: manifest.id,
-			name: manifest.name,
-			version: manifest.version,
-			methods: plugin.methods || {},
-			dispose: plugin.dispose,
-		};
+		try {
+			// Load plugin code using importScripts (safer than eval)
+			// @ts-expect-error - importScripts is available in WorkerGlobalScope but not in TypeScript types
+			self.importScripts(blobUrl);
 
-		// Send success response
-		sendMessage({
-			type: "INIT",
-			payload: {
-				success: true,
-				pluginId: manifest.id,
-			},
-		});
+			// Get plugin from global scope
+			let plugin: {
+				methods?: Record<
+					string,
+					(...args: unknown[]) => unknown | Promise<unknown>
+				>;
+				dispose?: () => void | Promise<void>;
+			} = {};
+
+			// Check for activate function or plugin object on global scope
+			const globalScope = self as unknown as {
+				__pluginActivate?: (
+					api: unknown,
+					config: Record<string, unknown>,
+				) => Promise<{
+					methods?: Record<
+						string,
+						(...args: unknown[]) => unknown | Promise<unknown>
+					>;
+					dispose?: () => void | Promise<void>;
+				}>;
+				__pluginObject?: {
+					methods?: Record<
+						string,
+						(...args: unknown[]) => unknown | Promise<unknown>
+					>;
+					dispose?: () => void | Promise<void>;
+				};
+			};
+
+			if (typeof globalScope.__pluginActivate === "function") {
+				// Call activate function with API and config
+				plugin = (await globalScope.__pluginActivate(api, config || {})) || {};
+			} else if (globalScope.__pluginObject) {
+				plugin = globalScope.__pluginObject;
+			}
+
+			// Clean up global scope
+			delete globalScope.__pluginActivate;
+			delete globalScope.__pluginObject;
+
+			// Store plugin instance
+			pluginInstance = {
+				id: manifest.id,
+				name: manifest.name,
+				version: manifest.version,
+				methods: plugin.methods || {},
+				dispose: plugin.dispose,
+			};
+
+			// Send success response
+			sendMessage({
+				type: "INIT",
+				payload: {
+					success: true,
+					pluginId: manifest.id,
+				},
+			});
+		} finally {
+			// Cleanup blob URL
+			URL.revokeObjectURL(blobUrl);
+		}
 	} catch (error) {
 		// Send error response
 		sendError(error);

@@ -1,0 +1,16 @@
+{
+	"id": "com.fal.examples.ui-extension",
+	"name": "UI Extension サンプル",
+	"version": "1.0.0",
+	"description": "UI拡張機能の実装例を示すサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": true,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": ["ui", "widget", "page", "sidebar", "sample", "example"]
+}

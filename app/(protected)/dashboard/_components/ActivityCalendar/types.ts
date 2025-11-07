@@ -4,6 +4,8 @@
  * カレンダーUIで使用する型定義
  */
 
+import type { CalendarExtensionData } from "@/lib/plugins/types";
+
 /**
  * 活動レベル
  */
@@ -39,6 +41,7 @@ export interface DailyActivitySummary {
 	activityLevel: ActivityLevel; // 活動レベル
 	learning: LearningStats; // 学習統計
 	notes: NoteStats; // ノート統計
+	pluginExtensions?: CalendarExtensionData[]; // プラグイン拡張データ
 }
 
 /**

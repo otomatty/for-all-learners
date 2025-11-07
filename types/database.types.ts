@@ -1374,6 +1374,284 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			plugin_ratings: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					plugin_id: string;
+					rating: number;
+					updated_at: string | null;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					plugin_id: string;
+					rating: number;
+					updated_at?: string | null;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					plugin_id?: string;
+					rating?: number;
+					updated_at?: string | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_ratings_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_ratings_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_review_helpful: {
+				Row: {
+					created_at: string | null;
+					id: string;
+					review_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string | null;
+					id?: string;
+					review_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string | null;
+					id?: string;
+					review_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_review_helpful_review_id_fkey";
+						columns: ["review_id"];
+						isOneToOne: false;
+						referencedRelation: "plugin_reviews";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "plugin_review_helpful_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_reviews: {
+				Row: {
+					content: string;
+					created_at: string | null;
+					helpful_count: number | null;
+					id: string;
+					plugin_id: string;
+					title: string | null;
+					updated_at: string | null;
+					user_id: string;
+				};
+				Insert: {
+					content: string;
+					created_at?: string | null;
+					helpful_count?: number | null;
+					id?: string;
+					plugin_id: string;
+					title?: string | null;
+					updated_at?: string | null;
+					user_id: string;
+				};
+				Update: {
+					content?: string;
+					created_at?: string | null;
+					helpful_count?: number | null;
+					id?: string;
+					plugin_id?: string;
+					title?: string | null;
+					updated_at?: string | null;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_reviews_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_reviews_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_security_alerts: {
+				Row: {
+					acknowledged_at: string | null;
+					acknowledged_by: string | null;
+					alert_data: Json;
+					alert_type: string;
+					context: Json | null;
+					created_at: string | null;
+					description: string;
+					id: string;
+					plugin_id: string | null;
+					resolved_at: string | null;
+					severity: string;
+					status: string;
+					title: string;
+					updated_at: string | null;
+					user_id: string | null;
+				};
+				Insert: {
+					acknowledged_at?: string | null;
+					acknowledged_by?: string | null;
+					alert_data?: Json;
+					alert_type: string;
+					context?: Json | null;
+					created_at?: string | null;
+					description: string;
+					id?: string;
+					plugin_id?: string | null;
+					resolved_at?: string | null;
+					severity: string;
+					status?: string;
+					title: string;
+					updated_at?: string | null;
+					user_id?: string | null;
+				};
+				Update: {
+					acknowledged_at?: string | null;
+					acknowledged_by?: string | null;
+					alert_data?: Json;
+					alert_type?: string;
+					context?: Json | null;
+					created_at?: string | null;
+					description?: string;
+					id?: string;
+					plugin_id?: string | null;
+					resolved_at?: string | null;
+					severity?: string;
+					status?: string;
+					title?: string;
+					updated_at?: string | null;
+					user_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_security_alerts_acknowledged_by_fkey";
+						columns: ["acknowledged_by"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "plugin_security_alerts_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_security_audit_logs: {
+				Row: {
+					context: Json | null;
+					created_at: string | null;
+					event_data: Json;
+					event_type: string;
+					id: string;
+					plugin_id: string;
+					severity: string;
+					user_id: string | null;
+				};
+				Insert: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type: string;
+					id?: string;
+					plugin_id: string;
+					severity: string;
+					user_id?: string | null;
+				};
+				Update: {
+					context?: Json | null;
+					created_at?: string | null;
+					event_data?: Json;
+					event_type?: string;
+					id?: string;
+					plugin_id?: string;
+					severity?: string;
+					user_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_security_audit_logs_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			plugin_signature_verifications: {
+				Row: {
+					error_message: string | null;
+					id: string;
+					plugin_id: string;
+					user_id: string | null;
+					verification_result: string;
+					verified_at: string | null;
+				};
+				Insert: {
+					error_message?: string | null;
+					id?: string;
+					plugin_id: string;
+					user_id?: string | null;
+					verification_result: string;
+					verified_at?: string | null;
+				};
+				Update: {
+					error_message?: string | null;
+					id?: string;
+					plugin_id?: string;
+					user_id?: string | null;
+					verification_result?: string;
+					verified_at?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "plugin_signature_verifications_plugin_id_fkey";
+						columns: ["plugin_id"];
+						isOneToOne: false;
+						referencedRelation: "plugins";
+						referencedColumns: ["plugin_id"];
+					},
+					{
+						foreignKeyName: "plugin_signature_verifications_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			plugin_storage: {
 				Row: {
 					created_at: string | null;
@@ -1432,10 +1710,14 @@ export type Database = {
 					manifest: Json;
 					name: string;
 					plugin_id: string;
+					public_key: string | null;
 					published_at: string | null;
 					rating_average: number | null;
 					rating_count: number | null;
 					repository: string | null;
+					signature: string | null;
+					signature_algorithm: string | null;
+					signed_at: string | null;
 					updated_at: string | null;
 					version: string;
 				};
@@ -1458,10 +1740,14 @@ export type Database = {
 					manifest: Json;
 					name: string;
 					plugin_id: string;
+					public_key?: string | null;
 					published_at?: string | null;
 					rating_average?: number | null;
 					rating_count?: number | null;
 					repository?: string | null;
+					signature?: string | null;
+					signature_algorithm?: string | null;
+					signed_at?: string | null;
 					updated_at?: string | null;
 					version: string;
 				};
@@ -1484,10 +1770,14 @@ export type Database = {
 					manifest?: Json;
 					name?: string;
 					plugin_id?: string;
+					public_key?: string | null;
 					published_at?: string | null;
 					rating_average?: number | null;
 					rating_count?: number | null;
 					repository?: string | null;
+					signature?: string | null;
+					signature_algorithm?: string | null;
+					signed_at?: string | null;
 					updated_at?: string | null;
 					version?: string;
 				};
@@ -2409,6 +2699,10 @@ export type Database = {
 			};
 			show_limit: { Args: never; Returns: number };
 			show_trgm: { Args: { "": string }; Returns: string[] };
+			toggle_review_helpful: {
+				Args: { p_review_id: string };
+				Returns: boolean;
+			};
 			update_pdf_job_heartbeat: {
 				Args: {
 					current_step_text?: string;
@@ -2433,6 +2727,10 @@ export type Database = {
 			};
 			update_plugin_rating: {
 				Args: { p_new_rating: number; p_plugin_id: string };
+				Returns: undefined;
+			};
+			upsert_plugin_rating: {
+				Args: { p_plugin_id: string; p_rating: number };
 				Returns: undefined;
 			};
 		};

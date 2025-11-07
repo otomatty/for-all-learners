@@ -1,0 +1,151 @@
+"use client";
+
+/**
+ * Marketplace Plugin Card Component (Client Component)
+ *
+ * Displays plugin card with install button and details dialog.
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this):
+ *   └─ app/(protected)/settings/plugins/page.tsx
+ *
+ * Dependencies:
+ *   ├─ app/_actions/plugins.ts
+ *   ├─ components/ui/* (Button, Card, Dialog, etc.)
+ *   ├─ types/plugin.ts
+ *   └─ ./PluginDetails.tsx
+ *
+ * Related Documentation:
+ *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
+ */
+
+import { Download, Eye, Shield, Star } from "lucide-react";
+import { useState } from "react";
+import { installPlugin } from "@/app/_actions/plugins";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import type { PluginMetadata } from "@/types/plugin";
+import { PluginDetails } from "./PluginDetails";
+
+interface MarketplacePluginCardProps {
+	plugin: PluginMetadata;
+	isInstalled: boolean;
+}
+
+export function MarketplacePluginCard({
+	plugin,
+	isInstalled,
+}: MarketplacePluginCardProps) {
+	const [showDetails, setShowDetails] = useState(false);
+
+	return (
+		<Card>
+			<CardHeader>
+				<div className="flex items-start justify-between">
+					<div className="flex-1">
+						<div className="flex items-center gap-2 mb-1">
+							<CardTitle>{plugin.name}</CardTitle>
+							{plugin.isOfficial && (
+								<Badge variant="default" className="gap-1">
+									<Shield className="h-3 w-3" />
+									公式
+								</Badge>
+							)}
+							{plugin.isReviewed && (
+								<Badge variant="secondary">レビュー済み</Badge>
+							)}
+							{isInstalled && (
+								<Badge variant="outline" className="bg-blue-50">
+									インストール済み
+								</Badge>
+							)}
+						</div>
+						<CardDescription>{plugin.description}</CardDescription>
+					</div>
+				</div>
+
+				<div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+					<span>v{plugin.version}</span>
+					<span>作成者: {plugin.author}</span>
+					<span className="flex items-center gap-1">
+						<Download className="h-3 w-3" />
+						{plugin.downloadsCount.toLocaleString()}
+					</span>
+					{plugin.ratingAverage && (
+						<span className="flex items-center gap-1">
+							<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+							{plugin.ratingAverage.toFixed(1)}
+						</span>
+					)}
+				</div>
+			</CardHeader>
+
+			<CardContent>
+				<div className="flex flex-wrap gap-2">
+					{plugin.manifest.extensionPoints.editor && (
+						<Badge variant="outline">エディタ</Badge>
+					)}
+					{plugin.manifest.extensionPoints.ai && (
+						<Badge variant="outline">AI</Badge>
+					)}
+					{plugin.manifest.extensionPoints.ui && (
+						<Badge variant="outline">UI</Badge>
+					)}
+					{plugin.manifest.extensionPoints.dataProcessor && (
+						<Badge variant="outline">データ処理</Badge>
+					)}
+					{plugin.manifest.extensionPoints.integration && (
+						<Badge variant="outline">外部連携</Badge>
+					)}
+				</div>
+			</CardContent>
+
+			<CardFooter className="flex gap-2">
+				<Dialog open={showDetails} onOpenChange={setShowDetails}>
+					<DialogTrigger asChild>
+						<Button variant="outline" size="sm" className="gap-2">
+							<Eye className="h-4 w-4" />
+							詳細を見る
+						</Button>
+					</DialogTrigger>
+					<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>{plugin.name}</DialogTitle>
+						</DialogHeader>
+						<PluginDetails plugin={plugin} />
+					</DialogContent>
+				</Dialog>
+
+				{isInstalled ? (
+					<Button disabled variant="outline" size="sm">
+						インストール済み
+					</Button>
+				) : (
+					<form action={installPlugin}>
+						<input type="hidden" name="pluginId" value={plugin.pluginId} />
+						<Button type="submit" size="sm" className="gap-2">
+							<Download className="h-4 w-4" />
+							インストール
+						</Button>
+					</form>
+				)}
+			</CardFooter>
+		</Card>
+	);
+}

@@ -340,8 +340,9 @@ describe("createTagInputRule", () => {
 				PATTERNS.tag.exec(input);
 				const end = performance.now();
 
-				// Should complete within reasonable time (less than 10ms)
-				expect(end - start).toBeLessThan(10);
+				// Should complete within reasonable time (less than 50ms)
+				// Note: 10ms was too strict for CI/CD environments with varying CPU load
+				expect(end - start).toBeLessThan(50);
 			}
 		});
 	});

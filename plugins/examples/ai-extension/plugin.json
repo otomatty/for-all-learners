@@ -1,0 +1,23 @@
+{
+	"id": "com.fal.examples.ai-extension",
+	"name": "AI Extension サンプル",
+	"version": "1.0.0",
+	"description": "AI拡張機能の実装例を示すサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": true,
+		"ui": false,
+		"dataProcessor": false,
+		"integration": false
+	},
+	"keywords": [
+		"ai",
+		"question-generator",
+		"prompt-template",
+		"content-analyzer",
+		"sample",
+		"example"
+	]
+}

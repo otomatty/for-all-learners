@@ -7,7 +7,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ lib/plugins/plugin-loader.ts
+ *   ├─ lib/plugins/plugin-loader/index.ts
  *   └─ lib/plugins/sandbox-worker.ts
  *
  * Dependencies:
@@ -24,19 +24,39 @@
 
 import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
+// Import package.json for version information
+import pkg from "../../package.json";
+import * as aiRegistry from "./ai-registry";
+import * as calendarRegistry from "./calendar-registry";
+import * as dataProcessorRegistry from "./data-processor-registry";
 import { getEditorManager } from "./editor-manager";
-import { getEditorExtensionRegistry } from "./editor-registry";
+import * as editorRegistry from "./editor-registry";
+import * as integrationRegistry from "./integration-registry";
+import { getPluginRateLimiter } from "./plugin-rate-limiter";
+import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
+	CalendarExtensionOptions,
 	Command,
+	ContentAnalyzerOptions,
 	DialogOptions,
 	EditorExtensionOptions,
 	EditorSelection,
+	ExporterOptions,
+	ExternalAPIOptions,
+	ExternalAPIRequestOptions,
+	ExternalAPIResponse,
+	ImporterOptions,
 	NotificationType,
+	OAuthProviderOptions,
+	PageOptions,
+	PromptTemplateOptions,
+	QuestionGeneratorOptions,
+	SidebarPanelOptions,
+	TransformerOptions,
+	WebhookOptions,
+	WidgetOptions,
 } from "./types";
-
-// Import package.json for version information
-import pkg from "../../package.json";
-
+import * as uiRegistry from "./ui-registry";
 // ============================================================================
 // Plugin API Interface
 // ============================================================================
@@ -63,9 +83,17 @@ export interface PluginAPI {
 	/** Editor extensions (Phase 2) */
 	editor: EditorAPI;
 
-	// Future extension points (Phase 3+)
-	// ai?: AIAPI;
-	// data?: DataAPI;
+	/** AI extensions (Phase 2) */
+	ai: AIAPI;
+
+	/** Data processor extensions (Phase 2) */
+	data: DataAPI;
+
+	/** Integration extensions (Phase 2) */
+	integration: IntegrationAPI;
+
+	/** Calendar extensions (Phase 2) */
+	calendar: CalendarAPI;
 }
 
 /**
@@ -161,7 +189,7 @@ export interface NotificationsAPI {
 }
 
 /**
- * UI API (basic functionality in Phase 1)
+ * UI API (basic functionality in Phase 1, extended in Phase 2)
  */
 export interface UIAPI {
 	/**
@@ -182,6 +210,42 @@ export interface UIAPI {
 	 * @returns Promise that resolves when dialog is closed
 	 */
 	showDialog(options: DialogOptions): Promise<unknown>;
+
+	/**
+	 * Register a widget (Phase 2)
+	 * @param options Widget options
+	 */
+	registerWidget(options: WidgetOptions): Promise<void>;
+
+	/**
+	 * Unregister a widget
+	 * @param widgetId Widget ID to unregister
+	 */
+	unregisterWidget(widgetId: string): Promise<void>;
+
+	/**
+	 * Register a custom page (Phase 2)
+	 * @param options Page options
+	 */
+	registerPage(options: PageOptions): Promise<void>;
+
+	/**
+	 * Unregister a custom page
+	 * @param pageId Page ID to unregister
+	 */
+	unregisterPage(pageId: string): Promise<void>;
+
+	/**
+	 * Register a sidebar panel (Phase 2)
+	 * @param options Panel options
+	 */
+	registerSidebarPanel(options: SidebarPanelOptions): Promise<void>;
+
+	/**
+	 * Unregister a sidebar panel
+	 * @param panelId Panel ID to unregister
+	 */
+	unregisterSidebarPanel(panelId: string): Promise<void>;
 }
 
 /**
@@ -246,6 +310,157 @@ export interface EditorAPI {
 	canExecuteCommand(command: string, editorId?: string): Promise<boolean>;
 }
 
+/**
+ * AI API for plugin extensions
+ */
+export interface AIAPI {
+	/**
+	 * Register a question generator
+	 * @param options Generator options
+	 */
+	registerQuestionGenerator(options: QuestionGeneratorOptions): Promise<void>;
+
+	/**
+	 * Unregister a question generator
+	 * @param generatorId Generator ID to unregister
+	 */
+	unregisterQuestionGenerator(generatorId: string): Promise<void>;
+
+	/**
+	 * Register a prompt template
+	 * @param options Template options
+	 */
+	registerPromptTemplate(options: PromptTemplateOptions): Promise<void>;
+
+	/**
+	 * Unregister a prompt template
+	 * @param templateId Template ID to unregister
+	 */
+	unregisterPromptTemplate(templateId: string): Promise<void>;
+
+	/**
+	 * Register a content analyzer
+	 * @param options Analyzer options
+	 */
+	registerContentAnalyzer(options: ContentAnalyzerOptions): Promise<void>;
+
+	/**
+	 * Unregister a content analyzer
+	 * @param analyzerId Analyzer ID to unregister
+	 */
+	unregisterContentAnalyzer(analyzerId: string): Promise<void>;
+}
+
+/**
+ * Data Processor API for plugin extensions
+ */
+export interface DataAPI {
+	/**
+	 * Register an importer
+	 * @param options Importer options
+	 */
+	registerImporter(options: ImporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an importer
+	 * @param importerId Importer ID to unregister
+	 */
+	unregisterImporter(importerId: string): Promise<void>;
+
+	/**
+	 * Register an exporter
+	 * @param options Exporter options
+	 */
+	registerExporter(options: ExporterOptions): Promise<void>;
+
+	/**
+	 * Unregister an exporter
+	 * @param exporterId Exporter ID to unregister
+	 */
+	unregisterExporter(exporterId: string): Promise<void>;
+
+	/**
+	 * Register a transformer
+	 * @param options Transformer options
+	 */
+	registerTransformer(options: TransformerOptions): Promise<void>;
+
+	/**
+	 * Unregister a transformer
+	 * @param transformerId Transformer ID to unregister
+	 */
+	unregisterTransformer(transformerId: string): Promise<void>;
+}
+
+/**
+ * Integration API for plugin extensions
+ */
+export interface IntegrationAPI {
+	/**
+	 * Register an OAuth provider
+	 * @param options OAuth provider options
+	 */
+	registerOAuthProvider(options: OAuthProviderOptions): Promise<void>;
+
+	/**
+	 * Unregister an OAuth provider
+	 * @param providerId Provider ID to unregister
+	 */
+	unregisterOAuthProvider(providerId: string): Promise<void>;
+
+	/**
+	 * Register a webhook
+	 * @param options Webhook options
+	 */
+	registerWebhook(options: WebhookOptions): Promise<void>;
+
+	/**
+	 * Unregister a webhook
+	 * @param webhookId Webhook ID to unregister
+	 */
+	unregisterWebhook(webhookId: string): Promise<void>;
+
+	/**
+	 * Register an external API
+	 * @param options External API options
+	 */
+	registerExternalAPI(options: ExternalAPIOptions): Promise<void>;
+
+	/**
+	 * Unregister an external API
+	 * @param apiId API ID to unregister
+	 */
+	unregisterExternalAPI(apiId: string): Promise<void>;
+
+	/**
+	 * Call an external API
+	 * @param apiId API ID (optional, if not provided, uses default caller)
+	 * @param options Request options
+	 * @returns API response
+	 */
+	callExternalAPI(
+		apiId: string | undefined,
+		options: ExternalAPIRequestOptions,
+	): Promise<ExternalAPIResponse>;
+}
+
+/**
+ * Calendar API for plugin extensions
+ */
+export interface CalendarAPI {
+	/**
+	 * Register a calendar extension
+	 * @param options Calendar extension options
+	 */
+	registerExtension(options: CalendarExtensionOptions): Promise<void>;
+
+	/**
+	 * Unregister a calendar extension
+	 * @param extensionId Extension ID to unregister
+	 */
+	unregisterExtension(extensionId: string): Promise<void>;
+}
+
 // ============================================================================
 // Plugin API Implementation (Host-side)
 // ============================================================================
@@ -266,6 +481,10 @@ export function createPluginAPI(pluginId: string): PluginAPI {
 		notifications: createNotificationsAPI(pluginId),
 		ui: createUIAPI(pluginId),
 		editor: createEditorAPI(pluginId),
+		ai: createAIAPI(pluginId),
+		data: createDataAPI(pluginId),
+		integration: createIntegrationAPI(pluginId),
+		calendar: createCalendarAPI(pluginId),
 	};
 }
 
@@ -297,9 +516,15 @@ function createAppAPI(): AppAPI {
  * @param pluginId Plugin ID for storage isolation
  */
 function createStorageAPI(pluginId: string): StorageAPI {
+	const rateLimiter = getPluginRateLimiter();
+	const auditLogger = getPluginSecurityAuditLogger();
+
 	return {
 		async get<T = unknown>(key: string): Promise<T | undefined> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "get", undefined, key);
+
 				// Dynamic import to avoid circular dependencies
 				const { getPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
@@ -317,10 +542,48 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async set(key: string, value: unknown): Promise<void> {
 			try {
+				// Check storage quota before setting
+				// Estimate size by JSON stringifying (approximate)
+				const estimatedSize = new Blob([JSON.stringify(value)]).size;
+
+				// TODO: Get actual userId from plugin context when available
+				const quotaCheck = rateLimiter.checkStorageQuota(
+					pluginId,
+					undefined,
+					estimatedSize,
+				);
+
+				if (!quotaCheck.allowed) {
+					// Log storage quota exceeded
+					const maxQuota = 10 * 1024 * 1024; // 10MB default
+					auditLogger.logStorageAccess(
+						pluginId,
+						"set",
+						undefined,
+						key,
+						estimatedSize,
+						maxQuota,
+					);
+					throw new Error(quotaCheck.reason || "Storage quota exceeded");
+				}
+
 				const { setPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await setPluginStorage(pluginId, key, value);
+
+				// Log storage access
+				auditLogger.logStorageAccess(
+					pluginId,
+					"set",
+					undefined,
+					key,
+					estimatedSize,
+				);
+
+				// Update storage usage tracking
+				// Note: This is approximate. For accurate tracking, query database
+				// TODO: Get actual storage size from database and update rate limiter
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "set" },
@@ -332,10 +595,17 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async delete(key: string): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "delete", undefined, key);
+
 				const { deletePluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await deletePluginStorage(pluginId, key);
+
+				// Note: Storage usage tracking would need to be updated here
+				// For accurate tracking, query database after deletion
+				// TODO: Update storage usage tracking after deletion
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "delete" },
@@ -347,6 +617,9 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async keys(): Promise<string[]> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "keys");
+
 				const { getPluginStorageKeys } = await import(
 					"@/app/_actions/plugin-storage"
 				);
@@ -362,10 +635,16 @@ function createStorageAPI(pluginId: string): StorageAPI {
 
 		async clear(): Promise<void> {
 			try {
+				// Log storage access
+				auditLogger.logStorageAccess(pluginId, "clear");
+
 				const { clearPluginStorage } = await import(
 					"@/app/_actions/plugin-storage"
 				);
 				await clearPluginStorage(pluginId);
+
+				// Reset storage usage tracking
+				rateLimiter.recordStorageUsage(pluginId, undefined, 0);
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, operation: "clear" },
@@ -493,6 +772,99 @@ function createUIAPI(pluginId: string): UIAPI {
 
 			return undefined;
 		},
+
+		async registerWidget(options: WidgetOptions): Promise<void> {
+			try {
+				uiRegistry.registerWidget(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						widgetId: options.id,
+						position: options.position,
+						size: options.size,
+					},
+					"Widget registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, widgetId: options.id },
+					"Failed to register widget",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterWidget(widgetId: string): Promise<void> {
+			try {
+				uiRegistry.unregisterWidget(pluginId, widgetId);
+				logger.info({ pluginId, widgetId }, "Widget unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, widgetId },
+					"Failed to unregister widget",
+				);
+				throw error;
+			}
+		},
+
+		async registerPage(options: PageOptions): Promise<void> {
+			try {
+				uiRegistry.registerPage(pluginId, options);
+				logger.info(
+					{ pluginId, pageId: options.id, route: options.route.path },
+					"Page registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, pageId: options.id },
+					"Failed to register page",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterPage(pageId: string): Promise<void> {
+			try {
+				uiRegistry.unregisterPage(pluginId, pageId);
+				logger.info({ pluginId, pageId }, "Page unregistered");
+			} catch (error) {
+				logger.error({ error, pluginId, pageId }, "Failed to unregister page");
+				throw error;
+			}
+		},
+
+		async registerSidebarPanel(options: SidebarPanelOptions): Promise<void> {
+			try {
+				uiRegistry.registerSidebarPanel(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						panelId: options.id,
+						position: options.position,
+					},
+					"Sidebar panel registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, panelId: options.id },
+					"Failed to register sidebar panel",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterSidebarPanel(panelId: string): Promise<void> {
+			try {
+				uiRegistry.unregisterSidebarPanel(pluginId, panelId);
+				logger.info({ pluginId, panelId }, "Sidebar panel unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, panelId },
+					"Failed to unregister sidebar panel",
+				);
+				throw error;
+			}
+		},
 	};
 }
 
@@ -549,21 +921,23 @@ export function clearPluginCommands(pluginId: string): void {
  * @param pluginId Plugin ID for extension registration
  */
 function createEditorAPI(pluginId: string): EditorAPI {
-	const registry = getEditorExtensionRegistry();
 	const manager = getEditorManager();
 
 	return {
 		async registerExtension(options: EditorExtensionOptions): Promise<void> {
 			try {
-				registry.register(pluginId, options);
+				editorRegistry.register(pluginId, options);
 
-				// Apply extensions to all registered editors
-				const managerInstance = getEditorManager();
-				managerInstance.applyExtensionsToAllEditors();
+				// Note: TipTap does not support dynamic extension updates after editor initialization.
+				// New plugin extensions will only be available for newly created editors.
+				// Existing editors must be recreated to use new extensions.
+				// The deprecated applyExtensionsToAllEditors() method is not called because it does nothing.
 
 				logger.info(
 					{ pluginId, extensionId: options.id, type: options.type },
-					"Editor extension registered and applied",
+					"Editor extension registered. " +
+						"Note: This extension will only be available for newly created editors. " +
+						"Existing editors must be recreated to use this extension.",
 				);
 			} catch (error) {
 				logger.error(
@@ -576,15 +950,17 @@ function createEditorAPI(pluginId: string): EditorAPI {
 
 		async unregisterExtension(extensionId: string): Promise<void> {
 			try {
-				registry.unregister(pluginId, extensionId);
+				editorRegistry.unregister(pluginId, extensionId);
 
-				// Reapply extensions to all registered editors
-				const managerInstance = getEditorManager();
-				managerInstance.applyExtensionsToAllEditors();
+				// Note: TipTap does not support dynamic extension updates after editor initialization.
+				// Extension removal will only affect newly created editors.
+				// Existing editors will continue to use the extension until recreated.
+				// The deprecated applyExtensionsToAllEditors() method is not called because it does nothing.
 
 				logger.info(
 					{ pluginId, extensionId },
-					"Editor extension unregistered",
+					"Editor extension unregistered. " +
+						"Note: This extension will still be available in existing editors until they are recreated.",
 				);
 			} catch (error) {
 				logger.error(
@@ -622,10 +998,7 @@ function createEditorAPI(pluginId: string): EditorAPI {
 			}
 		},
 
-		async setContent(
-			content: JSONContent,
-			editorId?: string,
-		): Promise<void> {
+		async setContent(content: JSONContent, editorId?: string): Promise<void> {
 			try {
 				await manager.setContent(editorId, content);
 			} catch (error) {
@@ -677,6 +1050,584 @@ function createEditorAPI(pluginId: string): EditorAPI {
 					"Failed to check command availability",
 				);
 				return false;
+			}
+		},
+	};
+}
+
+/**
+ * Create AI API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns AI API instance
+ */
+function createAIAPI(pluginId: string): AIAPI {
+	return {
+		async registerQuestionGenerator(
+			options: QuestionGeneratorOptions,
+		): Promise<void> {
+			try {
+				aiRegistry.registerQuestionGenerator(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						generatorId: options.id,
+						supportedTypes: options.supportedTypes,
+					},
+					"Question generator registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, generatorId: options.id },
+					"Failed to register question generator",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterQuestionGenerator(generatorId: string): Promise<void> {
+			try {
+				aiRegistry.unregisterQuestionGenerator(pluginId, generatorId);
+				logger.info(
+					{ pluginId, generatorId },
+					"Question generator unregistered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, generatorId },
+					"Failed to unregister question generator",
+				);
+				throw error;
+			}
+		},
+
+		async registerPromptTemplate(
+			options: PromptTemplateOptions,
+		): Promise<void> {
+			try {
+				aiRegistry.registerPromptTemplate(pluginId, options);
+				logger.info(
+					{ pluginId, templateId: options.id, key: options.key },
+					"Prompt template registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, templateId: options.id },
+					"Failed to register prompt template",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterPromptTemplate(templateId: string): Promise<void> {
+			try {
+				aiRegistry.unregisterPromptTemplate(pluginId, templateId);
+				logger.info({ pluginId, templateId }, "Prompt template unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, templateId },
+					"Failed to unregister prompt template",
+				);
+				throw error;
+			}
+		},
+
+		async registerContentAnalyzer(
+			options: ContentAnalyzerOptions,
+		): Promise<void> {
+			try {
+				aiRegistry.registerContentAnalyzer(pluginId, options);
+				logger.info(
+					{ pluginId, analyzerId: options.id },
+					"Content analyzer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, analyzerId: options.id },
+					"Failed to register content analyzer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterContentAnalyzer(analyzerId: string): Promise<void> {
+			try {
+				aiRegistry.unregisterContentAnalyzer(pluginId, analyzerId);
+				logger.info({ pluginId, analyzerId }, "Content analyzer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, analyzerId },
+					"Failed to unregister content analyzer",
+				);
+				throw error;
+			}
+		},
+	};
+}
+
+/**
+ * Create Data Processor API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns Data API instance
+ */
+function createDataAPI(pluginId: string): DataAPI {
+	return {
+		async registerImporter(options: ImporterOptions): Promise<void> {
+			try {
+				dataProcessorRegistry.registerImporter(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						importerId: options.id,
+						name: options.name,
+						supportedFormats: options.supportedFormats,
+					},
+					"Importer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, importerId: options.id },
+					"Failed to register importer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterImporter(importerId: string): Promise<void> {
+			try {
+				dataProcessorRegistry.unregisterImporter(pluginId, importerId);
+				logger.info({ pluginId, importerId }, "Importer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, importerId },
+					"Failed to unregister importer",
+				);
+				throw error;
+			}
+		},
+
+		async registerExporter(options: ExporterOptions): Promise<void> {
+			try {
+				dataProcessorRegistry.registerExporter(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						exporterId: options.id,
+						name: options.name,
+						supportedFormats: options.supportedFormats,
+					},
+					"Exporter registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, exporterId: options.id },
+					"Failed to register exporter",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExporter(exporterId: string): Promise<void> {
+			try {
+				dataProcessorRegistry.unregisterExporter(pluginId, exporterId);
+				logger.info({ pluginId, exporterId }, "Exporter unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, exporterId },
+					"Failed to unregister exporter",
+				);
+				throw error;
+			}
+		},
+
+		async registerTransformer(options: TransformerOptions): Promise<void> {
+			try {
+				dataProcessorRegistry.registerTransformer(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						transformerId: options.id,
+						name: options.name,
+						sourceFormats: options.sourceFormats,
+						targetFormats: options.targetFormats,
+					},
+					"Transformer registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, transformerId: options.id },
+					"Failed to register transformer",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterTransformer(transformerId: string): Promise<void> {
+			try {
+				dataProcessorRegistry.unregisterTransformer(pluginId, transformerId);
+				logger.info({ pluginId, transformerId }, "Transformer unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, transformerId },
+					"Failed to unregister transformer",
+				);
+				throw error;
+			}
+		},
+	};
+}
+
+/**
+ * Create Integration API implementation
+ *
+ * @param pluginId Plugin ID for API calls
+ * @returns Integration API instance
+ */
+function createIntegrationAPI(pluginId: string): IntegrationAPI {
+	return {
+		async registerOAuthProvider(options: OAuthProviderOptions): Promise<void> {
+			try {
+				integrationRegistry.registerOAuthProvider(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						providerId: options.id,
+						name: options.name,
+					},
+					"OAuth provider registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, providerId: options.id },
+					"Failed to register OAuth provider",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterOAuthProvider(providerId: string): Promise<void> {
+			try {
+				integrationRegistry.unregisterOAuthProvider(pluginId, providerId);
+				logger.info({ pluginId, providerId }, "OAuth provider unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, providerId },
+					"Failed to unregister OAuth provider",
+				);
+				throw error;
+			}
+		},
+
+		async registerWebhook(options: WebhookOptions): Promise<void> {
+			try {
+				integrationRegistry.registerWebhook(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						webhookId: options.id,
+						path: options.path,
+						methods: options.methods,
+					},
+					"Webhook registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, webhookId: options.id },
+					"Failed to register webhook",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterWebhook(webhookId: string): Promise<void> {
+			try {
+				integrationRegistry.unregisterWebhook(pluginId, webhookId);
+				logger.info({ pluginId, webhookId }, "Webhook unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, webhookId },
+					"Failed to unregister webhook",
+				);
+				throw error;
+			}
+		},
+
+		async registerExternalAPI(options: ExternalAPIOptions): Promise<void> {
+			try {
+				integrationRegistry.registerExternalAPI(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						apiId: options.id,
+						name: options.name,
+						baseUrl: options.baseUrl,
+					},
+					"External API registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId: options.id },
+					"Failed to register external API",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExternalAPI(apiId: string): Promise<void> {
+			try {
+				integrationRegistry.unregisterExternalAPI(pluginId, apiId);
+				logger.info({ pluginId, apiId }, "External API unregistered");
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId },
+					"Failed to unregister external API",
+				);
+				throw error;
+			}
+		},
+
+		async callExternalAPI(
+			apiId: string | undefined,
+			options: ExternalAPIRequestOptions,
+		): Promise<ExternalAPIResponse> {
+			try {
+				// If apiId is provided, use registered API configuration
+				if (apiId) {
+					const apiEntry = integrationRegistry.getExternalAPI(pluginId, apiId);
+					if (!apiEntry) {
+						throw new Error(`External API ${apiId} not found`);
+					}
+
+					// Merge base URL if provided
+					const url = apiEntry.baseUrl
+						? `${apiEntry.baseUrl}${options.url}`
+						: options.url;
+
+					// Merge headers
+					const headers = {
+						...apiEntry.defaultHeaders,
+						...options.headers,
+					};
+
+					// Add authentication headers if configured
+					if (apiEntry.auth) {
+						if (apiEntry.auth.type === "bearer" && apiEntry.auth.token) {
+							headers.Authorization = `Bearer ${apiEntry.auth.token}`;
+						} else if (
+							apiEntry.auth.type === "apiKey" &&
+							apiEntry.auth.apiKey &&
+							apiEntry.auth.apiKeyHeader
+						) {
+							headers[apiEntry.auth.apiKeyHeader] = apiEntry.auth.apiKey;
+						} else if (
+							apiEntry.auth.type === "basic" &&
+							apiEntry.auth.username &&
+							apiEntry.auth.password
+						) {
+							const credentials = btoa(
+								`${apiEntry.auth.username}:${apiEntry.auth.password}`,
+							);
+							headers.Authorization = `Basic ${credentials}`;
+						}
+					}
+
+					// Use custom caller if provided, otherwise use default
+					if (apiEntry.caller) {
+						return await apiEntry.caller({
+							...options,
+							url,
+							headers,
+							timeout: options.timeout ?? apiEntry.defaultTimeout,
+						});
+					}
+
+					// Default HTTP caller implementation
+					return await defaultHTTPCaller({
+						...options,
+						url,
+						headers,
+						timeout: options.timeout ?? apiEntry.defaultTimeout,
+					});
+				}
+
+				// Use default caller if no apiId provided
+				return await defaultHTTPCaller(options);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, apiId, url: options.url },
+					"Failed to call external API",
+				);
+				throw error;
+			}
+		},
+	};
+}
+
+/**
+ * Default HTTP caller implementation
+ *
+ * @param options Request options
+ * @returns API response
+ */
+async function defaultHTTPCaller(
+	options: ExternalAPIRequestOptions,
+): Promise<ExternalAPIResponse> {
+	const method = options.method ?? "GET";
+
+	// Build URL - handle relative URLs
+	let urlString = options.url;
+	if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+		// Relative URL - use proxy if needed or construct absolute URL
+		if (options.useProxy && typeof window !== "undefined") {
+			// Validate URL before passing to proxy to prevent open redirect attacks
+			try {
+				// Try to parse as URL to validate format
+				const testUrl = new URL(urlString, window.location.origin);
+				// Only allow relative URLs, not absolute URLs that could be used for redirects
+				if (testUrl.origin !== window.location.origin) {
+					throw new Error("Invalid URL: cannot use proxy for external URLs");
+				}
+			} catch (error) {
+				throw new Error(
+					`Invalid URL format for proxy: ${error instanceof Error ? error.message : "unknown error"}`,
+				);
+			}
+			// In browser, use proxy endpoint
+			urlString = `/api/proxy?url=${encodeURIComponent(urlString)}`;
+		} else {
+			// For server-side, use the URL as-is or throw error
+			throw new Error(
+				"Relative URLs require useProxy=true in browser context or absolute URL",
+			);
+		}
+	} else {
+		// For absolute URLs, validate the URL before using
+		try {
+			const url = new URL(urlString);
+			// Basic security check: reject dangerous protocols
+			if (!["http:", "https:"].includes(url.protocol)) {
+				throw new Error(`Unsupported protocol: ${url.protocol}`);
+			}
+		} catch (error) {
+			throw new Error(
+				`Invalid URL: ${error instanceof Error ? error.message : "unknown error"}`,
+			);
+		}
+	}
+
+	const url = new URL(urlString);
+
+	// Add query parameters
+	if (options.query) {
+		for (const [key, value] of Object.entries(options.query)) {
+			url.searchParams.append(key, value);
+		}
+	}
+
+	// Prepare request options
+	const requestOptions: RequestInit = {
+		method,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+	};
+
+	// Add body if provided
+	if (
+		options.body &&
+		(method === "POST" || method === "PUT" || method === "PATCH")
+	) {
+		requestOptions.body = JSON.stringify(options.body);
+	}
+
+	// Add timeout if provided
+	const controller = new AbortController();
+	const timeoutId = options.timeout
+		? setTimeout(() => controller.abort(), options.timeout)
+		: undefined;
+
+	try {
+		const response = await fetch(url.toString(), {
+			...requestOptions,
+			signal: controller.signal,
+		});
+
+		// Parse response data
+		let data: unknown;
+		const contentType = response.headers.get("content-type");
+		if (contentType?.includes("application/json")) {
+			data = await response.json();
+		} else {
+			data = await response.text();
+		}
+
+		// Extract headers
+		const headers: Record<string, string> = {};
+		response.headers.forEach((value, key) => {
+			headers[key] = value;
+		});
+
+		return {
+			status: response.status,
+			statusText: response.statusText,
+			headers,
+			data,
+		};
+	} catch (error) {
+		if (error instanceof Error && error.name === "AbortError") {
+			throw new Error(`Request timeout after ${options.timeout}ms`);
+		}
+		throw error;
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
+	}
+}
+
+/**
+ * Create Calendar API implementation
+ *
+ * @param pluginId Plugin ID making the API call
+ * @returns Calendar API instance
+ */
+function createCalendarAPI(pluginId: string): CalendarAPI {
+	return {
+		async registerExtension(options: CalendarExtensionOptions): Promise<void> {
+			try {
+				calendarRegistry.registerCalendarExtension(pluginId, options);
+				logger.info(
+					{
+						pluginId,
+						extensionId: options.id,
+						name: options.name,
+					},
+					"Calendar extension registered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId: options.id },
+					"Failed to register calendar extension",
+				);
+				throw error;
+			}
+		},
+
+		async unregisterExtension(extensionId: string): Promise<void> {
+			try {
+				calendarRegistry.unregisterCalendarExtension(pluginId, extensionId);
+				logger.info(
+					{ pluginId, extensionId },
+					"Calendar extension unregistered",
+				);
+			} catch (error) {
+				logger.error(
+					{ error, pluginId, extensionId },
+					"Failed to unregister calendar extension",
+				);
+				throw error;
 			}
 		},
 	};

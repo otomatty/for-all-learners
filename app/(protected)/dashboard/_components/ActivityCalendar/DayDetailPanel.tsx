@@ -32,6 +32,9 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 			try {
 				const data = await getDayActivityDetail(userId, new Date(date));
 				setDetail(data);
+			} catch (_error) {
+				// Error is handled by showing empty state when detail is null
+				setDetail(null);
 			} finally {
 				setLoading(false);
 			}
@@ -138,6 +141,52 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 
 				{/* 目標達成 */}
 				<GoalAchievementSection achievements={detail.goalAchievements} />
+
+				{/* プラグイン拡張セクション */}
+				{detail.summary.pluginExtensions &&
+					detail.summary.pluginExtensions.length > 0 && (
+						<div className="space-y-4">
+							<h4 className="text-sm font-semibold text-muted-foreground">
+								プラグイン拡張
+							</h4>
+							{detail.summary.pluginExtensions.map((ext, index) => {
+								if (!ext.detailSections || ext.detailSections.length === 0) {
+									return null;
+								}
+								return (
+									<div
+										key={`${ext.tooltip || ext.badge || "ext"}-${index}`}
+										className="space-y-2"
+									>
+										{ext.detailSections.map((section, sectionIndex) => (
+											<div
+												key={`${section.title}-${sectionIndex}`}
+												className="p-3 bg-muted rounded-lg"
+											>
+												<div className="flex items-center gap-2 mb-2">
+													{section.icon && (
+														<span className="text-base">{section.icon}</span>
+													)}
+													<h5 className="text-sm font-medium">
+														{section.title}
+													</h5>
+												</div>
+												<div className="text-sm text-muted-foreground">
+													{typeof section.content === "string" ? (
+														<p>{section.content}</p>
+													) : (
+														<pre className="text-xs">
+															{JSON.stringify(section.content, null, 2)}
+														</pre>
+													)}
+												</div>
+											</div>
+										))}
+									</div>
+								);
+							})}
+						</div>
+					)}
 			</div>
 		</div>
 	);

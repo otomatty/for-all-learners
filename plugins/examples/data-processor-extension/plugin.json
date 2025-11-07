@@ -1,0 +1,23 @@
+{
+	"id": "com.fal.examples.data-processor-extension",
+	"name": "Data Processor Extension サンプル",
+	"version": "1.0.0",
+	"description": "データ処理拡張機能の実装例を示すサンプルプラグイン",
+	"author": "F.A.L Team",
+	"main": "src/index.ts",
+	"extensionPoints": {
+		"editor": false,
+		"ai": false,
+		"ui": false,
+		"dataProcessor": true,
+		"integration": false
+	},
+	"keywords": [
+		"data-processor",
+		"importer",
+		"exporter",
+		"transformer",
+		"sample",
+		"example"
+	]
+}
