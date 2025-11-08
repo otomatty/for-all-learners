@@ -33,6 +33,7 @@ import logger from "@/lib/logger";
 import type { LoadedPlugin, PluginManifest } from "@/types/plugin";
 import * as aiRegistry from "../ai-registry";
 import * as dataProcessorRegistry from "../data-processor-registry";
+import { logPluginMessage } from "../debug-tools";
 import { getEditorManager } from "../editor-manager";
 import * as editorRegistry from "../editor-registry";
 import * as integrationRegistry from "../integration-registry";
@@ -243,6 +244,27 @@ export class PluginLoader {
 				"Plugin loaded successfully",
 			);
 
+			// Log to debug tools
+			const debugData: Record<string, unknown> = {
+				pluginId,
+			};
+			if (manifest.name) {
+				debugData.pluginName = manifest.name;
+			}
+			if (manifest.version) {
+				debugData.version = manifest.version;
+			}
+			debugData.enabled = loadedPlugin.enabled;
+			debugData.hasConfig =
+				!!options.config && Object.keys(options.config).length > 0;
+
+			logPluginMessage(
+				pluginId,
+				"info",
+				`プラグインをロードしました: ${manifest.name || pluginId} v${manifest.version || "unknown"}`,
+				debugData,
+			);
+
 			return {
 				success: true,
 				plugin: loadedPlugin,
@@ -252,15 +274,47 @@ export class PluginLoader {
 			this.cleanupWorker(pluginId);
 
 			const message = error instanceof Error ? error.message : "Unknown error";
+			const stack = error instanceof Error ? error.stack : undefined;
+			const errorType = error instanceof PluginError ? error.type : undefined;
 
-			logger.error(
-				{
-					error,
-					pluginId,
-					pluginName: manifest.name,
-					errorType: error instanceof PluginError ? error.type : undefined,
-				},
-				"Failed to load plugin",
+			// In browser environment, Pino may have issues serializing Error objects directly
+			// Extract error properties instead of passing the error object
+			const logContext: Record<string, unknown> = {
+				pluginId,
+				pluginName: manifest.name,
+				errorMessage: message,
+			};
+			if (stack) {
+				logContext.errorStack = stack;
+			}
+			if (errorType) {
+				logContext.errorType = errorType;
+			}
+			// Add error name if available
+			if (error instanceof Error && error.name) {
+				logContext.errorName = error.name;
+			}
+
+			logger.error(logContext, "Failed to load plugin");
+
+			// Log to debug tools
+			const debugData: Record<string, unknown> = {
+				pluginId,
+			};
+			if (manifest.name) {
+				debugData.pluginName = manifest.name;
+			}
+			if (message) {
+				debugData.error = message;
+			}
+			if (errorType) {
+				debugData.errorType = errorType;
+			}
+			logPluginMessage(
+				pluginId,
+				"error",
+				`プラグインのロードに失敗しました: ${message}`,
+				debugData,
 			);
 
 			return {
@@ -431,6 +485,82 @@ export class PluginLoader {
 	 */
 	public getWorkers(): Map<string, Worker> {
 		return new Map(this.workers);
+	}
+
+	/**
+	 * Call a plugin method
+	 *
+	 * @param pluginId Plugin ID
+	 * @param method Method name
+	 * @param args Method arguments
+	 * @returns Promise that resolves with the method result
+	 */
+	public async callPluginMethod(
+		pluginId: string,
+		method: string,
+		...args: unknown[]
+	): Promise<unknown> {
+		const worker = this.workers.get(pluginId);
+
+		if (!worker) {
+			throw new Error(`Worker not found for plugin ${pluginId}`);
+		}
+
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Plugin method call timeout: ${pluginId}.${method}`));
+			}, 30000); // 30 second timeout
+
+			const handleMessage = (event: MessageEvent<WorkerMessage>) => {
+				const message = event.data;
+				if (message.type === "CALL_METHOD") {
+					clearTimeout(timeout);
+					worker.removeEventListener("message", handleMessage);
+
+					const payload = message.payload as {
+						success: boolean;
+						result?: unknown;
+						error?: string;
+					};
+
+					if (payload.success) {
+						resolve(payload.result);
+					} else {
+						reject(
+							new Error(
+								payload.error ||
+									`Plugin method call failed: ${pluginId}.${method}`,
+							),
+						);
+					}
+				} else if (message.type === "ERROR") {
+					clearTimeout(timeout);
+					worker.removeEventListener("message", handleMessage);
+					const errorPayload = message.payload as {
+						message: string;
+						stack?: string;
+					};
+					reject(
+						new Error(
+							errorPayload.message ||
+								`Plugin method call error: ${pluginId}.${method}`,
+						),
+					);
+				}
+			};
+
+			worker.addEventListener("message", handleMessage);
+
+			const callMethodMessage: WorkerMessage = {
+				type: "CALL_METHOD",
+				payload: {
+					method,
+					args,
+				},
+			};
+
+			worker.postMessage(callMethodMessage);
+		});
 	}
 }
 

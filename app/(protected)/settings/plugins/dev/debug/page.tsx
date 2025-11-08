@@ -30,7 +30,7 @@ import { PluginDebugView } from "./_components/PluginDebugView";
 export default async function PluginDebugPage() {
 	const registry = getPluginRegistry();
 	const loadedPlugins = registry.getAll();
-	const debugInfos = getAllPluginsDebugInfo();
+	const debugInfos = await getAllPluginsDebugInfo();
 
 	return (
 		<div className="container mx-auto py-8">

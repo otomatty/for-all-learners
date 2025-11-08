@@ -19,7 +19,15 @@
  */
 
 import logger from "@/lib/logger";
-import type { PageOptions, SidebarPanelOptions, WidgetOptions } from "./types";
+import { logPluginMessage } from "./debug-tools";
+import { getPluginLoader } from "./plugin-loader/plugin-loader";
+import type {
+	PageOptions,
+	SidebarPanelOptions,
+	WidgetContext,
+	WidgetOptions,
+	WidgetRenderResult,
+} from "./types";
 
 // ============================================================================
 // UI Extension Entry Types
@@ -37,6 +45,8 @@ export interface WidgetEntry {
 	size: WidgetOptions["size"];
 	render: WidgetOptions["render"];
 	icon?: string;
+	/** Whether this widget's render function is in Worker context */
+	isWorkerContext?: boolean;
 }
 
 /**
@@ -105,6 +115,58 @@ export function registerWidget(pluginId: string, options: WidgetOptions): void {
 		);
 	}
 
+	// Check if render function is missing (Worker context)
+	// In Worker context, functions cannot be serialized via postMessage
+	const isWorkerContext =
+		!options.render || typeof options.render !== "function";
+
+	logger.debug(
+		{
+			pluginId,
+			widgetId: options.id,
+			hasRender: !!options.render,
+			renderType: typeof options.render,
+			isWorkerContext,
+		},
+		"[registerWidget] Registering widget",
+	);
+
+	// Create render function wrapper for Worker context
+	let renderFunction: WidgetOptions["render"];
+	if (isWorkerContext) {
+		// Create a wrapper that calls the Worker's render method
+		renderFunction = async (
+			context: WidgetContext,
+		): Promise<WidgetRenderResult> => {
+			const loader = getPluginLoader();
+
+			// Call the plugin's render method via CALL_METHOD message
+			// The method name follows the pattern: __widget_render_${widgetId}
+			const methodName = `__widget_render_${options.id}`;
+
+			try {
+				const result = await loader.callPluginMethod(
+					pluginId,
+					methodName,
+					context,
+				);
+				return result as WidgetRenderResult;
+			} catch (error) {
+				logger.error(
+					{
+						pluginId,
+						widgetId: options.id,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					"Failed to render widget from Worker",
+				);
+				throw error;
+			}
+		};
+	} else {
+		renderFunction = options.render;
+	}
+
 	const entry: WidgetEntry = {
 		pluginId,
 		widgetId: options.id,
@@ -112,8 +174,9 @@ export function registerWidget(pluginId: string, options: WidgetOptions): void {
 		description: options.description,
 		position: options.position,
 		size: options.size,
-		render: options.render,
+		render: renderFunction,
 		icon: options.icon,
+		isWorkerContext,
 	};
 
 	pluginWidgets.push(entry);
@@ -125,8 +188,25 @@ export function registerWidget(pluginId: string, options: WidgetOptions): void {
 			widgetId: options.id,
 			position: options.position,
 			size: options.size,
+			isWorkerContext,
+			totalWidgets: pluginWidgets.length,
 		},
 		"Widget registered",
+	);
+
+	// Log to debug tools
+	logPluginMessage(
+		pluginId,
+		"info",
+		`Widgetを登録: ${options.name} (${options.id})`,
+		{
+			widgetId: options.id,
+			name: options.name,
+			position: options.position,
+			size: options.size,
+			icon: options.icon,
+			isWorkerContext,
+		},
 	);
 }
 

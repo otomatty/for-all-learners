@@ -117,18 +117,16 @@ export function handleWorkerMessage(
 
 		case "ERROR": {
 			const errorPayload = message.payload as ErrorPayload;
-			const error = new Error(errorPayload.message || "Unknown error");
-			if (errorPayload.stack) {
-				error.stack = errorPayload.stack;
-			}
+			const errorMessage = errorPayload.message || "Unknown error";
+			const errorStack = errorPayload.stack;
 
 			// Log plugin error to security audit log
 			const auditLogger = getPluginSecurityAuditLogger();
 			auditLogger.logPluginError(
 				pluginId,
-				errorPayload.message || "Unknown error",
+				errorMessage,
 				undefined, // userId not available yet
-				errorPayload.stack,
+				errorStack,
 			);
 
 			// Log to debug tools (async import to avoid circular dependency)
@@ -138,24 +136,39 @@ export function handleWorkerMessage(
 				.then(({ logPluginError }) => {
 					logPluginError(
 						pluginId,
-						errorPayload.message || "Unknown error",
-						errorPayload.stack,
+						errorMessage,
+						errorStack,
 						plugin?.manifest.name,
 					);
 				})
-				.catch((error) => {
+				.catch((err) => {
 					// Silently fail if debug tools are not available
 					logger.debug(
-						{ error, pluginId },
+						{
+							pluginId,
+							errorMessage: err instanceof Error ? err.message : String(err),
+						},
 						"Failed to log error to debug tools",
 					);
 				});
 
-			logger.error(
-				{ error, pluginId, stack: errorPayload.stack },
-				"Plugin error received",
-			);
-			registry.setError(pluginId, errorPayload.message || "Unknown error");
+			// In browser environment, extract error properties instead of passing error object
+			const logContext: Record<string, unknown> = {
+				pluginId,
+				errorMessage,
+			};
+			if (errorStack) {
+				logContext.errorStack = errorStack;
+			}
+			logger.error(logContext, "Plugin error received");
+			registry.setError(pluginId, errorMessage);
+			break;
+		}
+
+		case "INIT":
+		case "DISPOSE": {
+			// These messages are handled directly by worker-manager.ts
+			// Ignore them here to avoid duplicate processing
 			break;
 		}
 
@@ -251,18 +264,32 @@ async function handleAPICall(
 		}
 
 		// Call method
+		// Note: render function handling for widgets is done in sandbox-worker.ts
 		const result = await methodFn(...args);
 
-		// Log successful API call
-		auditLogger.logAPICall(
-			pluginId,
-			namespace,
-			method,
-			args,
-			requestId,
-			true,
-			undefined, // userId not available yet
-		);
+		// Log successful API call (don't let logging errors break API calls)
+		try {
+			auditLogger.logAPICall(
+				pluginId,
+				namespace,
+				method,
+				args,
+				requestId,
+				true,
+				undefined, // userId not available yet
+			);
+		} catch (logError) {
+			// Log the logging error but don't fail the API call
+			logger.warn(
+				{
+					error: logError,
+					pluginId,
+					namespace,
+					method,
+				},
+				"Failed to log API call (non-fatal)",
+			);
+		}
 
 		// Send response
 		if (worker) {
@@ -280,17 +307,30 @@ async function handleAPICall(
 			worker.postMessage(response);
 		}
 	} catch (error) {
-		// Log failed API call
-		auditLogger.logAPICall(
-			pluginId,
-			payload.namespace,
-			payload.method,
-			payload.args,
-			requestId,
-			false,
-			undefined, // userId not available yet
-			error instanceof Error ? error.message : String(error),
-		);
+		// Log failed API call (don't let logging errors break error handling)
+		try {
+			auditLogger.logAPICall(
+				pluginId,
+				payload.namespace,
+				payload.method,
+				payload.args,
+				requestId,
+				false,
+				undefined, // userId not available yet
+				error instanceof Error ? error.message : String(error),
+			);
+		} catch (logError) {
+			// Log the logging error but don't fail error handling
+			logger.warn(
+				{
+					error: logError,
+					pluginId,
+					namespace: payload.namespace,
+					method: payload.method,
+				},
+				"Failed to log API call error (non-fatal)",
+			);
+		}
 
 		// Send error response
 		if (worker) {

@@ -314,8 +314,49 @@ class PluginSecurityAuditLogger {
 		event: SecurityAuditEvent,
 		eventData: Record<string, unknown>,
 	): Promise<void> {
+		// Check if Supabase is configured before attempting to create client
+		// This prevents errors in development/local plugin development environments
+		const supabaseUrl =
+			typeof process !== "undefined"
+				? process.env.NEXT_PUBLIC_SUPABASE_URL
+				: undefined;
+		const serviceRoleKey =
+			typeof process !== "undefined"
+				? process.env.SUPABASE_SERVICE_ROLE_KEY
+				: undefined;
+
+		// Skip database save if Supabase is not configured
+		// This is expected in development/local plugin development environments
+		if (!supabaseUrl || !serviceRoleKey) {
+			logger.debug(
+				{
+					pluginId: event.pluginId,
+					eventType: event.eventType,
+					hasSupabaseUrl: !!supabaseUrl,
+					hasServiceRoleKey: !!serviceRoleKey,
+				},
+				"Skipping audit log save (Supabase not configured - expected in local development)",
+			);
+			return;
+		}
+
 		// Use admin client (service role) to bypass RLS for system logs
-		const supabase = createAdminClient();
+		let supabase;
+		try {
+			supabase = createAdminClient();
+		} catch (error) {
+			// If createAdminClient fails even though env vars are set, log and skip
+			logger.warn(
+				{
+					pluginId: event.pluginId,
+					eventType: event.eventType,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				"Failed to create admin client for audit log save (skipping)",
+			);
+			return;
+		}
+
 		const { error } = await supabase
 			.from("plugin_security_audit_logs" as never)
 			.insert({

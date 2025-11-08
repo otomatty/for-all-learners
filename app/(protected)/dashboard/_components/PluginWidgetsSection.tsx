@@ -18,8 +18,10 @@
  *   └─ Plan: docs/03_plans/plugin-system/widget-calendar-extensions.md
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PluginWidgetContainer } from "@/components/plugins/PluginWidgetContainer";
+import logger from "@/lib/logger";
+import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import type { WidgetPosition } from "@/lib/plugins/types";
 import { getWidgets } from "@/lib/plugins/ui-registry";
 
@@ -50,9 +52,26 @@ export function PluginWidgetsSection() {
 		"bottom-right": [],
 	});
 
-	useEffect(() => {
+	// Function to refresh widgets
+	const refreshWidgets = useCallback(() => {
 		// Get all widgets from registry
 		const allWidgets = getWidgets();
+
+		// Debug: Log widget count
+		if (allWidgets.length > 0) {
+			logger.debug(
+				{
+					widgetCount: allWidgets.length,
+					widgets: allWidgets.map((w) => ({
+						pluginId: w.pluginId,
+						widgetId: w.widgetId,
+						name: w.name,
+						position: w.position,
+					})),
+				},
+				"[PluginWidgetsSection] Found widgets",
+			);
+		}
 
 		// Group by position
 		const grouped: Record<WidgetPosition, WidgetMetadata[]> = {
@@ -76,6 +95,46 @@ export function PluginWidgetsSection() {
 
 		setWidgetsByPosition(grouped);
 	}, []);
+
+	useEffect(() => {
+		// Initial load
+		refreshWidgets();
+
+		// Poll for widget changes (plugins may load asynchronously)
+		// Check every 2 seconds for the first 30 seconds, then every 5 seconds
+		let pollCount = 0;
+		const maxQuickPolls = 15; // 15 * 2s = 30s
+		let slowPollInterval: NodeJS.Timeout | null = null;
+
+		const quickPollInterval = setInterval(() => {
+			pollCount++;
+			refreshWidgets();
+			if (pollCount >= maxQuickPolls) {
+				clearInterval(quickPollInterval);
+				// Switch to slower polling
+				slowPollInterval = setInterval(() => {
+					refreshWidgets();
+				}, 5000); // Poll every 5 seconds
+			}
+		}, 2000); // Poll every 2 seconds initially
+
+		// Also check when plugins are loaded
+		const registry = getPluginRegistry();
+		const checkInterval = setInterval(() => {
+			const loadedPlugins = registry.getAll();
+			if (loadedPlugins.length > 0) {
+				refreshWidgets();
+			}
+		}, 1000); // Check every second
+
+		return () => {
+			clearInterval(quickPollInterval);
+			if (slowPollInterval) {
+				clearInterval(slowPollInterval);
+			}
+			clearInterval(checkInterval);
+		};
+	}, [refreshWidgets]);
 
 	// Check if there are any widgets
 	const hasWidgets = Object.values(widgetsByPosition).some(

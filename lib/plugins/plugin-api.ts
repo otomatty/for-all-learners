@@ -29,6 +29,7 @@ import pkg from "../../package.json";
 import * as aiRegistry from "./ai-registry";
 import * as calendarRegistry from "./calendar-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
+import { logPluginMessage } from "./debug-tools";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
 import * as integrationRegistry from "./integration-registry";
@@ -734,6 +735,19 @@ function createUIAPI(pluginId: string): UIAPI {
 				{ pluginId, commandId: fullCommandId, commandLabel: command.label },
 				"Plugin command registered",
 			);
+
+			// Log to debug tools
+			logPluginMessage(
+				pluginId,
+				"info",
+				`コマンドを登録: ${command.label || command.id} (${command.id})`,
+				{
+					commandId: fullCommandId,
+					commandLabel: command.label,
+					description: command.description,
+					icon: command.icon,
+				},
+			);
 		},
 
 		async unregisterCommand(commandId: string): Promise<void> {
@@ -775,6 +789,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async registerWidget(options: WidgetOptions): Promise<void> {
 			try {
+				// Register widget (render function will be handled by ui-registry for Worker context)
 				uiRegistry.registerWidget(pluginId, options);
 				logger.info(
 					{

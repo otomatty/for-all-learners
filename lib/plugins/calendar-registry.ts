@@ -19,6 +19,7 @@
  */
 
 import logger from "@/lib/logger";
+import { logPluginMessage } from "./debug-tools";
 import type { CalendarExtensionData, CalendarExtensionOptions } from "./types";
 
 // ============================================================================
@@ -89,6 +90,18 @@ export function registerCalendarExtension(
 			name: options.name,
 		},
 		"Calendar extension registered",
+	);
+
+	// Log to debug tools
+	logPluginMessage(
+		pluginId,
+		"info",
+		`カレンダー拡張を登録: ${options.name} (${options.id})`,
+		{
+			extensionId: options.id,
+			name: options.name,
+			description: options.description,
+		},
 	);
 }
 

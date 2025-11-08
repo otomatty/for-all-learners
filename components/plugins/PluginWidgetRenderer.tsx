@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useState } from "react";
+import logger from "@/lib/logger";
 import type { WidgetRenderResult } from "@/lib/plugins/types";
 import { getWidgets } from "@/lib/plugins/ui-registry";
 import { type WidgetComponentType, WidgetRenderer } from "./widget-renderers";
@@ -75,10 +76,21 @@ export function PluginWidgetRenderer({
 				}
 			} catch (err) {
 				if (mounted) {
-					setError(
-						err instanceof Error ? err.message : "Failed to render widget",
-					);
+					const errorMessage =
+						err instanceof Error ? err.message : "Failed to render widget";
+					setError(errorMessage);
 					setLoading(false);
+
+					// Log error using logger (works in client components)
+					logger.error(
+						{
+							pluginId,
+							widgetId,
+							error: err instanceof Error ? err.message : String(err),
+							errorStack: err instanceof Error ? err.stack : undefined,
+						},
+						`[PluginWidgetRenderer] Failed to render widget ${widgetId} from plugin ${pluginId}`,
+					);
 				}
 			}
 		}

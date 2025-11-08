@@ -9,7 +9,6 @@
  *   └─ lib/plugins/plugin-loader/plugin-loader.ts
  *
  * Dependencies:
- *   ├─ lib/plugins/plugin-loader/sandbox-worker-code.ts
  *   ├─ lib/plugins/types.ts
  *   └─ types/plugin.ts
  *
@@ -21,7 +20,6 @@ import logger from "@/lib/logger";
 import type { PluginManifest } from "@/types/plugin";
 import type { ErrorPayload, InitPayload, WorkerMessage } from "../types";
 import { PluginError, PluginErrorType } from "../types";
-import { getSandboxWorkerCode } from "./sandbox-worker-code";
 
 /**
  * Create Web Worker for plugin
@@ -36,13 +34,9 @@ export function createWorker(
 	onMessage: (pluginId: string, message: WorkerMessage) => void,
 	onError: (pluginId: string, message: string) => void,
 ): Worker {
-	// Create worker from inline sandbox worker code
-	// Note: In production, this should be loaded from a separate file
-	// For now, we'll create a blob URL with the worker code
-	const workerCode = getSandboxWorkerCode();
-
-	const blob = new Blob([workerCode], { type: "application/javascript" });
-	const workerUrl = URL.createObjectURL(blob);
+	// Load worker from built file
+	// The file should be built by scripts/build-sandbox-worker.ts before running the app
+	const workerUrl = "/workers/sandbox-worker.js";
 
 	const worker = new Worker(workerUrl, {
 		type: "classic", // Use classic mode for simpler execution
@@ -56,22 +50,31 @@ export function createWorker(
 
 	// Set up error handler
 	worker.onerror = (error: ErrorEvent) => {
-		logger.error(
-			{
-				error: error.error || new Error(error.message),
-				pluginId,
-				workerName: `plugin-${pluginId}`,
-			},
-			"Plugin worker error",
-		);
-		onError(pluginId, error.message);
-	};
+		// In browser environment, Pino may have issues serializing Error objects directly
+		// Extract error properties instead of passing the error object
+		const logContext: Record<string, unknown> = {
+			pluginId,
+			workerName: `plugin-${pluginId}`,
+			errorMessage: error.message,
+		};
+		if (error.filename) {
+			logContext.errorFilename = error.filename;
+		}
+		if (error.lineno !== undefined) {
+			logContext.errorLineno = error.lineno;
+		}
+		if (error.colno !== undefined) {
+			logContext.errorColno = error.colno;
+		}
+		if (error.error instanceof Error) {
+			logContext.errorName = error.error.name;
+			if (error.error.stack) {
+				logContext.errorStack = error.error.stack;
+			}
+		}
 
-	// Cleanup blob URL when worker is terminated
-	const originalTerminate = worker.terminate.bind(worker);
-	worker.terminate = () => {
-		URL.revokeObjectURL(workerUrl);
-		originalTerminate();
+		logger.error(logContext, "Plugin worker error");
+		onError(pluginId, error.message);
 	};
 
 	return worker;

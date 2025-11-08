@@ -65,8 +65,8 @@ export function buildCSPHeader(_nonce: string): string {
 		`style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net`,
 		// Image sources: self, data URIs, HTTPS, and blob (for plugin-generated images)
 		"img-src 'self' data: https: blob:",
-		// Font sources: self, data URIs, and Google Fonts (for next/font/google)
-		"font-src 'self' data: https://fonts.gstatic.com",
+		// Font sources: self, data URIs, Google Fonts (for next/font/google), and jsDelivr (for KaTeX fonts)
+		"font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
 		// Frame sources: self only
 		"frame-src 'self'",
 		// Object sources: none (prevent Flash/Java)

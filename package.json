@@ -3,8 +3,8 @@
 	"version": "0.2.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev --turbopack",
-		"build": "next build --webpack",
+		"dev": "bun run scripts/build-sandbox-worker.ts && next dev --turbopack",
+		"build": "bun run scripts/build-sandbox-worker.ts && next build --webpack",
 		"start": "next start",
 		"lint": "biome check --write ./app ./components ./lib ./hooks ./types ./stores ./scripts ./templates ./middleware.ts",
 		"lint:ci": "biome check --diagnostic-level=error ./app ./components ./lib ./hooks ./types ./stores ./scripts ./templates ./middleware.ts",

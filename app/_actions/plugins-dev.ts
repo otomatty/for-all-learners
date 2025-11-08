@@ -132,14 +132,15 @@ export async function getLocalPlugins(): Promise<LocalPluginInfo[]> {
 }
 
 /**
- * Load a local plugin for development
+ * Get local plugin code and manifest (for client-side loading)
  *
  * @param pluginId Plugin ID
- * @returns Load result
+ * @returns Plugin code and manifest
  */
-export async function loadLocalPlugin(pluginId: string): Promise<{
+export async function getLocalPluginCode(pluginId: string): Promise<{
 	success: boolean;
-	plugin?: LoadedPlugin;
+	manifest?: PluginManifest;
+	code?: string;
 	error?: string;
 }> {
 	try {
@@ -171,7 +172,11 @@ export async function loadLocalPlugin(pluginId: string): Promise<{
 			const distPath = join(pluginDir, "dist/index.js");
 			if (existsSync(distPath)) {
 				const code = readFileSync(distPath, "utf-8");
-				return await loadPluginCode(manifest, code);
+				return {
+					success: true,
+					manifest,
+					code,
+				};
 			}
 			return {
 				success: false,
@@ -184,13 +189,66 @@ export async function loadLocalPlugin(pluginId: string): Promise<{
 		const distPath = join(pluginDir, "dist/index.js");
 		if (existsSync(distPath)) {
 			const code = readFileSync(distPath, "utf-8");
-			return await loadPluginCode(manifest, code);
+			return {
+				success: true,
+				manifest,
+				code,
+			};
 		}
 
 		// If no built version, try to read source (will fail if not bundled)
 		// This is a fallback for development
 		const code = readFileSync(codePath, "utf-8");
-		return await loadPluginCode(manifest, code);
+		return {
+			success: true,
+			manifest,
+			code,
+		};
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unknown error";
+		logger.error({ error, pluginId }, "Failed to get local plugin code");
+		return {
+			success: false,
+			error: message,
+		};
+	}
+}
+
+/**
+ * Load a local plugin for development
+ * NOTE: This function is deprecated. Use getLocalPluginCode + client-side loading instead.
+ * Kept for backward compatibility but will fail in SSR context.
+ *
+ * @param pluginId Plugin ID
+ * @returns Load result
+ * @deprecated Use getLocalPluginCode instead and load on client side
+ */
+export async function loadLocalPlugin(pluginId: string): Promise<{
+	success: boolean;
+	plugin?: LoadedPlugin;
+	error?: string;
+}> {
+	// Check if we're in a browser environment
+	if (typeof window === "undefined") {
+		return {
+			success: false,
+			error:
+				"loadLocalPlugin cannot be called from server-side. Use getLocalPluginCode instead.",
+		};
+	}
+
+	try {
+		// Get plugin code and manifest
+		const codeResult = await getLocalPluginCode(pluginId);
+		if (!codeResult.success || !codeResult.manifest || !codeResult.code) {
+			return {
+				success: false,
+				error: codeResult.error || "Failed to get plugin code",
+			};
+		}
+
+		// Load plugin code using PluginLoader (client-side only)
+		return await loadPluginCode(codeResult.manifest, codeResult.code);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error";
 		logger.error({ error, pluginId }, "Failed to load local plugin");

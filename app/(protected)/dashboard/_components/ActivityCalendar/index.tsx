@@ -6,8 +6,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMonthlyActivitySummary } from "@/app/_actions/activity_calendar";
+import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { CalendarGrid } from "./CalendarGrid";
 import { CalendarHeader } from "./CalendarHeader";
 import { DayDetailPanel } from "./DayDetailPanel";
@@ -30,9 +31,79 @@ export function ActivityCalendar({
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [isEnrichingPlugins, setIsEnrichingPlugins] = useState(false);
+	const lastEnrichedMonthRef = useRef<{ year: number; month: number } | null>(
+		null,
+	);
+
+	// Enrich monthData with plugin extension data (client-side only)
+	useEffect(() => {
+		async function enrichWithPluginData() {
+			// Check if we've already enriched this month
+			const currentMonthKey = `${monthData.year}-${monthData.month}`;
+			const lastEnrichedKey = lastEnrichedMonthRef.current
+				? `${lastEnrichedMonthRef.current.year}-${lastEnrichedMonthRef.current.month}`
+				: null;
+
+			if (currentMonthKey === lastEnrichedKey) {
+				return; // Already enriched this month
+			}
+
+			if (isEnrichingPlugins) return; // Prevent concurrent enrichment
+			setIsEnrichingPlugins(true);
+
+			try {
+				// Get plugin extension data for all days in the month
+				const enrichmentPromises = monthData.days.map(async (day) => {
+					try {
+						const pluginExtensions = await getDailyExtensionData(day.date);
+						if (pluginExtensions.length === 0) {
+							return day; // No plugin data, return as-is
+						}
+						return {
+							...day,
+							pluginExtensions,
+						};
+					} catch (_error) {
+						return day;
+					}
+				});
+
+				const enrichedDays = await Promise.all(enrichmentPromises);
+
+				// Update month data with enriched days
+				setMonthData((prev) => ({
+					...prev,
+					days: enrichedDays,
+				}));
+
+				// Mark this month as enriched
+				lastEnrichedMonthRef.current = {
+					year: monthData.year,
+					month: monthData.month,
+				};
+			} catch (_error) {
+			} finally {
+				setIsEnrichingPlugins(false);
+			}
+		}
+		// Only enrich if we have days to process
+		if (monthData.days.length > 0) {
+			enrichWithPluginData();
+		}
+		// monthData.days is derived from year/month, so we only need to depend on those
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		monthData.year,
+		monthData.month,
+		monthData.days.map,
+		monthData.days.length,
+		isEnrichingPlugins,
+	]); // Re-enrich when month changes
 
 	const handlePreviousMonth = async () => {
 		setLoading(true);
+		lastEnrichedMonthRef.current = null; // Reset enrichment state
 		try {
 			const newMonth = currentMonth.month === 1 ? 12 : currentMonth.month - 1;
 			const newYear =
@@ -50,6 +121,7 @@ export function ActivityCalendar({
 
 	const handleNextMonth = async () => {
 		setLoading(true);
+		lastEnrichedMonthRef.current = null; // Reset enrichment state
 		try {
 			const newMonth = currentMonth.month === 12 ? 1 : currentMonth.month + 1;
 			const newYear =
@@ -67,6 +139,7 @@ export function ActivityCalendar({
 
 	const handleToday = async () => {
 		setLoading(true);
+		lastEnrichedMonthRef.current = null; // Reset enrichment state
 		try {
 			const today = new Date();
 			const year = today.getFullYear();

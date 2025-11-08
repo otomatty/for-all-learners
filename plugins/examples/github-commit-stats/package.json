@@ -1,11 +1,11 @@
 {
 	"name": "@fal/github-commit-stats",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "GitHubコミット行数をカレンダーに表示し、ダッシュボードに統計を表示するプラグイン",
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"build": "tsc && esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=browser --target=es2020"
+		"build": "tsc && esbuild src/index.ts --bundle --format=iife --outfile=dist/index.js --platform=browser --target=es2020 --global-name=plugin"
 	},
 	"devDependencies": {
 		"@fal/plugin-types": "workspace:*",

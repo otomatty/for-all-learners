@@ -59,6 +59,14 @@ const pendingRequests = new Map<
 	}
 >();
 
+/**
+ * Temporary storage for widget render functions registered before plugin activation
+ */
+const pendingWidgetRenders = new Map<
+	string,
+	(...args: unknown[]) => unknown | Promise<unknown>
+>();
+
 // ============================================================================
 // Plugin API Proxy (Worker-side)
 // ============================================================================
@@ -130,7 +138,42 @@ function createPluginAPIProxy() {
 				return await callHostAPI("ui", "showDialog", [options]);
 			},
 			async registerWidget(options: unknown): Promise<void> {
-				await callHostAPI("ui", "registerWidget", [options]);
+				// Extract render function and store it as a plugin method
+				const widgetOptions = options as {
+					id: string;
+					render?: unknown;
+					[name: string]: unknown;
+				};
+
+				if (
+					widgetOptions.render &&
+					typeof widgetOptions.render === "function"
+				) {
+					// Store render function as a plugin method
+					const methodName = `__widget_render_${widgetOptions.id}`;
+
+					// Store in plugin instance methods (will be available after activation)
+					if (pluginInstance) {
+						// Store in plugin instance methods
+						pluginInstance.methods[methodName] = widgetOptions.render as (
+							...args: unknown[]
+						) => unknown | Promise<unknown>;
+					} else {
+						// Plugin not initialized yet, store in temporary storage
+						pendingWidgetRenders.set(
+							methodName,
+							widgetOptions.render as (
+								...args: unknown[]
+							) => unknown | Promise<unknown>,
+						);
+					}
+
+					// Remove render function from options before registering
+					const { render, ...optionsWithoutRender } = widgetOptions;
+					await callHostAPI("ui", "registerWidget", [optionsWithoutRender]);
+				} else {
+					await callHostAPI("ui", "registerWidget", [options]);
+				}
 			},
 			async unregisterWidget(widgetId: string): Promise<void> {
 				await callHostAPI("ui", "unregisterWidget", [widgetId]);
@@ -401,9 +444,16 @@ async function handleInit(payload: InitPayload): Promise<void> {
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
-				methods: plugin.methods || {},
+				methods: {
+					...plugin.methods,
+					// Add pending widget render functions
+					...Object.fromEntries(pendingWidgetRenders),
+				},
 				dispose: plugin.dispose,
 			};
+
+			// Clear pending widget renders
+			pendingWidgetRenders.clear();
 
 			// Send success response
 			sendMessage({

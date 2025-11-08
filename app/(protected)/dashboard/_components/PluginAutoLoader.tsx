@@ -23,8 +23,8 @@
 import { useEffect, useRef } from "react";
 import { getInstalledPlugins } from "@/app/_actions/plugins";
 import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
-import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import logger from "@/lib/logger";
+import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 
 /**
  * Plugin Auto Loader Component

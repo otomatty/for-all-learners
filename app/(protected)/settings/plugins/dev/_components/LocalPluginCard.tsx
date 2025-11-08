@@ -6,10 +6,8 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { publishPlugin } from "@/app/_actions/plugin-publish";
 import {
+	getLocalPluginCode,
 	type LocalPluginInfo,
-	loadLocalPlugin,
-	reloadLocalPlugin,
-	unloadLocalPlugin,
 } from "@/app/_actions/plugins-dev";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +19,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
+import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 
 interface LocalPluginCardProps {
 	plugin: LocalPluginInfo;
@@ -40,12 +40,36 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 	const handleLoad = () => {
 		startTransition(async () => {
 			try {
-				const result = await loadLocalPlugin(plugin.id);
-				if (result.success) {
+				// Get plugin code and manifest from server
+				const codeResult = await getLocalPluginCode(plugin.id);
+				if (!codeResult.success || !codeResult.manifest || !codeResult.code) {
+					toast.error(codeResult.error || "プラグインの読み込みに失敗しました");
+					return;
+				}
+
+				// Load plugin on client side (where Worker is available)
+				const loader = PluginLoader.getInstance();
+				const registry = getPluginRegistry();
+
+				// Check if already loaded - if so, unload first
+				if (registry.has(plugin.id)) {
+					await loader.unloadPlugin(plugin.id);
+				}
+
+				const loadResult = await loader.loadPlugin(
+					codeResult.manifest,
+					codeResult.code,
+					{
+						enableImmediately: true,
+						requireSignature: false, // Skip signature verification for local development
+					},
+				);
+
+				if (loadResult.success) {
 					toast.success(`${plugin.name} を読み込みました`);
 					router.refresh();
 				} else {
-					toast.error(result.error || "プラグインの読み込みに失敗しました");
+					toast.error(loadResult.error || "プラグインの読み込みに失敗しました");
 				}
 			} catch (error) {
 				toast.error(
@@ -60,13 +84,11 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 	const handleUnload = () => {
 		startTransition(async () => {
 			try {
-				const result = await unloadLocalPlugin(plugin.id);
-				if (result.success) {
-					toast.success(`${plugin.name} をアンロードしました`);
-					router.refresh();
-				} else {
-					toast.error(result.error || "プラグインのアンロードに失敗しました");
-				}
+				// Unload plugin on client side (where Worker is available)
+				const loader = PluginLoader.getInstance();
+				await loader.unloadPlugin(plugin.id);
+				toast.success(`${plugin.name} をアンロードしました`);
+				router.refresh();
 			} catch (error) {
 				toast.error(
 					error instanceof Error
@@ -81,12 +103,39 @@ export function LocalPluginCard({ plugin }: LocalPluginCardProps) {
 		setIsReloading(true);
 		startTransition(async () => {
 			try {
-				const result = await reloadLocalPlugin(plugin.id);
-				if (result.success) {
+				// Unload first
+				const loader = PluginLoader.getInstance();
+				const registry = getPluginRegistry();
+				if (registry.has(plugin.id)) {
+					await loader.unloadPlugin(plugin.id);
+				}
+
+				// Get plugin code and manifest from server
+				const codeResult = await getLocalPluginCode(plugin.id);
+				if (!codeResult.success || !codeResult.manifest || !codeResult.code) {
+					toast.error(
+						codeResult.error || "プラグインの再読み込みに失敗しました",
+					);
+					return;
+				}
+
+				// Load plugin on client side
+				const loadResult = await loader.loadPlugin(
+					codeResult.manifest,
+					codeResult.code,
+					{
+						enableImmediately: true,
+						requireSignature: false,
+					},
+				);
+
+				if (loadResult.success) {
 					toast.success(`${plugin.name} を再読み込みしました`);
 					router.refresh();
 				} else {
-					toast.error(result.error || "プラグインの再読み込みに失敗しました");
+					toast.error(
+						loadResult.error || "プラグインの再読み込みに失敗しました",
+					);
 				}
 			} catch (error) {
 				toast.error(

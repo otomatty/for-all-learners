@@ -25,7 +25,6 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { installPlugin } from "@/app/_actions/plugins";
-import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +42,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import type { PluginMetadata } from "@/types/plugin";
 import { PluginDetails } from "./PluginDetails";
 

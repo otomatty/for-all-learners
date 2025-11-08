@@ -35,9 +35,7 @@ import {
 	getAllPluginStorage,
 	setPluginStorage,
 } from "@/app/_actions/plugin-storage";
-import { GitHubRepoSelector } from "./custom-widgets/GitHubRepoSelector";
-import { GitHubUserSelector } from "./custom-widgets/GitHubUserSelector";
-import { PasswordInput } from "./custom-widgets/PasswordInput";
+import { getPlugin } from "@/app/_actions/plugins";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -66,7 +64,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
+import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
+import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import type { JSONSchema } from "@/types/plugin";
+import { GitHubRepoSelector } from "./custom-widgets/GitHubRepoSelector";
+import { GitHubUserSelector } from "./custom-widgets/GitHubUserSelector";
+import { PasswordInput } from "./custom-widgets/PasswordInput";
 
 interface PluginSettingsFormProps {
 	pluginId: string;
@@ -404,6 +408,7 @@ export function PluginSettingsForm({
 	const [availableRepos, setAvailableRepos] = useState<
 		Array<{ full_name: string; name: string }>
 	>([]);
+	const { loadPlugin } = useLoadPlugin();
 
 	// Generate Zod schema from JSON Schema
 	const zodSchema = configSchema ? jsonSchemaToZod(configSchema) : z.object({});
@@ -474,7 +479,44 @@ export function PluginSettingsForm({
 				await setPluginStorage(pluginId, key, value);
 			}
 
-			toast.success("設定を保存しました");
+			// Reload plugin with new configuration
+			try {
+				// Check if plugin is currently loaded
+				const registry = getPluginRegistry();
+				const loadedPlugin = registry.get(pluginId);
+
+				if (loadedPlugin) {
+					// Unload existing plugin first
+					const loader = PluginLoader.getInstance();
+					try {
+						await loader.unloadPlugin(pluginId);
+					} catch (_unloadError) {
+						// Continue even if unload fails
+					}
+				}
+
+				// Load plugin with new configuration
+				const pluginMetadata = await getPlugin(pluginId);
+				if (pluginMetadata) {
+					const result = await loadPlugin(pluginMetadata);
+					if (result.success) {
+						toast.success("設定を保存し、プラグインを再読み込みしました");
+					} else {
+						toast.warning(
+							"設定を保存しましたが、プラグインの再読み込みに失敗しました: " +
+								(result.error || "不明なエラー"),
+						);
+					}
+				} else {
+					toast.success("設定を保存しました");
+				}
+			} catch (_reloadError) {
+				// If reload fails, still show success for config save
+				toast.warning(
+					"設定を保存しましたが、プラグインの再読み込みに失敗しました。ページをリロードしてください。",
+				);
+			}
+
 			setSavedConfig(valuesObj);
 			onOpenChange(false);
 		} catch (error) {
