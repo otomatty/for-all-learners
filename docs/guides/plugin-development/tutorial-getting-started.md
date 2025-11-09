@@ -234,6 +234,8 @@ bun run plugins:dev my-first-plugin
 3. プラグインを読み込む：
    - プラグインカードの「読み込む」ボタンをクリック
 
+詳細は **[ローカル開発環境のドキュメント](./local-development-environment.md)** を参照してください。
+
 ### プラグインの再読み込み
 
 コードを変更したら、再読み込みできます：

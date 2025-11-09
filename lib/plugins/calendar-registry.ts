@@ -72,6 +72,12 @@ export function registerCalendarExtension(
 		);
 	}
 
+	if (typeof options.getDailyData !== "function") {
+		throw new Error(
+			`Calendar extension ${options.id} must provide a getDailyData function`,
+		);
+	}
+
 	const entry: CalendarExtensionEntry = {
 		pluginId,
 		extensionId: options.id,

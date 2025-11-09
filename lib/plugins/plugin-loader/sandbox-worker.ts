@@ -38,10 +38,21 @@ const pendingRequests = new Map<
 	string,
 	{ resolve: (value: unknown) => void; reject: (reason?: Error) => void }
 >();
-const pendingWidgetRenders = new Map<
+const pendingWorkerMethods = new Map<
 	string,
 	(...args: unknown[]) => unknown | Promise<unknown>
 >();
+
+const registerWorkerMethod = (
+	methodName: string,
+	fn: (...args: unknown[]) => unknown | Promise<unknown>,
+): void => {
+	if (pluginInstance) {
+		pluginInstance.methods[methodName] = fn;
+	} else {
+		pendingWorkerMethods.set(methodName, fn);
+	}
+};
 
 // Message types
 const MessageTypes = {
@@ -174,7 +185,48 @@ const createPluginAPIProxy = () => ({
 	},
 	ui: {
 		registerCommand: (command: unknown) =>
-			callHostAPI("ui", "registerCommand", [command]),
+			callHostAPI("ui", "registerCommand", [
+				(() => {
+					if (!command || typeof command !== "object") {
+						return command;
+					}
+
+					const commandOptions = command as {
+						id?: string;
+						handler?: unknown;
+						execute?: unknown;
+						[key: string]: unknown;
+					};
+
+					if (!commandOptions.id) {
+						return command;
+					}
+
+					const handler =
+						typeof commandOptions.handler === "function"
+							? commandOptions.handler
+							: typeof commandOptions.execute === "function"
+								? commandOptions.execute
+								: null;
+
+					if (!handler) {
+						return command;
+					}
+
+					const methodName = `__command_handler_${commandOptions.id}`;
+					registerWorkerMethod(
+						methodName,
+						handler as (...args: unknown[]) => unknown | Promise<unknown>,
+					);
+
+					const {
+						handler: _handler,
+						execute: _execute,
+						...rest
+					} = commandOptions;
+					return rest;
+				})(),
+			]),
 		unregisterCommand: (commandId: string) =>
 			callHostAPI("ui", "unregisterCommand", [commandId]),
 		showDialog: (options: unknown) =>
@@ -187,12 +239,8 @@ const createPluginAPIProxy = () => ({
 			const widgetOptions = options || {};
 			if (widgetOptions.render && typeof widgetOptions.render === "function") {
 				const methodName = `__widget_render_${widgetOptions.id}`;
-				if (pluginInstance) {
-					pluginInstance.methods[methodName] = widgetOptions.render;
-				} else {
-					pendingWidgetRenders.set(methodName, widgetOptions.render);
-				}
-				const { render, ...optionsWithoutRender } = widgetOptions;
+				registerWorkerMethod(methodName, widgetOptions.render);
+				const { render: _render, ...optionsWithoutRender } = widgetOptions;
 				return callHostAPI("ui", "registerWidget", [optionsWithoutRender]);
 			}
 			return callHostAPI("ui", "registerWidget", [options]);
@@ -210,7 +258,37 @@ const createPluginAPIProxy = () => ({
 	},
 	calendar: {
 		registerExtension: (options: unknown) =>
-			callHostAPI("calendar", "registerExtension", [options]),
+			callHostAPI("calendar", "registerExtension", [
+				(() => {
+					if (!options || typeof options !== "object") {
+						return options;
+					}
+
+					const extensionOptions = options as {
+						id?: string;
+						getDailyData?: unknown;
+						[key: string]: unknown;
+					};
+
+					if (
+						!extensionOptions.id ||
+						typeof extensionOptions.getDailyData !== "function"
+					) {
+						return options;
+					}
+
+					const methodName = `__calendar_getDailyData_${extensionOptions.id}`;
+					registerWorkerMethod(
+						methodName,
+						extensionOptions.getDailyData as (
+							...args: unknown[]
+						) => unknown | Promise<unknown>,
+					);
+
+					const { getDailyData: _getDailyData, ...rest } = extensionOptions;
+					return rest;
+				})(),
+			]),
 		unregisterExtension: (extensionId: string) =>
 			callHostAPI("calendar", "unregisterExtension", [extensionId]),
 	},
@@ -320,12 +398,12 @@ const handleInit = async (payload: {
 				version: manifest.version,
 				methods: {
 					...(plugin.methods || {}),
-					...Object.fromEntries(pendingWidgetRenders),
+					...Object.fromEntries(pendingWorkerMethods),
 				},
 				dispose: plugin.dispose,
 			};
 
-			pendingWidgetRenders.clear();
+			pendingWorkerMethods.clear();
 
 			self.postMessage({
 				type: MessageTypes.INIT,
@@ -418,10 +496,27 @@ const handleAPIResponse = (
 		return;
 	}
 
-	if (payload.success) {
-		pending.resolve(payload.result);
+	// Type guard: ensure payload is a valid API response object
+	const apiResponse = payload as {
+		success: boolean;
+		result?: unknown;
+		error?: string;
+	};
+
+	// Additional safety check
+	if (!apiResponse || typeof apiResponse !== "object") {
+		pending.reject(new Error("Invalid API response object"));
+		return;
+	}
+
+	if (apiResponse.success) {
+		pending.resolve(apiResponse.result);
 	} else {
-		pending.reject(new Error(payload.error || "API call failed"));
+		const errorMessage =
+			apiResponse.error && typeof apiResponse.error === "string"
+				? apiResponse.error
+				: "API call failed";
+		pending.reject(new Error(errorMessage));
 	}
 };
 

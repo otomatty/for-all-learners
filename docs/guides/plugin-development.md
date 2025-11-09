@@ -36,6 +36,7 @@
 - **[エディタ拡張チュートリアル](./plugin-development/tutorial-editor-extension.md)**: エディタ機能の拡張方法
 - **[AI拡張チュートリアル](./plugin-development/tutorial-ai-extension.md)**: AI機能の拡張方法
 - **[UI拡張チュートリアル](./plugin-development/tutorial-ui-extension.md)**: UI要素の追加方法
+- **[ローカル開発環境](./plugin-development/local-development-environment.md)**: 開発環境の読み込みボタンとローカル開発の詳細
 - **[APIリファレンス](./plugin-development/api-reference.md)**: 詳細なAPIドキュメント
 - **[ベストプラクティス](./plugin-development/best-practices.md)**: 開発のベストプラクティス
 - **[トラブルシューティング](./plugin-development/troubleshooting.md)**: よくある問題と解決方法
@@ -694,7 +695,9 @@ await api.editor.setSelection(5, 10);
 
 1. F.A.Lアプリケーションをローカルで起動
 2. プラグインをビルド
-3. ビルドしたプラグインを手動でインストール
+3. 開発環境ページ (`http://localhost:3000/settings/plugins/dev`) でプラグインを読み込む
+
+詳細は **[ローカル開発環境のドキュメント](./plugin-development/local-development-environment.md)** を参照してください。
 
 ### CLIツールを使用した開発（推奨）
 

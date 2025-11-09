@@ -207,12 +207,34 @@ export class PluginLoader {
 			}
 
 			// Step 4: Create Web Worker
+			// Track initialization state to handle errors before registration
+			let initializationFailed = false;
+			let initializationError: string | null = null;
+
 			const worker = createWorker(
 				pluginId,
 				(pId, msg) => this.handleWorkerMessage(pId, msg),
 				(pId, msg) => {
+					// Handle worker errors
+					// Note: Plugin may not be registered yet, so we need to handle that case
 					const reg = getPluginRegistry();
-					reg.setError(pId, msg);
+					const plugin = reg.get(pId);
+					if (plugin) {
+						// Plugin is registered, set error normally
+						reg.setError(pId, msg);
+					} else {
+						// Plugin not registered yet, mark initialization as failed
+						initializationFailed = true;
+						initializationError = msg;
+						logger.error(
+							{
+								pluginId: pId,
+								errorMessage: msg,
+								stage: "worker_creation_or_initialization",
+							},
+							"Worker error occurred before plugin registration",
+						);
+					}
 				},
 			);
 			this.workers.set(pluginId, worker);
@@ -222,7 +244,25 @@ export class PluginLoader {
 			executionMonitor.startMonitoring(pluginId, worker);
 
 			// Step 5: Initialize plugin in worker
+			// Check if initialization failed before starting
+			if (initializationFailed && initializationError) {
+				throw new PluginError(
+					PluginErrorType.INIT_FAILED,
+					`Worker error during plugin initialization: ${initializationError}`,
+					pluginId,
+				);
+			}
+
 			await initializePlugin(worker, manifest, code, options.config);
+
+			// Check again after initialization (in case error occurred during init)
+			if (initializationFailed && initializationError) {
+				throw new PluginError(
+					PluginErrorType.INIT_FAILED,
+					`Worker error during plugin initialization: ${initializationError}`,
+					pluginId,
+				);
+			}
 
 			// Step 6: Register plugin
 			const loadedPlugin: LoadedPlugin = {

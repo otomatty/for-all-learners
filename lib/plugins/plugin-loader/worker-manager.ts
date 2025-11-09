@@ -52,10 +52,16 @@ export function createWorker(
 	worker.onerror = (error: ErrorEvent) => {
 		// In browser environment, Pino may have issues serializing Error objects directly
 		// Extract error properties instead of passing the error object
+		const errorMessage =
+			error.message ||
+			(error.error instanceof Error
+				? error.error.message
+				: String(error.error || "Unknown worker error"));
+
 		const logContext: Record<string, unknown> = {
 			pluginId,
 			workerName: `plugin-${pluginId}`,
-			errorMessage: error.message,
+			errorMessage,
 		};
 		if (error.filename) {
 			logContext.errorFilename = error.filename;
@@ -74,7 +80,7 @@ export function createWorker(
 		}
 
 		logger.error(logContext, "Plugin worker error");
-		onError(pluginId, error.message);
+		onError(pluginId, errorMessage);
 	};
 
 	return worker;
