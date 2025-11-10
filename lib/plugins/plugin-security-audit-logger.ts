@@ -26,6 +26,8 @@
 
 import logger from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
 
 /**
  * Security audit event types
@@ -293,7 +295,18 @@ class PluginSecurityAuditLogger {
 
 		// Log with appropriate level
 		const message = this.getLogMessage(event);
-		logger[logLevel](logContext, message);
+		// Use switch statement instead of dynamic access to avoid runtime errors
+		switch (logLevel) {
+			case "error":
+				logger.error(logContext, message);
+				break;
+			case "warn":
+				logger.warn(logContext, message);
+				break;
+			default:
+				logger.info(logContext, message);
+				break;
+		}
 
 		// Save to database asynchronously (don't block on errors)
 		this.saveToDatabase(event, eventData).catch((error) => {
@@ -341,7 +354,7 @@ class PluginSecurityAuditLogger {
 		}
 
 		// Use admin client (service role) to bypass RLS for system logs
-		let supabase;
+		let supabase: SupabaseClient<Database>;
 		try {
 			supabase = createAdminClient();
 		} catch (error) {

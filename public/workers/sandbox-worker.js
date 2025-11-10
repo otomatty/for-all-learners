@@ -130,7 +130,11 @@
             methodName,
             handler
           );
-          const { handler: _handler, execute: _execute, ...rest } = commandOptions;
+          const {
+            handler: _handler,
+            execute: _execute,
+            ...rest
+          } = commandOptions;
           return rest;
         })()
       ]),
@@ -141,7 +145,7 @@
         if (widgetOptions.render && typeof widgetOptions.render === "function") {
           const methodName = `__widget_render_${widgetOptions.id}`;
           registerWorkerMethod(methodName, widgetOptions.render);
-          const { render, ...optionsWithoutRender } = widgetOptions;
+          const { render: _render, ...optionsWithoutRender } = widgetOptions;
           return callHostAPI("ui", "registerWidget", [optionsWithoutRender]);
         }
         return callHostAPI("ui", "registerWidget", [options]);
