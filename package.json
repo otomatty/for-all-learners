@@ -92,7 +92,7 @@
 		"katex": "^0.16.25",
 		"lodash.debounce": "^4.0.8",
 		"lowlight": "^3.3.0",
-		"lucide-react": "^0.552.0",
+		"lucide-react": "^0.553.0",
 		"marked": "^16.4.1",
 		"next": "16.0.1",
 		"next-pwa": "^5.6.0",
