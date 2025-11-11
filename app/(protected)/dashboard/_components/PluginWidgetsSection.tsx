@@ -18,7 +18,7 @@
  *   └─ Plan: docs/03_plans/plugin-system/widget-calendar-extensions.md
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PluginWidgetContainer } from "@/components/plugins/PluginWidgetContainer";
 import logger from "@/lib/logger";
 import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
@@ -52,13 +52,19 @@ export function PluginWidgetsSection() {
 		"bottom-right": [],
 	});
 
+	// Track previous widget count to only log when it changes
+	const previousWidgetCountRef = useRef<number>(0);
+
 	// Function to refresh widgets
 	const refreshWidgets = useCallback(() => {
 		// Get all widgets from registry
 		const allWidgets = getWidgets();
 
-		// Debug: Log widget count
-		if (allWidgets.length > 0) {
+		// Debug: Log widget count only when it changes
+		if (
+			allWidgets.length > 0 &&
+			allWidgets.length !== previousWidgetCountRef.current
+		) {
 			logger.debug(
 				{
 					widgetCount: allWidgets.length,
@@ -71,6 +77,7 @@ export function PluginWidgetsSection() {
 				},
 				"[PluginWidgetsSection] Found widgets",
 			);
+			previousWidgetCountRef.current = allWidgets.length;
 		}
 
 		// Group by position
@@ -118,14 +125,14 @@ export function PluginWidgetsSection() {
 			}
 		}, 2000); // Poll every 2 seconds initially
 
-		// Also check when plugins are loaded
+		// Also check when plugins are loaded (less frequently to avoid spam)
 		const registry = getPluginRegistry();
 		const checkInterval = setInterval(() => {
 			const loadedPlugins = registry.getAll();
 			if (loadedPlugins.length > 0) {
 				refreshWidgets();
 			}
-		}, 1000); // Check every second
+		}, 5000); // Check every 5 seconds (reduced from 1 second)
 
 		return () => {
 			clearInterval(quickPollInterval);

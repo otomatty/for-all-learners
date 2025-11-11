@@ -22,7 +22,8 @@
 		"plugins:validate": "bun run scripts/plugins/cli.ts validate",
 		"plugins:lint": "bun run scripts/plugins/cli.ts lint",
 		"plugins:security-check": "bun run scripts/plugins/cli.ts security-check",
-		"plugins:benchmark": "bun run scripts/plugins/cli.ts benchmark"
+		"plugins:benchmark": "bun run scripts/plugins/cli.ts benchmark",
+		"plugins:publish": "bun run scripts/plugins/cli.ts publish"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.68.0",

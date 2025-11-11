@@ -33,12 +33,12 @@ import { logPluginMessage } from "./debug-tools";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
 import * as integrationRegistry from "./integration-registry";
-import { getPluginRateLimiter } from "./plugin-rate-limiter";
 import { getPluginLoader } from "./plugin-loader/plugin-loader";
+import { getPluginRateLimiter } from "./plugin-rate-limiter";
 import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
-	CalendarExtensionOptions,
 	CalendarExtensionData,
+	CalendarExtensionOptions,
 	Command,
 	ContentAnalyzerOptions,
 	DialogOptions,

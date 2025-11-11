@@ -7,7 +7,7 @@
  * Usage: bun run scripts/build-sandbox-worker.ts
  */
 
-import { writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";

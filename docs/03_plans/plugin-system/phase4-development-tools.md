@@ -127,30 +127,33 @@ bun run plugins:dev my-plugin
 
 **備考**: テンプレートは `bun run plugins:create` コマンドで使用されます。実際の動作するサンプルプラグインは `plugins/examples/` に作成する必要があります（セクション2参照）。
 
-#### 1.3 ローカル開発環境でのプラグイン読み込み機能（推定: 2時間）✅ **完了**
+#### 1.3 ローカル開発環境でのプラグイン読み込み機能（推定: 2時間）✅ **完了** → **削除済み**
 
 **目的**: 開発中のプラグインをローカルで簡単にテストできる環境
 
 **実装内容**:
 
-- [x] `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅
+- [x] `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅ → **削除済み**
   - [x] ローカルプラグインの読み込み ✅
   - [x] プラグインの再読み込み（ホットリロード） ✅
   - [x] 開発モードフラグの管理 ✅
 
-- [x] `app/(protected)/settings/plugins/dev/page.tsx`: 開発用プラグイン管理ページ ✅
+- [x] `app/(protected)/settings/plugins/dev/page.tsx`: 開発用プラグイン管理ページ ✅ → **削除済み**
   - [x] ローカルプラグインの一覧表示 ✅
   - [x] プラグインの追加/削除 ✅
   - [x] プラグインの再読み込みボタン ✅
 
 **実装ファイル**:
-- `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅
-- `app/(protected)/settings/plugins/dev/page.tsx`: 開発用UI ✅
-- `app/(protected)/settings/plugins/dev/_components/LocalPluginCard.tsx`: プラグインカードコンポーネント ✅
+- `app/_actions/plugins-dev.ts`: 開発用Server Actions ✅ → **削除済み**
+- `app/(protected)/settings/plugins/dev/page.tsx`: 開発用UI ✅ → **削除済み**
+- `app/(protected)/settings/plugins/dev/_components/LocalPluginCard.tsx`: プラグインカードコンポーネント ✅ → **削除済み**
 
-**実装日**: 2025-11-06
+**削除理由**: CLIツールによる公開機能が実装されたため、開発環境ページは不要となり削除されました。プラグインのテストは、公開→マーケットプレイスからインストールの流れで行います。
 
-#### 1.4 デバッグツール（推定: 2時間）✅ **完了**
+**実装日**: 2025-11-06  
+**削除日**: 2025-11-10
+
+#### 1.4 デバッグツール（推定: 2時間）✅ **完了** → **削除済み**
 
 **目的**: プラグイン開発時のデバッグを支援
 
@@ -161,7 +164,7 @@ bun run plugins:dev my-plugin
   - [x] エラー追跡 ✅
   - [x] パフォーマンス測定 ✅
 
-- [x] `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅
+- [x] `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅ → **削除済み**
   - [x] プラグインログの表示 ✅
   - [x] エラー一覧 ✅
   - [x] パフォーマンスメトリクス ✅
@@ -172,12 +175,15 @@ bun run plugins:dev my-plugin
 
 **実装ファイル**:
 - `lib/plugins/debug-tools.ts`: デバッグユーティリティ ✅
-- `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅
-- `app/(protected)/settings/plugins/dev/debug/_components/PluginDebugView.tsx`: デバッグビューコンポーネント ✅
+- `app/(protected)/settings/plugins/dev/debug/page.tsx`: デバッグUI ✅ → **削除済み**
+- `app/(protected)/settings/plugins/dev/debug/_components/PluginDebugView.tsx`: デバッグビューコンポーネント ✅ → **削除済み**
 - `lib/plugins/plugin-loader/sandbox-worker-code.ts`: Worker内console.logの転送 ✅
 - `lib/plugins/plugin-loader/worker-message-handler.ts`: メッセージハンドラー ✅
 
-**実装日**: 2025-11-06
+**削除理由**: 開発環境ページとともに削除されました。デバッグはブラウザの開発者ツールを使用します。
+
+**実装日**: 2025-11-06  
+**削除日**: 2025-11-10
 
 #### 1.5 TypeScript型定義の自動生成（推定: 2時間）✅ **完了**
 
