@@ -148,7 +148,12 @@ export function usePageEditorLogic({
 		// TipTap does not support dynamic extension updates after initialization
 		const pluginExtensions = getTiptapExtensions();
 		return [...baseExts, ...pluginExtensions];
-	}, [noteSlug, page.user_id, onShowCreatePageDialog]); // Include dependencies for UnifiedLinkMark configuration
+	}, [
+		noteSlug,
+		page.user_id,
+		onShowCreatePageDialog,
+		onNavigate, // Phase 2: Add onNavigate callback for client-side navigation
+	]); // Include dependencies for UnifiedLinkMark configuration
 
 	const editor = useEditor({
 		immediatelyRender: false,

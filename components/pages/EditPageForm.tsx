@@ -62,7 +62,7 @@ export default function EditPageForm({
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
-	const navigateToPage = useNavigateToPage();
+	const _navigateToPage = useNavigateToPage();
 
 	// パス解析してnote slugを取得
 	const noteSlug = pathname.startsWith("/notes/")
