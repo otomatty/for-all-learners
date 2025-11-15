@@ -20,7 +20,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Use PR branch head for pull_request events, default for push
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
@@ -84,7 +84,7 @@ jobs:
 
       - name: Comment PR (on failure)
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.createComment({
