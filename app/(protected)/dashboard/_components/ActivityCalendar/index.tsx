@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getMonthlyActivitySummary } from "@/app/_actions/activity_calendar";
+import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { CalendarGrid } from "./CalendarGrid";
 import { CalendarHeader } from "./CalendarHeader";
@@ -83,7 +84,7 @@ export function ActivityCalendar({
 					month: monthData.month,
 				};
 			} catch (error) {
-				console.error("Failed to enrich month data with plugin data:", error);
+				logger.error({ error }, "Failed to enrich month data with plugin data");
 			} finally {
 				isEnrichingPluginsRef.current = false;
 			}
@@ -92,8 +93,10 @@ export function ActivityCalendar({
 		if (monthData.days.length > 0) {
 			enrichWithPluginData();
 		}
-		// monthData.days is derived from year/month, so we only need to depend on those
-	}, [monthData.year, monthData.month]); // Re-enrich when month changes
+		// monthData.days is derived from year/month, but we need to include it in deps
+		// since we use monthData.days.map inside the effect
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [monthData.year, monthData.month, monthData.days]); // Re-enrich when month changes
 
 	const handlePreviousMonth = async () => {
 		setLoading(true);

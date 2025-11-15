@@ -10,6 +10,7 @@ import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getDayActivityDetail } from "@/app/_actions/activity_calendar";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { ACTIVITY_COLORS } from "./constants";
 import { GoalAchievementSection } from "./GoalAchievementSection";
@@ -40,7 +41,10 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 						data.summary.pluginExtensions = pluginExtensions;
 					}
 				} catch (error) {
-					console.error("Failed to enrich with plugin extension data:", error);
+					logger.error(
+						{ error },
+						"Failed to enrich with plugin extension data",
+					);
 				}
 
 				setDetail(data);

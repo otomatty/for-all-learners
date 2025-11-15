@@ -21,7 +21,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PluginWidgetContainer } from "@/components/plugins/PluginWidgetContainer";
 import logger from "@/lib/logger";
-import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import type { WidgetPosition } from "@/lib/plugins/types";
 import { getWidgets } from "@/lib/plugins/ui-registry";
 

@@ -97,7 +97,7 @@ export function PluginAutoLoader() {
 		return () => {
 			mounted = false;
 		};
-	}, []); // Empty deps - only run once on mount
+	}, [loadPlugin]); // loadPlugin is stable from useLoadPlugin hook
 
 	// This component doesn't render anything
 	return null;

@@ -28,12 +28,7 @@ import { signPlugin } from "@/lib/plugins/plugin-signature/signer";
 import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import type { PluginManifest } from "@/types/plugin";
-
-type PluginRow = Database["public"]["Tables"]["plugins"]["Row"];
-type SignatureVerificationRow =
-	Database["public"]["Tables"]["plugin_signature_verifications"]["Row"];
 
 export interface PluginSignatureInfo {
 	pluginId: string;
