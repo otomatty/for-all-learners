@@ -46,6 +46,7 @@ interface UsePageEditorLogicProps {
 		title: string,
 		onConfirm: () => Promise<void>,
 	) => void;
+	onDeleteEmptyTitlePage?: () => Promise<void>;
 }
 
 /**
@@ -82,6 +83,7 @@ export function usePageEditorLogic({
 	setIsDirty,
 	noteSlug,
 	onShowCreatePageDialog,
+	onDeleteEmptyTitlePage,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
@@ -190,6 +192,7 @@ export function usePageEditorLogic({
 	const { savePage } = usePageSaver(editor, page.id, title, {
 		setIsLoading,
 		setIsDirty,
+		onDeleteEmptyTitlePage,
 	});
 
 	// Content generation hook

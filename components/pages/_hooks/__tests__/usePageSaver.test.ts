@@ -15,7 +15,7 @@
 
 import { renderHook } from "@testing-library/react";
 import type { Editor } from "@tiptap/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { usePageSaver } from "../usePageSaver";
 
 describe("usePageSaver", () => {
@@ -94,12 +94,78 @@ describe("usePageSaver", () => {
 			expect(result.current).toBeDefined();
 		});
 
+		it("should handle whitespace-only title", () => {
+			const { result } = renderHook(() =>
+				usePageSaver(mockEditor, "id", "   "),
+			);
+
+			expect(result.current).toBeDefined();
+		});
+
 		it("should handle empty pageId", () => {
 			const { result } = renderHook(() =>
 				usePageSaver(mockEditor, "", "title"),
 			);
 
 			expect(result.current).toBeDefined();
+		});
+	});
+
+	describe("Empty Title Handling", () => {
+		it("should call onDeleteEmptyTitlePage when title is empty string", async () => {
+			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
+
+			const { result } = renderHook(() =>
+				usePageSaver(mockEditor, "id", "", {
+					onDeleteEmptyTitlePage,
+				}),
+			);
+
+			await result.current.savePage();
+
+			expect(onDeleteEmptyTitlePage).toHaveBeenCalledTimes(1);
+		});
+
+		it("should call onDeleteEmptyTitlePage when title is whitespace only", async () => {
+			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
+
+			const { result } = renderHook(() =>
+				usePageSaver(mockEditor, "id", "   ", {
+					onDeleteEmptyTitlePage,
+				}),
+			);
+
+			await result.current.savePage();
+
+			expect(onDeleteEmptyTitlePage).toHaveBeenCalledTimes(1);
+		});
+
+		it("should not call onDeleteEmptyTitlePage when title has content", async () => {
+			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
+
+			const { result } = renderHook(() =>
+				usePageSaver(mockEditor, "id", "Valid Title", {
+					onDeleteEmptyTitlePage,
+				}),
+			);
+
+			// Note: We can't easily test the full save flow without mocking updatePage,
+			// but we can verify that onDeleteEmptyTitlePage is not called
+			// The actual save will fail in tests due to missing mocks, but that's expected
+			try {
+				await result.current.savePage();
+			} catch {
+				// Expected to fail due to missing mocks
+			}
+
+			expect(onDeleteEmptyTitlePage).not.toHaveBeenCalled();
+		});
+
+		it("should handle missing onDeleteEmptyTitlePage callback gracefully", async () => {
+			const { result } = renderHook(() => usePageSaver(mockEditor, "id", ""));
+
+			// Should not throw when callback is not provided
+			await expect(result.current.savePage()).resolves.toBeUndefined();
 		});
 	});
 
