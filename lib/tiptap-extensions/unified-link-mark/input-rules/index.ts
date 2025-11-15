@@ -5,6 +5,7 @@
 
 import type { Editor } from "@tiptap/core";
 // import { createBracketInputRule } from "./bracket-rule"; // DISABLED: Replaced by bracket-monitor-plugin
+import { createCommaToBracketInputRule } from "./comma-to-bracket-rule";
 import { createTagInputRule } from "./tag-rule";
 
 /**
@@ -14,6 +15,7 @@ import { createTagInputRule } from "./tag-rule";
  */
 export function createInputRules(context: { editor: Editor; name: string }) {
 	return [
+		createCommaToBracketInputRule(context), // Converts ,,, to [ for mobile-friendly input
 		createTagInputRule(context),
 		// createBracketInputRule(context), // DISABLED: Replaced by bracket-monitor-plugin for real-time monitoring
 	];
