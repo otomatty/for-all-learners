@@ -17,7 +17,7 @@
  * - Error handling
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type {
 	GetSecurityAuditLogsOptions,
 	GetSecurityAuditLogsResult,
@@ -72,9 +72,7 @@ describe("Type Definitions", () => {
 
 	it("GetSecurityAuditLogsOptions should accept valid severity filters", () => {
 		const validSeverities: Array<
-			GetSecurityAuditLogsOptions["filters"] extends { severity?: infer S }
-				? S
-				: never
+			NonNullable<GetSecurityAuditLogsOptions["filters"]>["severity"]
 		> = ["low", "medium", "high", "critical"];
 
 		for (const severity of validSeverities) {
@@ -141,7 +139,7 @@ describe("Options Parsing Logic", () => {
 		expect(defaults.limit).toBe(50);
 		expect(defaults.sortBy).toBe("created_at");
 		expect(defaults.sortOrder).toBe("desc");
-		expect(defaults.filters).toEqual({});
+		expect(Object.keys(defaults.filters)).toHaveLength(0);
 	});
 
 	it("should validate sortBy values", () => {
@@ -238,7 +236,7 @@ describe("Sort Logic Validation", () => {
 	});
 
 	it("should handle descending sort order", () => {
-		const sortOrder = "desc";
+		const sortOrder = "desc" as "asc" | "desc";
 		const ascending = sortOrder === "asc";
 
 		expect(ascending).toBe(false);
@@ -340,11 +338,13 @@ describe("Data Mapping Logic", () => {
 			created_at: "2025-01-05T10:00:00Z",
 		};
 
-		const eventData = (dbRow.event_data as Record<string, unknown>) || {};
-		const context = (dbRow.context as Record<string, unknown>) || {};
+		const eventData =
+			(dbRow.event_data as unknown as Record<string, unknown>) || {};
+		const context = (dbRow.context as unknown as Record<string, unknown>) || {};
 
-		expect(eventData).toEqual({});
-		expect(context).toEqual({});
+		// Verify that null values are converted to empty objects
+		expect(Object.keys(eventData)).toHaveLength(0);
+		expect(Object.keys(context)).toHaveLength(0);
 	});
 });
 

@@ -1,7 +1,7 @@
 # プラグインシステム: Widgetレンダリング & カレンダーUI拡張機能
 
 **作成日**: 2025-11-05  
-**最終更新**: 2025-11-05  
+**最終更新**: 2025-11-10  
 **ステータス**: ✅ 実装完了  
 **関連Issue**: [#109](https://github.com/otomatty/for-all-learners/issues/109), [#97](https://github.com/otomatty/for-all-learners/issues/97)  
 **前提条件**: Phase 1, Phase 2, Phase 3完了 ✅
@@ -492,10 +492,19 @@ await api.ui.registerWidget({
 
 ---
 
+## フォローアップメモ (2025-11-10)
+
+- GitHubコミット統計プラグインに `createConcurrencyLimiter` を導入し、`integration.callExternalAPI` の同時実行数を5件に制限することでホスト側レートリミット (最大10件) を確実に下回るように調整。
+- カレンダー拡張とダッシュボードWidgetのデータ取得処理で行われる全ての GitHub API 呼び出しをリミッター経由に統一し、既存のバッチ処理構造を維持したままピーク負荷を平準化。
+- 単体テスト `plugins/examples/github-commit-stats/src/concurrency.test.ts` を新設し、リミッターが設定値を超えて非同期タスクを同時実行しないことを検証。
+
+---
+
 ## 変更履歴
 
 | 日付 | 変更内容 | 担当 |
 |------|----------|------|
 | 2025-11-05 | Widgetレンダリング & カレンダーUI拡張機能実装計画作成 | AI Agent |
 | 2025-01-28 | Phase 1-5 すべての実装完了、全69テストケースパス、ドキュメント完備 | AI Agent |
+| 2025-11-10 | GitHubコミット統計プラグインのAPI同時実行数を5件に制限し、関連テストとドキュメントを更新 | AI Agent |
 

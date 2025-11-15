@@ -12,6 +12,7 @@ import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
 import { ActivityCalendar } from "./_components/ActivityCalendar";
 import { GoalSummary } from "./_components/GoalSummary";
+import { PluginAutoLoader } from "./_components/PluginAutoLoader";
 import { PluginWidgetsSection } from "./_components/PluginWidgetsSection";
 import { QuickActionTiles } from "./_components/QuickActionTiles";
 
@@ -75,6 +76,8 @@ export default async function DashboardPage({
 		<Container>
 			{/* Set the current user ID for downstream components */}
 			<UserIdSetter userId={user.id} />
+			{/* Auto-load installed plugins on app startup */}
+			<PluginAutoLoader />
 			<div className="space-y-6">
 				{/* 目標サマリー */}
 				<GoalSummary

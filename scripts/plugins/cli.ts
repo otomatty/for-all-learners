@@ -14,7 +14,8 @@
  *   ├─ scripts/plugins/create-plugin.ts
  *   ├─ scripts/plugins/build-plugin.ts
  *   ├─ scripts/plugins/test-plugin.ts
- *   └─ scripts/plugins/dev-plugin.ts
+ *   ├─ scripts/plugins/dev-plugin.ts
+ *   └─ scripts/plugins/publish-plugin.ts
  *
  * Related Documentation:
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
@@ -27,6 +28,7 @@ import { createPlugin } from "./create-plugin";
 import { devPlugin } from "./dev-plugin";
 import { generateTypes } from "./generate-types";
 import { lintPlugin } from "./lint-plugin";
+import { publishPlugin } from "./publish-plugin";
 import { securityCheck } from "./security-check";
 import { testPlugin } from "./test-plugin";
 import { validatePlugin } from "./validate-plugin";
@@ -145,6 +147,17 @@ export async function main(
 			break;
 		}
 
+		case "publish": {
+			const pluginId = args[0];
+			if (!pluginId) {
+				cliError("Error: Plugin ID is required");
+				cliLog("Usage: bun run plugins:publish <plugin-id>");
+				process.exit(1);
+			}
+			await publishPlugin(pluginId);
+			break;
+		}
+
 		case "help":
 		case "--help":
 		case "-h": {
@@ -164,6 +177,7 @@ Commands:
   lint <plugin-id> [--fix]  Lint plugin code (use --fix to auto-fix)
   security-check <plugin-id>  Check plugin for security issues
   benchmark <plugin-id>   Measure plugin performance
+  publish <plugin-id>     Build and publish plugin to marketplace
 
 Examples:
   bun run plugins:create my-plugin
@@ -176,6 +190,7 @@ Examples:
   bun run plugins:lint my-plugin --fix
   bun run plugins:security-check my-plugin
   bun run plugins:benchmark my-plugin
+  bun run plugins:publish my-plugin
 
 For more information, see:
   docs/03_plans/plugin-system/phase4-development-tools.md

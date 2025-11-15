@@ -41,6 +41,12 @@ export interface UsePageSaverOptions {
 	 * Callback to reset dirty state after successful save
 	 */
 	setIsDirty?: (dirty: boolean) => void;
+
+	/**
+	 * Callback fired when title is empty and page should be deleted
+	 * If provided, this callback will be called instead of automatically deleting the page
+	 */
+	onDeleteEmptyTitlePage?: () => Promise<void>;
 }
 
 export interface UsePageSaverReturn {
@@ -85,7 +91,13 @@ export function usePageSaver(
 	title: string,
 	options: UsePageSaverOptions = {},
 ): UsePageSaverReturn {
-	const { onSaveSuccess, onSaveError, setIsLoading, setIsDirty } = options;
+	const {
+		onSaveSuccess,
+		onSaveError,
+		setIsLoading,
+		setIsDirty,
+		onDeleteEmptyTitlePage,
+	} = options;
 
 	const [isSaving, setIsSaving] = useState(false);
 	const isSavingRef = useRef(false);
@@ -93,6 +105,7 @@ export function usePageSaver(
 	const onSaveErrorRef = useRef(onSaveError);
 	const setIsLoadingRef = useRef(setIsLoading);
 	const setIsDirtyRef = useRef(setIsDirty);
+	const onDeleteEmptyTitlePageRef = useRef(onDeleteEmptyTitlePage);
 
 	// Update refs when callbacks change (without triggering re-renders)
 	useEffect(() => {
@@ -100,21 +113,46 @@ export function usePageSaver(
 		onSaveErrorRef.current = onSaveError;
 		setIsLoadingRef.current = setIsLoading;
 		setIsDirtyRef.current = setIsDirty;
-	}, [onSaveSuccess, onSaveError, setIsLoading, setIsDirty]);
+		onDeleteEmptyTitlePageRef.current = onDeleteEmptyTitlePage;
+	}, [
+		onSaveSuccess,
+		onSaveError,
+		setIsLoading,
+		setIsDirty,
+		onDeleteEmptyTitlePage,
+	]);
 
 	/**
 	 * Save the current editor content
 	 *
 	 * This function:
-	 * 1. Gets the current editor content
-	 * 2. Removes H1 headings (reserved for page title)
-	 * 3. Saves to the database via updatePage action
-	 * 4. Handles errors and provides user feedback
-	 * 5. Resets dirty state on success
+	 * 1. Checks if title is empty (empty string or whitespace only)
+	 * 2. If empty, triggers deletion via onDeleteEmptyTitlePage callback
+	 * 3. Otherwise, gets the current editor content
+	 * 4. Removes H1 headings (reserved for page title)
+	 * 5. Saves to the database via updatePage action
+	 * 6. Handles errors and provides user feedback
+	 * 7. Resets dirty state on success
 	 */
 	const savePage = useCallback(async () => {
 		if (!editor) {
 			logger.warn({ pageId }, "savePage called but editor is null");
+			return;
+		}
+
+		// Check if title is empty (empty string or whitespace only)
+		const trimmedTitle = title.trim();
+		if (trimmedTitle === "") {
+			// Title is empty, trigger deletion
+			if (onDeleteEmptyTitlePageRef.current) {
+				await onDeleteEmptyTitlePageRef.current();
+			} else {
+				logger.warn(
+					{ pageId },
+					"Page title is empty but onDeleteEmptyTitlePage callback is not provided",
+				);
+				toast.error("タイトルが空のページは保存できません");
+			}
 			return;
 		}
 
@@ -132,7 +170,7 @@ export function usePageSaver(
 			// Save page content to database
 			await updatePage({
 				id: pageId,
-				title,
+				title: trimmedTitle,
 				content: JSON.stringify(content),
 			});
 

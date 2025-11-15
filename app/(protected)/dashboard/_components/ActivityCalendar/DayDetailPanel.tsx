@@ -10,6 +10,8 @@ import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getDayActivityDetail } from "@/app/_actions/activity_calendar";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/logger";
+import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { ACTIVITY_COLORS } from "./constants";
 import { GoalAchievementSection } from "./GoalAchievementSection";
 import { LearningActivitySection } from "./LearningActivitySection";
@@ -31,6 +33,20 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 			setLoading(true);
 			try {
 				const data = await getDayActivityDetail(userId, new Date(date));
+
+				// Enrich with plugin extension data (client-side only)
+				try {
+					const pluginExtensions = await getDailyExtensionData(date);
+					if (pluginExtensions.length > 0) {
+						data.summary.pluginExtensions = pluginExtensions;
+					}
+				} catch (error) {
+					logger.error(
+						{ error },
+						"Failed to enrich with plugin extension data",
+					);
+				}
+
 				setDetail(data);
 			} catch (_error) {
 				// Error is handled by showing empty state when detail is null
