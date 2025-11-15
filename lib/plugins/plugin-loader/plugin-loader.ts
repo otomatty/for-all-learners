@@ -41,10 +41,7 @@ import { clearPluginCommands } from "../plugin-api";
 import { getPluginExecutionMonitor } from "../plugin-execution-monitor";
 import { getPluginRegistry } from "../plugin-registry";
 import { getPluginSecurityAuditLogger } from "../plugin-security-audit-logger";
-import {
-	type SignatureAlgorithm,
-	verifyPluginSignatureFromDB,
-} from "../plugin-signature";
+import type { SignatureAlgorithm } from "../plugin-signature";
 import {
 	PluginError,
 	PluginErrorType,
@@ -157,8 +154,13 @@ export class PluginLoader {
 			}
 
 			// Step 3.5: Verify signature (if provided)
+			// Use dynamic import to avoid bundling node:crypto in client-side builds
 			if (options.requireSignature || options.signature) {
 				const auditLogger = getPluginSecurityAuditLogger();
+				// Dynamic import to avoid bundling crypto in client-side builds
+				const { verifyPluginSignatureFromDB } = await import(
+					"../plugin-signature/verifier"
+				);
 				const verificationResult = verifyPluginSignatureFromDB(
 					manifest,
 					code,
