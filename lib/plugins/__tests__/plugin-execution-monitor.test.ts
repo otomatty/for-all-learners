@@ -68,22 +68,30 @@ describe("PluginExecutionMonitor", () => {
 			monitor.startMonitoring("test-plugin", worker);
 
 			// Wait a bit so idleTime increases
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 20));
 			const stats1 = monitor.getExecutionStats("test-plugin");
 			const idleTime1 = stats1?.idleTime || 0;
+
+			// Verify that idleTime has increased before updateActivity
+			expect(idleTime1).toBeGreaterThanOrEqual(15); // At least 15ms should have passed
 
 			// Update activity should reset idleTime
 			monitor.updateActivity("test-plugin");
 
-			// Wait a bit more
-			await new Promise((resolve) => setTimeout(resolve, 5));
+			// Immediately check idleTime after updateActivity - should be very small
+			const stats2Immediate = monitor.getExecutionStats("test-plugin");
+			const idleTime2Immediate = stats2Immediate?.idleTime || 0;
+			expect(idleTime2Immediate).toBeLessThan(5); // Should be less than 5ms immediately after reset
+
+			// Wait a bit more and verify idleTime increases from the reset point
+			await new Promise((resolve) => setTimeout(resolve, 10));
 			const stats2 = monitor.getExecutionStats("test-plugin");
 			const idleTime2 = stats2?.idleTime || 0;
 
-			// idleTime2 should be less than idleTime1 (or at least not greater)
-			// After updateActivity, idleTime resets, so even after waiting, it should be less
+			// idleTime2 should be less than idleTime1 since it was reset
 			expect(idleTime2).toBeLessThan(idleTime1);
-			expect(idleTime1).toBeGreaterThan(0); // Make sure first idle time was actually greater than 0
+			// idleTime2 should be greater than the immediate value after reset
+			expect(idleTime2).toBeGreaterThan(idleTime2Immediate);
 		});
 
 		it("should not throw if plugin is not monitored", () => {
