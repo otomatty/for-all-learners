@@ -19,7 +19,6 @@
 export { resolveDependencies } from "./dependency-resolver";
 export { validateManifest } from "./manifest-validator";
 export { getPluginLoader, PluginLoader } from "./plugin-loader";
-export { getSandboxWorkerCode } from "./sandbox-worker-code";
 export {
 	cleanupWorker,
 	createWorker,

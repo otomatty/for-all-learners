@@ -19,6 +19,7 @@
  */
 
 import logger from "@/lib/logger";
+import { logPluginMessage } from "./debug-tools";
 import type { CalendarExtensionData, CalendarExtensionOptions } from "./types";
 
 // ============================================================================
@@ -71,6 +72,12 @@ export function registerCalendarExtension(
 		);
 	}
 
+	if (typeof options.getDailyData !== "function") {
+		throw new Error(
+			`Calendar extension ${options.id} must provide a getDailyData function`,
+		);
+	}
+
 	const entry: CalendarExtensionEntry = {
 		pluginId,
 		extensionId: options.id,
@@ -89,6 +96,18 @@ export function registerCalendarExtension(
 			name: options.name,
 		},
 		"Calendar extension registered",
+	);
+
+	// Log to debug tools
+	logPluginMessage(
+		pluginId,
+		"info",
+		`カレンダー拡張を登録: ${options.name} (${options.id})`,
+		{
+			extensionId: options.id,
+			name: options.name,
+			description: options.description,
+		},
 	);
 }
 

@@ -29,12 +29,15 @@ import pkg from "../../package.json";
 import * as aiRegistry from "./ai-registry";
 import * as calendarRegistry from "./calendar-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
+import { logPluginMessage } from "./debug-tools";
 import { getEditorManager } from "./editor-manager";
 import * as editorRegistry from "./editor-registry";
 import * as integrationRegistry from "./integration-registry";
+import { getPluginLoader } from "./plugin-loader/plugin-loader";
 import { getPluginRateLimiter } from "./plugin-rate-limiter";
 import { getPluginSecurityAuditLogger } from "./plugin-security-audit-logger";
 import type {
+	CalendarExtensionData,
 	CalendarExtensionOptions,
 	Command,
 	ContentAnalyzerOptions,
@@ -662,48 +665,58 @@ function createStorageAPI(pluginId: string): StorageAPI {
  * @param pluginId Plugin ID for logging/tracking
  */
 function createNotificationsAPI(pluginId: string): NotificationsAPI {
-	return {
-		show(message: string, type: NotificationType = "info"): void {
-			// Use sonner toast for notifications
-			if (typeof window !== "undefined") {
-				// Dynamic import sonner to avoid SSR issues
-				import("sonner").then(({ toast }) => {
-					const prefixedMessage = `[${pluginId}] ${message}`;
+	const showNotification = (
+		message: string,
+		type: NotificationType = "info",
+	): void => {
+		if (typeof window === "undefined") {
+			return;
+		}
 
-					switch (type) {
-						case "success":
-							toast.success(prefixedMessage);
-							break;
-						case "error":
-							toast.error(prefixedMessage);
-							break;
-						case "warning":
-							toast.warning(prefixedMessage);
-							break;
-						default:
-							toast.info(prefixedMessage);
-							break;
-					}
-				});
-			}
-		},
+		void import("sonner")
+			.then(({ toast }) => {
+				const prefixedMessage = `[${pluginId}] ${message}`;
 
+				switch (type) {
+					case "success":
+						toast.success(prefixedMessage);
+						break;
+					case "error":
+						toast.error(prefixedMessage);
+						break;
+					case "warning":
+						toast.warning(prefixedMessage);
+						break;
+					default:
+						toast.info(prefixedMessage);
+						break;
+				}
+			})
+			.catch((error: unknown) => {
+				logger.error(
+					{ pluginId, message, type, error },
+					"Failed to display notification",
+				);
+			});
+	};
+
+	const notifications: NotificationsAPI = {
+		show: showNotification,
 		info(message: string): void {
-			this.show(message, "info");
+			notifications.show(message, "info");
 		},
-
 		success(message: string): void {
-			this.show(message, "success");
+			notifications.show(message, "success");
 		},
-
 		error(message: string): void {
-			this.show(message, "error");
+			notifications.show(message, "error");
 		},
-
 		warning(message: string): void {
-			this.show(message, "warning");
+			notifications.show(message, "warning");
 		},
 	};
+
+	return notifications;
 }
 
 /**
@@ -725,14 +738,51 @@ function createUIAPI(pluginId: string): UIAPI {
 				throw new Error(`Command ${fullCommandId} is already registered`);
 			}
 
+			const handlerCandidate =
+				typeof command.handler === "function"
+					? command.handler
+					: typeof (
+								command as unknown as { execute?: () => void | Promise<void> }
+							).execute === "function"
+						? (command as unknown as { execute: () => void | Promise<void> })
+								.execute
+						: null;
+
+			const resolvedHandler =
+				handlerCandidate !== null
+					? async () => {
+							await handlerCandidate();
+						}
+					: async () => {
+							const loader = getPluginLoader();
+							await loader.callPluginMethod(
+								pluginId,
+								`__command_handler_${command.id}`,
+							);
+						};
+
 			commandRegistry.set(fullCommandId, {
 				...command,
 				id: fullCommandId,
+				handler: resolvedHandler,
 			});
 
 			logger.info(
 				{ pluginId, commandId: fullCommandId, commandLabel: command.label },
 				"Plugin command registered",
+			);
+
+			// Log to debug tools
+			logPluginMessage(
+				pluginId,
+				"info",
+				`コマンドを登録: ${command.label || command.id} (${command.id})`,
+				{
+					commandId: fullCommandId,
+					commandLabel: command.label,
+					description: command.description,
+					icon: command.icon,
+				},
 			);
 		},
 
@@ -775,6 +825,7 @@ function createUIAPI(pluginId: string): UIAPI {
 
 		async registerWidget(options: WidgetOptions): Promise<void> {
 			try {
+				// Register widget (render function will be handled by ui-registry for Worker context)
 				uiRegistry.registerWidget(pluginId, options);
 				logger.info(
 					{
@@ -1597,7 +1648,27 @@ function createCalendarAPI(pluginId: string): CalendarAPI {
 	return {
 		async registerExtension(options: CalendarExtensionOptions): Promise<void> {
 			try {
-				calendarRegistry.registerCalendarExtension(pluginId, options);
+				const resolvedGetDailyData =
+					typeof options.getDailyData === "function"
+						? options.getDailyData
+						: async (date: string) => {
+								const loader = getPluginLoader();
+								return (await loader.callPluginMethod(
+									pluginId,
+									`__calendar_getDailyData_${options.id}`,
+									date,
+								)) as CalendarExtensionData | null;
+							};
+
+				const registrationOptions: CalendarExtensionOptions = {
+					...options,
+					getDailyData: resolvedGetDailyData,
+				};
+
+				calendarRegistry.registerCalendarExtension(
+					pluginId,
+					registrationOptions,
+				);
 				logger.info(
 					{
 						pluginId,

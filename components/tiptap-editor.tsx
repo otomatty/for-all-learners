@@ -16,6 +16,7 @@ import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomBlockquote } from "@/lib/tiptap-extensions/custom-blockquote";
+import { CustomHorizontalRule } from "@/lib/tiptap-extensions/custom-horizontal-rule";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import { MarkdownPaste } from "@/lib/tiptap-extensions/markdown-paste";
@@ -48,9 +49,11 @@ const TiptapEditor = ({
 				// history: false, // use y-prosemirror history if you use collaboration
 				blockquote: false, // Disable default blockquote in favor of CustomBlockquote
 				codeBlock: false, // Disable default codeBlock in favor of CustomCodeBlock
+				horizontalRule: false, // Disable default horizontalRule in favor of CustomHorizontalRule
 			}),
 			CustomBlockquote, // Add the custom blockquote extension
 			CustomCodeBlock, // Add the custom code block extension
+			CustomHorizontalRule, // Add the custom horizontal rule extension
 			LatexInlineNode, // Add the new LaTeX inline node extension
 			Image.configure({
 				inline: false,

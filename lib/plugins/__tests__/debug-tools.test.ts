@@ -49,6 +49,11 @@ vi.mock("../plugin-execution-monitor", () => ({
 	})),
 }));
 
+// Mock getAllPluginStorage
+vi.mock("@/app/_actions/plugin-storage", () => ({
+	getAllPluginStorage: vi.fn().mockResolvedValue({}),
+}));
+
 describe("Debug Tools", () => {
 	let registry: PluginRegistry;
 
@@ -284,14 +289,14 @@ describe("Debug Tools", () => {
 	});
 
 	describe("getPluginDebugInfo", () => {
-		it("should return debug info for loaded plugin", () => {
+		it("should return debug info for loaded plugin", async () => {
 			const plugin = createMockPlugin("test-plugin");
 			registry.register(plugin);
 
 			logPluginMessage("test-plugin", "info", "Test log");
 			logPluginError("test-plugin", "Test error");
 
-			const debugInfo = getPluginDebugInfo("test-plugin");
+			const debugInfo = await getPluginDebugInfo("test-plugin");
 			expect(debugInfo).not.toBeNull();
 			expect(debugInfo?.plugin).toEqual(plugin);
 			expect(debugInfo?.logs).toHaveLength(1);
@@ -300,16 +305,16 @@ describe("Debug Tools", () => {
 			expect(debugInfo?.metrics.errorCount).toBe(1);
 		});
 
-		it("should return null for non-loaded plugin", () => {
-			const debugInfo = getPluginDebugInfo("non-existent-plugin");
+		it("should return null for non-loaded plugin", async () => {
+			const debugInfo = await getPluginDebugInfo("non-existent-plugin");
 			expect(debugInfo).toBeNull();
 		});
 
-		it("should include performance metrics in debug info", () => {
+		it("should include performance metrics in debug info", async () => {
 			const plugin = createMockPlugin("test-plugin");
 			registry.register(plugin);
 
-			const debugInfo = getPluginDebugInfo("test-plugin");
+			const debugInfo = await getPluginDebugInfo("test-plugin");
 			expect(debugInfo?.metrics).toMatchObject({
 				pluginId: "test-plugin",
 				pluginName: "Test Plugin test-plugin",
@@ -322,13 +327,13 @@ describe("Debug Tools", () => {
 	});
 
 	describe("getAllPluginsDebugInfo", () => {
-		it("should return debug info for all loaded plugins", () => {
+		it("should return debug info for all loaded plugins", async () => {
 			const plugin1 = createMockPlugin("plugin-1");
 			const plugin2 = createMockPlugin("plugin-2");
 			registry.register(plugin1);
 			registry.register(plugin2);
 
-			const debugInfos = getAllPluginsDebugInfo();
+			const debugInfos = await getAllPluginsDebugInfo();
 			expect(debugInfos).toHaveLength(2);
 			expect(debugInfos.map((info) => info.plugin.manifest.id)).toEqual([
 				"plugin-1",
@@ -336,18 +341,18 @@ describe("Debug Tools", () => {
 			]);
 		});
 
-		it("should return empty array when no plugins loaded", () => {
-			const debugInfos = getAllPluginsDebugInfo();
+		it("should return empty array when no plugins loaded", async () => {
+			const debugInfos = await getAllPluginsDebugInfo();
 			expect(debugInfos).toEqual([]);
 		});
 
-		it("should filter out null debug info", () => {
+		it("should filter out null debug info", async () => {
 			const plugin = createMockPlugin("plugin-1");
 			registry.register(plugin);
 			// Unregister without clearing registry state
 			registry.unregister("plugin-1");
 
-			const debugInfos = getAllPluginsDebugInfo();
+			const debugInfos = await getAllPluginsDebugInfo();
 			// Should filter out null entries
 			expect(debugInfos.every((info) => info !== null)).toBe(true);
 		});

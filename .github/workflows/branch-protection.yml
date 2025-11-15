@@ -1,0 +1,77 @@
+name: Branch Protection Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-merge-source:
+    name: Check Merge Source Branch
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if PR is from develop branch
+        id: check-branch
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          BASE_REPO="${{ github.event.pull_request.base.repo.full_name }}"
+          
+          echo "Base branch: $BASE_BRANCH"
+          echo "Head branch: $HEAD_BRANCH"
+          echo "Head repo: $HEAD_REPO"
+          echo "Base repo: $BASE_REPO"
+          
+          # Check if PR is targeting main branch
+          if [ "$BASE_BRANCH" != "main" ]; then
+            echo "✅ This PR is not targeting main branch. Skipping check."
+            echo "allowed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check if PR is from develop branch
+          if [ "$HEAD_BRANCH" = "develop" ]; then
+            echo "✅ PR is from develop branch. Allowed."
+            echo "allowed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ PR to main branch must be from develop branch."
+            echo "Current source branch: $HEAD_BRANCH"
+            echo "allowed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Comment PR (on failure)
+        if: steps.check-branch.outputs.allowed == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **Branch Protection Rule Violation**
+
+This pull request cannot be merged to \`main\` branch because it is not from \`develop\` branch.
+
+**Required workflow:**
+1. Merge your changes to \`develop\` branch first
+2. Create a new PR from \`develop\` to \`main\`
+
+**Current source branch:** \`${{ github.event.pull_request.head.ref }}\`
+
+Please close this PR and create a new one from \`develop\` branch.`
+            })
+      
+      - name: Fail if not allowed
+        if: steps.check-branch.outputs.allowed == 'false'
+        run: |
+          echo "❌ This PR cannot be merged. It must be from develop branch."
+          exit 1
+

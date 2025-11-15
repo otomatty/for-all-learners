@@ -1140,5 +1140,5 @@ export interface CalendarExtensionOptions {
 	/** Extension description */
 	description?: string;
 	/** Function to get daily data for a specific date */
-	getDailyData: (date: string) => Promise<CalendarExtensionData | null>;
+	getDailyData?: (date: string) => Promise<CalendarExtensionData | null>;
 }

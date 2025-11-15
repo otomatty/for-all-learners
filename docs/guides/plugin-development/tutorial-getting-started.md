@@ -226,35 +226,43 @@ bun run plugins:dev my-first-plugin
    bun run dev
    ```
 
-2. プラグイン開発ページにアクセス：
-   ```
-   http://localhost:3000/settings/plugins/dev
+2. プラグインをビルドして公開：
+   ```bash
+   bun run plugins:build com.example.my-first-plugin
+   bun run plugins:publish com.example.my-first-plugin
    ```
 
-3. プラグインを読み込む：
-   - プラグインカードの「読み込む」ボタンをクリック
+3. マーケットプレイスからインストール：
+   - ブラウザで `http://localhost:3000/settings/plugins` にアクセス
+   - マーケットプレイスタブでプラグインを検索
+   - 「インストール」ボタンをクリック
+
+詳細は **[プラグイン公開ガイド](./publishing-plugins.md)** を参照してください。
 
 ### プラグインの再読み込み
 
-コードを変更したら、再読み込みできます：
+コードを変更したら、再公開してテストできます：
 
 1. プラグインをビルド：
    ```bash
-   bun run plugins:build my-first-plugin
+   bun run plugins:build com.example.my-first-plugin
    ```
 
-2. プラグイン開発ページで「再読み込み」ボタンをクリック
+2. プラグインを再公開：
+   ```bash
+   bun run plugins:publish com.example.my-first-plugin
+   ```
+
+3. マーケットプレイスからプラグインを再インストールまたは更新
 
 ### デバッグ
 
 デバッグ情報を確認：
 
-1. デバッグページにアクセス：
-   ```
-   http://localhost:3000/settings/plugins/dev/debug
-   ```
-
-2. プラグインのログ、エラー、パフォーマンスメトリクスを確認
+1. ブラウザの開発者ツールを開く（F12）
+2. `Application` → `Workers` で Worker を確認
+3. `Console` でログを確認
+4. プラグインのログ、エラー、パフォーマンスメトリクスを確認
 
 ---
 
@@ -282,7 +290,7 @@ bun run plugins:dev my-first-plugin
 
 ### Q: プラグインはどのように配布しますか？
 
-**A**: 現在はローカル開発のみサポートしています。将来的にはマーケットプレイスから配布できるようになります。
+**A**: CLIツールを使用してプラグインを公開できます。詳細は **[プラグイン公開ガイド](./publishing-plugins.md)** を参照してください。
 
 ---
 

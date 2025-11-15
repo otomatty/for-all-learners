@@ -72,6 +72,11 @@ export function useLinkGroupState(editor: Editor | null, pageId: string) {
 			let updated = false;
 
 			state.doc.descendants((node, pos) => {
+				// Skip code blocks - they cannot contain marks
+				if (node.type.name === "codeBlock") {
+					return false; // Don't descend into code blocks
+				}
+
 				// Find all text nodes with UnifiedLinkMark
 				if (!node.isText) return;
 

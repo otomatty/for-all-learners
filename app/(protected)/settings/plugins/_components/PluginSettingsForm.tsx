@@ -35,6 +35,7 @@ import {
 	getAllPluginStorage,
 	setPluginStorage,
 } from "@/app/_actions/plugin-storage";
+import { getPlugin } from "@/app/_actions/plugins";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -63,7 +64,14 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
+import logger from "@/lib/logger";
+import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
+import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import type { JSONSchema } from "@/types/plugin";
+import { GitHubRepoSelector } from "./custom-widgets/GitHubRepoSelector";
+import { GitHubUserSelector } from "./custom-widgets/GitHubUserSelector";
+import { PasswordInput } from "./custom-widgets/PasswordInput";
 
 interface PluginSettingsFormProps {
 	pluginId: string;
@@ -122,14 +130,126 @@ function jsonSchemaToZod(schema: JSONSchema): z.ZodTypeAny {
 
 /**
  * Render form field based on JSON Schema type
+ *
+ * Supports custom widgets via `ui:widget` property:
+ * - "githubUserSelector": GitHubユーザー選択
+ * - "githubRepoSelector": GitHubリポジトリ選択（複数選択）
+ * - "password": パスワード入力
  */
 function renderFormField(
 	schema: JSONSchema,
 	name: string,
 	control: Parameters<typeof FormField>[0]["control"],
 	defaultValue: unknown,
+	_pluginId: string,
+	githubToken: string | undefined,
+	onReposFetched?: (repos: Array<{ full_name: string; name: string }>) => void,
+	availableRepos?: Array<{ full_name: string; name: string }>,
 ) {
 	const fieldName = name.split(".").slice(1).join(".") || name;
+	const customWidget = schema["ui:widget"];
+
+	// Handle custom widgets
+	if (customWidget === "githubUserSelector") {
+		return (
+			<FormField
+				key={name}
+				control={control}
+				name={fieldName}
+				render={({ field }) => (
+					<FormItem>
+						<FormControl>
+							<GitHubUserSelector
+								value={String(field.value ?? defaultValue ?? "")}
+								onChange={field.onChange}
+								onReposFetched={onReposFetched}
+								githubToken={githubToken}
+							/>
+						</FormControl>
+						{schema.description && (
+							<FormDescription>{schema.description}</FormDescription>
+						)}
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+		);
+	}
+
+	if (customWidget === "githubRepoSelector") {
+		// For array type, store as JSON string in storage
+		const selectedRepos = Array.isArray(defaultValue)
+			? (defaultValue as string[])
+			: typeof defaultValue === "string" && defaultValue.trim()
+				? (JSON.parse(defaultValue) as string[])
+				: [];
+
+		return (
+			<FormField
+				key={name}
+				control={control}
+				name={fieldName}
+				render={({ field }) => {
+					const currentValue = field.value;
+					const repos = Array.isArray(currentValue)
+						? (currentValue as string[])
+						: typeof currentValue === "string" && currentValue.trim()
+							? (JSON.parse(currentValue) as string[])
+							: selectedRepos;
+
+					return (
+						<FormItem>
+							<FormControl>
+								<GitHubRepoSelector
+									repos={availableRepos || []}
+									selectedRepos={repos}
+									onChange={(newRepos) => {
+										// Store as JSON string for compatibility
+										field.onChange(JSON.stringify(newRepos));
+									}}
+								/>
+							</FormControl>
+							{schema.description && (
+								<FormDescription>{schema.description}</FormDescription>
+							)}
+							<FormMessage />
+						</FormItem>
+					);
+				}}
+			/>
+		);
+	}
+
+	if (customWidget === "password") {
+		// Check if this is a GitHub token field
+		const isGitHubToken =
+			fieldName.toLowerCase().includes("github") &&
+			(fieldName.toLowerCase().includes("token") ||
+				fieldName.toLowerCase().includes("oauth"));
+
+		return (
+			<FormField
+				key={name}
+				control={control}
+				name={fieldName}
+				render={({ field }) => (
+					<FormItem>
+						<FormControl>
+							<PasswordInput
+								value={String(field.value ?? defaultValue ?? "")}
+								onChange={field.onChange}
+								label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
+								description={schema.description}
+								placeholder={schema.description}
+								showGitHubHelp={isGitHubToken}
+							/>
+						</FormControl>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+		);
+	}
 
 	if (schema.type === "boolean") {
 		return (
@@ -285,6 +405,11 @@ export function PluginSettingsForm({
 }: PluginSettingsFormProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [_savedConfig, setSavedConfig] = useState<Record<string, unknown>>({});
+	const [githubToken, setGithubToken] = useState<string | undefined>(undefined);
+	const [availableRepos, setAvailableRepos] = useState<
+		Array<{ full_name: string; name: string }>
+	>([]);
+	const { loadPlugin } = useLoadPlugin();
 
 	// Generate Zod schema from JSON Schema
 	const zodSchema = configSchema ? jsonSchemaToZod(configSchema) : z.object({});
@@ -305,6 +430,24 @@ export function PluginSettingsForm({
 			getAllPluginStorage(pluginId)
 				.then((config) => {
 					setSavedConfig(config);
+
+					// Get GitHub token if exists
+					const token = config.github_oauth_token as string | undefined;
+					setGithubToken(token);
+
+					// Parse repo list if exists
+					if (config.selectedRepos) {
+						const repos =
+							typeof config.selectedRepos === "string"
+								? JSON.parse(config.selectedRepos)
+								: config.selectedRepos;
+						if (Array.isArray(repos) && repos.length > 0) {
+							// Repos are stored as full_name strings, we need to reconstruct
+							// For now, we'll rely on user to re-fetch repos
+							setAvailableRepos([]);
+						}
+					}
+
 					// Merge saved config with defaults
 					const mergedConfig = {
 						...(defaultConfig || {}),
@@ -321,6 +464,13 @@ export function PluginSettingsForm({
 		}
 	}, [open, pluginId, configSchema, defaultConfig, form]);
 
+	const handleReposFetched = (
+		repos: Array<{ full_name: string; name: string }>,
+	) => {
+		setAvailableRepos(repos);
+		toast.success(`${repos.length}個のリポジトリを取得しました`);
+	};
+
 	const handleSubmit = async (values: FormValues) => {
 		setIsLoading(true);
 		try {
@@ -330,7 +480,48 @@ export function PluginSettingsForm({
 				await setPluginStorage(pluginId, key, value);
 			}
 
-			toast.success("設定を保存しました");
+			// Reload plugin with new configuration
+			try {
+				// Check if plugin is currently loaded
+				const registry = getPluginRegistry();
+				const loadedPlugin = registry.get(pluginId);
+
+				if (loadedPlugin) {
+					// Unload existing plugin first
+					const loader = PluginLoader.getInstance();
+					try {
+						await loader.unloadPlugin(pluginId);
+					} catch (_unloadError) {
+						// Continue even if unload fails
+					}
+				}
+
+				// Load plugin with new configuration
+				const pluginMetadata = await getPlugin(pluginId);
+				if (pluginMetadata) {
+					const result = await loadPlugin(pluginMetadata);
+					if (result.success) {
+						toast.success("設定を保存し、プラグインを再読み込みしました");
+					} else {
+						toast.warning(
+							"設定を保存しましたが、プラグインの再読み込みに失敗しました: " +
+								(result.error || "不明なエラー"),
+						);
+					}
+				} else {
+					toast.success("設定を保存しました");
+				}
+			} catch (reloadError) {
+				logger.error(
+					{ error: reloadError, pluginId },
+					"Failed to reload plugin after saving settings",
+				);
+				// If reload fails, still show success for config save
+				toast.warning(
+					"設定を保存しましたが、プラグインの再読み込みに失敗しました。ページをリロードしてください。",
+				);
+			}
+
 			setSavedConfig(valuesObj);
 			onOpenChange(false);
 		} catch (error) {
@@ -394,6 +585,10 @@ export function PluginSettingsForm({
 										key,
 										form.control,
 										defaultValue,
+										pluginId,
+										githubToken,
+										handleReposFetched,
+										availableRepos,
 									);
 								},
 							)}

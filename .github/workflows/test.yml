@@ -11,17 +11,73 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    # Skip if this is a lockfile update commit or PR with [skip ci] in title
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && (github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]'))"
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Use PR branch head for pull_request events, default for push
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies (auto-update lockfile)
+        run: |
+          # Try frozen lockfile first
+          if bun install --frozen-lockfile; then
+            echo "✅ Lockfile is up to date"
+            exit 0
+          fi
+          
+          # Only auto-update for PRs from the same repository
+          if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "❌ Lockfile is out of sync. Cannot auto-update for PRs from forks."
+            exit 1
+          fi
+          
+          # If frozen lockfile fails, install normally
+          echo "⚠️ Lockfile is out of sync, updating..."
+          bun install
+          
+          # Check if lockfile changed
+          if git diff --quiet bun.lock; then
+            echo "❌ Lockfile check failed but no changes detected"
+            exit 1
+          fi
+          
+          # Commit and push the updated lockfile
+          echo "📝 Committing updated bun.lock..."
+          git add bun.lock
+          
+          # Check if there are staged changes before committing
+          if git diff --staged --quiet; then
+            echo "❌ No changes to stage"
+            exit 1
+          fi
+          
+          git commit -m "chore: update bun.lock [skip ci]"
+          if ! git push; then
+            echo "❌ Failed to push lockfile update"
+            exit 1
+          fi
+          
+          echo "✅ Lockfile updated and committed"
 
       - name: Run tests
         run: bun run test
