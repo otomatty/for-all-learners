@@ -89,6 +89,12 @@ export function PagesList({
 		});
 	};
 
+	// Phase 3: Prefetch page data on hover for better performance
+	const handlePageHover = (pageId: string) => {
+		const href = `/notes/${encodeURIComponent(slug)}/${encodeURIComponent(pageId)}`;
+		router.prefetch(href);
+	};
+
 	if (pages.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center h-40 border rounded-lg">
@@ -106,6 +112,7 @@ export function PagesList({
 				<Card
 					key={page.id}
 					onClick={() => handlePageClick(page.id)}
+					onMouseEnter={() => handlePageHover(page.id)}
 					className={cn(
 						"h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2 cursor-pointer",
 						clickedPageId === page.id && "ring-2 ring-primary",

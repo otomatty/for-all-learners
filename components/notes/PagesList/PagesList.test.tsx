@@ -6,13 +6,14 @@ import { PagesList } from "./PagesList";
 
 // Mock next/navigation
 const mockRouterPush = vi.fn();
+const mockRouterPrefetch = vi.fn();
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({
 		push: mockRouterPush,
 		refresh: vi.fn(),
 		back: vi.fn(),
 		forward: vi.fn(),
-		prefetch: vi.fn(),
+		prefetch: mockRouterPrefetch,
 	}),
 }));
 
@@ -66,6 +67,7 @@ const mockPages: PageRow[] = [
 describe("PagesList", () => {
 	beforeEach(() => {
 		mockRouterPush.mockClear();
+		mockRouterPrefetch.mockClear();
 	});
 
 	test("renders empty state when no pages", () => {
@@ -190,5 +192,52 @@ describe("PagesList", () => {
 		const firstCard = cards[0];
 		expect(firstCard).toBeInTheDocument();
 		expect(firstCard?.className).toContain("cursor-pointer");
+	});
+
+	// Phase 3: Prefetch tests
+	test("prefetches page data on hover", async () => {
+		const user = userEvent.setup();
+		const { container } = render(
+			<PagesList pages={mockPages} slug="test-note" />,
+		);
+
+		// Find the card by data-slot attribute
+		const cards = container.querySelectorAll('[data-slot="card"]');
+		const firstCard = cards[0];
+		expect(firstCard).toBeInTheDocument();
+
+		// Hover over the card
+		if (firstCard) {
+			await user.hover(firstCard);
+		}
+
+		// Check if prefetch was called with the correct URL
+		await waitFor(() => {
+			expect(mockRouterPrefetch).toHaveBeenCalledWith("/notes/test-note/1");
+		});
+	});
+
+	test("prefetches with correct slug encoding", async () => {
+		const user = userEvent.setup();
+		const { container } = render(
+			<PagesList pages={mockPages} slug="my/note" />,
+		);
+
+		// Find the card by data-slot attribute
+		const cards = container.querySelectorAll('[data-slot="card"]');
+		const firstCard = cards[0];
+		expect(firstCard).toBeInTheDocument();
+
+		// Hover over the card
+		if (firstCard) {
+			await user.hover(firstCard);
+		}
+
+		// Check if prefetch was called with encoded slug
+		await waitFor(() => {
+			expect(mockRouterPrefetch).toHaveBeenCalledWith(
+				"/notes/my%2Fnote/1",
+			);
+		});
 	});
 });
