@@ -16,7 +16,7 @@
 ### 優先度: 低リスク（優先的に対応）
 
 #### 1. PR #122: Biome のパッチアップデート
-- **パッケージ**: `@biomejs/biome` 2.3.3 → 2.3.4
+- **パッケージ**: `@biomejs/biome` 2.3.3 → 2.3.5
 - **PR**: https://github.com/otomatty/for-all-learners/pull/122
 - **変更内容**:
   - Astro frontmatter パースの回帰修正

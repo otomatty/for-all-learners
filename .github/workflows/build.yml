@@ -14,8 +14,8 @@ jobs:
       pull-requests: write
       issues: write
     
-    # Skip if this is a lockfile update commit
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    # Skip if this is a lockfile update commit or PR with [skip ci] in title
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.pull_request.title, '[skip ci]')"
     
     env:
       # Note: These should be set in GitHub Secrets
@@ -30,6 +30,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Use PR branch head for pull_request events, default for push
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -46,9 +48,15 @@ jobs:
       - name: Install dependencies (auto-update lockfile)
         run: |
           # Try frozen lockfile first
-          if bun install --frozen-lockfile 2>&1; then
+          if bun install --frozen-lockfile; then
             echo "✅ Lockfile is up to date"
             exit 0
+          fi
+          
+          # Only auto-update for PRs from the same repository
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "❌ Lockfile is out of sync. Cannot auto-update for PRs from forks."
+            exit 1
           fi
           
           # If frozen lockfile fails, install normally
@@ -64,8 +72,18 @@ jobs:
           # Commit and push the updated lockfile
           echo "📝 Committing updated bun.lock..."
           git add bun.lock
-          git commit -m "chore: update bun.lock [skip ci]" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          
+          # Check if there are staged changes before committing
+          if git diff --staged --quiet; then
+            echo "❌ No changes to stage"
+            exit 1
+          fi
+          
+          git commit -m "chore: update bun.lock [skip ci]"
+          if ! git push; then
+            echo "❌ Failed to push lockfile update"
+            exit 1
+          fi
           
           echo "✅ Lockfile updated and committed"
 
