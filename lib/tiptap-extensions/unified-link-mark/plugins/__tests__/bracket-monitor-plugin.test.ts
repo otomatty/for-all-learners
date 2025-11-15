@@ -6,9 +6,11 @@
 import { Editor } from "@tiptap/core";
 import CodeBlock from "@tiptap/extension-code-block";
 import Document from "@tiptap/extension-document";
+import Link from "@tiptap/extension-link";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { PluginKey } from "@tiptap/pm/state";
+import type { Mark } from "prosemirror-model";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UnifiedLinkMark } from "../../index";
 import {
@@ -264,6 +266,154 @@ describe("Bracket Monitor Plugin", () => {
 			const mockEditor = createMockEditor();
 			const plugin = createBracketMonitorPlugin(mockEditor);
 			expect(plugin.spec.appendTransaction).toBeDefined();
+		});
+	});
+
+	describe("External URL handling (Issue #138)", () => {
+		let editor: Editor;
+
+		beforeEach(() => {
+			editor = new Editor({
+				extensions: [
+					Document,
+					Paragraph,
+					Text,
+					CodeBlock,
+					Link.configure({
+						openOnClick: false,
+						autolink: true,
+					}),
+					UnifiedLinkMark.configure({
+						HTMLAttributes: {
+							class: "unilink",
+						},
+					}),
+				],
+				content: "",
+			});
+		});
+
+		afterEach(() => {
+			editor?.destroy();
+		});
+
+		it("should apply link mark instead of unilink mark for https:// URLs", () => {
+			// Set content with external URL in brackets
+			editor.commands.setContent("<p>[https://example.com]</p>");
+
+			// Trigger plugin by making a change
+			editor.commands.insertContentAt(editor.state.doc.content.size, " ");
+
+			const state = editor.state;
+
+			// Check that link mark is applied, not unilink mark
+			let hasLinkMark = false;
+			let hasUnilinkMark = false;
+
+			state.doc.descendants((node) => {
+				if (node.isText) {
+					const marks = node.marks;
+					if (marks.some((m) => m.type.name === "link")) {
+						hasLinkMark = true;
+					}
+					if (marks.some((m) => m.type.name === "unilink")) {
+						hasUnilinkMark = true;
+					}
+				}
+			});
+
+			expect(hasLinkMark).toBe(true);
+			expect(hasUnilinkMark).toBe(false);
+		});
+
+		it("should apply link mark instead of unilink mark for http:// URLs", () => {
+			// Set content with external URL in brackets
+			editor.commands.setContent("<p>[http://example.com]</p>");
+
+			// Trigger plugin by making a change
+			editor.commands.insertContentAt(editor.state.doc.content.size, " ");
+
+			const state = editor.state;
+
+			// Check that link mark is applied, not unilink mark
+			let hasLinkMark = false;
+			let hasUnilinkMark = false;
+
+			state.doc.descendants((node) => {
+				if (node.isText) {
+					const marks = node.marks;
+					if (marks.some((m) => m.type.name === "link")) {
+						hasLinkMark = true;
+					}
+					if (marks.some((m) => m.type.name === "unilink")) {
+						hasUnilinkMark = true;
+					}
+				}
+			});
+
+			expect(hasLinkMark).toBe(true);
+			expect(hasUnilinkMark).toBe(false);
+		});
+
+		it("should set target=_blank for external URL link marks", () => {
+			// Set content with external URL in brackets
+			editor.commands.setContent("<p>[https://example.com]</p>");
+
+			// Trigger plugin
+			editor.commands.insertContentAt(editor.state.doc.content.size, " ");
+
+			const state = editor.state;
+
+			// Check that link mark has target="_blank"
+			let linkMark: Mark | null = null;
+
+			state.doc.descendants((node) => {
+				if (node.isText) {
+					const marks = node.marks;
+					const mark = marks.find((m) => m.type.name === "link");
+					if (mark) {
+						linkMark = mark as Mark;
+					}
+				}
+			});
+
+			expect(linkMark).not.toBeNull();
+			if (linkMark) {
+				const attrs = (
+					linkMark as Mark & { attrs: { target?: string; href?: string } }
+				).attrs;
+				expect(attrs.target).toBe("_blank");
+				expect(attrs.href).toBe("https://example.com");
+			}
+		});
+
+		it("should still apply unilink mark for internal links", () => {
+			// Set content with internal link in brackets
+			editor.commands.setContent("<p>[Internal Page]</p>");
+
+			// Trigger plugin
+			editor.commands.insertContentAt(editor.state.doc.content.size, " ");
+
+			const state = editor.state;
+
+			// Check that unilink mark is applied, not link mark
+			let hasLinkMark = false;
+			let hasUnilinkMark = false;
+
+			state.doc.descendants((node) => {
+				if (node.isText) {
+					const marks = node.marks;
+					if (marks.some((m) => m.type.name === "link")) {
+						hasLinkMark = true;
+					}
+					if (marks.some((m) => m.type.name === "unilink")) {
+						hasUnilinkMark = true;
+					}
+				}
+			});
+
+			expect(hasLinkMark).toBe(false);
+			expect(hasUnilinkMark).toBe(true);
 		});
 	});
 

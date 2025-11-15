@@ -123,6 +123,52 @@ export function createBracketInputRule(_context: {
 				);
 			}
 
+			// External URLs should use standard link mark instead of unilink mark
+			if (isExternal) {
+				if (DEBUG_BRACKET_RULE) {
+					logger.debug(
+						{
+							deleteFrom: from,
+							deleteTo: to,
+							deleteText: state.doc.textBetween(from, to),
+						},
+						"[BracketInputRule] ℹ️ Applying link mark for external URL",
+					);
+				}
+				chain()
+					.focus()
+					.deleteRange({ from, to })
+					.insertContent({
+						type: "text",
+						text: "[",
+					})
+					.insertContent({
+						type: "text",
+						text: text,
+						marks: [
+							{
+								type: "link",
+								attrs: {
+									href: raw,
+									target: "_blank",
+								},
+							},
+						],
+					})
+					.insertContent({
+						type: "text",
+						text: "]",
+					})
+					.run();
+				if (DEBUG_BRACKET_RULE) {
+					logger.debug(
+						{ text: `[${text}]`, href: raw },
+						"[BracketInputRule] ✅ Link mark applied for external URL",
+					);
+				}
+				return;
+			}
+
 			// Simple link creation: bracket = link, no async resolution needed
 			const attrs: UnifiedLinkAttributes = {
 				variant: "bracket",
@@ -130,7 +176,7 @@ export function createBracketInputRule(_context: {
 				text,
 				key,
 				pageId: null,
-				href: isExternal ? raw : `#${key}`, // Use key as href for internal links
+				href: `#${key}`, // Use key as href for internal links
 				state: "exists", // Always exists - bracket presence defines link status
 				exists: true,
 				markId,

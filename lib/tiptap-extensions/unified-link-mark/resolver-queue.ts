@@ -22,7 +22,7 @@ import {
 	markUnifiedResolved,
 } from "../../unilink/metrics";
 import { searchPages } from "../../utils/searchPages";
-import { RESOLVER_CONFIG } from "./config";
+import { PATTERNS, RESOLVER_CONFIG } from "./config";
 import { updateMarkState } from "./state-manager";
 import type { ResolverQueueItem, SearchResult } from "./types";
 
@@ -231,6 +231,15 @@ const resolverQueue = new ResolverQueue();
  * @param item - The resolver queue item to add
  */
 export function enqueueResolve(item: ResolverQueueItem): void {
+	// Skip resolution for external URLs - they should use standard link mark
+	if (PATTERNS.externalUrl.test(item.raw)) {
+		logger.debug(
+			{ raw: item.raw, markId: item.markId },
+			"[ResolverQueue] Skipping external URL - no resolution needed",
+		);
+		return;
+	}
+
 	resolverQueue.add(item);
 	queueMicrotask(() => {
 		resolverQueue.process();
