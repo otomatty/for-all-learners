@@ -10,6 +10,7 @@ import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
+import { CustomHorizontalRule } from "@/lib/tiptap-extensions/custom-horizontal-rule";
 import {
 	CustomBulletList,
 	CustomOrderedList,
@@ -41,6 +42,11 @@ interface UsePageEditorLogicProps {
 	isDirty: boolean;
 	setIsDirty: (dirty: boolean) => void;
 	noteSlug?: string;
+	onShowCreatePageDialog?: (
+		title: string,
+		onConfirm: () => Promise<void>,
+	) => void;
+	onDeleteEmptyTitlePage?: () => Promise<void>;
 }
 
 /**
@@ -75,9 +81,15 @@ export function usePageEditorLogic({
 	setIsGenerating,
 	isDirty,
 	setIsDirty,
+	noteSlug,
+	onShowCreatePageDialog,
+	onDeleteEmptyTitlePage,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
+
+	// Code blocks always use dark theme (tokyo-night) for better readability
+	const codeBlockTheme = "tokyo-night";
 
 	// Memoize base extensions to prevent unnecessary re-renders
 	// Note: Plugin extensions are included at editor creation time
@@ -89,20 +101,27 @@ export function usePageEditorLogic({
 				bulletList: false,
 				orderedList: false,
 				codeBlock: false,
+				horizontalRule: false, // Disable default horizontalRule in favor of CustomHorizontalRule
 			}),
 			// Unified Link Mark handles both [Title] and #tag syntax
-			UnifiedLinkMark,
+			UnifiedLinkMark.configure({
+				noteSlug: noteSlug ?? null,
+				userId: page.user_id,
+				onShowCreatePageDialog,
+			}),
 			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,
 			CustomOrderedList,
+			CustomHorizontalRule, // Add the custom horizontal rule extension
 			GyazoImage,
 			LatexInlineNode,
 			Highlight,
 			// Shiki-based code block with copy functionality
 			// Automatically supports all programming languages with syntax highlighting
+			// Always uses dark theme (tokyo-night) for better readability
 			CodeBlockWithCopy.configure({
 				defaultLanguage: "javascript",
-				defaultTheme: "tokyo-night",
+				defaultTheme: codeBlockTheme, // Always "tokyo-night"
 			}),
 			// Table extensions for Markdown table support
 			...TableExtensions,
@@ -121,7 +140,7 @@ export function usePageEditorLogic({
 		// TipTap does not support dynamic extension updates after initialization
 		const pluginExtensions = getTiptapExtensions();
 		return [...baseExts, ...pluginExtensions];
-	}, []);
+	}, [noteSlug, page.user_id, onShowCreatePageDialog]); // Include dependencies for UnifiedLinkMark configuration
 
 	const editor = useEditor({
 		immediatelyRender: false,
@@ -132,7 +151,7 @@ export function usePageEditorLogic({
 					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose md:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
 			},
 		},
-	});
+	}); // No dependencies needed - codeBlockTheme is constant
 
 	// Register editor with editor manager
 	useEffect(() => {
@@ -173,6 +192,7 @@ export function usePageEditorLogic({
 	const { savePage } = usePageSaver(editor, page.id, title, {
 		setIsLoading,
 		setIsDirty,
+		onDeleteEmptyTitlePage,
 	});
 
 	// Content generation hook

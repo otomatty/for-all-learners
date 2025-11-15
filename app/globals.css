@@ -283,6 +283,84 @@
 	.prose pre code {
 		@apply font-mono text-sm leading-relaxed;
 	} */
+
+	/* Shiki theme switching for light/dark mode */
+	/* Code blocks always use dark theme (tokyo-night) */
+	/* Use specific selectors to override .prose and .ProseMirror styles without !important */
+
+	/* Base styles for Shiki code blocks - set color on pre to apply to all children */
+	/* color: inherit in spans will inherit from this */
+	.ProseMirror pre.shiki,
+	.prose pre.shiki,
+	pre.shiki {
+		margin: 0;
+		background-color: #1a1b26; /* tokyo-night background */
+		color: #c0caf5; /* tokyo-night default text color - applies to all children */
+	}
+
+	/* Code element inside Shiki blocks - explicitly set color to override prose styles */
+	.ProseMirror pre.shiki code,
+	.prose pre.shiki code,
+	pre.shiki code {
+		color: #c0caf5; /* tokyo-night default text color */
+		background-color: transparent;
+	}
+
+	/* All elements inside code (div, span, etc.) - inherit color from pre.shiki */
+	/* This ensures color: inherit in inline styles works correctly */
+	.ProseMirror pre.shiki code div,
+	.prose pre.shiki code div,
+	pre.shiki code div,
+	.ProseMirror pre.shiki code span,
+	.prose pre.shiki code span,
+	pre.shiki code span,
+	.ProseMirror pre.shiki code > *,
+	.prose pre.shiki code > *,
+	pre.shiki code > * {
+		color: inherit; /* Inherit from pre.shiki which is #c0caf5 */
+	}
+
+	/* Custom Horizontal Rule Styles */
+	/* Use ::before pseudo-element to ensure visibility - this method is more reliable */
+	/* Use padding instead of margin to prevent margin collapsing */
+	hr.custom-horizontal-rule,
+	.ProseMirror hr.custom-horizontal-rule,
+	.prose hr.custom-horizontal-rule {
+		display: block;
+		margin: 0;
+		padding: 2rem 0;
+		border: none;
+		width: 100%;
+		position: relative;
+		background: transparent;
+		overflow: visible;
+		box-sizing: border-box;
+	}
+
+	/* Draw the line using ::before pseudo-element */
+	/* This ensures the line is always visible regardless of other CSS rules */
+	/* Position it in the center of the padding area */
+	hr.custom-horizontal-rule::before,
+	.ProseMirror hr.custom-horizontal-rule::before,
+	.prose hr.custom-horizontal-rule::before {
+		content: "";
+		display: block;
+		position: absolute;
+		top: 50%;
+		left: 0;
+		width: 100%;
+		height: 4px;
+		transform: translateY(-50%);
+		/* Use fixed color as fallback, then CSS variable */
+		background-color: #e5e7eb; /* gray-300 for light mode */
+	}
+
+	/* Dark mode support */
+	.dark hr.custom-horizontal-rule::before,
+	.dark .ProseMirror hr.custom-horizontal-rule::before,
+	.dark .prose hr.custom-horizontal-rule::before {
+		background-color: #374151; /* gray-700 for dark mode */
+	}
 }
 
 /* GyazoImage 用スタイル */
@@ -348,6 +426,21 @@ blockquote {
 	border-color: #6b7280; /* border-gray-500 */
 	font-style: italic; /* italic */
 }
+
+/* Optional: Add decorative elements (uncomment to enable) */
+/*
+.ProseMirror hr.custom-horizontal-rule::after,
+.prose hr.custom-horizontal-rule::after {
+	content: '';
+	position: absolute;
+	top: -1px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 40px;
+	height: 2px;
+	background: hsl(var(--primary));
+}
+*/
 
 /* ユーザーアイコン表示用のスタイル */
 .user-icon-wrapper {

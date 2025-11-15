@@ -67,7 +67,7 @@ export function PluginReviewForm({
 					setExistingReviewId(existingReview.id);
 					setIsEditing(false);
 				}
-			} catch (error) {
+			} catch (_error) {
 			} finally {
 				setIsLoading(false);
 			}

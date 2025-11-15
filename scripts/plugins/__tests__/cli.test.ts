@@ -26,6 +26,7 @@ import { main } from "../cli";
 import * as createPluginModule from "../create-plugin";
 import * as devPluginModule from "../dev-plugin";
 import * as generateTypesModule from "../generate-types";
+import * as publishPluginModule from "../publish-plugin";
 import * as testPluginModule from "../test-plugin";
 
 // Mock child process exit
@@ -80,6 +81,10 @@ vi.mock("../lint-plugin", () => ({
 
 vi.mock("../security-check", () => ({
 	securityCheck: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../publish-plugin", () => ({
+	publishPlugin: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("CLI", () => {
@@ -372,6 +377,26 @@ describe("CLI", () => {
 			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
 			expect(infoSpy).toHaveBeenCalledWith(
 				"Usage: bun run plugins:benchmark <plugin-id>",
+			);
+			expect(mockExit).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("publish command", () => {
+		it("should call publishPlugin with plugin ID", async () => {
+			await main("publish", ["com.example.my-plugin"]);
+
+			expect(publishPluginModule.publishPlugin).toHaveBeenCalledWith(
+				"com.example.my-plugin",
+			);
+		});
+
+		it("should exit with error if plugin ID is missing", async () => {
+			await main("publish", []);
+
+			expect(errorSpy).toHaveBeenCalledWith("Error: Plugin ID is required");
+			expect(infoSpy).toHaveBeenCalledWith(
+				"Usage: bun run plugins:publish <plugin-id>",
 			);
 			expect(mockExit).toHaveBeenCalledWith(1);
 		});
