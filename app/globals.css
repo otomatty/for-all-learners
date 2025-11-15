@@ -285,12 +285,39 @@
 	} */
 
 	/* Shiki theme switching for light/dark mode */
-	/* Shiki themes are controlled via tiptap-extension-code-block-shiki configuration */
-	/* Both theme CSS files are loaded, and the extension applies the appropriate theme */
-	/* Ensure Shiki code blocks have proper styling and respect theme backgrounds */
+	/* Code blocks always use dark theme (tokyo-night) */
+	/* Use specific selectors to override .prose and .ProseMirror styles without !important */
+
+	/* Base styles for Shiki code blocks - set color on pre to apply to all children */
+	/* color: inherit in spans will inherit from this */
+	.ProseMirror pre.shiki,
+	.prose pre.shiki,
 	pre.shiki {
-		/* Let Shiki theme handle background colors */
 		margin: 0;
+		background-color: #1a1b26; /* tokyo-night background */
+		color: #c0caf5; /* tokyo-night default text color - applies to all children */
+	}
+
+	/* Code element inside Shiki blocks - explicitly set color to override prose styles */
+	.ProseMirror pre.shiki code,
+	.prose pre.shiki code,
+	pre.shiki code {
+		color: #c0caf5; /* tokyo-night default text color */
+		background-color: transparent;
+	}
+
+	/* All elements inside code (div, span, etc.) - inherit color from pre.shiki */
+	/* This ensures color: inherit in inline styles works correctly */
+	.ProseMirror pre.shiki code div,
+	.prose pre.shiki code div,
+	pre.shiki code div,
+	.ProseMirror pre.shiki code span,
+	.prose pre.shiki code span,
+	pre.shiki code span,
+	.ProseMirror pre.shiki code > *,
+	.prose pre.shiki code > *,
+	pre.shiki code > * {
+		color: inherit; /* Inherit from pre.shiki which is #c0caf5 */
 	}
 }
 

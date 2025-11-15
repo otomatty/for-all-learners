@@ -19,7 +19,7 @@ export default function CodeBlockComponent({ node: _node }: NodeViewProps) {
 
 	return (
 		<NodeViewWrapper ref={wrapperRef} className="relative group">
-			<pre className="p-4 overflow-auto rounded">
+			<pre className="p-6 overflow-auto rounded shiki">
 				<NodeViewContent<"code"> as="code" />
 			</pre>
 			<button
