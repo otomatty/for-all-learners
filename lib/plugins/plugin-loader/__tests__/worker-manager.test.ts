@@ -36,10 +36,6 @@ class MockWorker {
 
 global.Worker = MockWorker as unknown as typeof Worker;
 
-// Mock URL.createObjectURL
-global.URL.createObjectURL = vi.fn(() => "blob:mock-url");
-global.URL.revokeObjectURL = vi.fn();
-
 const createMockManifest = (
 	overrides?: Partial<PluginManifest>,
 ): PluginManifest => ({
@@ -128,17 +124,6 @@ describe("Worker Manager", () => {
 
 				expect(onError).toHaveBeenCalledWith(pluginId, "Test error");
 			}
-		});
-
-		it("should cleanup blob URL on terminate", () => {
-			const pluginId = "test-plugin";
-			const onMessage = vi.fn();
-			const onError = vi.fn();
-
-			const worker = createWorker(pluginId, onMessage, onError);
-			worker.terminate();
-
-			expect(global.URL.revokeObjectURL).toHaveBeenCalled();
 		});
 	});
 

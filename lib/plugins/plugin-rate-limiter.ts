@@ -9,14 +9,9 @@
  * Parents (Files that import this):
  *   └─ lib/plugins/plugin-loader/worker-message-handler.ts
  *
- * Dependencies:
- *   └─ lib/logger.ts
- *
  * Related Documentation:
  *   └─ Issue #96: Plugin System Security Enhancement
  */
-
-import logger from "@/lib/logger";
 
 /**
  * Rate limit configuration

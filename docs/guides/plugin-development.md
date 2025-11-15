@@ -36,6 +36,7 @@
 - **[エディタ拡張チュートリアル](./plugin-development/tutorial-editor-extension.md)**: エディタ機能の拡張方法
 - **[AI拡張チュートリアル](./plugin-development/tutorial-ai-extension.md)**: AI機能の拡張方法
 - **[UI拡張チュートリアル](./plugin-development/tutorial-ui-extension.md)**: UI要素の追加方法
+- **[プラグイン公開ガイド](./plugin-development/publishing-plugins.md)**: CLIツールを使用したプラグイン公開方法
 - **[APIリファレンス](./plugin-development/api-reference.md)**: 詳細なAPIドキュメント
 - **[ベストプラクティス](./plugin-development/best-practices.md)**: 開発のベストプラクティス
 - **[トラブルシューティング](./plugin-development/troubleshooting.md)**: よくある問題と解決方法
@@ -421,6 +422,20 @@ bun run plugins:benchmark <plugin-id>
 - API呼び出しのパフォーマンス
 - メモリ使用量
 
+#### プラグインの公開
+
+```bash
+# プラグインをマーケットプレイスに公開
+bun run plugins:publish <plugin-id>
+```
+
+公開プロセス：
+1. プラグインの自動ビルド
+2. Supabase Storageへのアップロード
+3. データベースへの登録または更新
+
+**詳細**: **[プラグイン公開ガイド](./plugin-development/publishing-plugins.md)** を参照してください。
+
 #### 型定義の生成
 
 ```bash
@@ -457,6 +472,9 @@ bun run plugins:benchmark com.example.my-first-plugin
 
 # 6. 開発モードで起動
 bun run plugins:dev com.example.my-first-plugin
+
+# 7. プラグインを公開
+bun run plugins:publish com.example.my-first-plugin
 ```
 
 ---
@@ -694,7 +712,9 @@ await api.editor.setSelection(5, 10);
 
 1. F.A.Lアプリケーションをローカルで起動
 2. プラグインをビルド
-3. ビルドしたプラグインを手動でインストール
+3. CLIツールを使用してプラグインを公開し、マーケットプレイスからインストールしてテスト
+
+詳細は **[プラグイン公開ガイド](./plugin-development/publishing-plugins.md)** を参照してください。
 
 ### CLIツールを使用した開発（推奨）
 
@@ -816,6 +836,27 @@ describe('My Plugin', () => {
 ---
 
 ## 公開とマーケットプレイス
+
+プラグインを開発したら、マーケットプレイスに公開して他のユーザーが利用できるようにできます。
+
+### CLIツールを使用した公開（推奨）
+
+CLIツールを使用すると、コマンドラインから簡単にプラグインを公開できます：
+
+```bash
+# プラグインを公開
+bun run plugins:publish <plugin-id>
+```
+
+**詳細**: **[プラグイン公開ガイド](./plugin-development/publishing-plugins.md)** を参照してください。
+
+### 公開プロセス
+
+公開プロセスでは以下が実行されます：
+
+1. **自動ビルド**: プラグインが自動的にビルドされます（`dist/index.js` が存在しない場合）
+2. **Storageへのアップロード**: プラグインコードがSupabase Storageにアップロードされます
+3. **データベースへの登録**: プラグイン情報がデータベースに登録または更新されます
 
 ### 公式プラグインの公開
 

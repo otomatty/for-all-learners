@@ -312,6 +312,13 @@ export async function getInstalledPlugins(): Promise<
 /**
  * Install a plugin for the current user
  *
+ * This function:
+ * 1. Gets plugin metadata from database
+ * 2. Registers in user_plugins table
+ *
+ * Note: Plugin loading is done on the client side after installation.
+ * This is because PluginLoader uses Web Workers which only work in browser environment.
+ *
  * @param formData FormData containing pluginId
  */
 export async function installPlugin(formData: FormData): Promise<void> {
@@ -374,6 +381,11 @@ export async function installPlugin(formData: FormData): Promise<void> {
 		await supabase.rpc("increment_plugin_downloads", {
 			p_plugin_id: pluginId,
 		});
+
+		logger.info(
+			{ pluginId, userId: user.id, version: plugin.version },
+			"[plugins] Plugin installed successfully (will be loaded on next page load)",
+		);
 	} catch (error) {
 		logger.error(
 			{ error, pluginId, userId: user?.id },

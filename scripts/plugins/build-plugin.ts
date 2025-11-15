@@ -16,7 +16,13 @@
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import logger from "../../lib/logger";
@@ -43,6 +49,36 @@ function findPluginDir(pluginId: string): string | null {
 	const kebabPath = join(PLUGINS_DIR, kebabId);
 	if (existsSync(kebabPath)) {
 		return kebabPath;
+	}
+
+	// Search all directories for matching manifest.id
+	if (!existsSync(PLUGINS_DIR)) {
+		return null;
+	}
+
+	const entries = readdirSync(PLUGINS_DIR, { withFileTypes: true });
+	for (const entry of entries) {
+		if (!entry.isDirectory()) {
+			continue;
+		}
+
+		const pluginDir = join(PLUGINS_DIR, entry.name);
+		const manifestPath = join(pluginDir, "plugin.json");
+
+		if (!existsSync(manifestPath)) {
+			continue;
+		}
+
+		try {
+			const manifestContent = readFileSync(manifestPath, "utf-8");
+			const manifest = JSON.parse(manifestContent) as PluginManifest;
+
+			if (manifest.id === pluginId) {
+				return pluginDir;
+			}
+		} catch {
+			// Skip invalid manifests
+		}
 	}
 
 	return null;

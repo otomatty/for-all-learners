@@ -28,7 +28,7 @@ export function SecurityAlertsFilters({
 	initialFilters,
 }: SecurityAlertsFiltersProps) {
 	const router = useRouter();
-	const searchParams = useSearchParams();
+	const _searchParams = useSearchParams();
 
 	const [searchQuery, setSearchQuery] = useState(
 		initialFilters.searchQuery || "",

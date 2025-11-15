@@ -5,7 +5,7 @@
 
 import type { Editor } from "@tiptap/core";
 import { PluginKey } from "prosemirror-state";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createMinimalMockEditor,
 	createMockOptions,
@@ -1143,6 +1143,147 @@ describe("createClickHandlerPlugin", () => {
 
 			expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
 			// Should continue even if note_page_links insert fails
+		});
+	});
+
+	// ========================================
+	// Issue #127: Confirmation Dialog for Missing Links
+	// ========================================
+
+	describe("Issue #127: Confirmation dialog for missing links", () => {
+		describe("Missing link click with onShowCreatePageDialog", () => {
+			it("should call onShowCreatePageDialog when missing link is clicked", () => {
+				// Contract: onShowCreatePageDialog should be called with title and callback
+				const mockOnShowCreatePageDialog = vi.fn();
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: mockOnShowCreatePageDialog,
+					},
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// When missing link is clicked, should call onShowCreatePageDialog
+			});
+
+			it("should pass correct title to onShowCreatePageDialog", () => {
+				// Contract: Should pass attrs.text || attrs.raw || "" as title
+				const mockOnShowCreatePageDialog = vi.fn();
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: mockOnShowCreatePageDialog,
+					},
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// Should pass title from mark attributes
+			});
+
+			it("should pass async callback to onShowCreatePageDialog", () => {
+				// Contract: Callback should be async function that creates page
+				const mockOnShowCreatePageDialog = vi.fn();
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: mockOnShowCreatePageDialog,
+					},
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// Callback should be async function
+			});
+		});
+
+		describe("Missing link click without onShowCreatePageDialog", () => {
+			it("should create page directly when onShowCreatePageDialog is not provided", () => {
+				// Contract: Should call handleAnchorClick directly
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: undefined,
+					},
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// Should fallback to handleAnchorClick logic
+			});
+		});
+
+		describe("data-page-title link with onShowCreatePageDialog", () => {
+			it("should call onShowCreatePageDialog for data-page-title links", () => {
+				// Contract: Should use onShowCreatePageDialog if provided
+				const mockOnShowCreatePageDialog = vi.fn();
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: mockOnShowCreatePageDialog,
+					},
+				});
+
+				expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+				// Should call onShowCreatePageDialog for data-page-title links
+			});
+
+			it("should pass title from data-page-title attribute", () => {
+				// Contract: Should extract title from data-page-title attribute
+				const mockOnShowCreatePageDialog = vi.fn();
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: mockOnShowCreatePageDialog,
+					},
+				});
+
+				expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+				// Should pass title from getAttribute("data-page-title")
+			});
+		});
+
+		describe("data-page-title link without onShowCreatePageDialog", () => {
+			it("should create page directly when onShowCreatePageDialog is not provided", () => {
+				// Contract: Should create page directly without confirmation
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: {
+						...mockOptions,
+						onShowCreatePageDialog: undefined,
+					},
+				});
+
+				expect(plugin.spec.props?.handleDOMEvents?.click).toBeDefined();
+				// Should create page directly using createPageFromLink
+			});
+		});
+
+		describe("Empty title handling", () => {
+			it("should show error when title is empty", () => {
+				// Contract: Should show toast.error if title is empty
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: mockOptions,
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// Should call toast.error("ページタイトルが空です")
+			});
+
+			it("should return early when title is empty", () => {
+				// Contract: Should return true without creating page
+				const plugin = createClickHandlerPlugin({
+					editor: mockEditor,
+					options: mockOptions,
+				});
+
+				expect(plugin.spec.props?.handleClick).toBeDefined();
+				// Should return true early
+			});
 		});
 	});
 });

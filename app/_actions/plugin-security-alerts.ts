@@ -74,7 +74,6 @@ export async function getPluginSecurityAlerts(
 ): Promise<GetPluginSecurityAlertsResult> {
 	try {
 		const adminClient = createAdminClient();
-		const supabase = await createClient();
 
 		// Check admin access
 		if (!(await isAdmin())) {

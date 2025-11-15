@@ -24,8 +24,10 @@
  *   └─ Issue #96: Plugin System Security Enhancement
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import logger from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import type { Database } from "@/types/database.types";
 
 /**
  * Security audit event types
@@ -175,6 +177,17 @@ export type SecurityAuditEvent =
  */
 class PluginSecurityAuditLogger {
 	/**
+	 * Track last log time for rate limit violations to prevent log spam
+	 * Key: pluginId, Value: last log timestamp
+	 */
+	private lastRateLimitLogTime: Map<string, number> = new Map();
+
+	/**
+	 * Minimum interval between rate limit violation logs (milliseconds)
+	 */
+	private readonly RATE_LIMIT_LOG_INTERVAL = 1000; // 1 second
+
+	/**
 	 * Log a security audit event
 	 *
 	 * @param event Security audit event
@@ -291,9 +304,60 @@ class PluginSecurityAuditLogger {
 			logContext.userId = event.userId;
 		}
 
+		// Sanitize log context to remove null/undefined values
+		// Pino logger may call Object.getPrototypeOf on values, which fails for null/undefined
+		const safeLogContext: Record<string, unknown> = {};
+		for (const key of Object.keys(logContext)) {
+			const value = logContext[key];
+			if (value !== null && value !== undefined) {
+				// Only include primitive types and plain objects
+				const valueType = typeof value;
+				if (
+					valueType === "string" ||
+					valueType === "number" ||
+					valueType === "boolean" ||
+					(valueType === "object" &&
+						value !== null &&
+						Object.prototype.toString.call(value) === "[object Object]")
+				) {
+					safeLogContext[key] = value;
+				}
+			}
+		}
+
 		// Log with appropriate level
 		const message = this.getLogMessage(event);
-		logger[logLevel](logContext, message);
+		// Use switch statement instead of dynamic access to avoid runtime errors
+		// Wrap in try-catch to prevent logging errors from breaking the audit flow
+		try {
+			switch (logLevel) {
+				case "error":
+					logger.error(safeLogContext, message);
+					break;
+				case "warn":
+					logger.warn(safeLogContext, message);
+					break;
+				default:
+					logger.info(safeLogContext, message);
+					break;
+			}
+		} catch (logError) {
+			// Fallback: log with minimal data if serialization fails
+			// Use try-catch to prevent infinite error loops
+			try {
+				logger.error(
+					{
+						pluginId: event.pluginId,
+						eventType: event.eventType,
+						errorMessage:
+							logError instanceof Error ? logError.message : String(logError),
+					},
+					"Failed to log security audit event",
+				);
+			} catch {
+				// If even fallback logging fails, silently ignore to prevent infinite loops
+			}
+		}
 
 		// Save to database asynchronously (don't block on errors)
 		this.saveToDatabase(event, eventData).catch((error) => {
@@ -314,8 +378,43 @@ class PluginSecurityAuditLogger {
 		event: SecurityAuditEvent,
 		eventData: Record<string, unknown>,
 	): Promise<void> {
+		// Check if Supabase is configured before attempting to create client
+		// This prevents errors in development/local plugin development environments
+		const supabaseUrl = process?.env?.NEXT_PUBLIC_SUPABASE_URL;
+		const serviceRoleKey = process?.env?.SUPABASE_SERVICE_ROLE_KEY;
+
+		// Skip database save if Supabase is not configured
+		// This is expected in development/local plugin development environments
+		if (!supabaseUrl || !serviceRoleKey) {
+			logger.debug(
+				{
+					pluginId: event.pluginId,
+					eventType: event.eventType,
+					hasSupabaseUrl: !!supabaseUrl,
+					hasServiceRoleKey: !!serviceRoleKey,
+				},
+				"Skipping audit log save (Supabase not configured - expected in local development)",
+			);
+			return;
+		}
+
 		// Use admin client (service role) to bypass RLS for system logs
-		const supabase = createAdminClient();
+		let supabase: SupabaseClient<Database>;
+		try {
+			supabase = createAdminClient();
+		} catch (error) {
+			// If createAdminClient fails even though env vars are set, log and skip
+			logger.warn(
+				{
+					pluginId: event.pluginId,
+					eventType: event.eventType,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				"Failed to create admin client for audit log save (skipping)",
+			);
+			return;
+		}
+
 		const { error } = await supabase
 			.from("plugin_security_audit_logs" as never)
 			.insert({
@@ -390,12 +489,26 @@ class PluginSecurityAuditLogger {
 		currentCallCount?: number,
 		limit?: number,
 	): void {
+		// Throttle rate limit violation logs to prevent log spam
+		const now = Date.now();
+		const lastLogTime = this.lastRateLimitLogTime.get(pluginId);
+		if (
+			lastLogTime !== undefined &&
+			now - lastLogTime < this.RATE_LIMIT_LOG_INTERVAL
+		) {
+			// Skip logging if we've logged a rate limit violation for this plugin recently
+			return;
+		}
+
+		// Update last log time
+		this.lastRateLimitLogTime.set(pluginId, now);
+
 		const event: RateLimitViolationAuditEvent = {
 			eventType: "rate_limit_violation",
 			severity: "high",
 			pluginId,
 			userId,
-			timestamp: Date.now(),
+			timestamp: now,
 			reason,
 			retryAfter,
 			currentCallCount,

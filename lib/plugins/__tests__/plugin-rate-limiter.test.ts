@@ -4,11 +4,8 @@
  * Unit tests for plugin rate limiting functionality.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	getPluginRateLimiter,
-	type RateLimitResult,
-} from "../plugin-rate-limiter";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getPluginRateLimiter } from "../plugin-rate-limiter";
 
 describe("PluginRateLimiter", () => {
 	let rateLimiter: ReturnType<typeof getPluginRateLimiter>;
