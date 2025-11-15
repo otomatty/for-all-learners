@@ -66,6 +66,12 @@ export async function registerWidget(
 				const lastDay = new Date(year, month, 0);
 
 				// Get stats for each day in the month sequentially (one at a time)
+				// Performance note: For a 31-day month with multiple repositories,
+				// this will result in 31+ sequential API calls. This is intentional
+				// to avoid GitHub API rate limiting (MAX_CONCURRENT_GITHUB_API_CALLS = 1).
+				// The widget may take several seconds to load, especially for months with
+				// many days and multiple repositories. Consider showing a loading indicator
+				// in the UI while this data is being fetched.
 				const daysInMonth = lastDay.getDate();
 				const allDailyStats: Array<{
 					date: string;

@@ -118,7 +118,7 @@ export function registerWidget(pluginId: string, options: WidgetOptions): void {
 	// Check if render function is missing (Worker context)
 	// In Worker context, functions cannot be serialized via postMessage
 	const isWorkerContext =
-		!options.render || typeof options.render !== "function";
+		options.render === undefined || typeof options.render !== "function";
 
 	logger.debug(
 		{

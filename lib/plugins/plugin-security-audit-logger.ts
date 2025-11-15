@@ -380,14 +380,8 @@ class PluginSecurityAuditLogger {
 	): Promise<void> {
 		// Check if Supabase is configured before attempting to create client
 		// This prevents errors in development/local plugin development environments
-		const supabaseUrl =
-			typeof process !== "undefined"
-				? process.env.NEXT_PUBLIC_SUPABASE_URL
-				: undefined;
-		const serviceRoleKey =
-			typeof process !== "undefined"
-				? process.env.SUPABASE_SERVICE_ROLE_KEY
-				: undefined;
+		const supabaseUrl = process?.env?.NEXT_PUBLIC_SUPABASE_URL;
+		const serviceRoleKey = process?.env?.SUPABASE_SERVICE_ROLE_KEY;
 
 		// Skip database save if Supabase is not configured
 		// This is expected in development/local plugin development environments

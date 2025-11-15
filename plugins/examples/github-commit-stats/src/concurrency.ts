@@ -60,7 +60,12 @@ export function createConcurrencyLimiter(
 	};
 
 	const release = () => {
-		activeCount = Math.max(0, activeCount - 1);
+		if (activeCount === 0) {
+			throw new Error(
+				"[ConcurrencyLimiter] release called when activeCount is already zero. This indicates a bug in task management.",
+			);
+		}
+		activeCount -= 1;
 		scheduleNext();
 	};
 

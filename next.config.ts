@@ -29,7 +29,9 @@ const nextConfig: NextConfig = {
 	},
 	webpack: (config, { isServer }) => {
 		// Handle node: protocol for Node.js built-in modules
+		// Webpack doesn't natively support node: protocol in Node.js 20+
 		// Use NormalModuleReplacementPlugin to replace node: prefixed imports
+		// This allows us to use node: imports in our code while maintaining compatibility
 		config.plugins = config.plugins || [];
 		config.plugins.push(
 			new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {

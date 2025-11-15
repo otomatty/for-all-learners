@@ -23,6 +23,13 @@ export interface UnifiedLinkMarkOptions {
 	autoReconciler?: AutoReconciler | null;
 	noteSlug?: string | null;
 	userId?: string | null;
+	/**
+	 * Callback function to show a confirmation dialog when creating a new page from an unset link.
+	 *
+	 * @param title - The title of the page to be created
+	 * @param onConfirm - Async callback function to execute when the user confirms page creation.
+	 *                   This callback should handle the actual page creation logic.
+	 */
 	onShowCreatePageDialog?: (
 		title: string,
 		onConfirm: () => Promise<void>,
