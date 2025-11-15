@@ -53,15 +53,24 @@ export function useAutoResize(
 
 	/**
 	 * Adjusts the height of the textarea based on its content
+	 * scrollHeight automatically accounts for line breaks and multi-line content,
+	 * so the height will adjust based on the number of lines
 	 */
 	const adjustHeight = useCallback(() => {
 		const textarea = textareaRef.current;
 		if (!textarea) return;
 
 		// Reset height to auto to get the correct scrollHeight
+		// This ensures scrollHeight reflects the actual content height including:
+		// - Line breaks (multiple lines)
+		// - Padding
+		// - Line height
+		// - Font size
+		// - Word wrapping
 		textarea.style.height = "auto";
 
-		// Calculate the new height
+		// scrollHeight automatically calculates the height needed for all lines
+		// When text wraps to multiple lines, scrollHeight increases accordingly
 		let newHeight = textarea.scrollHeight;
 
 		// Apply min height if specified
@@ -80,6 +89,7 @@ export function useAutoResize(
 		}
 
 		// Set the new height
+		// The height will automatically adjust as the number of lines changes
 		textarea.style.height = `${newHeight}px`;
 	}, [minHeight, maxHeight]);
 
