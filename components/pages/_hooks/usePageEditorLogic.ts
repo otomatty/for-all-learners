@@ -47,6 +47,11 @@ interface UsePageEditorLogicProps {
 		onConfirm: () => Promise<void>,
 	) => void;
 	onDeleteEmptyTitlePage?: () => Promise<void>;
+	/**
+	 * Phase 2: Callback for client-side navigation
+	 * If provided, this will be used instead of window.location.href
+	 */
+	onNavigate?: (href: string) => void;
 }
 
 /**
@@ -84,6 +89,7 @@ export function usePageEditorLogic({
 	noteSlug,
 	onShowCreatePageDialog,
 	onDeleteEmptyTitlePage,
+	onNavigate,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
@@ -108,6 +114,8 @@ export function usePageEditorLogic({
 				noteSlug: noteSlug ?? null,
 				userId: page.user_id,
 				onShowCreatePageDialog,
+				// Phase 2: Add onNavigate callback for client-side navigation
+				onNavigate,
 			}),
 			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,

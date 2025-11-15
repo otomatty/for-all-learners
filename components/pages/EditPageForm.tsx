@@ -30,6 +30,7 @@ import { TableBubbleMenu } from "@/components/pages/table-bubble-menu";
 import logger from "@/lib/logger";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
+import { useNavigateToPage } from "@/lib/unilink/resolver";
 // Types
 import type { Database } from "@/types/database.types";
 import type { LinkGroupForUI } from "@/types/link-group";
@@ -61,6 +62,7 @@ export default function EditPageForm({
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
+	const navigateToPage = useNavigateToPage();
 
 	// パス解析してnote slugを取得
 	const noteSlug = pathname.startsWith("/notes/")
@@ -191,6 +193,10 @@ export default function EditPageForm({
 		onDeleteEmptyTitlePage: () => {
 			setDeleteEmptyTitleDialogOpen(true);
 			return Promise.resolve();
+		},
+		onNavigate: (href: string) => {
+			// Phase 2: Use router.push for client-side navigation
+			router.push(href);
 		},
 	});
 
