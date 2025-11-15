@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckCircle2, Key, Shield, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SignatureStats {

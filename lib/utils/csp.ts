@@ -57,16 +57,16 @@ export function buildCSPHeader(_nonce: string): string {
 		`script-src 'self' 'unsafe-inline' blob:${isDevelopment ? " 'unsafe-eval'" : ""}`,
 		// Worker sources: self and blob (for plugin Web Workers)
 		"worker-src 'self' blob:",
-		// Connect sources: self and Supabase
-		"connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co",
+		// Connect sources: self, Supabase, and GitHub REST API for commit activity
+		"connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.github.com",
 		// Style sources: self, unsafe-inline for Next.js auto-generated styles, and external CDNs
 		// Note: Next.js injects styles dynamically without nonces
 		// Also allows style attributes (inline styles) which are commonly used by React/Radix UI
 		`style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net`,
 		// Image sources: self, data URIs, HTTPS, and blob (for plugin-generated images)
 		"img-src 'self' data: https: blob:",
-		// Font sources: self, data URIs, and Google Fonts (for next/font/google)
-		"font-src 'self' data: https://fonts.gstatic.com",
+		// Font sources: self, data URIs, Google Fonts (for next/font/google), and jsDelivr (for KaTeX fonts)
+		"font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
 		// Frame sources: self only
 		"frame-src 'self'",
 		// Object sources: none (prevent Flash/Java)

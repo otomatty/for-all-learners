@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { isAllowedImageDomain } from "@/lib/utils/domainValidation";
 import type { Database, Json } from "@/types/database.types";
 
@@ -74,6 +76,25 @@ export function PagesList({
 	slug = "all-pages",
 	gridCols = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
 }: PagesListProps) {
+	const router = useRouter();
+	const [isPending, startTransition] = useTransition();
+	const [clickedPageId, setClickedPageId] = useState<string | null>(null);
+
+	const handlePageClick = (pageId: string) => {
+		setClickedPageId(pageId);
+		startTransition(() => {
+			router.push(
+				`/notes/${encodeURIComponent(slug)}/${encodeURIComponent(pageId)}`,
+			);
+		});
+	};
+
+	// Phase 3: Prefetch page data on hover for better performance
+	const handlePageHover = (pageId: string) => {
+		const href = `/notes/${encodeURIComponent(slug)}/${encodeURIComponent(pageId)}`;
+		router.prefetch(href);
+	};
+
 	if (pages.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center h-40 border rounded-lg">
@@ -88,47 +109,51 @@ export function PagesList({
 	return (
 		<div className={`grid gap-2 md:gap-4 ${gridCols}`}>
 			{pages.map((page) => (
-				<Link
+				<Card
 					key={page.id}
-					href={`/notes/${encodeURIComponent(slug)}/${encodeURIComponent(page.id)}`}
+					onClick={() => handlePageClick(page.id)}
+					onMouseEnter={() => handlePageHover(page.id)}
+					className={cn(
+						"h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2 cursor-pointer",
+						clickedPageId === page.id && "ring-2 ring-primary",
+						isPending && clickedPageId === page.id && "opacity-50",
+					)}
 				>
-					<Card className="h-full overflow-hidden transition-all hover:shadow-md py-4 gap-2">
-						<CardHeader className="px-4 py-2">
-							<CardTitle>{page.title}</CardTitle>
-						</CardHeader>
-						<CardContent className="px-4">
-							{page.thumbnail_url ? (
-								isAllowedImageDomain(page.thumbnail_url) ? (
-									<Image
-										src={page.thumbnail_url}
-										alt={page.title}
-										width={400}
-										height={200}
-										className="w-full h-32 object-contain"
-									/>
-								) : (
-									<div className="w-full h-32 flex items-center justify-center bg-muted text-sm text-center text-muted-foreground p-4">
-										この画像のドメインは許可されていません。
-										<br />
-										<span className="text-xs">URL: {page.thumbnail_url}</span>
-									</div>
-								)
+					<CardHeader className="px-4 py-2">
+						<CardTitle>{page.title}</CardTitle>
+					</CardHeader>
+					<CardContent className="px-4">
+						{page.thumbnail_url ? (
+							isAllowedImageDomain(page.thumbnail_url) ? (
+								<Image
+									src={page.thumbnail_url}
+									alt={page.title}
+									width={400}
+									height={200}
+									className="w-full h-32 object-contain"
+								/>
 							) : (
-								(() => {
-									const text = extractTextFromTiptap(page.content_tiptap)
-										.replace(/\s+/g, " ")
-										.trim();
-									if (!text) return null;
-									return (
-										<p className="line-clamp-5 text-sm text-muted-foreground">
-											{text}
-										</p>
-									);
-								})()
-							)}
-						</CardContent>
-					</Card>
-				</Link>
+								<div className="w-full h-32 flex items-center justify-center bg-muted text-sm text-center text-muted-foreground p-4">
+									この画像のドメインは許可されていません。
+									<br />
+									<span className="text-xs">URL: {page.thumbnail_url}</span>
+								</div>
+							)
+						) : (
+							(() => {
+								const text = extractTextFromTiptap(page.content_tiptap)
+									.replace(/\s+/g, " ")
+									.trim();
+								if (!text) return null;
+								return (
+									<p className="line-clamp-5 text-sm text-muted-foreground">
+										{text}
+									</p>
+								);
+							})()
+						)}
+					</CardContent>
+				</Card>
 			))}
 		</div>
 	);

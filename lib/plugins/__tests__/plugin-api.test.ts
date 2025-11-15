@@ -189,6 +189,16 @@ describe("PluginAPI", () => {
 			// show method should accept optional type parameter
 			expect(() => api.notifications.show("Custom message")).not.toThrow();
 		});
+
+		it("should allow destructured notification helpers without losing context", () => {
+			const api = createPluginAPI(pluginId);
+			const { info, success, error, warning } = api.notifications;
+
+			expect(() => info("Info message")).not.toThrow();
+			expect(() => success("Success message")).not.toThrow();
+			expect(() => error("Error message")).not.toThrow();
+			expect(() => warning("Warning message")).not.toThrow();
+		});
 	});
 
 	describe("UIAPI", () => {

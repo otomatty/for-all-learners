@@ -75,6 +75,12 @@ function findCompleteBracketsInDoc(
 	state.doc.descendants((node, pos) => {
 		if (!node.isText || !node.text) return;
 
+		// Skip if this text node is inside a codeBlock
+		const $pos = state.doc.resolve(pos);
+		if ($pos.parent.type.name === "codeBlock") {
+			return;
+		}
+
 		const text = node.text;
 
 		// Pattern: [text] where text doesn't contain brackets or newlines
@@ -128,6 +134,12 @@ function findExistingBracketMarks(
 
 	state.doc.descendants((node, pos) => {
 		if (!node.isText) return;
+
+		// Skip if this text node is inside a codeBlock
+		const $pos = state.doc.resolve(pos);
+		if ($pos.parent.type.name === "codeBlock") {
+			return;
+		}
 
 		// Filter marks with variant="bracket"
 		const bracketMarks = node.marks.filter(

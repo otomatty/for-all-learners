@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
 import { duplicatePage } from "@/app/_actions/duplicatePage";
 import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
+import { deletePage } from "@/app/_actions/pages";
 // Hooks
 import { useDateShortcut } from "@/components/pages/_hooks/useDateShortcut";
 import { usePageEditorLogic } from "@/components/pages/_hooks/usePageEditorLogic";
@@ -17,6 +18,8 @@ import { useSpeechControls } from "@/components/pages/_hooks/useSpeechControls";
 // Components
 import BacklinksGrid from "@/components/pages/BacklinksGrid";
 import { ContentSkeleton } from "@/components/pages/content-skeleton";
+import { CreatePageConfirmDialog } from "@/components/pages/create-page-confirm-dialog";
+import { DeleteEmptyTitlePageDialog } from "@/components/pages/delete-empty-title-page-dialog";
 import { EditPageBubbleMenu } from "@/components/pages/edit-page-bubble-menu";
 import { LinkGroupsSection } from "@/components/pages/link-groups-section";
 import { PageHeader } from "@/components/pages/page-header";
@@ -27,6 +30,7 @@ import { TableBubbleMenu } from "@/components/pages/table-bubble-menu";
 import logger from "@/lib/logger";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
+import { useNavigateToPage } from "@/lib/unilink/resolver";
 // Types
 import type { Database } from "@/types/database.types";
 import type { LinkGroupForUI } from "@/types/link-group";
@@ -58,6 +62,7 @@ export default function EditPageForm({
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
+	const _navigateToPage = useNavigateToPage();
 
 	// パス解析してnote slugを取得
 	const noteSlug = pathname.startsWith("/notes/")
@@ -121,6 +126,54 @@ export default function EditPageForm({
 		autoSetThumbnail();
 	}, [page.id, page.thumbnail_url, initialContent]);
 
+	const [isDeleting, setIsDeleting] = useState(false);
+
+	// State for create page confirmation dialog
+	const [createPageDialogOpen, setCreatePageDialogOpen] = useState(false);
+	const [pendingPageTitle, setPendingPageTitle] = useState("");
+	const [pendingConfirmCallback, setPendingConfirmCallback] = useState<
+		(() => Promise<void>) | null
+	>(null);
+
+	// State for delete empty title page confirmation dialog
+	const [deleteEmptyTitleDialogOpen, setDeleteEmptyTitleDialogOpen] =
+		useState(false);
+
+	// Callback for showing create page dialog
+	const handleShowCreatePageDialog = useCallback(
+		(title: string, onConfirm: () => Promise<void>) => {
+			setPendingPageTitle(title);
+			setPendingConfirmCallback(() => onConfirm);
+			setCreatePageDialogOpen(true);
+		},
+		[],
+	);
+
+	// Handler for deleting page with empty title
+	const handleDeleteEmptyTitlePage = useCallback(async () => {
+		setIsDeleting(true);
+		setIsLoading(true);
+		toast.loading("ページを削除しています...");
+		try {
+			await deletePage(page.id);
+			toast.dismiss();
+			toast.success("タイトルが空のため、ページを削除しました");
+			// Redirect to appropriate page
+			if (noteSlug) {
+				router.push(`/notes/${encodeURIComponent(noteSlug)}`);
+			} else {
+				router.push("/notes/default");
+			}
+		} catch (error) {
+			logger.error({ error, pageId: page.id }, "空タイトルページ削除エラー");
+			toast.dismiss();
+			toast.error("ページの削除に失敗しました");
+		} finally {
+			setIsDeleting(false);
+			setIsLoading(false);
+		}
+	}, [page.id, noteSlug, router, setIsLoading]);
+
 	const {
 		editor,
 		handleGenerateContent,
@@ -136,6 +189,15 @@ export default function EditPageForm({
 		isDirty,
 		setIsDirty,
 		noteSlug,
+		onShowCreatePageDialog: handleShowCreatePageDialog,
+		onDeleteEmptyTitlePage: () => {
+			setDeleteEmptyTitleDialogOpen(true);
+			return Promise.resolve();
+		},
+		onNavigate: (href: string) => {
+			// Phase 2: Use router.push for client-side navigation
+			router.push(href);
+		},
 	});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =
@@ -143,7 +205,15 @@ export default function EditPageForm({
 			editor,
 		});
 	const handleDateShortcut = useDateShortcut(editor);
-	const [isDeleting, setIsDeleting] = useState(false);
+
+	// Handler for confirming page creation
+	const handleConfirmCreatePage = useCallback(async () => {
+		if (pendingConfirmCallback) {
+			await pendingConfirmCallback();
+			setPendingConfirmCallback(null);
+		}
+		setCreatePageDialogOpen(false);
+	}, [pendingConfirmCallback]);
 
 	// Keyboard shortcuts: Mod-k for page link, Mod-Shift-l/o for bullet/ordered list
 	const handleKeyDown = useCallback(
@@ -343,6 +413,17 @@ export default function EditPageForm({
 					オフラインです。接続を確認してください。
 				</div>
 			)}
+			<CreatePageConfirmDialog
+				isOpen={createPageDialogOpen}
+				onOpenChange={setCreatePageDialogOpen}
+				pageTitle={pendingPageTitle}
+				onConfirmCreate={handleConfirmCreatePage}
+			/>
+			<DeleteEmptyTitlePageDialog
+				isOpen={deleteEmptyTitleDialogOpen}
+				onOpenChange={setDeleteEmptyTitleDialogOpen}
+				onConfirmDelete={handleDeleteEmptyTitlePage}
+			/>
 		</>
 	);
 }

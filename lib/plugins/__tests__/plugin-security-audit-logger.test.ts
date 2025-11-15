@@ -33,8 +33,26 @@ describe("PluginSecurityAuditLogger", () => {
 	let infoSpy: ReturnType<typeof vi.spyOn>;
 	let warnSpy: ReturnType<typeof vi.spyOn>;
 	let errorSpy: ReturnType<typeof vi.spyOn>;
+	let originalSupabaseUrl: string | undefined;
+	let originalServiceRoleKey: string | undefined;
 
 	beforeEach(() => {
+		// Save original environment variables
+		originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+		originalServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+		// Set environment variables for tests
+		process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+		process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+
+		// Clear mock insert calls
+		const mockInsert = (
+			adminClientModule as unknown as {
+				__mockInsert: ReturnType<typeof vi.fn>;
+			}
+		).__mockInsert;
+		mockInsert.mockClear();
+
 		infoSpy = vi.spyOn(loggerModule.default, "info") as unknown as ReturnType<
 			typeof vi.spyOn
 		>;
@@ -47,6 +65,18 @@ describe("PluginSecurityAuditLogger", () => {
 	});
 
 	afterEach(() => {
+		// Restore original environment variables
+		if (originalSupabaseUrl !== undefined) {
+			process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
+		} else {
+			delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+		}
+		if (originalServiceRoleKey !== undefined) {
+			process.env.SUPABASE_SERVICE_ROLE_KEY = originalServiceRoleKey;
+		} else {
+			delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+		}
+
 		vi.restoreAllMocks();
 	});
 
@@ -352,8 +382,9 @@ describe("PluginSecurityAuditLogger", () => {
 				}
 			).__mockInsert;
 
+			// Use a different plugin ID to avoid rate limit throttling from previous tests
 			auditLogger.logRateLimitViolation(
-				"test-plugin",
+				"test-plugin-event-data",
 				"Rate limit exceeded",
 				"user-1",
 				5000,

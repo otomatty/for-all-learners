@@ -60,7 +60,7 @@ export function PluginRatingForm({
 					setRating(existingRating.rating);
 					setUserRating(existingRating.rating);
 				}
-			} catch (error) {
+			} catch (_error) {
 			} finally {
 				setIsLoading(false);
 			}

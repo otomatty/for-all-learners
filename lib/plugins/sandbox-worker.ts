@@ -59,6 +59,28 @@ const pendingRequests = new Map<
 	}
 >();
 
+/**
+ * Temporary storage for widget render functions registered before plugin activation
+ */
+const pendingWorkerMethods = new Map<
+	string,
+	(...args: unknown[]) => unknown | Promise<unknown>
+>();
+
+/**
+ * Registers a worker method either immediately or defers until plugin activation.
+ */
+const registerWorkerMethod = (
+	methodName: string,
+	fn: (...args: unknown[]) => unknown | Promise<unknown>,
+): void => {
+	if (pluginInstance) {
+		pluginInstance.methods[methodName] = fn;
+	} else {
+		pendingWorkerMethods.set(methodName, fn);
+	}
+};
+
 // ============================================================================
 // Plugin API Proxy (Worker-side)
 // ============================================================================
@@ -121,7 +143,48 @@ function createPluginAPIProxy() {
 
 		ui: {
 			async registerCommand(command: unknown): Promise<void> {
-				await callHostAPI("ui", "registerCommand", [command]);
+				await callHostAPI("ui", "registerCommand", [
+					(() => {
+						if (!command || typeof command !== "object") {
+							return command;
+						}
+
+						const commandOptions = command as {
+							id?: string;
+							handler?: unknown;
+							execute?: unknown;
+							[key: string]: unknown;
+						};
+
+						if (!commandOptions.id) {
+							return command;
+						}
+
+						const handler =
+							typeof commandOptions.handler === "function"
+								? commandOptions.handler
+								: typeof commandOptions.execute === "function"
+									? commandOptions.execute
+									: null;
+
+						if (!handler) {
+							return command;
+						}
+
+						const methodName = `__command_handler_${commandOptions.id}`;
+						registerWorkerMethod(
+							methodName,
+							handler as (...args: unknown[]) => unknown | Promise<unknown>,
+						);
+
+						const {
+							handler: _handler,
+							execute: _execute,
+							...rest
+						} = commandOptions;
+						return rest;
+					})(),
+				]);
 			},
 			async unregisterCommand(commandId: string): Promise<void> {
 				await callHostAPI("ui", "unregisterCommand", [commandId]);
@@ -130,7 +193,33 @@ function createPluginAPIProxy() {
 				return await callHostAPI("ui", "showDialog", [options]);
 			},
 			async registerWidget(options: unknown): Promise<void> {
-				await callHostAPI("ui", "registerWidget", [options]);
+				// Extract render function and store it as a plugin method
+				const widgetOptions = options as {
+					id: string;
+					render?: unknown;
+					[name: string]: unknown;
+				};
+
+				if (
+					widgetOptions.render &&
+					typeof widgetOptions.render === "function"
+				) {
+					// Store render function as a plugin method
+					const methodName = `__widget_render_${widgetOptions.id}`;
+
+					registerWorkerMethod(
+						methodName,
+						widgetOptions.render as (
+							...args: unknown[]
+						) => unknown | Promise<unknown>,
+					);
+
+					// Remove render function from options before registering
+					const { render: _render, ...optionsWithoutRender } = widgetOptions;
+					await callHostAPI("ui", "registerWidget", [optionsWithoutRender]);
+				} else {
+					await callHostAPI("ui", "registerWidget", [options]);
+				}
 			},
 			async unregisterWidget(widgetId: string): Promise<void> {
 				await callHostAPI("ui", "unregisterWidget", [widgetId]);
@@ -263,7 +352,37 @@ function createPluginAPIProxy() {
 		},
 		calendar: {
 			async registerExtension(options: unknown): Promise<void> {
-				await callHostAPI("calendar", "registerExtension", [options]);
+				await callHostAPI("calendar", "registerExtension", [
+					(() => {
+						if (!options || typeof options !== "object") {
+							return options;
+						}
+
+						const extensionOptions = options as {
+							id?: string;
+							getDailyData?: unknown;
+							[key: string]: unknown;
+						};
+
+						if (
+							!extensionOptions.id ||
+							typeof extensionOptions.getDailyData !== "function"
+						) {
+							return options;
+						}
+
+						const methodName = `__calendar_getDailyData_${extensionOptions.id}`;
+						registerWorkerMethod(
+							methodName,
+							extensionOptions.getDailyData as (
+								...args: unknown[]
+							) => unknown | Promise<unknown>,
+						);
+
+						const { getDailyData: _getDailyData, ...rest } = extensionOptions;
+						return rest;
+					})(),
+				]);
 			},
 			async unregisterExtension(extensionId: string): Promise<void> {
 				await callHostAPI("calendar", "unregisterExtension", [extensionId]);
@@ -401,9 +520,16 @@ async function handleInit(payload: InitPayload): Promise<void> {
 				id: manifest.id,
 				name: manifest.name,
 				version: manifest.version,
-				methods: plugin.methods || {},
+				methods: {
+					...(plugin.methods || {}),
+					// Add pending worker methods
+					...Object.fromEntries(pendingWorkerMethods),
+				},
 				dispose: plugin.dispose,
 			};
+
+			// Clear pending worker methods
+			pendingWorkerMethods.clear();
 
 			// Send success response
 			sendMessage({

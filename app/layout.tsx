@@ -42,9 +42,17 @@ export default async function RootLayout({
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css"
 				/>
+				{/* Light theme for code blocks */}
+				<link
+					rel="stylesheet"
+					href="https://cdn.jsdelivr.net/npm/shiki@0.10.1/themes/github-light.css"
+					className="shiki-light-theme"
+				/>
+				{/* Dark theme for code blocks */}
 				<link
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/npm/shiki@0.10.1/themes/tokyo-night.css"
+					className="shiki-dark-theme"
 				/>
 			</head>
 			<body className={inter.className} suppressHydrationWarning>

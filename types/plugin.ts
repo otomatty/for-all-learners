@@ -58,6 +58,13 @@ export interface ExtensionPointsConfig {
  * Simplified JSON Schema for plugin configuration
  * Full JSON Schema spec can be added in future phases
  */
+/**
+ * JSON Schema with UI extensions
+ *
+ * Supports custom UI widgets via `ui:widget` property.
+ * This allows plugin developers to specify custom input components
+ * for better user experience.
+ */
 export interface JSONSchema {
 	type: "object" | "array" | "string" | "number" | "boolean" | "null";
 	properties?: Record<string, JSONSchema>;
@@ -66,6 +73,20 @@ export interface JSONSchema {
 	description?: string;
 	default?: unknown;
 	enum?: unknown[];
+	/**
+	 * UI widget type for custom rendering
+	 *
+	 * Supported widgets:
+	 * - "githubUserSelector": GitHubユーザー選択（リポジトリ一覧を取得）
+	 * - "githubRepoSelector": GitHubリポジトリ選択（複数選択可能）
+	 * - "password": パスワード入力フィールド
+	 * - "text", "textarea", "number", "select": 標準ウィジェット（デフォルト）
+	 */
+	"ui:widget"?: string;
+	/**
+	 * Widget-specific options
+	 */
+	"ui:options"?: Record<string, unknown>;
 }
 
 // ============================================================================

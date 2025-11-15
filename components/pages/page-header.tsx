@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CosenseSyncBadge } from "@/components/ui/cosense-sync-badge";
 import { Textarea } from "@/components/ui/textarea";
+import { useAutoResize } from "@/hooks/use-auto-resize";
 
 interface PageHeaderProps {
 	title: string;
@@ -15,6 +16,22 @@ interface PageHeaderProps {
 	scrapboxPageListSyncedAt?: string | null;
 }
 
+/**
+ * PageHeader Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ (To be updated by parent components)
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @/hooks/use-auto-resize
+ *   ├─ @/components/ui/textarea
+ *   └─ @/components/ui/cosense-sync-badge
+ *
+ * Related Documentation:
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/129
+ */
 export function PageHeader({
 	title,
 	onTitleChange,
@@ -27,6 +44,13 @@ export function PageHeader({
 	const [isSyncingContent, setIsSyncingContent] = useState(false);
 	// Ref to ensure auto-sync runs only once
 	const hasAutoSyncedRef = useRef(false);
+
+	// Auto-resize textarea based on content
+	// Max height is set to ~300px to allow scrolling for very long titles
+	const titleTextareaRef = useAutoResize(title, {
+		maxHeight: 300,
+		adjustOnInput: true,
+	});
 
 	// Auto-sync only once when content has never been synced
 	useEffect(() => {
@@ -62,6 +86,7 @@ export function PageHeader({
 	return (
 		<div className="flex items-center">
 			<Textarea
+				ref={titleTextareaRef}
 				role="heading"
 				aria-level={1}
 				value={title}

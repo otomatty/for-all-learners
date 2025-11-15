@@ -57,7 +57,7 @@ export function SecurityAlertsTable({
 			} else {
 				toast.error(result.message || "ステータスの更新に失敗しました");
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error("エラーが発生しました");
 		} finally {
 			setUpdatingAlertId(null);
