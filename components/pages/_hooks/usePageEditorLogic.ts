@@ -10,6 +10,7 @@ import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
 import { CustomHeading } from "@/lib/tiptap-extensions/custom-heading";
+import { CustomHorizontalRule } from "@/lib/tiptap-extensions/custom-horizontal-rule";
 import {
 	CustomBulletList,
 	CustomOrderedList,
@@ -92,12 +93,14 @@ export function usePageEditorLogic({
 				bulletList: false,
 				orderedList: false,
 				codeBlock: false,
+				horizontalRule: false, // Disable default horizontalRule in favor of CustomHorizontalRule
 			}),
 			// Unified Link Mark handles both [Title] and #tag syntax
 			UnifiedLinkMark,
 			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,
 			CustomOrderedList,
+			CustomHorizontalRule, // Add the custom horizontal rule extension
 			GyazoImage,
 			LatexInlineNode,
 			Highlight,
