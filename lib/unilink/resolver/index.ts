@@ -25,6 +25,10 @@ export {
 // Mark operations
 export { batchResolveMarks, updateMarkToExists } from "./mark-operations";
 // Navigation
-export { navigateToPage, navigateToPageWithContext } from "./navigation";
+export {
+	navigateToPage,
+	navigateToPageWithContext,
+	useNavigateToPage,
+} from "./navigation";
 // Page creation
 export { createPageFromLink, createPageFromMark } from "./page-creation";

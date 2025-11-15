@@ -101,7 +101,13 @@ const handleBracketClick = async (
 		// Handle regular page links - simple navigation to key-based URL
 		const href = `/notes/${parsed.slug}`;
 		logger.debug({ slug: parsed.slug, href }, "Navigating to bracket link");
-		window.location.href = href;
+
+		// Phase 2: Use onNavigate callback if provided, otherwise fallback to window.location.href
+		if (_context.options.onNavigate) {
+			_context.options.onNavigate(href);
+		} else {
+			window.location.href = href;
+		}
 		return true;
 	} catch (error) {
 		logger.error({ bracketContent, error }, "Failed to handle bracket click");
@@ -170,7 +176,12 @@ const handleAnchorClick = async (
 						);
 
 						if (result) {
-							window.location.href = result.href;
+							// Phase 2: Use onNavigate callback if provided
+							if (context.options.onNavigate) {
+								context.options.onNavigate(result.href);
+							} else {
+								window.location.href = result.href;
+							}
 						}
 					} catch (error) {
 						logger.error(
@@ -219,7 +230,12 @@ const handleAnchorClick = async (
 				if (target.target === "_blank") {
 					window.open(href, "_blank", "noopener,noreferrer");
 				} else {
-					window.location.href = href;
+					// Phase 2: Use onNavigate callback if provided for internal links
+					if (context.options.onNavigate && href.startsWith("/")) {
+						context.options.onNavigate(href);
+					} else {
+						window.location.href = href;
+					}
 				}
 
 				return true;
@@ -278,7 +294,13 @@ export const createClickHandlerPlugin = (context: {
 								{ pageId: attrs.pageId, href },
 								"[UnifiedLinkMark] Navigating to existing page",
 							);
-							window.location.href = href;
+
+							// Phase 2: Use onNavigate callback if provided
+							if (context.options.onNavigate) {
+								context.options.onNavigate(href);
+							} else {
+								window.location.href = href;
+							}
 							return true;
 						}
 
