@@ -19,13 +19,13 @@ export default function CodeBlockComponent({ node: _node }: NodeViewProps) {
 
 	return (
 		<NodeViewWrapper ref={wrapperRef} className="relative group">
-			<pre className="p-4 overflow-auto bg-muted rounded">
+			<pre className="p-4 overflow-auto rounded">
 				<NodeViewContent<"code"> as="code" />
 			</pre>
 			<button
 				type="button"
 				onClick={handleCopy}
-				className="absolute top-2 right-2 bg-secondary p-1 rounded opacity-0 group-hover:opacity-100 text-sm"
+				className="absolute top-2 right-2 bg-secondary/80 hover:bg-secondary p-1 rounded opacity-0 group-hover:opacity-100 text-sm transition-opacity"
 			>
 				Copy
 			</button>

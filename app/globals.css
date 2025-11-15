@@ -283,6 +283,15 @@
 	.prose pre code {
 		@apply font-mono text-sm leading-relaxed;
 	} */
+
+	/* Shiki theme switching for light/dark mode */
+	/* Shiki themes are controlled via tiptap-extension-code-block-shiki configuration */
+	/* Both theme CSS files are loaded, and the extension applies the appropriate theme */
+	/* Ensure Shiki code blocks have proper styling and respect theme backgrounds */
+	pre.shiki {
+		/* Let Shiki theme handle background colors */
+		margin: 0;
+	}
 }
 
 /* GyazoImage 用スタイル */

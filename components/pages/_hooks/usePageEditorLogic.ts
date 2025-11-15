@@ -4,6 +4,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { ReactNodeViewRenderer, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { getEditorManager } from "@/lib/plugins/editor-manager";
@@ -79,6 +80,11 @@ export function usePageEditorLogic({
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
 
+	// Get current theme mode for code block theme switching
+	const { resolvedTheme } = useTheme();
+	const codeBlockTheme =
+		resolvedTheme === "dark" ? "tokyo-night" : "github-light";
+
 	// Memoize base extensions to prevent unnecessary re-renders
 	// Note: Plugin extensions are included at editor creation time
 	// because TipTap does not support dynamic extension updates after initialization
@@ -100,9 +106,10 @@ export function usePageEditorLogic({
 			Highlight,
 			// Shiki-based code block with copy functionality
 			// Automatically supports all programming languages with syntax highlighting
+			// Theme switches based on light/dark mode
 			CodeBlockWithCopy.configure({
 				defaultLanguage: "javascript",
-				defaultTheme: "tokyo-night",
+				defaultTheme: codeBlockTheme,
 			}),
 			// Table extensions for Markdown table support
 			...TableExtensions,
@@ -121,18 +128,21 @@ export function usePageEditorLogic({
 		// TipTap does not support dynamic extension updates after initialization
 		const pluginExtensions = getTiptapExtensions();
 		return [...baseExts, ...pluginExtensions];
-	}, []);
+	}, [codeBlockTheme]);
 
-	const editor = useEditor({
-		immediatelyRender: false,
-		extensions: baseExtensions,
-		editorProps: {
-			attributes: {
-				class:
-					"focus:outline-none !border-none ring-0 prose prose-sm sm:prose md:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
+	const editor = useEditor(
+		{
+			immediatelyRender: false,
+			extensions: baseExtensions,
+			editorProps: {
+				attributes: {
+					class:
+						"focus:outline-none !border-none ring-0 prose prose-sm sm:prose md:prose-lg whitespace-normal break-all mx-auto min-h-[200px] px-3 py-2",
+				},
 			},
 		},
-	});
+		[codeBlockTheme], // Recreate editor when theme changes
+	);
 
 	// Register editor with editor manager
 	useEffect(() => {
