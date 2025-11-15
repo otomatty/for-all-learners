@@ -307,7 +307,8 @@ class PluginSecurityAuditLogger {
 		// Sanitize log context to remove null/undefined values
 		// Pino logger may call Object.getPrototypeOf on values, which fails for null/undefined
 		const safeLogContext: Record<string, unknown> = {};
-		for (const [key, value] of Object.entries(logContext)) {
+		for (const key of Object.keys(logContext)) {
+			const value = logContext[key];
 			if (value !== null && value !== undefined) {
 				// Only include primitive types and plain objects
 				const valueType = typeof value;

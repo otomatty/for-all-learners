@@ -125,21 +125,11 @@ export function PluginWidgetsSection() {
 			}
 		}, 2000); // Poll every 2 seconds initially
 
-		// Also check when plugins are loaded (less frequently to avoid spam)
-		const registry = getPluginRegistry();
-		const checkInterval = setInterval(() => {
-			const loadedPlugins = registry.getAll();
-			if (loadedPlugins.length > 0) {
-				refreshWidgets();
-			}
-		}, 5000); // Check every 5 seconds (reduced from 1 second)
-
 		return () => {
 			clearInterval(quickPollInterval);
 			if (slowPollInterval) {
 				clearInterval(slowPollInterval);
 			}
-			clearInterval(checkInterval);
 		};
 	}, [refreshWidgets]);
 

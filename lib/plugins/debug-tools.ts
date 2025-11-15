@@ -532,10 +532,10 @@ export function logPluginMessage(
 		logData.pluginId = pluginId;
 	}
 	if (
-		data &&
+		data !== null &&
+		data !== undefined &&
 		typeof data === "object" &&
-		!Array.isArray(data) &&
-		data !== null
+		!Array.isArray(data)
 	) {
 		try {
 			const keys = Object.keys(data);
@@ -576,7 +576,7 @@ export function logPluginMessage(
 					continue; // Skip null/undefined values
 				}
 				const sanitized = sanitizeLogValue(value);
-				if (sanitized !== undefined && sanitized !== null) {
+				if (sanitized !== undefined) {
 					// Only add primitive types or plain objects
 					const valueType = typeof sanitized;
 					if (

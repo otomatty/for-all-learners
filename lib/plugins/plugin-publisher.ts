@@ -94,13 +94,12 @@ export async function publishPluginToMarketplace(
 		const storagePath = `plugins/${pluginId}/${manifest.version}/index.js`;
 
 		// Create file from code string
-		const codeBlob = new Blob([code], { type: "text/javascript" });
-		const codeFile = new File([codeBlob], "index.js", {
+		const codeFile = new File([code], "index.js", {
 			type: "text/javascript",
 		});
 
 		// Upload to Storage
-		const { data: uploadData, error: uploadError } = await supabase.storage
+		const { error: uploadError } = await supabase.storage
 			.from("plugins")
 			.upload(storagePath, codeFile, {
 				upsert: true, // Overwrite if exists

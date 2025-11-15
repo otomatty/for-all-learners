@@ -65,6 +65,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
+import logger from "@/lib/logger";
 import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
 import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
 import type { JSONSchema } from "@/types/plugin";
@@ -510,7 +511,11 @@ export function PluginSettingsForm({
 				} else {
 					toast.success("設定を保存しました");
 				}
-			} catch (_reloadError) {
+			} catch (reloadError) {
+				logger.error(
+					{ error: reloadError, pluginId },
+					"Failed to reload plugin after saving settings",
+				);
 				// If reload fails, still show success for config save
 				toast.warning(
 					"設定を保存しましたが、プラグインの再読み込みに失敗しました。ページをリロードしてください。",

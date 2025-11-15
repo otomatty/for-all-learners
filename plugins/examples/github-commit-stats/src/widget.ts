@@ -62,8 +62,7 @@ export async function registerWidget(
 				const year = today.getFullYear();
 				const month = today.getMonth() + 1;
 
-				// Calculate first and last day of month
-				const firstDay = new Date(year, month - 1, 1);
+				// Calculate last day of month
 				const lastDay = new Date(year, month, 0);
 
 				// Get stats for each day in the month sequentially (one at a time)

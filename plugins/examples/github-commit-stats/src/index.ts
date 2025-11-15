@@ -34,7 +34,9 @@ import { registerWidget } from "./widget";
 
 /**
  * Maximum concurrent GitHub API calls
- * Set to 1 to ensure sequential execution and avoid rate limiting
+ * Set to 1 for sequential execution to avoid GitHub API rate limiting.
+ * Despite the name suggesting concurrent calls, this value enforces
+ * strictly sequential execution (one call at a time).
  */
 const MAX_CONCURRENT_GITHUB_API_CALLS = 1;
 

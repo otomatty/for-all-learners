@@ -39,7 +39,9 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 					if (pluginExtensions.length > 0) {
 						data.summary.pluginExtensions = pluginExtensions;
 					}
-				} catch (error) {}
+				} catch (error) {
+					console.error("Failed to enrich with plugin extension data:", error);
+				}
 
 				setDetail(data);
 			} catch (_error) {

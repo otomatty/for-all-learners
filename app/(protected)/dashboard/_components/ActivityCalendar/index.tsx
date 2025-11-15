@@ -31,7 +31,7 @@ export function ActivityCalendar({
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [isEnrichingPlugins, setIsEnrichingPlugins] = useState(false);
+	const isEnrichingPluginsRef = useRef(false);
 	const lastEnrichedMonthRef = useRef<{ year: number; month: number } | null>(
 		null,
 	);
@@ -49,8 +49,8 @@ export function ActivityCalendar({
 				return; // Already enriched this month
 			}
 
-			if (isEnrichingPlugins) return; // Prevent concurrent enrichment
-			setIsEnrichingPlugins(true);
+			if (isEnrichingPluginsRef.current) return; // Prevent concurrent enrichment
+			isEnrichingPluginsRef.current = true;
 
 			try {
 				// Get plugin extension data for all days in the month
@@ -82,9 +82,10 @@ export function ActivityCalendar({
 					year: monthData.year,
 					month: monthData.month,
 				};
-			} catch (_error) {
+			} catch (error) {
+				console.error("Failed to enrich month data with plugin data:", error);
 			} finally {
-				setIsEnrichingPlugins(false);
+				isEnrichingPluginsRef.current = false;
 			}
 		}
 		// Only enrich if we have days to process
@@ -92,14 +93,7 @@ export function ActivityCalendar({
 			enrichWithPluginData();
 		}
 		// monthData.days is derived from year/month, so we only need to depend on those
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		monthData.year,
-		monthData.month,
-		monthData.days.map,
-		monthData.days.length,
-		isEnrichingPlugins,
-	]); // Re-enrich when month changes
+	}, [monthData.year, monthData.month]); // Re-enrich when month changes
 
 	const handlePreviousMonth = async () => {
 		setLoading(true);

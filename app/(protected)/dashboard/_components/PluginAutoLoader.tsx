@@ -97,8 +97,7 @@ export function PluginAutoLoader() {
 		return () => {
 			mounted = false;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [loadPlugin]); // Empty deps - only run once on mount
+	}, []); // Empty deps - only run once on mount
 
 	// This component doesn't render anything
 	return null;
