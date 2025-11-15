@@ -4,11 +4,11 @@
  */
 
 import { Editor } from "@tiptap/core";
-import { PluginKey } from "@tiptap/pm/state";
+import CodeBlock from "@tiptap/extension-code-block";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
-import CodeBlock from "@tiptap/extension-code-block";
+import { PluginKey } from "@tiptap/pm/state";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UnifiedLinkMark } from "../../index";
 import {

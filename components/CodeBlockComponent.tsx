@@ -3,7 +3,7 @@ import {
 	type NodeViewProps,
 	NodeViewWrapper,
 } from "@tiptap/react";
-import { Edit2, Copy } from "lucide-react";
+import { Copy, Edit2 } from "lucide-react";
 import mermaid from "mermaid";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import logger from "@/lib/logger";

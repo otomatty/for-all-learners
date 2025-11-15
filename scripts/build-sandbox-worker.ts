@@ -14,15 +14,17 @@ import { build } from "esbuild";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+// Get project root (parent of scripts directory)
+const projectRoot = join(__dirname, "..");
 
 const workerSourcePath = join(
-	__dirname,
+	projectRoot,
 	"lib",
 	"plugins",
 	"plugin-loader",
 	"sandbox-worker.ts",
 );
-const outputDir = join(__dirname, "public", "workers");
+const outputDir = join(projectRoot, "public", "workers");
 const outputPath = join(outputDir, "sandbox-worker.js");
 
 async function buildSandboxWorker(): Promise<void> {
