@@ -235,9 +235,7 @@ describe("PagesList", () => {
 
 		// Check if prefetch was called with encoded slug
 		await waitFor(() => {
-			expect(mockRouterPrefetch).toHaveBeenCalledWith(
-				"/notes/my%2Fnote/1",
-			);
+			expect(mockRouterPrefetch).toHaveBeenCalledWith("/notes/my%2Fnote/1");
 		});
 	});
 });
