@@ -17,6 +17,7 @@ import { useSpeechControls } from "@/components/pages/_hooks/useSpeechControls";
 // Components
 import BacklinksGrid from "@/components/pages/BacklinksGrid";
 import { ContentSkeleton } from "@/components/pages/content-skeleton";
+import { CreatePageConfirmDialog } from "@/components/pages/create-page-confirm-dialog";
 import { EditPageBubbleMenu } from "@/components/pages/edit-page-bubble-menu";
 import { LinkGroupsSection } from "@/components/pages/link-groups-section";
 import { PageHeader } from "@/components/pages/page-header";
@@ -136,6 +137,7 @@ export default function EditPageForm({
 		isDirty,
 		setIsDirty,
 		noteSlug,
+		onShowCreatePageDialog: handleShowCreatePageDialog,
 	});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =
@@ -144,6 +146,32 @@ export default function EditPageForm({
 		});
 	const handleDateShortcut = useDateShortcut(editor);
 	const [isDeleting, setIsDeleting] = useState(false);
+
+	// State for create page confirmation dialog
+	const [createPageDialogOpen, setCreatePageDialogOpen] = useState(false);
+	const [pendingPageTitle, setPendingPageTitle] = useState("");
+	const [pendingConfirmCallback, setPendingConfirmCallback] = useState<
+		(() => Promise<void>) | null
+	>(null);
+
+	// Callback for showing create page dialog
+	const handleShowCreatePageDialog = useCallback(
+		(title: string, onConfirm: () => Promise<void>) => {
+			setPendingPageTitle(title);
+			setPendingConfirmCallback(() => onConfirm);
+			setCreatePageDialogOpen(true);
+		},
+		[],
+	);
+
+	// Handler for confirming page creation
+	const handleConfirmCreatePage = useCallback(async () => {
+		if (pendingConfirmCallback) {
+			await pendingConfirmCallback();
+			setPendingConfirmCallback(null);
+		}
+		setCreatePageDialogOpen(false);
+	}, [pendingConfirmCallback]);
 
 	// Keyboard shortcuts: Mod-k for page link, Mod-Shift-l/o for bullet/ordered list
 	const handleKeyDown = useCallback(
@@ -343,6 +371,12 @@ export default function EditPageForm({
 					オフラインです。接続を確認してください。
 				</div>
 			)}
+			<CreatePageConfirmDialog
+				isOpen={createPageDialogOpen}
+				onOpenChange={setCreatePageDialogOpen}
+				pageTitle={pendingPageTitle}
+				onConfirmCreate={handleConfirmCreatePage}
+			/>
 		</>
 	);
 }

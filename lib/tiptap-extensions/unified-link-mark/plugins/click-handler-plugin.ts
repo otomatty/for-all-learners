@@ -153,28 +153,58 @@ const handleAnchorClick = async (
 				}
 			}
 
-			try {
-				// Import createPageFromLink dynamically
-				const { createPageFromLink } = await import(
-					"../../../unilink/resolver"
-				);
+			// Use onShowCreatePageDialog callback if provided
+			if (context.options.onShowCreatePageDialog) {
+				context.options.onShowCreatePageDialog(newTitle, async () => {
+					try {
+						// Import createPageFromLink dynamically
+						const { createPageFromLink } = await import(
+							"../../../unilink/resolver"
+						);
 
-				// Create page and navigate
-				const result = await createPageFromLink(
-					newTitle,
-					userId,
-					context.options.noteSlug,
-				);
+						// Create page and navigate
+						const result = await createPageFromLink(
+							newTitle,
+							userId!,
+							context.options.noteSlug,
+						);
 
-				if (result) {
-					window.location.href = result.href;
+						if (result) {
+							window.location.href = result.href;
+						}
+					} catch (error) {
+						logger.error(
+							{ newTitle, userId, error },
+							"Failed to create page from link",
+						);
+						toast.error("ページの作成に失敗しました");
+					}
+				});
+			} else {
+				// Fallback: Create page directly without confirmation dialog
+				try {
+					// Import createPageFromLink dynamically
+					const { createPageFromLink } = await import(
+						"../../../unilink/resolver"
+					);
+
+					// Create page and navigate
+					const result = await createPageFromLink(
+						newTitle,
+						userId!,
+						context.options.noteSlug,
+					);
+
+					if (result) {
+						window.location.href = result.href;
+					}
+				} catch (error) {
+					logger.error(
+						{ newTitle, userId, error },
+						"Failed to create page from link",
+					);
+					toast.error("ページの作成に失敗しました");
 				}
-			} catch (error) {
-				logger.error(
-					{ newTitle, userId, error },
-					"Failed to create page from link",
-				);
-				toast.error("ページの作成に失敗しました");
 			}
 
 			return true;

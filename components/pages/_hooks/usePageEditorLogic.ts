@@ -42,6 +42,10 @@ interface UsePageEditorLogicProps {
 	isDirty: boolean;
 	setIsDirty: (dirty: boolean) => void;
 	noteSlug?: string;
+	onShowCreatePageDialog?: (
+		title: string,
+		onConfirm: () => Promise<void>,
+	) => void;
 }
 
 /**
@@ -76,6 +80,8 @@ export function usePageEditorLogic({
 	setIsGenerating,
 	isDirty,
 	setIsDirty,
+	noteSlug,
+	onShowCreatePageDialog,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
@@ -96,7 +102,11 @@ export function usePageEditorLogic({
 				horizontalRule: false, // Disable default horizontalRule in favor of CustomHorizontalRule
 			}),
 			// Unified Link Mark handles both [Title] and #tag syntax
-			UnifiedLinkMark,
+			UnifiedLinkMark.configure({
+				noteSlug: noteSlug ?? null,
+				userId: page.user_id,
+				onShowCreatePageDialog,
+			}),
 			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,
 			CustomOrderedList,
@@ -128,7 +138,7 @@ export function usePageEditorLogic({
 		// TipTap does not support dynamic extension updates after initialization
 		const pluginExtensions = getTiptapExtensions();
 		return [...baseExts, ...pluginExtensions];
-	}, []); // codeBlockTheme is constant, no need to recreate extensions
+	}, [noteSlug, page.user_id, onShowCreatePageDialog]); // Include dependencies for UnifiedLinkMark configuration
 
 	const editor = useEditor({
 		immediatelyRender: false,
