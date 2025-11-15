@@ -34,6 +34,14 @@ export interface UnifiedLinkMarkOptions {
 		title: string,
 		onConfirm: () => Promise<void>,
 	) => void;
+	/**
+	 * Callback function for client-side navigation.
+	 * If provided, this will be used instead of window.location.href for better UX.
+	 * Phase 2: Client-side navigation improvement
+	 *
+	 * @param href - The URL to navigate to
+	 */
+	onNavigate?: (href: string) => void;
 }
 
 /**

@@ -47,6 +47,11 @@ interface UsePageEditorLogicProps {
 		onConfirm: () => Promise<void>,
 	) => void;
 	onDeleteEmptyTitlePage?: () => Promise<void>;
+	/**
+	 * Phase 2: Callback for client-side navigation
+	 * If provided, this will be used instead of window.location.href
+	 */
+	onNavigate?: (href: string) => void;
 }
 
 /**
@@ -84,6 +89,7 @@ export function usePageEditorLogic({
 	noteSlug,
 	onShowCreatePageDialog,
 	onDeleteEmptyTitlePage,
+	onNavigate,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
@@ -108,6 +114,8 @@ export function usePageEditorLogic({
 				noteSlug: noteSlug ?? null,
 				userId: page.user_id,
 				onShowCreatePageDialog,
+				// Phase 2: Add onNavigate callback for client-side navigation
+				onNavigate,
 			}),
 			CustomHeading.configure({ levels: [2, 3, 4, 5, 6] }),
 			CustomBulletList,
@@ -140,7 +148,12 @@ export function usePageEditorLogic({
 		// TipTap does not support dynamic extension updates after initialization
 		const pluginExtensions = getTiptapExtensions();
 		return [...baseExts, ...pluginExtensions];
-	}, [noteSlug, page.user_id, onShowCreatePageDialog]); // Include dependencies for UnifiedLinkMark configuration
+	}, [
+		noteSlug,
+		page.user_id,
+		onShowCreatePageDialog,
+		onNavigate, // Phase 2: Add onNavigate callback for client-side navigation
+	]); // Include dependencies for UnifiedLinkMark configuration
 
 	const editor = useEditor({
 		immediatelyRender: false,
