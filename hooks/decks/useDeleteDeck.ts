@@ -22,86 +22,39 @@ export function useDeleteDeck() {
 			} = await supabase.auth.getUser();
 			if (userError || !user) throw new Error("User not authenticated");
 
-			// 関連データを正しい順序で削除
-
-			// 1. カードの削除
-			const { error: cardsError } = await supabase
-				.from("cards")
-				.delete()
-				.eq("deck_id", id);
-
-			if (cardsError) {
-				throw new Error(`カードの削除に失敗しました: ${cardsError.message}`);
-			}
-
-			// 2. 目標デッキリンクの削除
-			const { error: goalLinksError } = await supabase
-				.from("goal_deck_links")
-				.delete()
-				.eq("deck_id", id);
-
-			if (goalLinksError) {
-				throw new Error(
-					`目標リンクの削除に失敗しました: ${goalLinksError.message}`,
-				);
-			}
-
-			// 3. ノートデッキリンクの削除
-			const { error: noteLinksError } = await supabase
-				.from("note_deck_links")
-				.delete()
-				.eq("deck_id", id);
-
-			if (noteLinksError) {
-				throw new Error(
-					`ノートリンクの削除に失敗しました: ${noteLinksError.message}`,
-				);
-			}
-
-			// 4. 共有情報の削除
-			const { error: sharesError } = await supabase
-				.from("deck_shares")
-				.delete()
-				.eq("deck_id", id);
-
-			if (sharesError) {
-				throw new Error(`共有情報の削除に失敗しました: ${sharesError.message}`);
-			}
-
-			// 5. 学習ログの削除
-			const { error: studyLogsError } = await supabase
-				.from("deck_study_logs")
-				.delete()
-				.eq("deck_id", id);
-
-			if (studyLogsError) {
-				throw new Error(
-					`学習ログの削除に失敗しました: ${studyLogsError.message}`,
-				);
-			}
-
-			// 6. 音声記録の削除
-			const { error: audioError } = await supabase
-				.from("audio_transcriptions")
-				.delete()
-				.eq("deck_id", id);
-
-			if (audioError) {
-				throw new Error(`音声記録の削除に失敗しました: ${audioError.message}`);
-			}
-
-			// 7. 最後にデッキ本体を削除
-			const { data, error: deckError } = await supabase
+			// デッキの所有者であることを確認
+			const { data: deck, error: deckFetchError } = await supabase
 				.from("decks")
-				.delete()
+				.select("user_id")
 				.eq("id", id)
 				.single();
 
-			if (deckError) {
-				throw new Error(`デッキの削除に失敗しました: ${deckError.message}`);
+			if (deckFetchError || !deck) {
+				throw new Error("デッキが見つかりません");
 			}
 
-			return data;
+			if (deck.user_id !== user.id) {
+				throw new Error("このデッキを削除する権限がありません");
+			}
+
+			// RPC関数を使用してトランザクション内で削除
+			const { data, error } = await supabase.rpc(
+				"delete_deck_with_transaction",
+				{
+					p_deck_id: id,
+				},
+			);
+
+			if (error) {
+				throw new Error(`デッキの削除に失敗しました: ${error.message}`);
+			}
+
+			if (!data) {
+				throw new Error("デッキの削除に失敗しました");
+			}
+
+			// RPC関数は単一のdecks行を返す
+			return data as Deck;
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["decks"] });

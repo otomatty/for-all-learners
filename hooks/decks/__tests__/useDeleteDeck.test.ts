@@ -2,10 +2,10 @@
  * Tests for useDeleteDeck hook
  *
  * Test Coverage:
- * - TC-001: 正常系 - デッキ削除成功（関連データも削除）
+ * - TC-001: 正常系 - デッキ削除成功（RPC関数を使用）
  * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - カード削除エラー
- * - TC-004: 異常系 - デッキ削除エラー
+ * - TC-003: 異常系 - デッキが見つからない
+ * - TC-004: 異常系 - デッキ削除エラー（RPC関数エラー）
  * - TC-005: 正常系 - キャッシュの無効化
  */
 
@@ -41,55 +41,23 @@ describe("useDeleteDeck", () => {
 			error: null,
 		});
 
-		// Mock all delete operations
-		const mockCardsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockGoalLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockNoteLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockSharesDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockStudyLogsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockAudioDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockDeckDelete = {
-			delete: vi.fn().mockReturnThis(),
+		// Mock deck ownership check
+		const mockDeckSelect = {
+			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
-				data: mockDeck,
+				data: { user_id: mockUser.id },
 				error: null,
 			}),
 		};
 
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockCardsDelete) // cards
-			.mockReturnValueOnce(mockGoalLinksDelete) // goal_deck_links
-			.mockReturnValueOnce(mockNoteLinksDelete) // note_deck_links
-			.mockReturnValueOnce(mockSharesDelete) // deck_shares
-			.mockReturnValueOnce(mockStudyLogsDelete) // deck_study_logs
-			.mockReturnValueOnce(mockAudioDelete) // audio_transcriptions
-			.mockReturnValueOnce(mockDeckDelete); // decks
+		// Mock RPC function call
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: mockDeck,
+			error: null,
+		});
+
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockDeckSelect);
 
 		const { result } = renderHook(() => useDeleteDeck(), {
 			wrapper: createWrapper(),
@@ -102,14 +70,11 @@ describe("useDeleteDeck", () => {
 		});
 
 		expect(result.current.data).toBeDefined();
-		// Verify all delete operations were called
-		expect(mockCardsDelete.delete).toHaveBeenCalled();
-		expect(mockGoalLinksDelete.delete).toHaveBeenCalled();
-		expect(mockNoteLinksDelete.delete).toHaveBeenCalled();
-		expect(mockSharesDelete.delete).toHaveBeenCalled();
-		expect(mockStudyLogsDelete.delete).toHaveBeenCalled();
-		expect(mockAudioDelete.delete).toHaveBeenCalled();
-		expect(mockDeckDelete.delete).toHaveBeenCalled();
+		// Verify RPC function was called
+		expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
+			"delete_deck_with_transaction",
+			{ p_deck_id: "deck-123" },
+		);
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -133,21 +98,23 @@ describe("useDeleteDeck", () => {
 		expect(result.current.error?.message).toContain("not authenticated");
 	});
 
-	// TC-003: 異常系 - カード削除エラー
-	test("TC-003: Should handle cards deletion error", async () => {
+	// TC-003: 異常系 - デッキが見つからない
+	test("TC-003: Should handle deck not found error", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		const mockCardsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				error: { message: "Failed to delete cards" },
+		const mockDeckSelect = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			single: vi.fn().mockResolvedValue({
+				data: null,
+				error: { message: "Deck not found" },
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockCardsDelete);
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockDeckSelect);
 
 		const { result } = renderHook(() => useDeleteDeck(), {
 			wrapper: createWrapper(),
@@ -160,68 +127,32 @@ describe("useDeleteDeck", () => {
 		});
 
 		expect(result.current.error).toBeDefined();
-		expect(result.current.error?.message).toContain(
-			"カードの削除に失敗しました",
-		);
+		expect(result.current.error?.message).toContain("デッキが見つかりません");
 	});
 
-	// TC-004: 異常系 - デッキ削除エラー
+	// TC-004: 異常系 - デッキ削除エラー（RPC関数エラー）
 	test("TC-004: Should handle deck deletion error", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		// All related data deletions succeed
-		const mockCardsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockGoalLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockNoteLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockSharesDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockStudyLogsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockAudioDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		// Deck deletion fails
-		const mockDeckDelete = {
-			delete: vi.fn().mockReturnThis(),
+		const mockDeckSelect = {
+			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Failed to delete deck" },
+				data: { user_id: mockUser.id },
+				error: null,
 			}),
 		};
 
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockCardsDelete)
-			.mockReturnValueOnce(mockGoalLinksDelete)
-			.mockReturnValueOnce(mockNoteLinksDelete)
-			.mockReturnValueOnce(mockSharesDelete)
-			.mockReturnValueOnce(mockStudyLogsDelete)
-			.mockReturnValueOnce(mockAudioDelete)
-			.mockReturnValueOnce(mockDeckDelete);
+		// RPC function fails
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: null,
+			error: { message: "Failed to delete deck" },
+		});
+
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockDeckSelect);
 
 		const { result } = renderHook(() => useDeleteDeck(), {
 			wrapper: createWrapper(),
@@ -246,54 +177,21 @@ describe("useDeleteDeck", () => {
 			error: null,
 		});
 
-		const mockCardsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockGoalLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockNoteLinksDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockSharesDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockStudyLogsDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockAudioDelete = {
-			delete: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({ error: null }),
-		};
-
-		const mockDeckDelete = {
-			delete: vi.fn().mockReturnThis(),
+		const mockDeckSelect = {
+			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
-				data: mockDeck,
+				data: { user_id: mockUser.id },
 				error: null,
 			}),
 		};
 
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockCardsDelete)
-			.mockReturnValueOnce(mockGoalLinksDelete)
-			.mockReturnValueOnce(mockNoteLinksDelete)
-			.mockReturnValueOnce(mockSharesDelete)
-			.mockReturnValueOnce(mockStudyLogsDelete)
-			.mockReturnValueOnce(mockAudioDelete)
-			.mockReturnValueOnce(mockDeckDelete);
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: mockDeck,
+			error: null,
+		});
+
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockDeckSelect);
 
 		const { result } = renderHook(() => useDeleteDeck(), {
 			wrapper: createWrapper(),
