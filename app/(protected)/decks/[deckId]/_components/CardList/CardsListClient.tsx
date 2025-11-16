@@ -19,16 +19,20 @@ import {
 import { useTextSelection } from "@/hooks/use-text-selection";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
-import { CardItem } from "./card-item"; // CardItem をインポート
-import { RichContent } from "./rich-content";
+import { CardItem } from "./CardItem/CardItem"; // CardItem をインポート
+import { RichContent } from "./RichContent";
 
-interface CardsListProps {
+interface CardsListClientProps {
 	cards: Database["public"]["Tables"]["cards"]["Row"][];
 	deckId: string;
 	canEdit: boolean;
 }
 
-export function CardsList({ cards, deckId, canEdit }: CardsListProps) {
+export function CardsListClient({
+	cards,
+	deckId,
+	canEdit,
+}: CardsListClientProps) {
 	const { selectedText, selectionRect, clearSelection } = useTextSelection();
 	const supabase = createClient();
 	const router = useRouter();

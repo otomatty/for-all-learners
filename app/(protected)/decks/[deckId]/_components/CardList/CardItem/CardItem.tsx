@@ -4,8 +4,8 @@ import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/types/database.types";
-import { CardContextMenu } from "./card-context-menu";
-import { RichContent } from "./rich-content";
+import { RichContent } from "../RichContent";
+import { CardContextMenu } from "./CardContextMenu";
 
 interface CardItemProps {
 	card?: Database["public"]["Tables"]["cards"]["Row"]; // オプショナルに変更

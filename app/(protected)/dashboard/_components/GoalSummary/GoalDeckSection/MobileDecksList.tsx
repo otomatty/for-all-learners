@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
-import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { DeckForm } from "@/components/decks/DeckForm";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { Button } from "@/components/ui/button";

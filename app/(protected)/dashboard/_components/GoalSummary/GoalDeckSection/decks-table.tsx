@@ -3,7 +3,7 @@ import { useAtomValue } from "jotai";
 import { Camera, MoreHorizontal, Pencil, Trash2, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { DeckForm } from "@/components/decks/DeckForm";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { QuizSettingsDialog } from "@/components/quiz-settings-dialog";
 import { Button } from "@/components/ui/button";

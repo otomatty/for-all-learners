@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/context-menu";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types"; // Database 型をインポート
-import { CardForm } from "./card-form"; // CardForm をインポート
+import { CardForm } from "../../CardForm"; // CardForm をインポート
 
 interface CardContextMenuProps {
 	card: Database["public"]["Tables"]["cards"]["Row"];

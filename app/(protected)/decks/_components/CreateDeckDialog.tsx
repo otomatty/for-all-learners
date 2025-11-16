@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { DeckForm } from "@/app/(protected)/decks/_components/deck-form";
+import { DeckForm } from "@/components/decks/DeckForm";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 
-interface CreateDeckDialogButtonProps {
+interface CreateDeckDialogProps {
 	userId: string;
 }
 
-export function CreateDeckDialogButton({
-	userId,
-}: CreateDeckDialogButtonProps) {
+export function CreateDeckDialog({ userId }: CreateDeckDialogProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	return (

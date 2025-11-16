@@ -9,9 +9,9 @@ import type {
 	CardSelectionState,
 	PdfCardGeneratorProps,
 } from "@/types/pdf-card-generator";
-import { PdfFileSelection } from "./pdf-file-selection";
-import { PdfGeneratedCardList } from "./pdf-generated-card-list";
-import { PdfProcessingStatus } from "./pdf-processing-status";
+import { PdfFileSelection } from "./PdfFileSelection";
+import { PdfGeneratedCardList } from "./PdfGeneratedCardList";
+import { PdfProcessingStatus } from "./PdfProcessingStatus";
 
 export function PdfCardGenerator({ deckId, userId }: PdfCardGeneratorProps) {
 	// PDF処理フック
