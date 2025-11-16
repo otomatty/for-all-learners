@@ -1,7 +1,7 @@
 "use client";
 
 import { useNotes } from "@/hooks/notes/useNotes";
-import { NotesLayoutClient } from "./_components/notes-layout-client";
+import { NotesLayoutClient } from "./_components/NotesLayoutClient";
 
 export default function NotesLayout({
 	children,

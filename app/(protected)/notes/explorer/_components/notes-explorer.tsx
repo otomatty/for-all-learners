@@ -26,7 +26,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import type { NoteSummary } from "../../_components/notes-list";
+import type { NoteSummary } from "../../_components/NotesList";
 import type { ConflictInfo, ConflictResolution } from "../types";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";

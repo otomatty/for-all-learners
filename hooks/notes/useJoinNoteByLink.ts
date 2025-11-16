@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { useLinkPageToNote } from "./useLinkPageToNote";
 
 /**
  * 共有リンクからノートに参加（共有）します。
@@ -10,7 +9,6 @@ import { useLinkPageToNote } from "./useLinkPageToNote";
 export function useJoinNoteByLink() {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
-	const linkPageToNote = useLinkPageToNote();
 
 	return useMutation({
 		mutationFn: async (token: string) => {

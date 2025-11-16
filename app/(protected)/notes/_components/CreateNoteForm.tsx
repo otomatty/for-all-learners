@@ -273,13 +273,15 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 	async function handleShare() {
 		setIsSharing(true);
 		try {
-			for (const userId of selectedUserIds) {
-				await shareNote.mutateAsync({
-					noteId: createdNoteId,
-					userId,
-					permission: "viewer",
-				});
-			}
+			await Promise.all(
+				Array.from(selectedUserIds).map((userId) =>
+					shareNote.mutateAsync({
+						noteId: createdNoteId,
+						userId,
+						permission: "viewer",
+					}),
+				),
+			);
 			onSuccess();
 		} catch (_err) {
 			// Error handling is done by the mutation

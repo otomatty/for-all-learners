@@ -10,7 +10,7 @@ import type {
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useBatchMovePages } from "@/hooks/notes/useBatchMovePages";
 import { useCheckBatchConflicts } from "@/hooks/notes/useCheckBatchConflicts";
-import { NotesExplorerSidebar } from "./notes-sidebar";
+import { NotesExplorerSidebar } from "./NotesSidebar";
 
 type Note = {
 	id: string;
@@ -25,11 +25,7 @@ type NotesLayoutClientProps = {
 	isLoading?: boolean;
 };
 
-export function NotesLayoutClient({
-	notes,
-	children,
-	isLoading,
-}: NotesLayoutClientProps) {
+export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 	const [pendingOperation, setPendingOperation] = useState<{
 		pageIds: string[];
 		targetNoteId: string;

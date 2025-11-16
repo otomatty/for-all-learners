@@ -2,10 +2,10 @@
 
 import { Container } from "@/components/layouts/container";
 import { useNotes } from "@/hooks/notes/useNotes";
-import CreateNoteDialog from "./_components/create-note-dialog";
-import type { NoteSummary } from "./_components/notes-list";
-import NotesList from "./_components/notes-list";
-import RecommendedPublicNotes from "./_components/recommended-public-notes";
+import CreateNoteDialog from "./_components/CreateNoteDialog";
+import type { NoteSummary } from "./_components/NotesList";
+import NotesList from "./_components/NotesList";
+import RecommendedPublicNotes from "./_components/RecommendedPublicNotes";
 
 const mockRecommended: NoteSummary[] = [
 	{

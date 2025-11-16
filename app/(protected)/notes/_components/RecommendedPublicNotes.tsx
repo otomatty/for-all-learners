@@ -10,7 +10,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import type { NoteSummary } from "./notes-list";
+import type { NoteSummary } from "./NotesList";
 
 interface RecommendedPublicNotesProps {
 	notes: NoteSummary[];

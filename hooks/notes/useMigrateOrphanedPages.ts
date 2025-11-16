@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { useDefaultNote } from "./useDefaultNote";
 import { useLinkPageToNote } from "./useLinkPageToNote";
 
 export interface MigrateOrphanedPagesResult {
