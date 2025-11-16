@@ -65,10 +65,7 @@ describe("useSharedPages", () => {
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.length).toBe(1);
 		expect(result.current.data?.[0]?.pages.id).toBe(mockPageShare.pages.id);
-		expect(mockQuery.eq).toHaveBeenCalledWith(
-			"shared_with_user_id",
-			userId,
-		);
+		expect(mockQuery.eq).toHaveBeenCalledWith("shared_with_user_id", userId);
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -148,4 +145,3 @@ describe("useSharedPages", () => {
 		expect(result.current.data).toEqual([]);
 	});
 });
-

@@ -1,7 +1,7 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
 import { useQuery } from "@tanstack/react-query";
+import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/client";
 
 interface BacklinkPage {
@@ -20,7 +20,10 @@ export function usePageBacklinks(targetPageId: string) {
 
 	return useQuery({
 		queryKey: ["pages", "backlinks", targetPageId],
-		queryFn: async (): Promise<{ data: BacklinkPage[] | null; error: string | null }> => {
+		queryFn: async (): Promise<{
+			data: BacklinkPage[] | null;
+			error: string | null;
+		}> => {
 			try {
 				const {
 					data: { user },
@@ -74,4 +77,3 @@ export function usePageBacklinks(targetPageId: string) {
 		enabled: !!targetPageId,
 	});
 }
-

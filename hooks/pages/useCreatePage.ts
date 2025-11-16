@@ -1,18 +1,17 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
+import type { JSONContent } from "@tiptap/core";
+import { linkPageToDefaultNote } from "@/hooks/notes/useLinkPageToDefaultNote";
 import {
 	deleteLinkOccurrencesByPage,
-	syncLinkGroupsForPage,
 	upsertLinkGroup,
 	upsertLinkOccurrence,
 } from "@/lib/services/linkGroupService";
-import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
+import { createClient } from "@/lib/supabase/client";
 import { normalizeTitleToKey } from "@/lib/unilink/utils";
-import { linkPageToDefaultNote } from "@/hooks/notes/useLinkPageToDefaultNote";
+import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
+import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -109,14 +108,8 @@ export function useCreatePage() {
 
 			return data;
 		},
-		onSuccess: (data) => {
+		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["pages"] });
-			if (data.note_id) {
-				queryClient.invalidateQueries({
-					queryKey: ["pages", "by-note", data.note_id],
-				});
-			}
 		},
 	});
 }
-

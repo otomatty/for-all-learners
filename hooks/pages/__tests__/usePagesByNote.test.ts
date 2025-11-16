@@ -165,4 +165,3 @@ describe("usePagesByNote", () => {
 		expect(mockSupabaseClient.from).not.toHaveBeenCalled();
 	});
 });
-

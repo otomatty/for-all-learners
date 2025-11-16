@@ -66,9 +66,12 @@ describe("useDeletePage", () => {
 
 		result.current.mutate(pageId);
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(result.current.data).toBeDefined();
 		expect(mockQuery.delete).toHaveBeenCalled();
@@ -158,9 +161,12 @@ describe("useDeletePage", () => {
 
 		result.current.mutate(pageId);
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		// Cache invalidation is handled by onSuccess callback
 		expect(result.current.isSuccess).toBe(true);
@@ -196,9 +202,12 @@ describe("useDeletePage", () => {
 
 		result.current.mutate(pageId);
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		// Verify link groups deletion was called
 		expect(deleteLinkOccurrencesByPage).toHaveBeenCalledWith(
@@ -207,4 +216,3 @@ describe("useDeletePage", () => {
 		);
 	});
 });
-

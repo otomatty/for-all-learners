@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import { deleteLinkOccurrencesByPage } from "@/lib/services/linkGroupService";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * ページを削除します。
@@ -33,14 +33,8 @@ export function useDeletePage() {
 			if (error) throw error;
 			return data;
 		},
-		onSuccess: (data) => {
+		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["pages"] });
-			if (data.note_id) {
-				queryClient.invalidateQueries({
-					queryKey: ["pages", "by-note", data.note_id],
-				});
-			}
 		},
 	});
 }
-

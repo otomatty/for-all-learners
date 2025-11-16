@@ -35,7 +35,6 @@ export const mockPage = {
 			},
 		],
 	},
-	note_id: "note-123",
 	user_id: "user-123",
 	thumbnail_url: null,
 	is_public: false,
@@ -139,4 +138,3 @@ export function createMockQueryChain<T = unknown>(
 
 	return chain;
 }
-

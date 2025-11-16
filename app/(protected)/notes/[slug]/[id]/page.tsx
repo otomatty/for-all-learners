@@ -48,9 +48,7 @@ export default async function PageDetail({ params }: PageDetailProps) {
 
 	// Get user pages (shared pages will be fetched in EditPageForm client component)
 	const myPages = await getAllUserPages(user.id);
-	const pagesMap = new Map<string, string>(
-		myPages.map((p) => [p.title, p.id]),
-	);
+	const pagesMap = new Map<string, string>(myPages.map((p) => [p.title, p.id]));
 
 	const decoratedDoc = transformPageLinks(
 		page.content_tiptap as JSONContent,

@@ -29,4 +29,3 @@ export function usePage(id: string) {
 		enabled: !!id,
 	});
 }
-

@@ -13,8 +13,8 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
 import { useCreatePage } from "../useCreatePage";
 import {
 	createMockSupabaseClient,
@@ -40,7 +40,9 @@ vi.mock("@/lib/utils/extractLinksFromContent", () => ({
 
 // Mock thumbnail extractor
 vi.mock("@/lib/utils/thumbnailExtractor", () => ({
-	extractFirstImageUrl: vi.fn().mockReturnValue("https://example.com/image.jpg"),
+	extractFirstImageUrl: vi
+		.fn()
+		.mockReturnValue("https://example.com/image.jpg"),
 }));
 
 // Mock unilink utils
@@ -75,7 +77,6 @@ describe("useCreatePage", () => {
 				type: "doc",
 				content: [{ type: "paragraph", content: [] }],
 			},
-			note_id: "note-123",
 			user_id: mockUser.id,
 			is_public: false,
 		};
@@ -132,7 +133,10 @@ describe("useCreatePage", () => {
 			"id"
 		> = {
 			title: "New Page",
-			note_id: "note-123",
+			content_tiptap: {
+				type: "doc",
+				content: [{ type: "paragraph", content: [] }],
+			},
 			user_id: mockUser.id,
 		};
 
@@ -162,7 +166,10 @@ describe("useCreatePage", () => {
 			"id"
 		> = {
 			title: "New Page",
-			note_id: "note-123",
+			content_tiptap: {
+				type: "doc",
+				content: [{ type: "paragraph", content: [] }],
+			},
 			user_id: mockUser.id,
 		};
 
@@ -214,7 +221,6 @@ describe("useCreatePage", () => {
 					},
 				],
 			},
-			note_id: "note-123",
 			user_id: mockUser.id,
 		};
 
@@ -223,7 +229,11 @@ describe("useCreatePage", () => {
 			error: null,
 		});
 
-		const createdPage = { ...mockPage, ...pageData, thumbnail_url: "https://example.com/image.jpg" };
+		const createdPage = {
+			...mockPage,
+			...pageData,
+			thumbnail_url: "https://example.com/image.jpg",
+		};
 		const mockQuery = {
 			insert: vi.fn().mockReturnThis(),
 			select: vi.fn().mockReturnThis(),
@@ -280,7 +290,6 @@ describe("useCreatePage", () => {
 					},
 				],
 			},
-			note_id: "note-123",
 			user_id: mockUser.id,
 		};
 
@@ -334,7 +343,10 @@ describe("useCreatePage", () => {
 			"id"
 		> = {
 			title: "New Page",
-			note_id: "note-123",
+			content_tiptap: {
+				type: "doc",
+				content: [{ type: "paragraph", content: [] }],
+			},
 			user_id: mockUser.id,
 		};
 
@@ -384,9 +396,6 @@ describe("useCreatePage", () => {
 
 	// TC-007: リンクグループ同期の呼び出し確認
 	test("TC-007: Should sync link groups after page creation", async () => {
-		const { upsertLinkGroup } = await import(
-			"@/lib/services/linkGroupService"
-		);
 		const { extractLinksFromContent } = await import(
 			"@/lib/utils/extractLinksFromContent"
 		);
@@ -399,7 +408,6 @@ describe("useCreatePage", () => {
 				type: "doc",
 				content: [{ type: "paragraph", content: [] }],
 			},
-			note_id: "note-123",
 			user_id: mockUser.id,
 		};
 
@@ -439,9 +447,12 @@ describe("useCreatePage", () => {
 
 		result.current.mutate({ page: pageData });
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		// Verify link groups sync was called
 		expect(extractLinksFromContent).toHaveBeenCalled();
@@ -449,4 +460,3 @@ describe("useCreatePage", () => {
 		// For this test, we return empty links, so it won't be called
 	});
 });
-

@@ -105,9 +105,12 @@ describe("usePageBacklinks", () => {
 			wrapper: createWrapper(),
 		});
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.error).toBe("予期しないエラーが発生しました");
@@ -137,9 +140,12 @@ describe("usePageBacklinks", () => {
 			wrapper: createWrapper(),
 		});
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.error).toBe("ページの取得に失敗しました");
@@ -194,4 +200,3 @@ describe("usePageBacklinks", () => {
 		expect(mockSupabaseClient.from).not.toHaveBeenCalled();
 	});
 });
-

@@ -11,8 +11,8 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
 import { useUpdatePage } from "../useUpdatePage";
 import {
 	createMockSupabaseClient,
@@ -66,9 +66,12 @@ describe("useUpdatePage", () => {
 
 		result.current.mutate({ id: pageId, updates });
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.title).toBe(updates.title);
@@ -169,9 +172,12 @@ describe("useUpdatePage", () => {
 
 		result.current.mutate({ id: pageId, updates });
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		// Cache invalidation is handled by onSuccess callback
 		expect(result.current.isSuccess).toBe(true);
@@ -211,12 +217,14 @@ describe("useUpdatePage", () => {
 
 		result.current.mutate({ id: pageId, updates });
 
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(result.current.isSuccess).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(result.current.data).toBeDefined();
 		expect(mockQuery.update).toHaveBeenCalledWith(updates);
 	});
 });
-

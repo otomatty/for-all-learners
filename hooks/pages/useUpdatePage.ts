@@ -37,12 +37,6 @@ export function useUpdatePage() {
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({ queryKey: ["pages"] });
 			queryClient.invalidateQueries({ queryKey: ["pages", data.id] });
-			if (data.note_id) {
-				queryClient.invalidateQueries({
-					queryKey: ["pages", "by-note", data.note_id],
-				});
-			}
 		},
 	});
 }
-

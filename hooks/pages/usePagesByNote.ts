@@ -28,4 +28,3 @@ export function usePagesByNote(noteId: string) {
 		enabled: !!noteId,
 	});
 }
-

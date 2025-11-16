@@ -168,4 +168,3 @@ describe("usePage", () => {
 		expect(mockSupabaseClient.from).not.toHaveBeenCalled();
 	});
 });
-
