@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { createActionLog } from "@/app/_actions/actionLogs";
 import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
-import { createCards } from "@/app/_actions/cards";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
 import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
 import { transcribeAudio } from "@/app/_actions/transcribe";
@@ -22,6 +21,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateCards } from "@/hooks/cards";
 import { createClient } from "@/lib/supabase/client";
 
 interface AudioCardGeneratorProps {
@@ -35,10 +35,11 @@ export function AudioCardGenerator({
 }: AudioCardGeneratorProps) {
 	const supabase = createClient();
 	const router = useRouter();
+	const createCardsMutation = useCreateCards();
 	const [isRecording, setIsRecording] = useState(false);
 	const recordingStartRef = useRef<number>(0);
 	const [isProcessing, setIsProcessing] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
+	const isSaving = createCardsMutation.isPending;
 	const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
 	const [audioUrl, setAudioUrl] = useState("");
 	const [generatedCards, setGeneratedCards] = useState<
@@ -199,8 +200,6 @@ export function AudioCardGenerator({
 			return;
 		}
 
-		setIsSaving(true);
-
 		try {
 			// 選択されたカードをデータベースに保存 (JSONContent にラップ)
 			const cardsToInsert = selectedCardsList.map((card) => {
@@ -231,8 +230,7 @@ export function AudioCardGenerator({
 				};
 			});
 
-			// Use server action to insert cards
-			const _data = await createCards(cardsToInsert);
+			await createCardsMutation.mutateAsync(cardsToInsert);
 
 			toast.success("カードを保存しました", {
 				description: `${selectedCardsList.length}件のカードを保存しました。`,
@@ -246,8 +244,6 @@ export function AudioCardGenerator({
 						? error.message
 						: "カードの保存中にエラーが発生しました。",
 			});
-		} finally {
-			setIsSaving(false);
 		}
 	};
 

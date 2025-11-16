@@ -2,9 +2,7 @@
 
 import { CheckCircle, Loader2, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
-import { createCards } from "@/app/_actions/cards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useCreateCards } from "@/hooks/cards";
 import type { Json } from "@/types/database.types";
 import type {
 	GeneratedCardListProps,
@@ -32,7 +31,8 @@ export function PdfGeneratedCardList({
 	userId,
 }: Omit<GeneratedCardListProps, "onSaveCards" | "isSaving">) {
 	const router = useRouter();
-	const [isSaving, setIsSaving] = useState(false);
+	const createCardsMutation = useCreateCards();
+	const isSaving = createCardsMutation.isPending;
 
 	const selectedCount = Object.values(selectedCards).filter(Boolean).length;
 
@@ -46,8 +46,6 @@ export function PdfGeneratedCardList({
 			return;
 		}
 
-		setIsSaving(true);
-
 		try {
 			// TiptapJSON形式のカードデータに変換
 			const cardsToInsert = selectedCardsList.map((card) => ({
@@ -58,7 +56,7 @@ export function PdfGeneratedCardList({
 				source_pdf_url: card.source_pdf_url,
 			}));
 
-			const _data = await createCards(cardsToInsert);
+			await createCardsMutation.mutateAsync(cardsToInsert);
 
 			toast.success("カードを保存しました", {
 				description: `${selectedCardsList.length}件のカードを保存しました。`,
@@ -72,8 +70,6 @@ export function PdfGeneratedCardList({
 						? error.message
 						: "カードの保存中にエラーが発生しました。",
 			});
-		} finally {
-			setIsSaving(false);
 		}
 	};
 

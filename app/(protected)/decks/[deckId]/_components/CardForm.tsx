@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { createCard, updateCard } from "@/app/_actions/cards"; // updateCard をインポート
 import TiptapEditor from "@/components/tiptap-editor";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import {
 	FormLabel,
 	FormMessage, // FormMessageを追加
 } from "@/components/ui/form";
+import { useCreateCard, useUpdateCard } from "@/hooks/cards";
 import logger from "@/lib/logger";
 import type { Database } from "@/types/database.types"; // Database 型をインポート
 
@@ -54,59 +54,66 @@ export function CardForm({
 		},
 	});
 	const [side, setSide] = useState<"front" | "back">("front");
-	const [isLoading, setIsLoading] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 
+	const createCardMutation = useCreateCard();
+	const updateCardMutation = useUpdateCard();
+
+	const isLoading =
+		createCardMutation.isPending || updateCardMutation.isPending;
+
 	const onSubmit = async (values: CardFormValues) => {
-		setIsLoading(true);
+		const { frontContent, backContent } = values;
+		const isFrontEmpty =
+			!frontContent ||
+			JSON.parse(frontContent).content.every(
+				(node: { content?: { text?: string }[] }) =>
+					!node.content ||
+					node.content.every(
+						(textNode: { text?: string }) => !textNode.text?.trim(),
+					),
+			);
+		const isBackEmpty =
+			!backContent ||
+			JSON.parse(backContent).content.every(
+				(node: { content?: { text?: string }[] }) =>
+					!node.content ||
+					node.content.every(
+						(textNode: { text?: string }) => !textNode.text?.trim(),
+					),
+			);
+
+		if (isFrontEmpty) {
+			toast.error("表面に内容を入力してください");
+			return;
+		}
+		if (isBackEmpty) {
+			toast.error("裏面に内容を入力してください");
+			return;
+		}
+
 		try {
-			const { frontContent, backContent } = values;
-			const isFrontEmpty =
-				!frontContent ||
-				JSON.parse(frontContent).content.every(
-					(node: { content?: { text?: string }[] }) =>
-						!node.content ||
-						node.content.every(
-							(textNode: { text?: string }) => !textNode.text?.trim(),
-						),
-				);
-			const isBackEmpty =
-				!backContent ||
-				JSON.parse(backContent).content.every(
-					(node: { content?: { text?: string }[] }) =>
-						!node.content ||
-						node.content.every(
-							(textNode: { text?: string }) => !textNode.text?.trim(),
-						),
-				);
-
-			if (isFrontEmpty) {
-				toast.error("表面に内容を入力してください");
-				return;
-			}
-			if (isBackEmpty) {
-				toast.error("裏面に内容を入力してください");
-				return;
-			}
-
 			if (cardToEdit) {
 				// 更新処理
-				const updatedCardData = await updateCard(cardToEdit.id, {
-					front_content: JSON.parse(frontContent),
-					back_content: JSON.parse(backContent),
+				const updatedCardData = await updateCardMutation.mutateAsync({
+					id: cardToEdit.id,
+					updates: {
+						front_content: JSON.parse(frontContent),
+						back_content: JSON.parse(backContent),
+					},
 				});
 				toast.success("カードを更新しました");
-				if (onSuccess) onSuccess(updatedCardData); // 更新されたカードデータを渡す
+				if (onSuccess) onSuccess(updatedCardData);
 			} else {
 				// 新規作成処理
-				const newCardData = await createCard({
+				const newCardData = await createCardMutation.mutateAsync({
 					user_id: userId,
 					deck_id: deckId,
 					front_content: JSON.parse(frontContent),
 					back_content: JSON.parse(backContent),
 				});
 				toast.success("カードを作成しました");
-				if (onSuccess) onSuccess(newCardData); // 作成されたカードデータを渡す
+				if (onSuccess) onSuccess(newCardData);
 			}
 			// onSuccess が提供されていれば、そちらでダイアログを閉じるなどの処理を期待
 			// onSuccess がなく、かつ新規作成モードだった場合のフォールバック
@@ -122,8 +129,6 @@ export function CardForm({
 					? err.message
 					: `カードの${actionType}中にエラーが発生しました。`,
 			);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 

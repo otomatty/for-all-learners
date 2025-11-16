@@ -1,12 +1,11 @@
 "use client";
 
 import type { JSONContent } from "@tiptap/core";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
-import { getCardsByDeck } from "@/app/_actions/cards";
+import { useCardsByDeck } from "@/hooks/cards";
+import { useUserPages } from "@/hooks/pages";
 import logger from "@/lib/logger";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
 import { CardsListClient } from "./CardsListClient";
 import { CardsListSkeleton } from "./CardsListSkeleton";
 
@@ -17,74 +16,67 @@ interface CardsListProps {
 }
 
 export function CardsList({ deckId, canEdit, userId }: CardsListProps) {
-	const [cards, setCards] = useState<
-		Database["public"]["Tables"]["cards"]["Row"][]
-	>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const {
+		data: fetchedCards,
+		isLoading: isLoadingCards,
+		error: cardsError,
+	} = useCardsByDeck(deckId);
 
-	useEffect(() => {
-		const fetchCards = async () => {
-			setIsLoading(true);
-			try {
-				const fetchedCards = await getCardsByDeck(deckId);
-				const supabase = createClient();
+	// ユーザーの全ページを取得し、タイトル→IDマップを作成
+	const { data: userPagesData } = useUserPages(userId);
 
-				// ユーザーの全ページを取得し、タイトル→IDマップを作成
-				const { data: userPages } = await supabase
-					.from("pages")
-					.select("id,title")
-					.eq("user_id", userId);
-				const pagesMap = new Map<string, string>(
-					(userPages ?? []).map((p: { title: string; id: string }) => [
-						p.title,
-						p.id,
-					]),
-				);
+	const pagesMap = useMemo(() => {
+		return new Map<string, string>(
+			(userPagesData ?? []).map((p: { title: string; id: string }) => [
+				p.title,
+				p.id,
+			]),
+		);
+	}, [userPagesData]);
 
-				type MarkJSON = { type: string; attrs?: Record<string, unknown> };
+	const cards = useMemo(() => {
+		if (!fetchedCards) return [];
 
-				function transformPageLinks(doc: JSONContent): JSONContent {
-					const recurse = (node: JSONContent): JSONContent => {
-						if (node.marks) {
-							node.marks = (node.marks as MarkJSON[]).map((mark) =>
-								mark.type === "pageLink"
-									? {
-											...mark,
-											attrs: {
-												...mark.attrs,
-												pageId:
-													pagesMap.get(mark.attrs?.pageName as string) ?? null,
-											},
-										}
-									: mark,
-							);
-						}
-						if (node.content && Array.isArray(node.content)) {
-							node.content = node.content.map(recurse);
-						}
-						return node;
-					};
-					const root = { ...doc };
-					root.content = (root.content ?? []).map(recurse);
-					return root;
+		type MarkJSON = { type: string; attrs?: Record<string, unknown> };
+
+		function transformPageLinks(doc: JSONContent): JSONContent {
+			const recurse = (node: JSONContent): JSONContent => {
+				if (node.marks) {
+					node.marks = (node.marks as MarkJSON[]).map((mark) =>
+						mark.type === "pageLink"
+							? {
+									...mark,
+									attrs: {
+										...mark.attrs,
+										pageId:
+											pagesMap.get(mark.attrs?.pageName as string) ?? null,
+									},
+								}
+							: mark,
+					);
 				}
+				if (node.content && Array.isArray(node.content)) {
+					node.content = node.content.map(recurse);
+				}
+				return node;
+			};
+			const root = { ...doc };
+			root.content = (root.content ?? []).map(recurse);
+			return root;
+		}
 
-				const decoratedCards = fetchedCards.map((card) => ({
-					...card,
-					front_content: transformPageLinks(card.front_content as JSONContent),
-				}));
+		return fetchedCards.map((card) => ({
+			...card,
+			front_content: transformPageLinks(card.front_content as JSONContent),
+		}));
+	}, [fetchedCards, pagesMap]);
 
-				setCards(decoratedCards);
-			} catch (error) {
-				logger.error({ error, deckId }, "Failed to fetch cards");
-				toast.error("カードの読み込みに失敗しました");
-			} finally {
-				setIsLoading(false);
-			}
-		};
+	if (cardsError) {
+		logger.error({ error: cardsError, deckId }, "Failed to fetch cards");
+		toast.error("カードの読み込みに失敗しました");
+	}
 
-		fetchCards();
-	}, [deckId, userId]);
+	const isLoading = isLoadingCards || !userPagesData;
 
 	if (isLoading) {
 		return <CardsListSkeleton deckId={deckId} />;
