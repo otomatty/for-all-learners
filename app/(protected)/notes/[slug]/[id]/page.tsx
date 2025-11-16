@@ -1,6 +1,7 @@
 import type { JSONContent } from "@tiptap/core";
 import { notFound, redirect } from "next/navigation";
 import { getAllUserPages } from "@/app/_actions/notes";
+import { getLastPageVisit, recordPageVisit } from "@/app/_actions/page-visits";
 import { getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/layouts/container";
 import EditPageForm from "@/components/pages/EditPageForm";
@@ -70,6 +71,11 @@ export default async function PageDetail({ params }: PageDetailProps) {
 	);
 	await syncLinkGroupsForPage(page.id, page.content_tiptap as JSONContent);
 
+	// --- ページ訪問履歴を記録（テロメア機能用） ---
+	// 記録前に前回訪問時刻を取得（テロメア機能で使用）
+	const lastVisitedAt = await getLastPageVisit(page.id);
+	await recordPageVisit(page.id);
+
 	// リンクグループを取得
 	const { getLinkGroupsForPage } = await import("@/app/_actions/linkGroups");
 	const { data: linkGroups } = await getLinkGroupsForPage(page.id);
@@ -103,6 +109,7 @@ export default async function PageDetail({ params }: PageDetailProps) {
 				cosenseProjectName={cosenseProjectName}
 				missingLinks={missingLinksFiltered}
 				linkGroups={linkGroups || []}
+				lastVisitedAt={lastVisitedAt}
 			/>
 		</Container>
 	);

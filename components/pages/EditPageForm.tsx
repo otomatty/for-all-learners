@@ -30,7 +30,6 @@ import { TableBubbleMenu } from "@/components/pages/table-bubble-menu";
 import logger from "@/lib/logger";
 // Supabase
 import { createClient } from "@/lib/supabase/client";
-import { useNavigateToPage } from "@/lib/unilink/resolver";
 // Types
 import type { Database } from "@/types/database.types";
 import type { LinkGroupForUI } from "@/types/link-group";
@@ -42,6 +41,8 @@ interface EditPageFormProps {
 	cosenseProjectName?: string | null;
 	missingLinks: string[];
 	linkGroups: LinkGroupForUI[];
+	/** 前回訪問時刻（テロメア機能用） */
+	lastVisitedAt?: Date | null;
 }
 
 export default function EditPageForm({
@@ -50,6 +51,7 @@ export default function EditPageForm({
 	cosenseProjectName,
 	missingLinks,
 	linkGroups,
+	lastVisitedAt,
 }: EditPageFormProps) {
 	// Link alert removed - now handled by link groups
 	// const originalTitle = page.title;
@@ -62,7 +64,6 @@ export default function EditPageForm({
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
-	const _navigateToPage = useNavigateToPage();
 
 	// パス解析してnote slugを取得
 	const noteSlug = pathname.startsWith("/notes/")
@@ -198,6 +199,7 @@ export default function EditPageForm({
 			// Phase 2: Use router.push for client-side navigation
 			router.push(href);
 		},
+		lastVisitedAt,
 	});
 
 	const { handleReadAloud, handlePause, handleReset, isPlaying } =

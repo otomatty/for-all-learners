@@ -20,6 +20,7 @@ import { GyazoImage } from "@/lib/tiptap-extensions/gyazo-image";
 import { Highlight } from "@/lib/tiptap-extensions/highlight-extension";
 import { LatexInlineNode } from "@/lib/tiptap-extensions/latex-inline-node";
 import { MarkdownPaste } from "@/lib/tiptap-extensions/markdown-paste";
+import { TelomereExtension } from "@/lib/tiptap-extensions/telomere-extension";
 import { UnifiedLinkMark } from "@/lib/tiptap-extensions/unified-link-mark";
 import { useUserIconRenderer } from "@/lib/utils/user-icon-renderer";
 import type { Database } from "@/types/database.types";
@@ -52,6 +53,11 @@ interface UsePageEditorLogicProps {
 	 * If provided, this will be used instead of window.location.href
 	 */
 	onNavigate?: (href: string) => void;
+	/**
+	 * Last visited timestamp for telomere feature
+	 * Used to determine which lines are unread (green)
+	 */
+	lastVisitedAt?: Date | null;
 }
 
 /**
@@ -90,6 +96,7 @@ export function usePageEditorLogic({
 	onShowCreatePageDialog,
 	onDeleteEmptyTitlePage,
 	onNavigate,
+	lastVisitedAt,
 }: UsePageEditorLogicProps) {
 	const initialDoc: JSONContent = initialContent ??
 		(page.content_tiptap as JSONContent) ?? { type: "doc", content: [] };
@@ -142,6 +149,11 @@ export function usePageEditorLogic({
 				placeholder: "ページ内容を入力してください",
 				includeChildren: true,
 			}),
+			// Telomere extension for visualizing line age and unread lines
+			TelomereExtension.configure({
+				lastVisitedAt: lastVisitedAt ?? null,
+				enabled: true,
+			}),
 		];
 
 		// Include plugin extensions at editor creation time
@@ -153,6 +165,7 @@ export function usePageEditorLogic({
 		page.user_id,
 		onShowCreatePageDialog,
 		onNavigate, // Phase 2: Add onNavigate callback for client-side navigation
+		lastVisitedAt, // Add lastVisitedAt as dependency for telomere extension
 	]); // Include dependencies for UnifiedLinkMark configuration
 
 	const editor = useEditor({
