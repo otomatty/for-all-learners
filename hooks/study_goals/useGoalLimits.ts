@@ -1,0 +1,81 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { isUserPaid } from "@/app/_actions/subscriptions";
+import { createClient } from "@/lib/supabase/client";
+
+export type GoalLimits = {
+	currentCount: number;
+	maxGoals: number;
+	canAddMore: boolean;
+	isPaid: boolean;
+	remainingGoals: number;
+};
+
+/**
+ * ユーザーの目標制限情報を取得します。
+ */
+export function useGoalLimits() {
+	const supabase = createClient();
+
+	return useQuery({
+		queryKey: ["study_goals", "limits"],
+		queryFn: async (): Promise<GoalLimits> => {
+			const {
+				data: { user },
+				error: userError,
+			} = await supabase.auth.getUser();
+
+			// ユーザーID検証
+			if (!user || userError) {
+				return {
+					currentCount: 0,
+					maxGoals: 3,
+					canAddMore: true,
+					isPaid: false,
+					remainingGoals: 3,
+				};
+			}
+
+			try {
+				const { data: currentGoals, error: goalsError } = await supabase
+					.from("study_goals")
+					.select("*")
+					.eq("user_id", user.id)
+					.order("priority_order", { ascending: true })
+					.order("created_at", { ascending: false });
+
+				if (goalsError) throw goalsError;
+
+				const isPaid = await isUserPaid(user.id);
+				const maxGoals = isPaid ? 10 : 3;
+				const currentCount = currentGoals?.length ?? 0;
+				const canAddMore = currentCount < maxGoals;
+
+				return {
+					currentCount,
+					maxGoals,
+					canAddMore,
+					isPaid,
+					remainingGoals: maxGoals - currentCount,
+				};
+			} catch (_error) {
+				// エラーが発生した場合は無料プランとして扱う
+				const { data: currentGoals } = await supabase
+					.from("study_goals")
+					.select("*")
+					.eq("user_id", user.id)
+					.order("priority_order", { ascending: true })
+					.order("created_at", { ascending: false });
+
+				return {
+					currentCount: currentGoals?.length ?? 0,
+					maxGoals: 3,
+					canAddMore: (currentGoals?.length ?? 0) < 3,
+					isPaid: false,
+					remainingGoals: 3 - (currentGoals?.length ?? 0),
+				};
+			}
+		},
+	});
+}

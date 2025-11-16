@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
-import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
+import { useReviewCard } from "@/hooks/review";
 import type { FlashcardQuestion } from "@/lib/gemini";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
 
@@ -18,6 +18,7 @@ export default function FlashcardQuiz({
 	startTime,
 	timeLimit,
 }: FlashcardQuizProps) {
+	const reviewCard = useReviewCard();
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
 	);
@@ -76,15 +77,15 @@ export default function FlashcardQuiz({
 
 	useEffect(() => {
 		if (finished) {
-			(async () => {
-				await Promise.all(
-					results.map(({ cardId, quality }) =>
-						reviewCard(cardId, quality, "one"),
-					),
-				);
-			})();
+			results.forEach(({ cardId, quality }) => {
+				reviewCard.mutate({
+					cardId,
+					quality,
+					practiceMode: "one",
+				});
+			});
 		}
-	}, [finished, results.map]);
+	}, [finished, results, reviewCard]);
 
 	const handleReveal = useCallback(() => {
 		// record when user reveals answer

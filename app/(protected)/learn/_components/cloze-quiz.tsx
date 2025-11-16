@@ -2,8 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
-import { reviewCard } from "@/app/_actions/review";
 import { Progress } from "@/components/ui/progress";
+import { useReviewCard } from "@/hooks/review";
 import type { ClozeQuestion } from "@/lib/gemini";
 import logger from "@/lib/logger";
 import QuizFinished, { type AnswerSummary } from "./quiz-finished";
@@ -23,6 +23,7 @@ export default function ClozeQuiz({
 	startTime,
 	timeLimit,
 }: ClozeQuizProps) {
+	const reviewCard = useReviewCard();
 	// 各カードのレビュー結果を蓄積
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
@@ -120,15 +121,15 @@ export default function ClozeQuiz({
 	// Review results on finish
 	useEffect(() => {
 		if (finished) {
-			(async () => {
-				await Promise.all(
-					results.map(({ cardId, quality }) =>
-						reviewCard(cardId, quality, "fill"),
-					),
-				);
-			})();
+			results.forEach(({ cardId, quality }) => {
+				reviewCard.mutate({
+					cardId,
+					quality,
+					practiceMode: "fill",
+				});
+			});
 		}
-	}, [finished, results.map]);
+	}, [finished, results, reviewCard]);
 
 	// 回答確認・次へ処理 (stable via useCallback)
 	const handleCheck = useCallback(() => {

@@ -1,9 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
-import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { addStudyGoal, getUserGoalLimits } from "@/app/_actions/study_goals";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +13,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
+import { useCreateStudyGoal, useGoalLimits } from "@/hooks/study_goals";
 
 interface GoalFormFields {
 	title: string;
@@ -37,16 +34,8 @@ export function AddGoalDialog({
 	open,
 	onOpenChange,
 }: AddGoalDialogProps) {
-	const router = useRouter();
-	const [internalOpen, setInternalOpen] = useState(false);
-	const [goalLimits, setGoalLimits] = useState<{
-		currentCount: number;
-		maxGoals: number;
-		canAddMore: boolean;
-		isPaid: boolean;
-		remainingGoals: number;
-	} | null>(null);
-	const [submitError, setSubmitError] = useState<string>("");
+	const [internalOpen, setInternalOpen] = React.useState(false);
+	const [submitError, setSubmitError] = React.useState<string>("");
 	const form = useForm<GoalFormFields>({
 		defaultValues: { title: "", description: "", deadline: "" },
 	});
@@ -55,44 +44,32 @@ export function AddGoalDialog({
 	const setIsDialogOpen =
 		onOpenChange !== undefined ? onOpenChange : setInternalOpen;
 
-	// 目標制限情報を取得する関数
-	const fetchGoalLimits = useCallback(async () => {
-		try {
-			const supabase = createClient();
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-			if (user) {
-				const limits = await getUserGoalLimits(user.id);
-				setGoalLimits(limits);
-			}
-		} catch (_error) {}
-	}, []);
+	// カスタムフックを使用
+	const { data: goalLimits } = useGoalLimits();
+	const createGoal = useCreateStudyGoal();
 
-	// 初期読み込み時に制限情報を取得
-	useEffect(() => {
-		fetchGoalLimits();
-	}, [fetchGoalLimits]);
-
-	// ダイアログが開かれるたびに制限情報を取得
+	// ダイアログが開かれるたびにエラーをクリア
 	useEffect(() => {
 		if (isDialogOpen) {
-			fetchGoalLimits();
 			setSubmitError("");
 		}
-	}, [isDialogOpen, fetchGoalLimits]);
+	}, [isDialogOpen]);
 
 	const onSubmit = async (data: GoalFormFields) => {
 		setSubmitError("");
-		const result = await addStudyGoal(data);
-
-		if (result.success) {
-			router.refresh();
-			form.reset();
-			setIsDialogOpen(false);
-		} else {
-			setSubmitError(result.error);
-		}
+		createGoal.mutate(data, {
+			onSuccess: (result) => {
+				if (result.success) {
+					form.reset();
+					setIsDialogOpen(false);
+				} else {
+					setSubmitError(result.error);
+				}
+			},
+			onError: (error) => {
+				setSubmitError(error.message || "目標の追加に失敗しました");
+			},
+		});
 	};
 
 	const triggerActualButtonProps = triggerButtonProps || {};
@@ -197,9 +174,12 @@ export function AddGoalDialog({
 							<Button
 								type="submit"
 								className="mt-2"
-								disabled={goalLimits ? !goalLimits.canAddMore : false}
+								disabled={
+									(goalLimits ? !goalLimits.canAddMore : false) ||
+									createGoal.isPending
+								}
 							>
-								追加
+								{createGoal.isPending ? "追加中..." : "追加"}
 							</Button>
 						</form>
 					</Form>
