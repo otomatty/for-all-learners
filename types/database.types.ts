@@ -2342,6 +2342,48 @@ export type Database = {
 					},
 				];
 			};
+			user_page_visits: {
+				Row: {
+					created_at: string;
+					id: string;
+					last_visited_at: string;
+					page_id: string;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					id?: string;
+					last_visited_at?: string;
+					page_id: string;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					id?: string;
+					last_visited_at?: string;
+					page_id?: string;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_page_visits_page_id_fkey";
+						columns: ["page_id"];
+						isOneToOne: false;
+						referencedRelation: "pages";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "user_page_visits_user_id_fkey";
+						columns: ["user_id"];
+						isOneToOne: false;
+						referencedRelation: "accounts";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			user_plugins: {
 				Row: {
 					config: Json | null;
