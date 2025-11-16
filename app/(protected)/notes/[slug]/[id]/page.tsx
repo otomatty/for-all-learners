@@ -2,7 +2,6 @@ import type { JSONContent } from "@tiptap/core";
 import { notFound, redirect } from "next/navigation";
 import { getAllUserPages } from "@/app/_actions/notes";
 import { getLastPageVisit, recordPageVisit } from "@/app/_actions/page-visits";
-import { getSharedPagesByUser } from "@/app/_actions/pages";
 import { Container } from "@/components/layouts/container";
 import EditPageForm from "@/components/pages/EditPageForm";
 import { BackLink } from "@/components/ui/back-link";
@@ -47,14 +46,10 @@ export default async function PageDetail({ params }: PageDetailProps) {
 		.single();
 	const cosenseProjectName = relation?.cosense_projects.project_name ?? null;
 
-	const [myPages, sharedPageShares] = await Promise.all([
-		getAllUserPages(user.id),
-		getSharedPagesByUser(user.id),
-	]);
-	const sharedPages = sharedPageShares.map((share) => share.pages);
-	const allPages = [...myPages, ...sharedPages];
+	// Get user pages (shared pages will be fetched in EditPageForm client component)
+	const myPages = await getAllUserPages(user.id);
 	const pagesMap = new Map<string, string>(
-		allPages.map((p) => [p.title, p.id]),
+		myPages.map((p) => [p.title, p.id]),
 	);
 
 	const decoratedDoc = transformPageLinks(
