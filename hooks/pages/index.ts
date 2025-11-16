@@ -10,3 +10,5 @@ export { usePagesByNote } from "./usePagesByNote";
 export type { SharedPage } from "./useSharedPages";
 export { useSharedPages } from "./useSharedPages";
 export { useUpdatePage } from "./useUpdatePage";
+export { useUserPages } from "./useUserPages";
+export type { UserPageSummary } from "./useUserPages";

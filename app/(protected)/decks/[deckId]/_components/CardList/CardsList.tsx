@@ -1,12 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/core";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useCardsByDeck } from "@/hooks/cards";
+import { useUserPages } from "@/hooks/pages";
 import logger from "@/lib/logger";
-import { createClient } from "@/lib/supabase/client";
 import { CardsListClient } from "./CardsListClient";
 import { CardsListSkeleton } from "./CardsListSkeleton";
 
@@ -24,19 +23,7 @@ export function CardsList({ deckId, canEdit, userId }: CardsListProps) {
 	} = useCardsByDeck(deckId);
 
 	// ユーザーの全ページを取得し、タイトル→IDマップを作成
-	const supabase = createClient();
-	const { data: userPagesData } = useQuery({
-		queryKey: ["pages", "user", userId],
-		queryFn: async () => {
-			const { data, error } = await supabase
-				.from("pages")
-				.select("id,title")
-				.eq("user_id", userId);
-			if (error) throw error;
-			return data ?? [];
-		},
-		enabled: !!userId,
-	});
+	const { data: userPagesData } = useUserPages(userId);
 
 	const pagesMap = useMemo(() => {
 		return new Map<string, string>(

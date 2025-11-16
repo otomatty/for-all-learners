@@ -37,13 +37,19 @@ export function useCreateCards() {
 			// 関連するクエリを無効化
 			if (data.length > 0) {
 				const deckIds = [...new Set(data.map((card) => card.deck_id))];
+				const userIds = [...new Set(data.map((card) => card.user_id))];
 				deckIds.forEach((deckId) => {
 					queryClient.invalidateQueries({
 						queryKey: ["cards", "deck", deckId],
 					});
 				});
+				userIds.forEach((userId) => {
+					queryClient.invalidateQueries({
+						queryKey: ["cards", "user", userId],
+					});
+				});
+				queryClient.invalidateQueries({ queryKey: ["cards", "due"] });
 			}
-			queryClient.invalidateQueries({ queryKey: ["cards"] });
 		},
 	});
 }

@@ -38,7 +38,10 @@ export function useDeleteCard() {
 			queryClient.invalidateQueries({
 				queryKey: ["cards", "deck", data.deck_id],
 			});
-			queryClient.invalidateQueries({ queryKey: ["cards"] });
+			queryClient.invalidateQueries({
+				queryKey: ["cards", "user", data.user_id],
+			});
+			queryClient.invalidateQueries({ queryKey: ["cards", "due"] });
 		},
 	});
 }

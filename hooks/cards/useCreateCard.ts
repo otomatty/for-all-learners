@@ -1,10 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUserPlanFeatures, isUserPaid } from "@/app/_actions/subscriptions";
-import type { QuestionType } from "@/lib/gemini";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
+import { triggerQuestionGeneration } from "./utils";
 
 export type Card = Database["public"]["Tables"]["cards"]["Row"];
 export type CreateCardPayload = Omit<
@@ -38,40 +37,20 @@ export function useCreateCard() {
 			if (!data) throw new Error("createCard: no data returned");
 
 			// バックグラウンドで問題プリジェネをキック（有料ユーザーのみ）
-			try {
-				const paid = await isUserPaid(data.user_id);
-				if (paid) {
-					const features = (await getUserPlanFeatures(data.user_id)) || [];
-					// ユーザーのロケール取得
-					const { data: settings } = await supabase
-						.from("user_settings")
-						.select("locale")
-						.eq("user_id", data.user_id)
-						.single();
-					const locale = settings?.locale ?? "ja";
-					for (const type of features as QuestionType[]) {
-						await supabase.functions.invoke("generate-questions-bg", {
-							body: JSON.stringify({
-								cardId: data.id,
-								type,
-								locale,
-								userId: data.user_id,
-							}),
-						});
-					}
-				}
-			} catch (_err) {
-				// バックグラウンド処理のエラーは無視
-			}
+			await triggerQuestionGeneration(supabase, data);
 
 			return data;
 		},
 		onSuccess: (data) => {
 			// 関連するクエリを無効化
+			queryClient.invalidateQueries({ queryKey: ["cards", data.id] });
 			queryClient.invalidateQueries({
 				queryKey: ["cards", "deck", data.deck_id],
 			});
-			queryClient.invalidateQueries({ queryKey: ["cards"] });
+			queryClient.invalidateQueries({
+				queryKey: ["cards", "user", data.user_id],
+			});
+			queryClient.invalidateQueries({ queryKey: ["cards", "due"] });
 		},
 	});
 }
