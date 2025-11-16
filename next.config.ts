@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 import webpack from "webpack";
 
+// Detect if running in Tauri environment
+const internalHost = process.env.TAURI_DEV_HOST || "localhost";
+
 // PWA plugin options
 const pwaOptions = {
 	dest: "public",
@@ -12,7 +15,13 @@ const pwaOptions = {
 
 /** @type {NextConfig} */
 const nextConfig: NextConfig = {
+	// NOTE: Static export (output: "export") is NOT used for now
+	// Current app structure uses Server Actions, middleware, and server-side auth
+	// Will gradually migrate to client-side in Phase 1-6 of Tauri migration
+	// For now, Tauri runs Next.js dev server internally
 	images: {
+		// Keep image optimization enabled for better performance
+		unoptimized: false,
 		domains: [
 			"scrapbox.io",
 			"gyazo.com",
@@ -22,6 +31,10 @@ const nextConfig: NextConfig = {
 			"storage.googleapis.com",
 		],
 	},
+	// Set assetPrefix for proper asset resolution in Tauri dev environment
+	assetPrefix: process.env.TAURI_ENV
+		? `http://${internalHost}:3000`
+		: undefined,
 	experimental: {
 		serverActions: {
 			bodySizeLimit: "25mb", // PDF処理用に25MBまで拡張
