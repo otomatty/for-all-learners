@@ -28,6 +28,23 @@
 
 ## 実装フェーズ
 
+## テスト駆動開発（TDD）アプローチ
+
+**重要**: すべてのフェーズで**テスト駆動開発（TDD）のアプローチを採用**します。
+
+### TDDのワークフロー
+
+1. **Red（赤）**: 既存のServer Actionを分析し、テストケースを先に作成（テストは失敗する）
+2. **Green（緑）**: テストが通るようにカスタムフックを実装
+3. **Refactor（リファクタ）**: コードを改善し、テストが引き続き通ることを確認
+
+### テスト作成のガイドライン
+
+- **既存のServer Actionを参考**: テストは既存のServer Actionの動作を再現するように記述
+- **テストヘルパーの活用**: `hooks/{feature}/__tests__/helpers.ts` に共通のモックやヘルパー関数を定義
+- **テスト構造**: Notes関連のテスト（`hooks/notes/__tests__/`）を参考にする
+- **カバレッジ**: 正常系・異常系・エッジケースを網羅
+
 ### Phase 0: 準備・環境構築（1週間）
 
 **目標**: Tauri開発環境のセットアップと基盤整備
@@ -112,55 +129,68 @@ app/_actions/notes/
 └── types.ts
 ```
 
-**実装手順**:
+**実装手順（TDDアプローチ）**:
 
-1. **カスタムフックの作成** (2-3日)
-   - [ ] `lib/hooks/use-notes.ts` 作成
-   - [ ] `useNotes()` - ノート一覧取得
-   - [ ] `useNote(id)` - ノート詳細取得
-   - [ ] `useCreateNote()` - ノート作成
-   - [ ] `useUpdateNote()` - ノート更新
-   - [ ] `useDeleteNote()` - ノート削除
-   - [ ] `useLinkPageToNote()` - ページ紐付け
-   - [ ] `useUnlinkPageFromNote()` - ページ紐付け解除
-   - [ ] `useShareNote()` - ノート共有
-   - [ ] `useUnshareNote()` - 共有解除
-   - [ ] `useNoteShareLinks()` - 共有リンク取得
-   - [ ] `useGenerateNoteShareLink()` - 共有リンク生成
-   - [ ] `useRevokeNoteShareLink()` - 共有リンク失効
-   - [ ] `useJoinNoteByLink()` - リンクでノート参加
-   - [ ] `useJoinNotePublic()` - 公開ノート参加
-   - [ ] `useMoveNoteToTrash()` - ゴミ箱へ移動
-   - [ ] `useRestoreNoteFromTrash()` - ゴミ箱から復元
-   - [ ] `useTrashItems()` - ゴミ箱アイテム取得
-   - [ ] `useDeletePagesPermanently()` - ページ完全削除
-   - [ ] `useBatchMovePages()` - ページ一括移動
-   - [ ] `useCheckPageConflict()` - ページ競合チェック
-   - [ ] `useCheckBatchConflicts()` - 一括競合チェック
-   - [ ] `useCreateDefaultNote()` - デフォルトノート作成
-   - [ ] `useGetDefaultNote()` - デフォルトノート取得
-   - [ ] `useGetAllUserPages()` - 全ユーザーページ取得
-   - [ ] `useMigrateOrphanedPages()` - 孤立ページ移行
+1. **既存Server Actionの分析** (0.5日)
+   - [x] `app/_actions/notes/` の各関数を分析（完了）
+   - [x] 入力・出力・エラーハンドリングを確認（完了）
 
-2. **Server Actions呼び出し箇所の特定と置き換え** (2-3日)
-   - [ ] `app/(protected)/notes/` 配下のコンポーネントを確認
-   - [ ] Server Actionsの呼び出し箇所を特定
-   - [ ] カスタムフックへの置き換え
-   - [ ] `revalidatePath()` の削除
+2. **テストケースの作成** (1日)
+   - [x] `hooks/notes/__tests__/` ディレクトリ作成（完了）
+   - [x] `hooks/notes/__tests__/helpers.ts` - テストヘルパー作成（完了）
+   - [x] 各カスタムフックのテストファイル作成（完了）
+   - [x] 各テストは既存のServer Actionの動作を再現するように記述（完了）
 
-3. **テスト・動作確認** (1-2日)
-   - [ ] 各機能の動作確認
-   - [ ] エラーハンドリングの確認
-   - [ ] キャッシュ動作の確認
+3. **カスタムフックの作成** (2-3日)
+   - [x] `hooks/notes/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成
+   - [x] `useNotes()` - ノート一覧取得 (`hooks/notes/useNotes.ts`)
+   - [x] `useNote(slug)` - ノート詳細取得 (`hooks/notes/useNote.ts`)
+   - [x] `useCreateNote()` - ノート作成 (`hooks/notes/useCreateNote.ts`)
+   - [x] `useUpdateNote()` - ノート更新 (`hooks/notes/useUpdateNote.ts`)
+   - [x] `useDeleteNote()` - ノート削除 (`hooks/notes/useDeleteNote.ts`)
+   - [x] `useLinkPageToNote()` - ページ紐付け (`hooks/notes/useLinkPageToNote.ts`)
+   - [x] `useUnlinkPageFromNote()` - ページ紐付け解除 (`hooks/notes/useUnlinkPageFromNote.ts`)
+   - [x] `useShareNote()` - ノート共有 (`hooks/notes/useShareNote.ts`)
+   - [x] `useUnshareNote()` - 共有解除 (`hooks/notes/useUnshareNote.ts`)
+   - [x] `useNoteShareLinks()` - 共有リンク取得 (`hooks/notes/useNoteShareLinks.ts`)
+   - [x] `useGenerateNoteShareLink()` - 共有リンク生成 (`hooks/notes/useGenerateNoteShareLink.ts`)
+   - [x] `useRevokeNoteShareLink()` - 共有リンク失効 (`hooks/notes/useRevokeNoteShareLink.ts`)
+   - [x] `useJoinNoteByLink()` - リンクでノート参加 (`hooks/notes/useJoinNoteByLink.ts`)
+   - [x] `useJoinNotePublic()` - 公開ノート参加 (`hooks/notes/useJoinNotePublic.ts`)
+   - [x] `useMoveNoteToTrash()` - ゴミ箱へ移動 (`hooks/notes/useMoveNoteToTrash.ts`)
+   - [x] `useRestoreNoteFromTrash()` - ゴミ箱から復元 (`hooks/notes/useRestoreNoteFromTrash.ts`)
+   - [x] `useTrashItems()` - ゴミ箱アイテム取得 (`hooks/notes/useTrashItems.ts`)
+   - [x] `useDeletePagesPermanently()` - ページ完全削除 (`hooks/notes/useDeletePagesPermanently.ts`)
+   - [x] `useBatchMovePages()` - ページ一括移動 (`hooks/notes/useBatchMovePages.ts`)
+   - [x] `useCheckPageConflict()` - ページ競合チェック (`hooks/notes/useCheckPageConflict.ts`)
+   - [x] `useCheckBatchConflicts()` - 一括競合チェック (`hooks/notes/useCheckBatchConflicts.ts`)
+   - [x] `useCreateDefaultNote()` - デフォルトノート作成 (`hooks/notes/useCreateDefaultNote.ts`)
+   - [x] `useDefaultNote()` - デフォルトノート取得 (`hooks/notes/useDefaultNote.ts`)
+   - [x] `useAllUserPages()` - 全ユーザーページ取得 (`hooks/notes/useAllUserPages.ts`)
+   - [x] `useMigrateOrphanedPages()` - 孤立ページ移行 (`hooks/notes/useMigrateOrphanedPages.ts`)
+
+4. **Server Actions呼び出し箇所の特定と置き換え** (2-3日)
+   - [x] `app/(protected)/notes/` 配下のコンポーネントを確認
+   - [x] Server Actionsの呼び出し箇所を特定
+   - [x] カスタムフックへの置き換え
+   - [x] `revalidatePath()` の削除（Notes関連では使用されていなかった）
+
+5. **テスト・動作確認** (1-2日)
+   - [x] 各機能の動作確認
+   - [x] エラーハンドリングの確認
+   - [x] キャッシュ動作の確認
+   - [x] テストがすべて通ることを確認（完了）
 
 **参照ファイル**:
 - `app/_actions/notes/*` - 移行元Server Actions
 - `app/(protected)/notes/` - 使用箇所
-- `lib/hooks/use-notes.ts` - 新規作成
+- `hooks/notes/*` - 新規作成（29個のフックファイル）
+
+**注意**: カスタムフックはルートの `hooks/` ディレクトリ配下に配置。各フックを個別ファイルとして作成。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
 
 **実装例**:
 ```typescript
-// lib/hooks/use-notes.ts
+// hooks/notes/useNotes.ts
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -217,10 +247,53 @@ export function useCreateNote() {
 **対象ファイル**:
 - `app/_actions/decks.ts`
 
-**実装手順**:
-- [ ] `lib/hooks/use-decks.ts` 作成
-- [ ] Server Actions呼び出し箇所の置き換え
-- [ ] テスト・動作確認
+**対象Server Actions**:
+- `getDecksByUser(userId: string)` - ユーザーのデッキ一覧取得
+- `getDeckById(id: string)` - デッキ詳細取得
+- `createDeck(deck)` - デッキ作成
+- `updateDeck(id, updates)` - デッキ更新
+- `deleteDeck(id: string)` - デッキ削除（関連データも削除）
+- `getSharedDecksByUser(userId: string)` - 共有デッキ一覧取得
+- `createDeckAction(formData)` - フォームからデッキ作成（revalidatePath含む）
+- `syncDeckLinks(deckId: string)` - デッキ内カードのリンク同期
+
+**実装手順（TDDアプローチ）**:
+
+1. **既存Server Actionの分析** (0.5日)
+   - [ ] `app/_actions/decks.ts` の各関数を分析
+   - [ ] 入力・出力・エラーハンドリングを確認
+   - [ ] 依存関係（`syncCardLinks`, `revalidatePath`）を確認
+
+2. **テストケースの作成** (1日)
+   - [ ] `hooks/decks/__tests__/` ディレクトリ作成
+   - [ ] `hooks/decks/__tests__/helpers.ts` - テストヘルパー作成
+   - [ ] `hooks/decks/__tests__/useDecks.test.ts` - `useDecks()` のテスト
+   - [ ] `hooks/decks/__tests__/useDeck.test.ts` - `useDeck(id)` のテスト
+   - [ ] `hooks/decks/__tests__/useCreateDeck.test.ts` - `useCreateDeck()` のテスト
+   - [ ] `hooks/decks/__tests__/useUpdateDeck.test.ts` - `useUpdateDeck()` のテスト
+   - [ ] `hooks/decks/__tests__/useDeleteDeck.test.ts` - `useDeleteDeck()` のテスト
+   - [ ] `hooks/decks/__tests__/useSharedDecks.test.ts` - `useSharedDecks()` のテスト
+   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
+   - [ ] テストは最初は失敗する（Red）
+
+3. **カスタムフックの実装** (1日)
+   - [ ] `hooks/decks/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成
+   - [ ] `useDecks()` - デッキ一覧取得 (`hooks/decks/useDecks.ts`)
+   - [ ] `useDeck(id)` - デッキ詳細取得 (`hooks/decks/useDeck.ts`)
+   - [ ] `useCreateDeck()` - デッキ作成 (`hooks/decks/useCreateDeck.ts`)
+   - [ ] `useUpdateDeck()` - デッキ更新 (`hooks/decks/useUpdateDeck.ts`)
+   - [ ] `useDeleteDeck()` - デッキ削除 (`hooks/decks/useDeleteDeck.ts`)
+   - [ ] `useSharedDecks()` - 共有デッキ一覧取得 (`hooks/decks/useSharedDecks.ts`)
+   - [ ] テストが通るまで実装を繰り返す（Green）
+   - [ ] リファクタリング（Refactor）
+
+4. **Server Actions呼び出し箇所の置き換え** (0.5日)
+   - [ ] `app/(protected)/decks/` 配下のコンポーネントを確認
+   - [ ] Server Actionsの呼び出し箇所を特定
+   - [ ] カスタムフックへの置き換え
+   - [ ] `revalidatePath()` の削除
+
+**注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/decks/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
 
 #### Phase 1.3: Pages関連の移行（2-3日）
 
@@ -228,10 +301,51 @@ export function useCreateNote() {
 - `app/_actions/pages.ts`
 - `app/_actions/pages/get-backlinks.ts`
 
-**実装手順**:
-- [ ] `lib/hooks/use-pages.ts` 作成
-- [ ] Server Actions呼び出し箇所の置き換え
-- [ ] テスト・動作確認
+**対象Server Actions**:
+- `getPagesByNote(noteId: string)` - ノート内のページ一覧取得
+- `getPageById(id: string)` - ページ詳細取得
+- `createPage(page, autoGenerateThumbnail)` - ページ作成（サムネイル自動生成付き）
+- `updatePage(id, updates)` - ページ更新
+- `deletePage(id: string)` - ページ削除
+- `getSharedPagesByUser(userId: string)` - 共有ページ一覧取得
+
+**実装手順（TDDアプローチ）**:
+
+1. **既存Server Actionの分析** (0.5日)
+   - [ ] `app/_actions/pages.ts` の各関数を分析
+   - [ ] 入力・出力・エラーハンドリングを確認
+   - [ ] 依存関係（`syncLinkGroupsForPage`, `connectLinkGroupToPage`, `linkPageToDefaultNote`）を確認
+   - [ ] サムネイル自動生成ロジックの確認
+
+2. **テストケースの作成** (1日)
+   - [ ] `hooks/pages/__tests__/` ディレクトリ作成
+   - [ ] `hooks/pages/__tests__/helpers.ts` - テストヘルパー作成
+   - [ ] `hooks/pages/__tests__/usePagesByNote.test.ts` - `usePagesByNote()` のテスト
+   - [ ] `hooks/pages/__tests__/usePage.test.ts` - `usePage(id)` のテスト
+   - [ ] `hooks/pages/__tests__/useCreatePage.test.ts` - `useCreatePage()` のテスト
+   - [ ] `hooks/pages/__tests__/useUpdatePage.test.ts` - `useUpdatePage()` のテスト
+   - [ ] `hooks/pages/__tests__/useDeletePage.test.ts` - `useDeletePage()` のテスト
+   - [ ] `hooks/pages/__tests__/useSharedPages.test.ts` - `useSharedPages()` のテスト
+   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
+   - [ ] テストは最初は失敗する（Red）
+
+3. **カスタムフックの実装** (1日)
+   - [ ] `hooks/pages/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成
+   - [ ] `usePagesByNote(noteId)` - ノート内のページ一覧取得 (`hooks/pages/usePagesByNote.ts`)
+   - [ ] `usePage(id)` - ページ詳細取得 (`hooks/pages/usePage.ts`)
+   - [ ] `useCreatePage()` - ページ作成 (`hooks/pages/useCreatePage.ts`)
+   - [ ] `useUpdatePage()` - ページ更新 (`hooks/pages/useUpdatePage.ts`)
+   - [ ] `useDeletePage()` - ページ削除 (`hooks/pages/useDeletePage.ts`)
+   - [ ] `useSharedPages()` - 共有ページ一覧取得 (`hooks/pages/useSharedPages.ts`)
+   - [ ] テストが通るまで実装を繰り返す（Green）
+   - [ ] リファクタリング（Refactor）
+
+4. **Server Actions呼び出し箇所の置き換え** (0.5日)
+   - [ ] `app/(protected)/pages/` 配下のコンポーネントを確認
+   - [ ] Server Actionsの呼び出し箇所を特定
+   - [ ] カスタムフックへの置き換え
+
+**注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/pages/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
 
 #### Phase 1.4: Cards関連の移行（2-3日）
 
@@ -239,10 +353,60 @@ export function useCreateNote() {
 - `app/_actions/cards.ts`
 - `app/_actions/syncCardLinks.ts`
 
-**実装手順**:
-- [ ] `lib/hooks/use-cards.ts` 作成
-- [ ] Server Actions呼び出し箇所の置き換え
-- [ ] テスト・動作確認
+**対象Server Actions**:
+- `getCardsByDeck(deckId: string)` - デッキ内のカード一覧取得
+- `getCardById(id: string)` - カード詳細取得
+- `createCard(card)` - カード作成（バックグラウンド問題生成含む）
+- `updateCard(id, updates)` - カード更新（バックグラウンド問題生成含む）
+- `deleteCard(id: string)` - カード削除
+- `getCardsByUser(userId: string)` - ユーザーのカード一覧取得
+- `createCards(cards)` - カード一括作成
+- `getDueCardsByDeck(deckId, userId)` - 期限切れカード取得
+- `getAllDueCountsByUser(userId)` - ユーザーの期限切れカード数取得
+
+**実装手順（TDDアプローチ）**:
+
+1. **既存Server Actionの分析** (0.5日)
+   - [ ] `app/_actions/cards.ts` の各関数を分析
+   - [ ] 入力・出力・エラーハンドリングを確認
+   - [ ] 依存関係（`getUserPlanFeatures`, `isUserPaid`, Edge Functions）を確認
+   - [ ] バックグラウンド処理の扱いを確認
+
+2. **テストケースの作成** (1日)
+   - [ ] `hooks/cards/__tests__/` ディレクトリ作成
+   - [ ] `hooks/cards/__tests__/helpers.ts` - テストヘルパー作成
+   - [ ] `hooks/cards/__tests__/useCardsByDeck.test.ts` - `useCardsByDeck()` のテスト
+   - [ ] `hooks/cards/__tests__/useCard.test.ts` - `useCard(id)` のテスト
+   - [ ] `hooks/cards/__tests__/useCreateCard.test.ts` - `useCreateCard()` のテスト
+   - [ ] `hooks/cards/__tests__/useUpdateCard.test.ts` - `useUpdateCard()` のテスト
+   - [ ] `hooks/cards/__tests__/useDeleteCard.test.ts` - `useDeleteCard()` のテスト
+   - [ ] `hooks/cards/__tests__/useCardsByUser.test.ts` - `useCardsByUser()` のテスト
+   - [ ] `hooks/cards/__tests__/useCreateCards.test.ts` - `useCreateCards()` のテスト
+   - [ ] `hooks/cards/__tests__/useDueCardsByDeck.test.ts` - `useDueCardsByDeck()` のテスト
+   - [ ] `hooks/cards/__tests__/useAllDueCountsByUser.test.ts` - `useAllDueCountsByUser()` のテスト
+   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
+   - [ ] テストは最初は失敗する（Red）
+
+3. **カスタムフックの実装** (1日)
+   - [ ] `hooks/cards/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成
+   - [ ] `useCardsByDeck(deckId)` - デッキ内のカード一覧取得 (`hooks/cards/useCardsByDeck.ts`)
+   - [ ] `useCard(id)` - カード詳細取得 (`hooks/cards/useCard.ts`)
+   - [ ] `useCreateCard()` - カード作成 (`hooks/cards/useCreateCard.ts`)
+   - [ ] `useUpdateCard()` - カード更新 (`hooks/cards/useUpdateCard.ts`)
+   - [ ] `useDeleteCard()` - カード削除 (`hooks/cards/useDeleteCard.ts`)
+   - [ ] `useCardsByUser()` - ユーザーのカード一覧取得 (`hooks/cards/useCardsByUser.ts`)
+   - [ ] `useCreateCards()` - カード一括作成 (`hooks/cards/useCreateCards.ts`)
+   - [ ] `useDueCardsByDeck()` - 期限切れカード取得 (`hooks/cards/useDueCardsByDeck.ts`)
+   - [ ] `useAllDueCountsByUser()` - ユーザーの期限切れカード数取得 (`hooks/cards/useAllDueCountsByUser.ts`)
+   - [ ] テストが通るまで実装を繰り返す（Green）
+   - [ ] リファクタリング（Refactor）
+
+4. **Server Actions呼び出し箇所の置き換え** (0.5日)
+   - [ ] `app/(protected)/decks/[deckId]/` 配下のコンポーネントを確認
+   - [ ] Server Actionsの呼び出し箇所を特定
+   - [ ] カスタムフックへの置き換え
+
+**注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/cards/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。バックグラウンド処理（Edge Functions呼び出し）は、テストではモックする。
 
 #### Phase 1.5: その他のCRUD操作（2-3日）
 
@@ -252,10 +416,33 @@ export function useCreateNote() {
 - `app/_actions/milestone.ts`
 - `app/_actions/review.ts`
 
-**実装手順**:
-- [ ] 各機能のカスタムフック作成
-- [ ] Server Actions呼び出し箇所の置き換え
-- [ ] テスト・動作確認
+**実装手順（TDDアプローチ）**:
+
+1. **既存Server Actionの分析** (0.5日)
+   - [ ] 各ファイルのServer Actionsを分析
+   - [ ] 入力・出力・エラーハンドリングを確認
+   - [ ] 依存関係を確認
+
+2. **テストケースの作成** (1日)
+   - [ ] 各機能のテストディレクトリ作成
+   - [ ] `hooks/study_goals/__tests__/` - 学習目標のテスト
+   - [ ] `hooks/learning_logs/__tests__/` - 学習ログのテスト
+   - [ ] `hooks/milestone/__tests__/` - マイルストーンのテスト
+   - [ ] `hooks/review/__tests__/` - 復習のテスト
+   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
+   - [ ] テストは最初は失敗する（Red）
+
+3. **カスタムフックの実装** (1日)
+   - [ ] 各機能のカスタムフック作成
+   - [ ] テストが通るまで実装を繰り返す（Green）
+   - [ ] リファクタリング（Refactor）
+
+4. **Server Actions呼び出し箇所の置き換え** (0.5日)
+   - [ ] Server Actionsの呼び出し箇所を特定
+   - [ ] カスタムフックへの置き換え
+   - [ ] テスト・動作確認
+
+**注意**: **テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
 
 #### 完了条件
 
@@ -582,7 +769,7 @@ export function useUploadImage() {
 - [ ] Server Actions ファイルの棚卸し
 
 ### Phase 1: CRUD操作
-- [ ] Notes関連の移行完了
+- [x] Notes関連の移行完了（2025-11-16完了）
 - [ ] Decks関連の移行完了
 - [ ] Pages関連の移行完了
 - [ ] Cards関連の移行完了
@@ -649,6 +836,10 @@ export function useUploadImage() {
 ---
 
 **作成日**: 2025-11-09  
-**最終更新**: 2025-11-09  
+**最終更新**: 2025-11-16  
 **担当**: 開発チーム
+
+## 更新履歴
+
+- 2025-11-16: TDDアプローチを明記。Phase 1.2以降の各フェーズでテストを先に作成してから実装を行うように更新。Phase 1.1（Notes関連）の完了を反映。
 

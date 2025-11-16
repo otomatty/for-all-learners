@@ -8,19 +8,16 @@ import {
 	TrashIcon,
 	XIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
-import {
-	deletePagesPermanently,
-	getTrashItems,
-	restoreFromTrash,
-	type TrashItem,
-} from "@/app/_actions/notes";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useDeletePagesPermanently } from "@/hooks/notes/useDeletePagesPermanently";
+import { useRestoreNoteFromTrash } from "@/hooks/notes/useRestoreNoteFromTrash";
+import { useTrashItems } from "@/hooks/notes/useTrashItems";
 
 interface TrashPanelProps {
 	selectedTrashIds: string[];
@@ -33,31 +30,18 @@ export function TrashPanel({
 	onSelectTrash,
 	onRestoreComplete,
 }: TrashPanelProps) {
-	const [trashItems, setTrashItems] = useState<TrashItem[]>([]);
-	const [loading, setLoading] = useState(false);
-	const [totalCount, setTotalCount] = useState(0);
+	const { data: trashData, isLoading, refetch } = useTrashItems({ limit: 100 });
+	const deletePagesPermanently = useDeletePagesPermanently();
+	const restoreFromTrash = useRestoreNoteFromTrash();
+
+	const trashItems = trashData?.trashItems || [];
+	const totalCount = trashData?.totalCount || 0;
+	const loading = isLoading;
 
 	// ゴミ箱アイテムを読み込み
-	const loadTrashItems = useCallback(async () => {
-		setLoading(true);
-		try {
-			const result = await getTrashItems({ limit: 100 });
-			if (result.success) {
-				setTrashItems(result.trashItems);
-				setTotalCount(result.totalCount);
-			} else {
-				toast.error(result.message || "ゴミ箱の読み込みに失敗しました");
-			}
-		} catch (_error) {
-			toast.error("ゴミ箱の読み込みに失敗しました");
-		}
-		setLoading(false);
-	}, []);
-
-	// 初回読み込み
-	useEffect(() => {
-		loadTrashItems();
-	}, [loadTrashItems]);
+	const loadTrashItems = useCallback(() => {
+		refetch();
+	}, [refetch]);
 
 	// 選択状態の切り替え
 	const toggleSelection = (trashId: string) => {
@@ -85,7 +69,7 @@ export function TrashPanel({
 
 		try {
 			toast.loading("復元中...");
-			const result = await restoreFromTrash({
+			const result = await restoreFromTrash.mutateAsync({
 				trashIds: selectedTrashIds,
 				targetNoteId,
 			});
@@ -121,7 +105,7 @@ export function TrashPanel({
 
 		try {
 			toast.loading("完全削除中...");
-			const result = await deletePagesPermanently({ pageIds });
+			const result = await deletePagesPermanently.mutateAsync({ pageIds });
 
 			toast.dismiss();
 

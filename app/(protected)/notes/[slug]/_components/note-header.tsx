@@ -12,7 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { deleteNote } from "@/app/_actions/notes";
 import { ShareSettingsModal } from "@/components/ShareSettingsModal";
 import {
 	AlertDialog,
@@ -34,6 +33,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDeleteNote } from "@/hooks/notes/useDeleteNote";
 import { createClient } from "@/lib/supabase/client";
 
 interface NoteHeaderProps {
@@ -64,10 +64,10 @@ export default function NoteHeader({
 	onOpenDeckDialog,
 }: NoteHeaderProps) {
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [showShareModal, setShowShareModal] = useState(false);
 	const router = useRouter();
+	const deleteNote = useDeleteNote();
 
 	useEffect(() => {
 		const supabase = createClient();
@@ -102,16 +102,14 @@ export default function NoteHeader({
 					: "destructive";
 
 	const handleDelete = async () => {
-		setIsDeleting(true);
 		try {
-			await deleteNote(id);
+			await deleteNote.mutateAsync(id);
 			toast.success("ノートを削除しました");
 			router.push("/notes");
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "ノートの削除に失敗しました。",
 			);
-			setIsDeleting(false);
 		}
 	};
 
@@ -227,8 +225,9 @@ export default function NoteHeader({
 						<AlertDialogAction
 							onClick={handleDelete}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							disabled={deleteNote.isPending}
 						>
-							{isDeleting ? "削除中..." : "削除"}
+							{deleteNote.isPending ? "削除中..." : "削除"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

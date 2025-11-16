@@ -1,5 +1,7 @@
-import { getNotesList } from "@/app/_actions/notes";
+"use client";
+
 import { Container } from "@/components/layouts/container";
+import { useNotes } from "@/hooks/notes/useNotes";
 import CreateNoteDialog from "./_components/create-note-dialog";
 import type { NoteSummary } from "./_components/notes-list";
 import NotesList from "./_components/notes-list";
@@ -28,8 +30,29 @@ const mockRecommended: NoteSummary[] = [
 	},
 ];
 
-export default async function NotesPage() {
-	const notes: NoteSummary[] = await getNotesList();
+export default function NotesPage() {
+	const { data: notes, isLoading, error } = useNotes();
+
+	if (isLoading) {
+		return (
+			<Container>
+				<div className="flex items-center justify-center p-8">
+					<p>読み込み中...</p>
+				</div>
+			</Container>
+		);
+	}
+
+	if (error) {
+		return (
+			<Container>
+				<div className="flex items-center justify-center p-8">
+					<p className="text-destructive">エラーが発生しました</p>
+				</div>
+			</Container>
+		);
+	}
+
 	return (
 		<Container>
 			<section className="mb-8">
@@ -37,7 +60,7 @@ export default async function NotesPage() {
 					<h2 className="text-xl font-bold">My Notes</h2>
 					<CreateNoteDialog />
 				</div>
-				<NotesList notes={notes} />
+				<NotesList notes={notes || []} />
 			</section>
 			<section className="mb-8">
 				<h2 className="text-xl font-bold mb-4">おすすめの公開Notes</h2>
