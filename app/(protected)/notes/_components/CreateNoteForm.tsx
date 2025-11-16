@@ -1,13 +1,9 @@
 "use client";
 
 import { Check, Loader2, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-	type CreateNotePayload,
-	createNote,
-	shareNote,
-} from "@/app/_actions/notes";
+import type { CreateNotePayload } from "@/app/_actions/notes/types";
 import { validateSlug } from "@/app/_actions/slug";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,6 +34,8 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateNote } from "@/hooks/notes/useCreateNote";
+import { useShareNote } from "@/hooks/notes/useShareNote";
 import { createClient } from "@/lib/supabase/client";
 
 interface CreateNoteFormProps {
@@ -45,7 +43,8 @@ interface CreateNoteFormProps {
 }
 
 export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
-	const [isPending, startTransition] = useTransition();
+	const createNote = useCreateNote();
+	const shareNote = useShareNote();
 	const methods = useForm<CreateNotePayload>({
 		defaultValues: {
 			title: "",
@@ -102,14 +101,14 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 		}
 	}, [step]);
 
-	const onSubmit = (data: CreateNotePayload) => {
-		startTransition(async () => {
-			try {
-				const note = await createNote(data);
-				setCreatedNoteId(note.id);
-				setStep("share");
-			} catch (_err) {}
-		});
+	const onSubmit = async (data: CreateNotePayload) => {
+		try {
+			const note = await createNote.mutateAsync(data);
+			setCreatedNoteId(note.id);
+			setStep("share");
+		} catch (_err) {
+			// Error handling is done by the mutation
+		}
 	};
 
 	return (
@@ -219,9 +218,9 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 						<div className="flex justify-end">
 							<Button
 								type="submit"
-								disabled={isPending || formState.isSubmitting}
+								disabled={createNote.isPending || formState.isSubmitting}
 							>
-								{isPending ? "作成中…" : "作成"}
+								{createNote.isPending ? "作成中…" : "作成"}
 							</Button>
 						</div>
 					</form>
@@ -274,11 +273,18 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 	async function handleShare() {
 		setIsSharing(true);
 		try {
-			for (const userId of selectedUserIds) {
-				await shareNote(createdNoteId, userId, "viewer");
-			}
+			await Promise.all(
+				Array.from(selectedUserIds).map((userId) =>
+					shareNote.mutateAsync({
+						noteId: createdNoteId,
+						userId,
+						permission: "viewer",
+					}),
+				),
+			);
 			onSuccess();
 		} catch (_err) {
+			// Error handling is done by the mutation
 		} finally {
 			setIsSharing(false);
 		}

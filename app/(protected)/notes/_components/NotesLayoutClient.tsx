@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { batchMovePages } from "@/app/_actions/notes/batchMovePages";
-import { checkBatchConflicts } from "@/app/_actions/notes/checkBatchConflicts";
 import { ConflictResolutionDialog } from "@/app/(protected)/notes/explorer/_components/conflict-resolution-dialog";
 import type {
 	ConflictInfo,
 	ConflictResolution,
 } from "@/app/(protected)/notes/explorer/types";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { NotesExplorerSidebar } from "./notes-sidebar";
+import { useBatchMovePages } from "@/hooks/notes/useBatchMovePages";
+import { useCheckBatchConflicts } from "@/hooks/notes/useCheckBatchConflicts";
+import { NotesExplorerSidebar } from "./NotesSidebar";
 
 type Note = {
 	id: string;
@@ -22,6 +22,7 @@ type Note = {
 type NotesLayoutClientProps = {
 	notes: Note[];
 	children: React.ReactNode;
+	isLoading?: boolean;
 };
 
 export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
@@ -32,6 +33,9 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 		conflicts: ConflictInfo[];
 	} | null>(null);
 
+	const checkBatchConflicts = useCheckBatchConflicts();
+	const batchMovePages = useBatchMovePages();
+
 	const handlePageMove = async (
 		pageIds: string[],
 		targetNoteId: string,
@@ -41,7 +45,7 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 			toast.loading(`${isCopy ? "コピー" : "移動"}の準備中...`);
 
 			// まず競合をチェック
-			const conflicts = await checkBatchConflicts({
+			const conflicts = await checkBatchConflicts.mutateAsync({
 				pageIds,
 				targetNoteId,
 				isCopy,
@@ -88,7 +92,7 @@ export function NotesLayoutClient({ notes, children }: NotesLayoutClientProps) {
 		try {
 			toast.loading(`${isCopy ? "コピー" : "移動"}中...`);
 
-			const result = await batchMovePages({
+			const result = await batchMovePages.mutateAsync({
 				pageIds,
 				sourceNoteId: currentNote.id,
 				targetNoteId,

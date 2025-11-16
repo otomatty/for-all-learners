@@ -10,7 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import type { NoteSummary } from "../../_components/notes-list";
+import type { NoteSummary } from "../../_components/NotesList";
 
 interface OperationPanelProps {
 	selectedPageIds: string[];
