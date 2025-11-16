@@ -388,11 +388,11 @@ export function useCreateNote() {
 
 **注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/pages/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
 
-#### Phase 1.4: Cards関連の移行（2-3日）
+#### Phase 1.4: Cards関連の移行（2-3日）✅ 完了（2025-11-17）
 
 **対象ファイル**:
 - `app/_actions/cards.ts`
-- `app/_actions/syncCardLinks.ts`
+- `app/_actions/syncCardLinks.ts` (後で対応)
 
 **対象Server Actions**:
 - `getCardsByDeck(deckId: string)` - デッキ内のカード一覧取得
@@ -408,44 +408,63 @@ export function useCreateNote() {
 **実装手順（TDDアプローチ）**:
 
 1. **既存Server Actionの分析** (0.5日)
-   - [ ] `app/_actions/cards.ts` の各関数を分析
-   - [ ] 入力・出力・エラーハンドリングを確認
-   - [ ] 依存関係（`getUserPlanFeatures`, `isUserPaid`, Edge Functions）を確認
-   - [ ] バックグラウンド処理の扱いを確認
+   - [x] `app/_actions/cards.ts` の各関数を分析（完了）
+   - [x] 入力・出力・エラーハンドリングを確認（完了）
+   - [x] 依存関係（`getUserPlanFeatures`, `isUserPaid`, Edge Functions）を確認（完了）
+   - [x] バックグラウンド処理の扱いを確認（完了）
 
 2. **テストケースの作成** (1日)
-   - [ ] `hooks/cards/__tests__/` ディレクトリ作成
-   - [ ] `hooks/cards/__tests__/helpers.ts` - テストヘルパー作成
-   - [ ] `hooks/cards/__tests__/useCardsByDeck.test.ts` - `useCardsByDeck()` のテスト
-   - [ ] `hooks/cards/__tests__/useCard.test.ts` - `useCard(id)` のテスト
-   - [ ] `hooks/cards/__tests__/useCreateCard.test.ts` - `useCreateCard()` のテスト
-   - [ ] `hooks/cards/__tests__/useUpdateCard.test.ts` - `useUpdateCard()` のテスト
-   - [ ] `hooks/cards/__tests__/useDeleteCard.test.ts` - `useDeleteCard()` のテスト
-   - [ ] `hooks/cards/__tests__/useCardsByUser.test.ts` - `useCardsByUser()` のテスト
-   - [ ] `hooks/cards/__tests__/useCreateCards.test.ts` - `useCreateCards()` のテスト
-   - [ ] `hooks/cards/__tests__/useDueCardsByDeck.test.ts` - `useDueCardsByDeck()` のテスト
-   - [ ] `hooks/cards/__tests__/useAllDueCountsByUser.test.ts` - `useAllDueCountsByUser()` のテスト
-   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
-   - [ ] テストは最初は失敗する（Red）
+   - [x] `hooks/cards/__tests__/` ディレクトリ作成（完了）
+   - [x] `hooks/cards/__tests__/helpers.tsx` - テストヘルパー作成（完了）
+   - [x] `hooks/cards/__tests__/useCardsByDeck.test.ts` - `useCardsByDeck()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useCard.test.ts` - `useCard(id)` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useCreateCard.test.ts` - `useCreateCard()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useUpdateCard.test.ts` - `useUpdateCard()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useDeleteCard.test.ts` - `useDeleteCard()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useCardsByUser.test.ts` - `useCardsByUser()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useCreateCards.test.ts` - `useCreateCards()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useDueCardsByDeck.test.ts` - `useDueCardsByDeck()` のテスト（完了）
+   - [x] `hooks/cards/__tests__/useAllDueCountsByUser.test.ts` - `useAllDueCountsByUser()` のテスト（完了）
+   - [x] 各テストは既存のServer Actionの動作を再現するように記述（完了）
+   - [x] テストは最初は失敗する（Red）（完了）
 
 3. **カスタムフックの実装** (1日)
-   - [ ] `hooks/cards/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成
-   - [ ] `useCardsByDeck(deckId)` - デッキ内のカード一覧取得 (`hooks/cards/useCardsByDeck.ts`)
-   - [ ] `useCard(id)` - カード詳細取得 (`hooks/cards/useCard.ts`)
-   - [ ] `useCreateCard()` - カード作成 (`hooks/cards/useCreateCard.ts`)
-   - [ ] `useUpdateCard()` - カード更新 (`hooks/cards/useUpdateCard.ts`)
-   - [ ] `useDeleteCard()` - カード削除 (`hooks/cards/useDeleteCard.ts`)
-   - [ ] `useCardsByUser()` - ユーザーのカード一覧取得 (`hooks/cards/useCardsByUser.ts`)
-   - [ ] `useCreateCards()` - カード一括作成 (`hooks/cards/useCreateCards.ts`)
-   - [ ] `useDueCardsByDeck()` - 期限切れカード取得 (`hooks/cards/useDueCardsByDeck.ts`)
-   - [ ] `useAllDueCountsByUser()` - ユーザーの期限切れカード数取得 (`hooks/cards/useAllDueCountsByUser.ts`)
-   - [ ] テストが通るまで実装を繰り返す（Green）
-   - [ ] リファクタリング（Refactor）
+   - [x] `hooks/cards/` ディレクトリ配下に各カスタムフックを個別ファイルとして作成（完了）
+   - [x] `useCardsByDeck(deckId)` - デッキ内のカード一覧取得 (`hooks/cards/useCardsByDeck.ts`)（完了）
+   - [x] `useCard(id)` - カード詳細取得 (`hooks/cards/useCard.ts`)（完了）
+   - [x] `useCreateCard()` - カード作成 (`hooks/cards/useCreateCard.ts`)（完了）
+   - [x] `useUpdateCard()` - カード更新 (`hooks/cards/useUpdateCard.ts`)（完了）
+   - [x] `useDeleteCard()` - カード削除 (`hooks/cards/useDeleteCard.ts`)（完了）
+   - [x] `useCardsByUser()` - ユーザーのカード一覧取得 (`hooks/cards/useCardsByUser.ts`)（完了）
+   - [x] `useCreateCards()` - カード一括作成 (`hooks/cards/useCreateCards.ts`)（完了）
+   - [x] `useDueCardsByDeck()` - 期限切れカード取得 (`hooks/cards/useDueCardsByDeck.ts`)（完了）
+   - [x] `useAllDueCountsByUser()` - ユーザーの期限切れカード数取得 (`hooks/cards/useAllDueCountsByUser.ts`)（完了）
+   - [x] `hooks/cards/index.ts` - エクスポートファイル作成（完了）
+   - [x] テストが通るまで実装を繰り返す（Green）（完了、33テストすべて成功）
+   - [x] リファクタリング（Refactor）（完了）
 
 4. **Server Actions呼び出し箇所の置き換え** (0.5日)
-   - [ ] `app/(protected)/decks/[deckId]/` 配下のコンポーネントを確認
-   - [ ] Server Actionsの呼び出し箇所を特定
-   - [ ] カスタムフックへの置き換え
+   - [x] `app/(protected)/decks/[deckId]/` 配下のコンポーネントを確認（完了）
+   - [x] Server Actionsの呼び出し箇所を特定（完了）
+   - [x] カスタムフックへの置き換え（完了）
+   - [x] `app/(protected)/decks/[deckId]/_components/CardList/CardsList.tsx` - `getCardsByDeck` を `useCardsByDeck` に置き換え（完了）
+   - [x] `app/(protected)/decks/[deckId]/_components/CardForm.tsx` - `createCard`, `updateCard` を `useCreateCard`, `useUpdateCard` に置き換え（完了）
+   - [x] `app/(protected)/decks/[deckId]/pdf/_components/PdfCardGenerator/PdfGeneratedCardList.tsx` - `createCards` を `useCreateCards` に置き換え（完了）
+   - [x] `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - `createCards` を `useCreateCards` に置き換え（完了）
+   - [x] `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - `createCards` を `useCreateCards` に置き換え（完了）
+   - [ ] `app/(protected)/dashboard/page.tsx` - `getAllDueCountsByUser` の置き換え（Server Componentのため後で対応）
+   - [ ] `app/admin/users/[id]/_components/DecksAndCards.tsx` - `getCardsByUser` の置き換え（Server Componentのため後で対応）
+
+**実装完了内容**:
+- 9つのカスタムフックを作成（useCardsByDeck, useCard, useCreateCard, useUpdateCard, useDeleteCard, useCardsByUser, useCreateCards, useDueCardsByDeck, useAllDueCountsByUser）
+- すべてのテストケースを作成・実装（33テスト、すべて成功）
+- 主要なクライアントコンポーネントでのServer Actions呼び出しをカスタムフックに置き換え
+- バックグラウンド処理（Edge Functions呼び出し）を実装（有料ユーザーの場合のみ）
+
+**参照ファイル**:
+- `app/_actions/cards.ts` - 移行元Server Actions
+- `app/(protected)/decks/[deckId]/` - 使用箇所（置き換え完了）
+- `hooks/cards/*` - 新規作成（9個のフックファイル + index.ts）
 
 **注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/cards/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。バックグラウンド処理（Edge Functions呼び出し）は、テストではモックする。
 
@@ -813,7 +832,7 @@ export function useUploadImage() {
 - [x] Notes関連の移行完了（2025-11-16完了）
 - [x] Decks関連の移行完了（2025-11-16完了）
 - [x] Pages関連の移行完了（2025-11-16完了）
-- [ ] Cards関連の移行完了
+- [x] Cards関連の移行完了（2025-11-17完了）
 - [ ] その他のCRUD操作の移行完了
 - [ ] `revalidatePath()` の削除完了
 
@@ -877,7 +896,7 @@ export function useUploadImage() {
 ---
 
 **作成日**: 2025-11-09  
-**最終更新**: 2025-11-16  
+**最終更新**: 2025-11-17  
 **担当**: 開発チーム
 
 ## 更新履歴
@@ -885,4 +904,5 @@ export function useUploadImage() {
 - 2025-11-16: TDDアプローチを明記。Phase 1.2以降の各フェーズでテストを先に作成してから実装を行うように更新。Phase 1.1（Notes関連）の完了を反映。
 - 2025-11-16: Phase 1.2（Decks関連）の移行完了を反映。8つのカスタムフック作成、RPC関数実装、コンポーネントリネーム・再構成、ページクライアントコンポーネント追加を完了。
 - 2025-11-16: Phase 1.3（Pages関連）の移行完了を反映。7つのカスタムフック作成、すべてのテストケース作成・実装（36テスト、すべて成功）、`linkPageToDefaultNote` のクライアント側実装追加、Server Actions呼び出し箇所の一部置き換えを完了。
+- 2025-11-17: Phase 1.4（Cards関連）の移行完了を反映。9つのカスタムフック作成、すべてのテストケース作成・実装（33テスト、すべて成功）、主要なクライアントコンポーネントでのServer Actions呼び出しをカスタムフックに置き換え、バックグラウンド処理（Edge Functions呼び出し）を実装。
 

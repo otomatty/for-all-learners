@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { createCards } from "@/app/_actions/cards";
 import type { GeneratedCard } from "@/app/_actions/generateCards";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
 import { createRawInput } from "@/app/_actions/rawInputs";
@@ -21,6 +20,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateCards } from "@/hooks/cards";
 import { createClient } from "@/lib/supabase/client";
 
 interface ImageCardGeneratorProps {
@@ -62,8 +62,9 @@ export function ImageCardGenerator({
 }: ImageCardGeneratorProps) {
 	const supabase = createClient();
 	const router = useRouter();
+	const createCardsMutation = useCreateCards();
 	const [isProcessing, setIsProcessing] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
+	const isSaving = createCardsMutation.isPending;
 	const [imageBlob, setImageBlob] = useState<Blob | null>(null);
 	const [imageUrl, setImageUrl] = useState("");
 	const [generatedCards, setGeneratedCards] = useState<CardWithId[]>([]);
@@ -166,7 +167,6 @@ export function ImageCardGenerator({
 			});
 			return;
 		}
-		setIsSaving(true);
 		try {
 			const cardsToInsert = selected.map((card) => {
 				const frontJson = {
@@ -195,7 +195,7 @@ export function ImageCardGenerator({
 					source_ocr_image_url: card.source_audio_url,
 				};
 			});
-			await createCards(cardsToInsert);
+			await createCardsMutation.mutateAsync(cardsToInsert);
 			toast.success("カードを保存しました", {
 				description: `${cardsToInsert.length}件保存されました。`,
 			});
@@ -207,8 +207,6 @@ export function ImageCardGenerator({
 						? error.message
 						: "カード保存中にエラーが発生しました。",
 			});
-		} finally {
-			setIsSaving(false);
 		}
 	};
 
