@@ -1,6 +1,6 @@
 {
   "name": "@fal/plugin-types",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TypeScript type definitions for F.A.L plugin development",
   "main": "index.d.ts",
   "types": "index.d.ts",
