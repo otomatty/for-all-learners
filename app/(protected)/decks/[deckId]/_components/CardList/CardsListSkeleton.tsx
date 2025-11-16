@@ -1,4 +1,4 @@
-import { CardItem } from "./card-item";
+import { CardItem } from "./CardItem/CardItem";
 
 interface CardsListSkeletonProps {
 	/** 表示するスケルトンアイテムの数 */

@@ -1,31 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
-import { syncDeckLinks } from "@/app/_actions/decks";
 import { Button } from "@/components/ui/button";
+import { useSyncDeckLinks } from "@/hooks/decks";
 
 interface SyncButtonProps {
 	deckId: string;
 }
 
 export function SyncButton({ deckId }: SyncButtonProps) {
-	const router = useRouter();
-	const [isSyncing, setIsSyncing] = useState(false);
+	const syncDeckLinksMutation = useSyncDeckLinks();
+	const isSyncing = syncDeckLinksMutation.isPending;
 
 	const handleSync = async () => {
-		setIsSyncing(true);
 		try {
-			await syncDeckLinks(deckId);
+			await syncDeckLinksMutation.mutateAsync(deckId);
 			toast.success("リンクの同期が完了しました");
-			router.refresh();
 		} catch (err: unknown) {
 			toast.error(
 				err instanceof Error ? err.message : "リンクの同期に失敗しました",
 			);
-		} finally {
-			setIsSyncing(false);
 		}
 	};
 

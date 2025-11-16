@@ -1,14 +1,35 @@
+/**
+ * DeckForm Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   ├─ app/(protected)/dashboard/_components/GoalSummary/GoalDeckSection/MobileDecksList.tsx
+ *   ├─ app/(protected)/decks/[deckId]/_components/ActionMenu.tsx
+ *   ├─ app/(protected)/dashboard/_components/GoalSummary/GoalDeckSection/decks-table.tsx
+ *   └─ app/(protected)/decks/_components/create-deck-dialog-button.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @/components/ui/button
+ *   ├─ @/components/ui/input
+ *   ├─ @/components/ui/label
+ *   ├─ @/components/ui/switch
+ *   ├─ @/components/ui/textarea
+ *   ├─ @/hooks/decks (useCreateDeck, useUpdateDeck)
+ *   └─ @/lib/supabase/client
+ */
+
 "use client";
 
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import { updateDeck } from "@/app/_actions/decks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateDeck, useUpdateDeck } from "@/hooks/decks";
 import { createClient } from "@/lib/supabase/client";
 
 interface DeckFormProps {
@@ -31,19 +52,23 @@ export function DeckForm({
 	onSuccess,
 }: DeckFormProps) {
 	const router = useRouter();
-	const supabase = createClient();
+	const _supabase = createClient();
 	const titleId = useId();
 	const descriptionId = useId();
 	const isPublicId = useId();
-	const [isLoading, setIsLoading] = useState(false);
 	// Initialize form state (use initial values for edit)
 	const [title, setTitle] = useState(initialTitle ?? "");
 	const [description, setDescription] = useState(initialDescription ?? "");
 	const [isPublic, setIsPublic] = useState(initialIsPublic);
 
+	const updateDeckMutation = useUpdateDeck();
+	const createDeckMutation = useCreateDeck();
+
+	const isLoading =
+		updateDeckMutation.isPending || createDeckMutation.isPending;
+
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setIsLoading(true);
 
 		try {
 			if (!title.trim()) {
@@ -51,21 +76,24 @@ export function DeckForm({
 			}
 
 			if (deckId) {
-				// 更新: サーバーアクションを利用
-				await updateDeck(deckId, { title, description, is_public: isPublic });
+				// 更新: カスタムフックを利用
+				await updateDeckMutation.mutateAsync({
+					id: deckId,
+					updates: { title, description, is_public: isPublic },
+				});
 				toast.success("デッキ情報を更新しました");
 				onSuccess?.();
-				router.refresh();
 			} else {
-				// 作成: 型付けしたSupabaseコール
-				const { data, error } = await supabase
-					.from("decks")
-					.insert({ user_id: userId, title, description, is_public: isPublic })
-					.select();
-				if (error) throw error;
+				// 作成: カスタムフックを利用
+				const newDeck = await createDeckMutation.mutateAsync({
+					user_id: userId,
+					title,
+					description,
+					is_public: isPublic,
+				});
 				toast.success("デッキを作成しました");
 				onSuccess?.();
-				router.push(`/decks/${data[0].id}`);
+				router.push(`/decks/${newDeck.id}`);
 			}
 		} catch (err) {
 			// Determine user-friendly message
@@ -78,8 +106,6 @@ export function DeckForm({
 				if (supaErr.message) message = supaErr.message;
 			}
 			toast.error(message);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 

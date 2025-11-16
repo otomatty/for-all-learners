@@ -214,7 +214,7 @@ export function PdfFileSelection({
 							<Card key={`${file.name}-${index}`} className="p-3">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-3 flex-1 min-w-0">
-										<FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+										<FileText className="h-5 w-5 text-blue-600" />
 										<div className="flex-1 min-w-0">
 											<p className="text-sm font-medium truncate">
 												{file.name}

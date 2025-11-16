@@ -35,8 +35,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DeckForm } from "../../_components/deck-form";
-import { CardForm } from "../_components/card-form";
+import { DeckForm } from "../../../../../components/decks/DeckForm";
+import { CardForm } from "./CardForm";
 
 interface ActionMenuProps {
 	deckId: string;
