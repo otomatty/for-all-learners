@@ -1,0 +1,40 @@
+{
+	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+	"productName": "For All Learners",
+	"version": "0.3.0",
+	"identifier": "com.saedgewell.for-all-learners",
+	"build": {
+		"frontendDist": "../out",
+		"devUrl": "http://localhost:3000",
+		"beforeDevCommand": "bun dev",
+		"beforeBuildCommand": "bun build"
+	},
+	"app": {
+		"windows": [
+			{
+				"label": "main",
+				"title": "For All Learners",
+				"url": "dashboard",
+				"width": 1400,
+				"height": 900,
+				"resizable": true,
+				"fullscreen": false,
+				"center": true
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	}
+}
