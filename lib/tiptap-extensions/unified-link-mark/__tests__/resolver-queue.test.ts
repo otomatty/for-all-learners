@@ -6,8 +6,12 @@
  * 統合テストで実施します。ここでは設定値のみをテストします。
  */
 
-import { describe, expect, it } from "vitest";
+import { Editor } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import logger from "../../../logger";
 import { RESOLVER_CONFIG } from "../config";
+import { enqueueResolve } from "../resolver-queue";
 
 describe("UnifiedLinkMark Resolver Queue Config", () => {
 	describe("RESOLVER_CONFIG", () => {
@@ -39,6 +43,88 @@ describe("UnifiedLinkMark Resolver Queue Config", () => {
 			// Third retry (if maxRetries was higher): 100 * 2^2 = 400ms
 			const thirdRetryDelay = RESOLVER_CONFIG.retryDelayBase * 2 ** 2;
 			expect(thirdRetryDelay).toBe(400);
+		});
+	});
+
+	describe("External URL handling (Issue #138)", () => {
+		let editor: Editor;
+
+		beforeEach(() => {
+			editor = new Editor({
+				extensions: [StarterKit],
+				content: "",
+			});
+		});
+
+		afterEach(() => {
+			editor?.destroy();
+		});
+
+		it("should skip resolution for https:// URLs", () => {
+			// Mock logger.debug to track if skip message is logged
+			const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
+
+			// Try to enqueue external URL
+			enqueueResolve({
+				key: "https://example.com",
+				raw: "https://example.com",
+				markId: "test-mark-id",
+				editor,
+				variant: "bracket",
+			});
+
+			// Should log skip message
+			expect(debugSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					raw: "https://example.com",
+					markId: "test-mark-id",
+				}),
+				expect.stringContaining("Skipping external URL"),
+			);
+
+			debugSpy.mockRestore();
+		});
+
+		it("should skip resolution for http:// URLs", () => {
+			const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
+
+			enqueueResolve({
+				key: "http://example.com",
+				raw: "http://example.com",
+				markId: "test-mark-id-2",
+				editor,
+				variant: "bracket",
+			});
+
+			expect(debugSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					raw: "http://example.com",
+					markId: "test-mark-id-2",
+				}),
+				expect.stringContaining("Skipping external URL"),
+			);
+
+			debugSpy.mockRestore();
+		});
+
+		it("should not skip resolution for internal links", () => {
+			const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
+
+			enqueueResolve({
+				key: "internal-page",
+				raw: "Internal Page",
+				markId: "test-mark-id-3",
+				editor,
+				variant: "bracket",
+			});
+
+			// Should not log skip message for internal links
+			const skipCalls = debugSpy.mock.calls.filter((call) =>
+				call[1]?.toString().includes("Skipping external URL"),
+			);
+			expect(skipCalls.length).toBe(0);
+
+			debugSpy.mockRestore();
 		});
 	});
 });

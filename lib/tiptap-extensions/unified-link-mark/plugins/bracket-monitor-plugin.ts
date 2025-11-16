@@ -251,13 +251,48 @@ function applyBracketMark(
 	// Check if this is an external URL (starts with http:// or https://)
 	const isExternal = PATTERNS.externalUrl.test(raw);
 
+	// External URLs should use standard link mark instead of unilink mark
+	if (isExternal) {
+		const linkMarkType = tr.doc.type.schema.marks.link;
+		if (linkMarkType) {
+			debugLog("APPLY", "applying link mark for external URL", {
+				from,
+				to,
+				raw,
+				href: raw,
+			});
+
+			// Remove any existing marks in this range.
+			// Both unilink and link marks are removed to ensure no conflicting marks remain before applying the standard link mark.
+			// This is necessary because, in rare edge cases, both marks could coexist due to prior editing or schema changes.
+			tr.removeMark(from, to, markType);
+			tr.removeMark(from, to, linkMarkType);
+
+			// Add standard link mark with external URL
+			tr.addMark(
+				from,
+				to,
+				linkMarkType.create({
+					href: raw,
+					target: "_blank",
+				}),
+			);
+
+			return tr;
+		}
+		// Fallback: if link mark type is not available, log warning and continue with unilink
+		debugLog("WARN", "link mark type not available, falling back to unilink", {
+			raw,
+		});
+	}
+
 	const attrs: UnifiedLinkAttributes = {
 		variant: "bracket",
 		raw,
 		text,
 		key,
 		pageId: null,
-		href: isExternal ? raw : `#${key}`,
+		href: `#${key}`,
 		state: "pending", // Always pending for closed brackets
 		exists: false,
 		markId,

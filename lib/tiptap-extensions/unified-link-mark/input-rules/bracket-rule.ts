@@ -48,8 +48,9 @@ export function createBracketInputRule(_context: {
 
 			// Check if the matched range already has a unilink mark
 			// If it does, skip processing to prevent re-processing already marked content
+			// Note: range.from and range.to already include the full bracket notation [text]
 			const hasUnilinkMark = state.doc.rangeHasMark(
-				range.from - 1, // Include the opening bracket
+				range.from,
 				range.to,
 				state.schema.marks.unilink,
 			);
@@ -83,14 +84,12 @@ export function createBracketInputRule(_context: {
 			// Check if external link
 			const isExternal = PATTERNS.externalUrl.test(raw);
 
-			// Note: InputRule range doesn't include the opening bracket
-			// We need to shift back by 1 to include it in the deletion
-			const { from: origFrom, to } = range;
-			const from = origFrom - 1; // Shift back to include the opening bracket
+			// Note: InputRule range.from and range.to already include the full bracket notation [text]
+			const { from, to } = range;
 
 			if (DEBUG_BRACKET_RULE) {
 				logger.debug(
-					{ raw, key, markId, isExternal, origFrom, from, to },
+					{ raw, key, markId, isExternal, from, to },
 					"[BracketInputRule] Processing match",
 				);
 			}
@@ -123,6 +122,55 @@ export function createBracketInputRule(_context: {
 				);
 			}
 
+			// External URLs should use standard link mark instead of unilink mark
+			if (isExternal) {
+				if (DEBUG_BRACKET_RULE) {
+					logger.debug(
+						{
+							deleteFrom: from,
+							deleteTo: to,
+							deleteText: state.doc.textBetween(from, to),
+						},
+						"[BracketInputRule] ℹ️ Applying link mark for external URL",
+					);
+				}
+				// Apply link mark to the entire bracket notation [text] for consistency with bracket-monitor-plugin
+				chain()
+					.focus()
+					.deleteRange({ from, to })
+					.insertContent([
+						{
+							type: "text",
+							text: "[",
+						},
+						{
+							type: "text",
+							text: text,
+							marks: [
+								{
+									type: "link",
+									attrs: {
+										href: raw,
+										target: "_blank",
+									},
+								},
+							],
+						},
+						{
+							type: "text",
+							text: "]",
+						},
+					])
+					.run();
+				if (DEBUG_BRACKET_RULE) {
+					logger.debug(
+						{ text: `[${text}]`, href: raw },
+						"[BracketInputRule] ✅ Link mark applied for external URL",
+					);
+				}
+				return;
+			}
+
 			// Simple link creation: bracket = link, no async resolution needed
 			const attrs: UnifiedLinkAttributes = {
 				variant: "bracket",
@@ -130,7 +178,7 @@ export function createBracketInputRule(_context: {
 				text,
 				key,
 				pageId: null,
-				href: isExternal ? raw : `#${key}`, // Use key as href for internal links
+				href: `#${key}`, // Use key as href for internal links
 				state: "exists", // Always exists - bracket presence defines link status
 				exists: true,
 				markId,
@@ -148,27 +196,30 @@ export function createBracketInputRule(_context: {
 					"[BracketInputRule] ℹ️ Applying mark to entire bracket notation",
 				);
 			}
+			// Use array form for insertContent to simplify and improve readability
 			chain()
 				.focus()
 				.deleteRange({ from, to })
-				.insertContent({
-					type: "text",
-					text: "[",
-				})
-				.insertContent({
-					type: "text",
-					text: text,
-					marks: [
-						{
-							type: "unilink",
-							attrs,
-						},
-					],
-				})
-				.insertContent({
-					type: "text",
-					text: "]",
-				})
+				.insertContent([
+					{
+						type: "text",
+						text: "[",
+					},
+					{
+						type: "text",
+						text: text,
+						marks: [
+							{
+								type: "unilink",
+								attrs,
+							},
+						],
+					},
+					{
+						type: "text",
+						text: "]",
+					},
+				])
 				.run();
 			if (DEBUG_BRACKET_RULE) {
 				logger.debug(

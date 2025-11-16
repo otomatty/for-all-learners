@@ -7,6 +7,7 @@ import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PATTERNS } from "../../config";
+import { UnifiedLinkMark } from "../../index";
 import { createBracketInputRule } from "../bracket-rule";
 
 // Note: happy-dom environment is already set up in vitest.config.mts
@@ -135,6 +136,216 @@ describe("createBracketInputRule", () => {
 				const isExternal = PATTERNS.externalUrl.test(link);
 				expect(isExternal).toBe(false);
 			}
+		});
+	});
+
+	describe("External URL handling (Issue #138)", () => {
+		let editor: Editor;
+
+		beforeEach(() => {
+			editor = new Editor({
+				extensions: [
+					StarterKit,
+					UnifiedLinkMark.configure({
+						HTMLAttributes: {
+							class: "unilink",
+						},
+					}),
+				],
+				content: "",
+			});
+		});
+
+		afterEach(() => {
+			editor?.destroy();
+		});
+
+		it("should apply link mark for https:// URLs in brackets", () => {
+			// Create InputRule and test handler directly
+			const rule = createBracketInputRule({
+				editor,
+				name: "unilink",
+			});
+
+			// Set up editor state with bracket notation
+			editor.commands.setContent("<p>[https://example.com]</p>");
+
+			// Find the match in the document
+			const state = editor.state;
+			const text = state.doc.textContent;
+			const match = PATTERNS.bracket.exec(text);
+
+			expect(match).not.toBeNull();
+			expect(match?.[1]).toBe("https://example.com");
+
+			if (!match) {
+				throw new Error("Match should not be null");
+			}
+
+			// Create a mock range for the match
+			const from = text.indexOf("[");
+			const to = text.indexOf("]") + 1;
+			const range = { from, to };
+
+			// Create a mock chain to capture commands
+			const chainCommands: Array<{ type: string; args: unknown[] }> = [];
+			const chainObj = {
+				focus: () => chainObj,
+				deleteRange: (args: { from: number; to: number }) => {
+					chainCommands.push({ type: "deleteRange", args: [args] });
+					return chainObj;
+				},
+				insertContent: (args: unknown) => {
+					chainCommands.push({ type: "insertContent", args: [args] });
+					return chainObj;
+				},
+				run: () => {},
+			};
+			const chain = () =>
+				chainObj as unknown as ReturnType<typeof editor.chain>;
+
+			// Call the handler
+			rule.handler({
+				state,
+				match,
+				range,
+				chain: chain as () => ReturnType<typeof editor.chain>,
+				commands: {} as unknown as typeof editor.commands,
+				can: () => ({}) as unknown as ReturnType<typeof editor.can>,
+			} as Parameters<typeof rule.handler>[0]);
+
+			// Check that link mark was applied (not unilink)
+			// insertContent now uses array form, so we need to check the array elements
+			const linkInsertCommand = chainCommands.find(
+				(cmd) =>
+					cmd.type === "insertContent" &&
+					Array.isArray(cmd.args[0]) &&
+					cmd.args[0].some(
+						(item: unknown) =>
+							typeof item === "object" &&
+							item !== null &&
+							"marks" in item &&
+							Array.isArray((item as { marks: unknown[] }).marks) &&
+							(item as { marks: Array<{ type: string }> }).marks.some(
+								(m) => m.type === "link",
+							),
+					),
+			);
+
+			expect(linkInsertCommand).toBeDefined();
+			if (linkInsertCommand && Array.isArray(linkInsertCommand.args[0])) {
+				const contentArray = linkInsertCommand.args[0] as Array<{
+					type: string;
+					text?: string;
+					marks?: Array<{
+						type: string;
+						attrs?: { href?: string; target?: string };
+					}>;
+				}>;
+				const linkItem = contentArray.find((item) =>
+					item.marks?.some((m) => m.type === "link"),
+				);
+				expect(linkItem).toBeDefined();
+				if (linkItem?.marks) {
+					const linkMark = linkItem.marks.find((m) => m.type === "link");
+					expect(linkMark).toBeDefined();
+					expect(linkMark?.attrs?.href).toBe("https://example.com");
+					expect(linkMark?.attrs?.target).toBe("_blank");
+				}
+			}
+		});
+
+		it("should apply link mark for http:// URLs in brackets", () => {
+			const rule = createBracketInputRule({
+				editor,
+				name: "unilink",
+			});
+
+			editor.commands.setContent("<p>[http://example.com]</p>");
+
+			const state = editor.state;
+			const text = state.doc.textContent;
+			const match = PATTERNS.bracket.exec(text);
+
+			expect(match).not.toBeNull();
+			expect(match?.[1]).toBe("http://example.com");
+
+			if (!match) {
+				throw new Error("Match should not be null");
+			}
+
+			const from = text.indexOf("[");
+			const to = text.indexOf("]") + 1;
+			const range = { from, to };
+
+			const chainCommands: Array<{ type: string; args: unknown[] }> = [];
+			const chainObj = {
+				focus: () => chainObj,
+				deleteRange: (args: { from: number; to: number }) => {
+					chainCommands.push({ type: "deleteRange", args: [args] });
+					return chainObj;
+				},
+				insertContent: (args: unknown) => {
+					chainCommands.push({ type: "insertContent", args: [args] });
+					return chainObj;
+				},
+				run: () => {},
+			};
+			const chain = () =>
+				chainObj as unknown as ReturnType<typeof editor.chain>;
+
+			rule.handler({
+				state,
+				match,
+				range,
+				chain,
+				commands: {} as unknown as typeof editor.commands,
+				can: () => ({}) as unknown as ReturnType<typeof editor.can>,
+			} as Parameters<typeof rule.handler>[0]);
+
+			// insertContent now uses array form, so we need to check the array elements
+			const linkInsertCommand = chainCommands.find(
+				(cmd) =>
+					cmd.type === "insertContent" &&
+					Array.isArray(cmd.args[0]) &&
+					cmd.args[0].some(
+						(item: unknown) =>
+							typeof item === "object" &&
+							item !== null &&
+							"marks" in item &&
+							Array.isArray((item as { marks: unknown[] }).marks) &&
+							(item as { marks: Array<{ type: string }> }).marks.some(
+								(m) => m.type === "link",
+							),
+					),
+			);
+
+			expect(linkInsertCommand).toBeDefined();
+		});
+
+		it("should still apply unilink mark for internal links", () => {
+			// Type bracket notation with internal link
+			editor.chain().insertContent("[").run();
+			editor.chain().insertContent("Internal Page").run();
+			editor.chain().insertContent("]").run();
+
+			const state = editor.state;
+
+			// Check that unilink mark is applied, not link mark
+			let hasLinkMark = false;
+
+			state.doc.descendants((node) => {
+				if (node.isText) {
+					const marks = node.marks;
+					if (marks.some((m) => m.type.name === "link")) {
+						hasLinkMark = true;
+					}
+				}
+			});
+
+			// Note: StarterKit may not include UnifiedLinkMark, so unilink mark may not be present
+			// But link mark should definitely not be present for internal links
+			expect(hasLinkMark).toBe(false);
 		});
 	});
 
