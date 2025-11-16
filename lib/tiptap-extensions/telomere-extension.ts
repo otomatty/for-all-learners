@@ -111,43 +111,58 @@ export const TelomereExtension = Extension.create<TelomereExtensionOptions>({
 					const now = new Date();
 					const tr = newState.tr;
 					let modified = false;
+					const processedNodes = new Set<number>();
+					const isPaste = transactions.some((tr) => tr.getMeta("pasted"));
 
-					// Get selection range to identify which nodes might have been modified
-					const selection = newState.selection;
-					const selectionFrom = Math.max(0, selection.from - 100);
-					const selectionTo = Math.min(
-						newState.doc.content.size,
-						selection.to + 100,
-					);
+					// 1. Update nodes that were directly changed in this transaction
+					// Use selection range as a proxy for changed content (more efficient than scanning entire doc)
+					transactions.forEach((transaction) => {
+						if (!transaction.docChanged) return;
 
-					// Update updatedAt for block nodes in or near the selection
-					// Also update nodes that don't have updatedAt yet
-					newState.doc.nodesBetween(
-						0,
-						newState.doc.content.size,
-						(node, pos) => {
-							// Check if this node is a block type
-							if (!BLOCK_NODE_TYPES.includes(node.type.name)) {
-								return;
-							}
+						// Use selection range to identify which nodes might have been modified
+						const selection = newState.selection;
+						const selectionFrom = Math.max(0, selection.from - 100);
+						const selectionTo = Math.min(
+							newState.doc.content.size,
+							selection.to + 100,
+						);
 
-							// Check if this node needs update
-							const currentUpdatedAt = node.attrs.updatedAt;
-							const nodeEnd = pos + node.nodeSize;
-							const isNearSelection =
-								(pos >= selectionFrom && pos <= selectionTo) ||
-								(nodeEnd >= selectionFrom && nodeEnd <= selectionTo);
-							const needsUpdate = isNearSelection || !currentUpdatedAt;
-
-							if (needsUpdate) {
+						newState.doc.nodesBetween(selectionFrom, selectionTo, (node, pos) => {
+							if (
+								BLOCK_NODE_TYPES.includes(node.type.name) &&
+								!processedNodes.has(pos)
+							) {
 								tr.setNodeMarkup(pos, undefined, {
 									...node.attrs,
 									updatedAt: now.toISOString(),
 								});
 								modified = true;
+								processedNodes.add(pos);
 							}
-						},
-					);
+						});
+					});
+
+					// 2. Backfill `updatedAt` for nodes that don't have it, but only on paste
+					if (isPaste) {
+						newState.doc.nodesBetween(
+							0,
+							newState.doc.content.size,
+							(node, pos) => {
+								if (
+									BLOCK_NODE_TYPES.includes(node.type.name) &&
+									!node.attrs.updatedAt &&
+									!processedNodes.has(pos)
+								) {
+									tr.setNodeMarkup(pos, undefined, {
+										...node.attrs,
+										updatedAt: now.toISOString(),
+									});
+									modified = true;
+									processedNodes.add(pos);
+								}
+							},
+						);
+					}
 
 					if (!modified) return null;
 
@@ -160,10 +175,6 @@ export const TelomereExtension = Extension.create<TelomereExtensionOptions>({
 				view(view) {
 					// Function to apply telomere styles to all block elements
 					const applyTelomereStyles = () => {
-						if (lastVisitedAt === undefined) {
-							return;
-						}
-
 						const dom = view.dom;
 						const blockSelectors = [
 							"p[data-updated-at]",
@@ -196,12 +207,15 @@ export const TelomereExtension = Extension.create<TelomereExtensionOptions>({
 					};
 
 					// Apply styles initially
-					setTimeout(applyTelomereStyles, 0);
+					requestAnimationFrame(applyTelomereStyles);
 
 					return {
-						update: () => {
-							// Apply styles after each update
-							setTimeout(applyTelomereStyles, 0);
+						update: (updatedView, prevState) => {
+							// Apply styles only if the document has actually changed
+							if (!prevState.doc.eq(updatedView.state.doc)) {
+								// Using requestAnimationFrame for smoother rendering
+								requestAnimationFrame(applyTelomereStyles);
+							}
 						},
 					};
 				},
