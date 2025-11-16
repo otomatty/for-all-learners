@@ -17,6 +17,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import pkg from "../../../package.json";
 import { generateTypes } from "../generate-types";
 
 // Mock fs operations
@@ -111,7 +112,7 @@ describe("generateTypes", () => {
 			expect(packageJsonCall).toBeDefined();
 			const packageJsonContent = JSON.parse(packageJsonCall?.[1] as string);
 			expect(packageJsonContent.name).toBe("@fal/plugin-types");
-			expect(packageJsonContent.version).toBe("0.2.0");
+			expect(packageJsonContent.version).toBe(pkg.version);
 			expect(packageJsonContent.main).toBe("index.d.ts");
 			expect(packageJsonContent.types).toBe("index.d.ts");
 		});
@@ -300,7 +301,7 @@ describe("generateTypes", () => {
 
 			const packageJson = JSON.parse(packageJsonCall?.[1] as string);
 			expect(packageJson.name).toBe("@fal/plugin-types");
-			expect(packageJson.version).toBe("0.2.0");
+			expect(packageJson.version).toBe(pkg.version);
 			expect(packageJson.description).toContain("TypeScript type definitions");
 		});
 

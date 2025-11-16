@@ -23,6 +23,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import pkg from "../../package.json";
 
 // Simple logger for CLI output
 function log(message: string): void {
@@ -976,7 +977,7 @@ export type PluginActivateFunction = (
 function generatePackageJson(): Record<string, unknown> {
 	return {
 		name: "@fal/plugin-types",
-		version: "0.3.0",
+		version: pkg.version,
 		description: "TypeScript type definitions for F.A.L plugin development",
 		main: "index.d.ts",
 		types: "index.d.ts",
