@@ -127,19 +127,23 @@ export const TelomereExtension = Extension.create<TelomereExtensionOptions>({
 							selection.to + 100,
 						);
 
-						newState.doc.nodesBetween(selectionFrom, selectionTo, (node, pos) => {
-							if (
-								BLOCK_NODE_TYPES.includes(node.type.name) &&
-								!processedNodes.has(pos)
-							) {
-								tr.setNodeMarkup(pos, undefined, {
-									...node.attrs,
-									updatedAt: now.toISOString(),
-								});
-								modified = true;
-								processedNodes.add(pos);
-							}
-						});
+						newState.doc.nodesBetween(
+							selectionFrom,
+							selectionTo,
+							(node, pos) => {
+								if (
+									BLOCK_NODE_TYPES.includes(node.type.name) &&
+									!processedNodes.has(pos)
+								) {
+									tr.setNodeMarkup(pos, undefined, {
+										...node.attrs,
+										updatedAt: now.toISOString(),
+									});
+									modified = true;
+									processedNodes.add(pos);
+								}
+							},
+						);
 					});
 
 					// 2. Backfill `updatedAt` for nodes that don't have it, but only on paste
