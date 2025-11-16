@@ -29,7 +29,7 @@ export async function linkPageToDefaultNote(
 	}
 
 	if (!defaultNote) {
-		throw new Error("Default note not found");
+		throw new Error("デフォルトノートが見つかりませんでした");
 	}
 
 	// Check if link already exists

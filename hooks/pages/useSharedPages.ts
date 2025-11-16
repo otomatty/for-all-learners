@@ -10,6 +10,19 @@ export type SharedPage = Database["public"]["Tables"]["page_shares"]["Row"] & {
 
 /**
  * ユーザーに共有されたページ一覧を取得します。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ [使用しているファイルがあれば記載]
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @tanstack/react-query
+ *   ├─ @/lib/supabase/client
+ *   └─ @/types/database.types
+ *
+ * Related Documentation:
+ *   └─ docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export function useSharedPages() {
 	const supabase = createClient();

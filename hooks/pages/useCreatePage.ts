@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/core";
 import { linkPageToDefaultNote } from "@/hooks/notes/useLinkPageToDefaultNote";
+import logger from "@/lib/logger";
 import {
 	deleteLinkOccurrencesByPage,
 	upsertLinkGroup,
@@ -101,9 +102,17 @@ export function useCreatePage() {
 			// 3. Auto-link to default note (for /pages consolidation)
 			try {
 				await linkPageToDefaultNote(data.user_id, data.id);
-			} catch {
+			} catch (error) {
 				// Log but don't fail the page creation
 				// The page can still be manually linked later
+				logger.error(
+					{
+						pageId: data.id,
+						userId: data.user_id,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					"Failed to link page to default note",
+				);
 			}
 
 			return data;

@@ -6,6 +6,19 @@ import type { Database } from "@/types/database.types";
 
 /**
  * ページを更新します。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ [使用しているファイルがあれば記載]
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @tanstack/react-query
+ *   ├─ @/lib/supabase/client
+ *   └─ @/types/database.types
+ *
+ * Related Documentation:
+ *   └─ docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export function useUpdatePage() {
 	const supabase = createClient();

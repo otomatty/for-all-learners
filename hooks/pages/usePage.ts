@@ -5,6 +5,18 @@ import { createClient } from "@/lib/supabase/client";
 
 /**
  * ページ詳細を取得します。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ [使用しているファイルがあれば記載]
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @tanstack/react-query
+ *   └─ @/lib/supabase/client
+ *
+ * Related Documentation:
+ *   └─ docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export function usePage(id: string) {
 	const supabase = createClient();

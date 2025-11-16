@@ -37,7 +37,8 @@ describe("usePagesByNote", () => {
 	// TC-001: 正常系 - データ取得成功
 	test("TC-001: Should fetch pages by note successfully", async () => {
 		const noteId = "note-123";
-		const pages = [mockPage];
+		// note_page_links returns { pages: Page } format
+		const notePageLinks = [{ pages: mockPage }];
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
@@ -47,7 +48,7 @@ describe("usePagesByNote", () => {
 		const mockQuery = {
 			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockResolvedValue({
-				data: pages,
+				data: notePageLinks,
 				error: null,
 			}),
 		};
@@ -131,7 +132,7 @@ describe("usePagesByNote", () => {
 		const mockQuery = {
 			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockResolvedValue({
-				data: [],
+				data: [], // Empty note_page_links array
 				error: null,
 			}),
 		};

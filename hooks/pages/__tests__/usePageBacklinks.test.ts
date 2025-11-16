@@ -37,7 +37,6 @@ describe("usePageBacklinks", () => {
 	// TC-001: 正常系 - バックリンク取得成功
 	test("TC-001: Should fetch backlinks successfully", async () => {
 		const targetPageId = "page-123";
-		const backlinks = [mockBacklinkPage];
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
@@ -87,8 +86,8 @@ describe("usePageBacklinks", () => {
 		});
 
 		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.data).toBeDefined();
-		expect(result.current.data?.data?.length).toBeGreaterThan(0);
+		expect(result.current.data?.length).toBeGreaterThan(0);
+		expect(result.current.data?.[0]?.id).toBe(mockBacklinkPage.id);
 		expect(mockQuery.neq).toHaveBeenCalledWith("id", targetPageId);
 	});
 
@@ -107,14 +106,13 @@ describe("usePageBacklinks", () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.isSuccess).toBe(true);
+				expect(result.current.isError).toBe(true);
 			},
 			{ timeout: 3000 },
 		);
 
-		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.error).toBe("予期しないエラーが発生しました");
-		expect(result.current.data?.data).toBeNull();
+		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toContain("not authenticated");
 	});
 
 	// TC-003: 異常系 - データベースエラー
@@ -142,14 +140,12 @@ describe("usePageBacklinks", () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.isSuccess).toBe(true);
+				expect(result.current.isError).toBe(true);
 			},
 			{ timeout: 3000 },
 		);
 
-		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.error).toBe("ページの取得に失敗しました");
-		expect(result.current.data?.data).toBeNull();
+		expect(result.current.error).toBeDefined();
 	});
 
 	// TC-004: エッジケース - バックリンクなし
@@ -180,8 +176,7 @@ describe("usePageBacklinks", () => {
 		});
 
 		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.data).toEqual([]);
-		expect(result.current.data?.error).toBeNull();
+		expect(result.current.data).toEqual([]);
 	});
 
 	// TC-005: pageIdが空の場合の動作
