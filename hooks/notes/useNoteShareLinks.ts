@@ -25,7 +25,16 @@ export function useNoteShareLinks(noteId: string) {
 				.eq("resource_type", "note")
 				.eq("resource_id", noteId);
 			if (error) throw error;
-			return data;
+			if (!data) return [];
+
+			// Map database result to ShareLink type
+			// created_at should never be null due to database constraints, but handle it for type safety
+			return data.map((link) => ({
+				token: link.token,
+				permission_level: link.permission_level,
+				created_at: link.created_at ?? new Date().toISOString(),
+				expires_at: link.expires_at,
+			}));
 		},
 		enabled: !!noteId,
 	});

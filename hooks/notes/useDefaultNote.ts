@@ -17,6 +17,21 @@ export interface DefaultNote {
 	is_default_note: boolean;
 }
 
+type VisibilityValue = "public" | "unlisted" | "invite" | "private";
+
+/**
+ * Validates that a string is a valid visibility value.
+ * This is a type guard function that narrows the type.
+ */
+function isValidVisibility(value: string): value is VisibilityValue {
+	return (
+		value === "public" ||
+		value === "unlisted" ||
+		value === "invite" ||
+		value === "private"
+	);
+}
+
 /**
  * ユーザーのデフォルトノートを取得します。
  * デフォルトノートは is_default_note フラグで識別されます。
@@ -51,7 +66,25 @@ export function useDefaultNote() {
 				);
 			}
 
-			return defaultNote;
+			// Map database result to DefaultNote type
+			// visibility is validated by database CHECK constraint, but TypeScript needs explicit validation
+			if (!isValidVisibility(defaultNote.visibility)) {
+				throw new Error(`Invalid visibility value: ${defaultNote.visibility}`);
+			}
+
+			return {
+				id: defaultNote.id,
+				slug: defaultNote.slug,
+				title: defaultNote.title,
+				description: defaultNote.description,
+				visibility: defaultNote.visibility,
+				created_at: defaultNote.created_at,
+				updated_at: defaultNote.updated_at,
+				page_count: defaultNote.page_count,
+				participant_count: defaultNote.participant_count,
+				owner_id: defaultNote.owner_id,
+				is_default_note: defaultNote.is_default_note ?? false,
+			};
 		},
 	});
 }
