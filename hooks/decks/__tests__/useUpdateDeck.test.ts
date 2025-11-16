@@ -44,6 +44,7 @@ describe("useUpdateDeck", () => {
 		const mockQuery = {
 			update: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
+			select: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
 				data: updatedDeck,
 				error: null,
@@ -106,6 +107,7 @@ describe("useUpdateDeck", () => {
 		const mockQuery = {
 			update: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
+			select: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
 				data: null,
 				error: { message: "Database error", code: "PGRST116" },
@@ -141,6 +143,7 @@ describe("useUpdateDeck", () => {
 		const mockQuery = {
 			update: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
+			select: vi.fn().mockReturnThis(),
 			single: vi.fn().mockResolvedValue({
 				data: updatedDeck,
 				error: null,
