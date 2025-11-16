@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/components/layouts/container";
-import { useDeck, useDeckPermissions } from "@/hooks/decks";
+import { useDeckPermissions } from "@/hooks/decks";
 import { ImageCardGenerator } from "./ImageCardGenerator";
 
 interface OcrPageClientProps {

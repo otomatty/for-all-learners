@@ -10,7 +10,8 @@
  * Dependencies (External files that this file imports):
  *   ├─ @supabase/supabase-js
  *   ├─ @/app/_actions/subscriptions
- *   └─ @/lib/gemini
+ *   ├─ @/lib/gemini
+ *   └─ @/lib/logger
  *
  * Related Documentation:
  *   └─ docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
@@ -19,6 +20,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getUserPlanFeatures, isUserPaid } from "@/app/_actions/subscriptions";
 import type { QuestionType } from "@/lib/gemini";
+import logger from "@/lib/logger";
 import type { Card } from "./useCardsByDeck";
 
 const DEFAULT_LOCALE = "ja";
@@ -27,12 +29,10 @@ const DEFAULT_LOCALE = "ja";
  * QuestionTypeの型ガード
  */
 function isQuestionType(value: unknown): value is QuestionType {
-	const validTypes: QuestionType[] = [
-		"flashcard",
-		"multiple_choice",
-		"cloze",
-	];
-	return typeof value === "string" && validTypes.includes(value as QuestionType);
+	const validTypes: QuestionType[] = ["flashcard", "multiple_choice", "cloze"];
+	return (
+		typeof value === "string" && validTypes.includes(value as QuestionType)
+	);
 }
 
 /**
@@ -73,8 +73,9 @@ export async function triggerQuestionGeneration(
 		}
 	} catch (err) {
 		// バックグラウンド処理の呼び出しエラーは、メインの処理に影響を与えないように握りつぶします。
-		// ただし、ロギングは検討する価値があります。
-		console.error("Failed to trigger question generation:", err);
+		logger.error(
+			{ error: err, cardId: card.id },
+			"Failed to trigger question generation",
+		);
 	}
 }
-

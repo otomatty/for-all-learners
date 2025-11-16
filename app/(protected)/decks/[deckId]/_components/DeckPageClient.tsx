@@ -7,7 +7,7 @@ import {
 } from "@/app/_actions/note-deck-links";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
-import { useDeck, useDeckPermissions, useDecks } from "@/hooks/decks";
+import { useDeckPermissions, useDecks } from "@/hooks/decks";
 import type { Database } from "@/types/database.types";
 import ActionMenu from "./ActionMenu";
 import { CardsList } from "./CardList/CardsList";
