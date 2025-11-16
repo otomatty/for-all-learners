@@ -33,6 +33,7 @@ export function useUpdateDeck() {
 				.from("decks")
 				.update(updates)
 				.eq("id", id)
+				.select()
 				.single();
 
 			if (error) throw error;

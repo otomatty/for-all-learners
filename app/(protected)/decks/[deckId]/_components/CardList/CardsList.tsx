@@ -2,6 +2,7 @@
 
 import type { JSONContent } from "@tiptap/core";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getCardsByDeck } from "@/app/_actions/cards";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
@@ -76,6 +77,7 @@ export function CardsList({ deckId, canEdit, userId }: CardsListProps) {
 				setCards(decoratedCards);
 			} catch (error) {
 				logger.error({ error, deckId }, "Failed to fetch cards");
+				toast.error("カードの読み込みに失敗しました");
 			} finally {
 				setIsLoading(false);
 			}

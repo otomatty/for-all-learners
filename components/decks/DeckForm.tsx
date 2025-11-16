@@ -15,8 +15,7 @@
  *   ├─ @/components/ui/label
  *   ├─ @/components/ui/switch
  *   ├─ @/components/ui/textarea
- *   ├─ @/hooks/decks (useCreateDeck, useUpdateDeck)
- *   └─ @/lib/supabase/client
+ *   └─ @/hooks/decks (useCreateDeck, useUpdateDeck)
  */
 
 "use client";
@@ -30,7 +29,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateDeck, useUpdateDeck } from "@/hooks/decks";
-import { createClient } from "@/lib/supabase/client";
 
 interface DeckFormProps {
 	userId: string;
@@ -52,7 +50,6 @@ export function DeckForm({
 	onSuccess,
 }: DeckFormProps) {
 	const router = useRouter();
-	const _supabase = createClient();
 	const titleId = useId();
 	const descriptionId = useId();
 	const isPublicId = useId();

@@ -7,8 +7,7 @@ import {
 } from "@/app/_actions/note-deck-links";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
-import { useDeck, useDecks } from "@/hooks/decks";
-import { createClient } from "@/lib/supabase/client";
+import { useDeck, useDeckPermissions, useDecks } from "@/hooks/decks";
 import type { Database } from "@/types/database.types";
 import ActionMenu from "./ActionMenu";
 import { CardsList } from "./CardList/CardsList";
@@ -22,49 +21,19 @@ interface DeckPageClientProps {
 }
 
 export function DeckPageClient({ deckId, userId }: DeckPageClientProps) {
-	const { data: deck, isLoading: isLoadingDeck } = useDeck(deckId);
+	const {
+		deck,
+		canEdit,
+		isLoading: isLoadingPermissions,
+	} = useDeckPermissions(deckId, userId);
+	const isLoadingDeck = isLoadingPermissions;
 	const { data: userDecks, isLoading: isLoadingDecks } = useDecks();
-	const [canEdit, setCanEdit] = useState(false);
 	const [linkedNotes, setLinkedNotes] = useState<
 		Database["public"]["Tables"]["notes"]["Row"][]
 	>([]);
 	const [availableNotes, setAvailableNotes] = useState<
 		Database["public"]["Tables"]["notes"]["Row"][]
 	>([]);
-
-	useEffect(() => {
-		if (!deck) return;
-
-		// デッキの所有者かどうかを確認
-		const isOwner = deck.user_id === userId;
-
-		// 共有されているデッキの場合、権限を確認
-		if (!isOwner) {
-			const supabase = createClient();
-			void Promise.resolve(
-				supabase
-					.from("deck_shares")
-					.select("permission_level")
-					.eq("deck_id", deckId)
-					.eq("shared_with_user_id", userId)
-					.single(),
-			)
-				.then(({ data: share }) => {
-					if (share) {
-						const permission = share.permission_level;
-						setCanEdit(permission === "edit");
-					} else {
-						// 共有されていない場合はリダイレクト
-						window.location.href = "/decks";
-					}
-				})
-				.catch(() => {
-					window.location.href = "/decks";
-				});
-		} else {
-			setCanEdit(true);
-		}
-	}, [deck, deckId, userId]);
 
 	useEffect(() => {
 		if (!canEdit) return;
@@ -79,7 +48,7 @@ export function DeckPageClient({ deckId, userId }: DeckPageClientProps) {
 		});
 	}, [canEdit, deckId]);
 
-	if (isLoadingDeck || isLoadingDecks) {
+	if (isLoadingDeck || isLoadingDecks || isLoadingPermissions) {
 		return (
 			<Container>
 				<div className="flex items-center justify-center h-40">

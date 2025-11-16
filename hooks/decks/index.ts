@@ -1,6 +1,7 @@
 export type { DeckInsert } from "./useCreateDeck";
 export { useCreateDeck } from "./useCreateDeck";
 export { useDeck } from "./useDeck";
+export { useDeckPermissions } from "./useDeckPermissions";
 export type { Deck } from "./useDecks";
 export { useDecks } from "./useDecks";
 export { useDeleteDeck } from "./useDeleteDeck";

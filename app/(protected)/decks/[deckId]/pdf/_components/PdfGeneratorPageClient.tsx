@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
-import { useDeck } from "@/hooks/decks";
-import { createClient } from "@/lib/supabase/client";
+import { useDeckPermissions } from "@/hooks/decks";
 import { PdfCardGenerator } from "../_components/PdfCardGenerator/PdfCardGenerator";
 
 interface PdfGeneratorPageClientProps {
@@ -16,40 +14,7 @@ export function PdfGeneratorPageClient({
 	deckId,
 	userId,
 }: PdfGeneratorPageClientProps) {
-	const { data: deck, isLoading } = useDeck(deckId);
-	const [canEdit, setCanEdit] = useState(false);
-
-	useEffect(() => {
-		if (!deck) return;
-
-		// デッキの所有者かどうかを確認
-		const isOwner = deck.user_id === userId;
-
-		// 共有されているデッキの場合、権限を確認
-		if (!isOwner) {
-			const supabase = createClient();
-			void Promise.resolve(
-				supabase
-					.from("deck_shares")
-					.select("permission_level")
-					.eq("deck_id", deckId)
-					.eq("shared_with_user_id", userId)
-					.single(),
-			)
-				.then(({ data: share }) => {
-					if (share?.permission_level === "edit") {
-						setCanEdit(true);
-					} else {
-						window.location.href = "/decks";
-					}
-				})
-				.catch(() => {
-					window.location.href = "/decks";
-				});
-		} else {
-			setCanEdit(true);
-		}
-	}, [deck, deckId, userId]);
+	const { deck, canEdit, isLoading } = useDeckPermissions(deckId, userId);
 
 	if (isLoading) {
 		return (
