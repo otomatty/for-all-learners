@@ -365,7 +365,7 @@ describe("Bracket Monitor Plugin", () => {
 			const state = editor.state;
 
 			// Check that link mark has target="_blank"
-			let linkMark: Mark | null = null;
+			let linkMark: Mark | undefined;
 
 			state.doc.descendants((node) => {
 				if (node.isText) {
@@ -377,8 +377,8 @@ describe("Bracket Monitor Plugin", () => {
 				}
 			});
 
-			expect(linkMark).not.toBeNull();
-			if (linkMark) {
+			expect(linkMark).not.toBeUndefined();
+			if (linkMark !== undefined) {
 				const attrs = (
 					linkMark as Mark & { attrs: { target?: string; href?: string } }
 				).attrs;

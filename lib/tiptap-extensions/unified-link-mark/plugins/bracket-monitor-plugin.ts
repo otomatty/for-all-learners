@@ -262,7 +262,9 @@ function applyBracketMark(
 				href: raw,
 			});
 
-			// Remove any existing marks in this range
+			// Remove any existing marks in this range.
+			// Both unilink and link marks are removed to ensure no conflicting marks remain before applying the standard link mark.
+			// This is necessary because, in rare edge cases, both marks could coexist due to prior editing or schema changes.
 			tr.removeMark(from, to, markType);
 			tr.removeMark(from, to, linkMarkType);
 
