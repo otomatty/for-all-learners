@@ -45,4 +45,3 @@ describe("isTauri", () => {
 		global.window = originalWindow;
 	});
 });
-

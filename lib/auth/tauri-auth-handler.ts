@@ -10,20 +10,18 @@ import { isTauri } from "@/lib/utils/environment";
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ app/layout.tsx
+ *   └─ components/auth/TauriAuthHandler.tsx
  *
  * Dependencies (External files that this file imports):
  *   ├─ @/lib/supabase/client
- *   ├─ @/app/_actions/accounts
- *   ├─ @/app/_actions/notes
- *   ├─ @/app/_actions/promptTemplate
- *   └─ @/app/_actions/user_settings
+ *   ├─ @/lib/utils/environment
+ *   └─ @/lib/logger
  *
  * Related Documentation:
  *   ├─ Spec: docs/02_research/2025_11/20251109_02_supabase-tauri-integration.md
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
-export async function setupTauriAuthHandler() {
+export async function handleTauriAuthCallback() {
 	if (!isTauri()) {
 		return; // Web環境では不要
 	}
@@ -35,9 +33,25 @@ export async function setupTauriAuthHandler() {
 	const refreshToken = urlParams.get("refresh_token");
 	const error = urlParams.get("error");
 
+	// リダイレクトURLの検証（セキュリティ）
+	// Tauri環境では、tauri://スキームのみ許可
+	const redirectUrl = urlParams.get("redirect_to");
+	if (redirectUrl && !redirectUrl.startsWith("tauri://")) {
+		logger.error(
+			{ redirectUrl },
+			"Invalid redirect URL: Only tauri:// scheme is allowed",
+		);
+		window.location.href = "/auth/login?error=invalid_redirect";
+		return;
+	}
+
 	if (error) {
+		// エラーパラメータの検証（セキュリティ）
+		const sanitizedError = encodeURIComponent(
+			error.length > 100 ? error.substring(0, 100) : error,
+		);
 		// エラーページにリダイレクト
-		window.location.href = `/auth/login?error=${encodeURIComponent(error)}`;
+		window.location.href = `/auth/login?error=${sanitizedError}`;
 		return;
 	}
 
@@ -89,11 +103,8 @@ async function handleAuthCallback({
 		}
 	}
 
-	// ユーザー情報を取得してアカウント初期化
-	const {
-		data: { user },
-		error: getUserError,
-	} = await supabase.auth.getUser();
+	// ユーザー情報を取得（認証が成功したことを確認）
+	const { error: getUserError } = await supabase.auth.getUser();
 
 	if (getUserError) {
 		logger.error(
@@ -104,31 +115,13 @@ async function handleAuthCallback({
 		return;
 	}
 
-	if (user) {
-		await initializeUserAccount(user);
-	}
+	// アカウント初期化処理（createAccount, createDefaultNote等）は
+	// 既存のServer Actionsを使用するため、認証コールバック後は
+	// 通常のWebフローと同様にサーバー側で処理されます。
+	// Tauri環境では、認証成功後にダッシュボードにリダイレクトし、
+	// サーバー側の認証チェック（getCurrentUser）でアカウント初期化が
+	// 必要に応じて実行されます。
 
 	// ダッシュボードにリダイレクト
 	window.location.href = "/dashboard";
-}
-
-/**
- * ユーザーアカウントの初期化
- *
- * 注意: アカウント初期化処理（createAccount, createDefaultNote等）は
- * 既存のServer Actionsを使用するため、認証コールバック後は
- * 通常のWebフローと同様にサーバー側で処理されます。
- *
- * Tauri環境では、認証成功後にダッシュボードにリダイレクトし、
- * サーバー側の認証チェック（getCurrentUser）でアカウント初期化が
- * 必要に応じて実行されます。
- */
-async function initializeUserAccount(_user: {
-	id: string;
-	email?: string;
-	user_metadata?: any;
-}) {
-	// Tauri環境では、認証成功後にダッシュボードにリダイレクトするだけで
-	// アカウント初期化はサーバー側で処理されます
-	// （app/(protected)/layout.tsx の getCurrentUser で処理）
 }

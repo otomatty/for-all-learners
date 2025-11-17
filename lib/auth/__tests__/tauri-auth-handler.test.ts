@@ -1,5 +1,5 @@
 /**
- * Tests for setupTauriAuthHandler function
+ * Tests for handleTauriAuthCallback function
  *
  * Test Coverage:
  * - TC-001: 正常系 - 認証コールバック処理成功（access_token/refresh_token）
@@ -8,11 +8,13 @@
  * - TC-004: 異常系 - コード交換エラー
  * - TC-005: 異常系 - OAuthエラーパラメータ
  * - TC-006: エッジケース - Web環境では何もしない
+ * - TC-007: 異常系 - getUser()エラー
+ * - TC-008: 異常系 - 無効なリダイレクトURL
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createClient } from "@/lib/supabase/client";
-import { setupTauriAuthHandler } from "../tauri-auth-handler";
+import { handleTauriAuthCallback } from "../tauri-auth-handler";
 import {
 	cleanupTauriMock,
 	createMockSupabaseClient,
@@ -29,7 +31,7 @@ vi.mock("@/lib/logger", () => ({
 	},
 }));
 
-describe("setupTauriAuthHandler", () => {
+describe("handleTauriAuthCallback", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
 	let mockLocationHref: string;
 
@@ -83,7 +85,7 @@ describe("setupTauriAuthHandler", () => {
 			error: null,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(mockSupabaseClient.auth.setSession).toHaveBeenCalledWith({
 			access_token: "token123",
@@ -115,7 +117,7 @@ describe("setupTauriAuthHandler", () => {
 			error: null,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
 			"auth-code-123",
@@ -143,7 +145,7 @@ describe("setupTauriAuthHandler", () => {
 			error: mockError,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(window.location.href).toBe("/auth/login?error=session_failed");
 	});
@@ -167,7 +169,7 @@ describe("setupTauriAuthHandler", () => {
 			error: mockError,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(window.location.href).toBe("/auth/login?error=exchange_failed");
 	});
@@ -185,7 +187,7 @@ describe("setupTauriAuthHandler", () => {
 			configurable: true,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(window.location.href).toBe("/auth/login?error=access_denied");
 		expect(mockSupabaseClient.auth.setSession).not.toHaveBeenCalled();
@@ -198,7 +200,7 @@ describe("setupTauriAuthHandler", () => {
 	test("TC-006: Should do nothing in web environment", async () => {
 		// window.__TAURI__ を設定しない
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(mockSupabaseClient.auth.setSession).not.toHaveBeenCalled();
 		expect(
@@ -229,10 +231,79 @@ describe("setupTauriAuthHandler", () => {
 			error: mockGetUserError,
 		});
 
-		await setupTauriAuthHandler();
+		await handleTauriAuthCallback();
 
 		expect(mockSupabaseClient.auth.setSession).toHaveBeenCalled();
 		expect(mockSupabaseClient.auth.getUser).toHaveBeenCalled();
 		expect(window.location.href).toBe("/auth/login?error=get_user_failed");
+	});
+
+	// TC-008: 異常系 - 無効なリダイレクトURL
+	test("TC-008: Should handle invalid redirect URL", async () => {
+		setupTauriMock();
+
+		// Set URL parameters with invalid redirect
+		Object.defineProperty(window, "location", {
+			value: {
+				search: "?redirect_to=http://evil.com",
+				href: "",
+			},
+			configurable: true,
+		});
+
+		await handleTauriAuthCallback();
+
+		expect(window.location.href).toBe("/auth/login?error=invalid_redirect");
+		expect(mockSupabaseClient.auth.setSession).not.toHaveBeenCalled();
+	});
+
+	// TC-009: 正常系 - 有効なリダイレクトURL（tauri://スキーム）
+	test("TC-009: Should allow valid tauri:// redirect URL", async () => {
+		setupTauriMock();
+
+		// Set URL parameters with valid redirect
+		Object.defineProperty(window, "location", {
+			value: {
+				search: "?redirect_to=tauri://localhost/auth/callback&code=test123",
+				href: "",
+			},
+			configurable: true,
+		});
+
+		mockSupabaseClient.auth.exchangeCodeForSession = vi.fn().mockResolvedValue({
+			data: { session: mockSession, user: mockUser },
+			error: null,
+		});
+		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
+			data: { user: mockUser },
+			error: null,
+		});
+
+		await handleTauriAuthCallback();
+
+		expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
+			"test123",
+		);
+		expect(window.location.href).toBe("/dashboard");
+	});
+
+	// TC-010: 異常系 - 長すぎるエラーメッセージのサニタイズ
+	test("TC-010: Should sanitize long error messages", async () => {
+		setupTauriMock();
+
+		const longError = "a".repeat(200); // 200文字のエラー
+		Object.defineProperty(window, "location", {
+			value: {
+				search: `?error=${longError}`,
+				href: "",
+			},
+			configurable: true,
+		});
+
+		await handleTauriAuthCallback();
+
+		// エラーメッセージが100文字に切り詰められることを確認
+		const expectedError = encodeURIComponent(longError.substring(0, 100));
+		expect(window.location.href).toContain(`error=${expectedError}`);
 	});
 });

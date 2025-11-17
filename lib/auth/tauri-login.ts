@@ -13,7 +13,7 @@ import { isTauri } from "@/lib/utils/environment";
  *
  * Dependencies (External files that this file imports):
  *   ├─ @/lib/supabase/client
- *   └─ @tauri-apps/api/shell
+ *   └─ @/lib/utils/environment
  *
  * Related Documentation:
  *   ├─ Spec: docs/02_research/2025_11/20251109_02_supabase-tauri-integration.md
@@ -42,7 +42,7 @@ export async function loginWithGoogleTauri() {
 	if (data.url) {
 		// 外部ブラウザでOAuth URLを開く
 		// Tauri環境では、window.openで外部ブラウザを開く
-		// (shell pluginは後で追加可能)
+		// TODO: 将来的に @tauri-apps/plugin-shell を使用することを検討
 		window.open(data.url, "_blank");
 	}
 }

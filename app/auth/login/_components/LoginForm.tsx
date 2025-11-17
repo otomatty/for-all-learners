@@ -2,7 +2,7 @@
 
 import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ export function LoginForm({
 }: LoginFormProps) {
 	const emailId = useId();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	// Tauri環境判定をメモ化（パフォーマンス最適化）
+	const tauriEnv = useMemo(() => isTauri(), []);
 
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -74,21 +76,20 @@ export function LoginForm({
 			)}
 
 			{/* Magic Link ログインフォーム */}
-			{isTauri() ? (
+			{tauriEnv ? (
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
 						setIsSubmitting(true);
 						const formData = new FormData(e.currentTarget);
 						const email = formData.get("email") as string;
-						if (!email) {
-							toast.error("メールアドレスを入力してください");
-							setIsSubmitting(false);
-							return;
-						}
+						// HTML5のrequired属性で検証されるため、JS検証は不要
 						try {
 							await loginWithMagicLinkTauri(email);
 							toast.success("認証メールを送信しました");
+							// フォームをリセット
+							e.currentTarget.reset();
+							setIsSubmitting(false);
 							window.location.href = "/auth/login?message=magic_link_sent";
 						} catch (err) {
 							toast.error(
@@ -152,7 +153,7 @@ export function LoginForm({
 			</div>
 
 			{/* Google ログインフォーム */}
-			{isTauri() ? (
+			{tauriEnv ? (
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();

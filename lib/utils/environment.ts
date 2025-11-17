@@ -27,4 +27,3 @@ export function isTauri(): boolean {
 	}
 	return "__TAURI__" in window && window.__TAURI__ !== undefined;
 }
-

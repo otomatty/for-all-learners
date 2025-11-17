@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { setupTauriAuthHandler } from "@/lib/auth/tauri-auth-handler";
+import { handleTauriAuthCallback } from "@/lib/auth/tauri-auth-handler";
 import { isTauri } from "@/lib/utils/environment";
 
 /**
@@ -23,7 +23,7 @@ export function TauriAuthHandler() {
 	useEffect(() => {
 		// Tauri環境でのみDeep Linkハンドラーを設定
 		if (isTauri()) {
-			setupTauriAuthHandler();
+			handleTauriAuthCallback();
 		}
 	}, []);
 
