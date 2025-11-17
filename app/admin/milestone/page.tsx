@@ -1,7 +1,7 @@
 // "use client"; // クライアントコンポーネント指定を削除
 
 import { getMilestones } from "@/app/_actions/milestone";
-import MilestoneAdminView from "./_components/milestone-admin-view"; // 新しいクライアントコンポーネントをインポート
+import MilestoneAdminView from "./_components/MilestoneAdminView"; // 新しいクライアントコンポーネントをインポート
 
 export default async function MilestonesAdminPage() {
 	// サーバーコンポーネント内でデータを取得

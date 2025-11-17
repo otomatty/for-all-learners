@@ -17,7 +17,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useReviewCard } from "@/hooks/review";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
-import QuizFinished, { type AnswerSummary } from "./quiz-finished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {
@@ -195,7 +195,7 @@ export default function MultipleChoiceQuiz({
 				});
 			});
 		}
-	}, [isFinished, reviewCard]);
+	}, [isFinished, results, reviewCard]);
 
 	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
 	useEffect(() => {

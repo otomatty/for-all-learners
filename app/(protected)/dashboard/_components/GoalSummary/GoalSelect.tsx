@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
-import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
+import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import {
 	Select,
 	SelectContent,

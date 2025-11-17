@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { useReviewCard } from "@/hooks/review";
 import type { ClozeQuestion } from "@/lib/gemini";
 import logger from "@/lib/logger";
-import QuizFinished, { type AnswerSummary } from "./quiz-finished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 
 interface ClozeQuizProps {
 	questions: (ClozeQuestion & { questionId: string; cardId: string })[];
@@ -129,7 +129,7 @@ export default function ClozeQuiz({
 				});
 			});
 		}
-	}, [finished, reviewCard]);
+	}, [finished, results, reviewCard]);
 
 	// 回答確認・次へ処理 (stable via useCallback)
 	const handleCheck = useCallback(() => {

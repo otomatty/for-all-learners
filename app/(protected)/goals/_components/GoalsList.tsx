@@ -26,8 +26,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { GoalItem } from "./goal-item";
-import { SortableGoalItem } from "./sortable-goal-item";
+import { GoalItem } from "./GoalItem/GoalItem";
+import { SortableGoalItem } from "./SortableGoalItem";
 
 interface StudyGoal {
 	id: string;

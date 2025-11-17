@@ -31,7 +31,9 @@ export function useCreateMilestone() {
 			}
 
 			if (!data) {
-				throw new Error("Failed to create milestone: No data returned from Supabase.");
+				throw new Error(
+					"Failed to create milestone: No data returned from Supabase.",
+				);
 			}
 
 			return mapRowToEntry(data as MilestoneRow);

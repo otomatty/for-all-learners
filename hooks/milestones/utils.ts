@@ -26,4 +26,3 @@ export function mapRowToEntry(item: MilestoneRow): MilestoneEntry {
 		sort_order: item.sort_order,
 	};
 }
-

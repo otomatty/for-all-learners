@@ -24,9 +24,9 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DeleteGoalDialog } from "./delete-goal-dialog";
-import { EditGoalDialog } from "./edit-goal-dialog";
-import { GoalProgressBar } from "./goal-progress-bar";
+import { DeleteGoalDialog } from "./DeleteGoalDialog";
+import { EditGoalDialog } from "./EditGoalDialog";
+import { GoalProgressBar } from "./GoalProgressBar";
 
 interface StudyGoal {
 	id: string;

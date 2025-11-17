@@ -17,7 +17,7 @@ Phase 1.5として、以下のServer Actionsをクライアントサイドのカ
 
 ### 1. 学習目標（Study Goals）関連
 
-#### `components/goals/add-goal-dialog.tsx`
+#### `components/goals/AddGoalDialog.tsx`
 
 **変更内容**:
 - Server Actions `addStudyGoal` と `getUserGoalLimits` をカスタムフックに置き換え
@@ -36,7 +36,7 @@ Phase 1.5として、以下のServer Actionsをクライアントサイドのカ
 
 ### 2. カードレビュー（Review）関連
 
-#### `app/(protected)/learn/_components/multiple-choice-quiz.tsx`
+#### `app/(protected)/learn/_components/MultipleChoiceQuiz.tsx`
 
 **変更内容**:
 - Server Action `reviewCard` をカスタムフックに置き換え
@@ -49,7 +49,7 @@ Phase 1.5として、以下のServer Actionsをクライアントサイドのカ
 - `useEffect` の依存配列から `results` を削除し、パフォーマンスを改善
 - エラーハンドリングは TanStack Query の標準的な方法で処理
 
-#### `app/(protected)/learn/_components/flashcard-quiz.tsx`
+#### `app/(protected)/learn/_components/FlashcardQuiz.tsx`
 
 **変更内容**:
 - Server Action `reviewCard` をカスタムフックに置き換え
@@ -62,7 +62,7 @@ Phase 1.5として、以下のServer Actionsをクライアントサイドのカ
 - `useEffect` の依存配列から `results` を削除し、パフォーマンスを改善
 - 練習モードは `"one"` を指定
 
-#### `app/(protected)/learn/_components/cloze-quiz.tsx`
+#### `app/(protected)/learn/_components/ClozeQuiz.tsx`
 
 **変更内容**:
 - Server Action `reviewCard` をカスタムフックに置き換え
@@ -79,7 +79,7 @@ Phase 1.5として、以下のServer Actionsをクライアントサイドのカ
 
 ### 3. マイルストーン（Milestones）関連
 
-#### `app/admin/milestone/_components/milestone-admin-view.tsx`
+#### `app/admin/milestone/_components/MilestoneAdminView.tsx`
 
 **変更内容**:
 - Server Actions `createMilestone`, `updateMilestone`, `deleteMilestone` をカスタムフックに置き換え
@@ -236,11 +236,11 @@ const { data: goalLimits, isLoading, error } = useGoalLimits();
 
 ### 変更したファイル
 
-- `components/goals/add-goal-dialog.tsx`
-- `app/(protected)/learn/_components/multiple-choice-quiz.tsx`
-- `app/(protected)/learn/_components/flashcard-quiz.tsx`
-- `app/(protected)/learn/_components/cloze-quiz.tsx`
-- `app/admin/milestone/_components/milestone-admin-view.tsx`
+- `components/goals/AddGoalDialog.tsx`
+- `app/(protected)/learn/_components/MultipleChoiceQuiz.tsx`
+- `app/(protected)/learn/_components/FlashcardQuiz.tsx`
+- `app/(protected)/learn/_components/ClozeQuiz.tsx`
+- `app/admin/milestone/_components/MilestoneAdminView.tsx`
 
 ---
 

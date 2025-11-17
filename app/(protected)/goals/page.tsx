@@ -4,10 +4,10 @@ import {
 	getStudyGoalsByUser,
 	getUserGoalLimits,
 } from "@/app/_actions/study_goals";
-import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
+import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import { Container } from "@/components/layouts/container";
 import { createClient } from "@/lib/supabase/server";
-import { GoalsList } from "./_components/goals-list";
+import { GoalsList } from "./_components/GoalsList";
 
 export default async function GoalsPage() {
 	const supabase = await createClient();

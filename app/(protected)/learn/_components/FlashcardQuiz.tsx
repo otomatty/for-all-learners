@@ -5,7 +5,7 @@ import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { Progress } from "@/components/ui/progress";
 import { useReviewCard } from "@/hooks/review";
 import type { FlashcardQuestion } from "@/lib/gemini";
-import QuizFinished, { type AnswerSummary } from "./quiz-finished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 
 interface FlashcardQuizProps {
 	questions: (FlashcardQuestion & { questionId: string; cardId: string })[];
@@ -85,7 +85,7 @@ export default function FlashcardQuiz({
 				});
 			});
 		}
-	}, [finished, reviewCard]);
+	}, [finished, reviewCard, results.forEach]);
 
 	const handleReveal = useCallback(() => {
 		// record when user reveals answer

@@ -1,3 +1,26 @@
+/**
+ * AddGoalDialog Component
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   ├─ app/(protected)/goals/page.tsx
+ *   ├─ app/(protected)/dashboard/_components/GoalSummary/index.tsx
+ *   └─ app/(protected)/dashboard/_components/GoalSummary/GoalSelect.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ @/components/layouts/ResponsiveDialog
+ *   ├─ @/components/ui/alert
+ *   ├─ @/components/ui/badge
+ *   ├─ @/components/ui/button
+ *   ├─ @/components/ui/form
+ *   ├─ @/components/ui/input
+ *   └─ @/hooks/study_goals (useCreateStudyGoal, useGoalLimits)
+ *
+ * Related Documentation:
+ *   └─ docs/05_logs/2025_11/20251117/01_phase1-5-migrated-components.md
+ */
+
 "use client";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
