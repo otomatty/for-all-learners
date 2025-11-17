@@ -1,12 +1,10 @@
 "use client";
 
-import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useId } from "react";
-import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useMemo, useState } from "react";
+import { isTauri } from "@/lib/utils/environment";
+import { GoogleLoginForm } from "./GoogleLoginForm";
+import { MagicLinkForm } from "./MagicLinkForm";
 
 interface LoginFormProps {
 	message?: string;
@@ -19,7 +17,9 @@ export function LoginForm({
 	error,
 	errorDescription,
 }: LoginFormProps) {
-	const emailId = useId();
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	// Tauri環境判定をメモ化（パフォーマンス最適化）
+	const tauriEnv = useMemo(() => isTauri(), []);
 
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -69,25 +69,11 @@ export function LoginForm({
 			)}
 
 			{/* Magic Link ログインフォーム */}
-			<form action={loginWithMagicLink} className="grid gap-4 mb-6">
-				<div>
-					<Label htmlFor={emailId} className="sr-only">
-						メールアドレス
-					</Label>
-					<Input
-						type="email"
-						name="email"
-						id={emailId}
-						placeholder="メールアドレス"
-						required
-						className="w-full"
-					/>
-				</div>
-				<Button type="submit" variant="default">
-					<Mail className="mr-2 h-4 w-4" />
-					メールアドレスでログイン
-				</Button>
-			</form>
+			<MagicLinkForm
+				isTauri={tauriEnv}
+				isSubmitting={isSubmitting}
+				onSubmittingChange={setIsSubmitting}
+			/>
 
 			<div className="relative mb-6">
 				<div className="absolute inset-0 flex items-center">
@@ -101,18 +87,11 @@ export function LoginForm({
 			</div>
 
 			{/* Google ログインフォーム */}
-			<form action={loginWithGoogle} className="grid gap-6">
-				<Button type="submit" variant="outline">
-					<Image
-						src="/images/google-logo.svg"
-						alt="Google Logo"
-						width={20}
-						height={20}
-						className="mr-2"
-					/>
-					<span>Googleでログイン</span>
-				</Button>
-			</form>
+			<GoogleLoginForm
+				isTauri={tauriEnv}
+				isSubmitting={isSubmitting}
+				onSubmittingChange={setIsSubmitting}
+			/>
 		</div>
 	);
 }

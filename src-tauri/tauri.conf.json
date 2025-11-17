@@ -24,6 +24,15 @@
 		],
 		"security": {
 			"csp": null
+		},
+		"withGlobalTauri": true
+	},
+	"plugins": {
+		"deep-link": {
+			"schemes": ["tauri"]
+		},
+		"shell": {
+			"open": true
 		}
 	},
 	"bundle": {

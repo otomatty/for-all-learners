@@ -468,7 +468,7 @@ export function useCreateNote() {
 
 **注意**: Phase 1.1と同様に、各フックを個別ファイルとして `hooks/cards/` 配下に配置。**テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。バックグラウンド処理（Edge Functions呼び出し）は、テストではモックする。
 
-#### Phase 1.5: その他のCRUD操作（2-3日）
+#### Phase 1.5: その他のCRUD操作（2-3日）✅ 完了（2025-11-17）
 
 **対象ファイル**:
 - `app/_actions/study_goals.ts`
@@ -479,30 +479,91 @@ export function useCreateNote() {
 **実装手順（TDDアプローチ）**:
 
 1. **既存Server Actionの分析** (0.5日)
-   - [ ] 各ファイルのServer Actionsを分析
-   - [ ] 入力・出力・エラーハンドリングを確認
-   - [ ] 依存関係を確認
+   - [x] 各ファイルのServer Actionsを分析（完了）
+   - [x] 入力・出力・エラーハンドリングを確認（完了）
+   - [x] 依存関係を確認（完了）
 
 2. **テストケースの作成** (1日)
-   - [ ] 各機能のテストディレクトリ作成
-   - [ ] `hooks/study_goals/__tests__/` - 学習目標のテスト
-   - [ ] `hooks/learning_logs/__tests__/` - 学習ログのテスト
-   - [ ] `hooks/milestone/__tests__/` - マイルストーンのテスト
-   - [ ] `hooks/review/__tests__/` - 復習のテスト
-   - [ ] 各テストは既存のServer Actionの動作を再現するように記述
-   - [ ] テストは最初は失敗する（Red）
+   - [x] 各機能のテストディレクトリ作成（完了）
+   - [x] `hooks/study_goals/__tests__/` - 学習目標のテスト（完了）
+   - [x] `hooks/learning_logs/__tests__/` - 学習ログのテスト（完了）
+   - [x] `hooks/milestones/__tests__/` - マイルストーンのテスト（完了）
+   - [x] `hooks/review/__tests__/` - 復習のテスト（完了）
+   - [x] 各テストは既存のServer Actionの動作を再現するように記述（完了）
+   - [x] テストは最初は失敗する（Red）（完了）
 
 3. **カスタムフックの実装** (1日)
-   - [ ] 各機能のカスタムフック作成
-   - [ ] テストが通るまで実装を繰り返す（Green）
-   - [ ] リファクタリング（Refactor）
+   - [x] 各機能のカスタムフック作成（完了）
+   - [x] `hooks/study_goals/` - 学習目標関連フック（完了）
+     - [x] `useStudyGoals()` - 学習目標一覧取得（完了）
+     - [x] `useCreateStudyGoal()` - 学習目標作成（完了）
+     - [x] `useUpdateStudyGoal()` - 学習目標更新（完了）
+     - [x] `useDeleteStudyGoal()` - 学習目標削除（完了）
+     - [x] `useCompleteStudyGoal()` - 学習目標完了（完了）
+     - [x] `useUpdateGoalsPriority()` - 優先順位一括更新（完了）
+     - [x] `useGoalLimits()` - 目標制限情報取得（完了）
+   - [x] `hooks/learning_logs/` - 学習ログ関連フック（完了）
+     - [x] `useLearningLogs()` - 学習ログ一覧取得（完了）
+     - [x] `useLearningLog(id)` - 学習ログ詳細取得（完了）
+     - [x] `useCreateLearningLog()` - 学習ログ作成（完了）
+     - [x] `useUpdateLearningLog()` - 学習ログ更新（完了）
+     - [x] `useDeleteLearningLog()` - 学習ログ削除（完了）
+     - [x] `useRecentActivity()` - 最近の活動取得（完了）
+     - [x] `useReviewCards()` - 復習カード取得（完了）
+     - [x] `useTodayReviewCountsByDeck()` - デッキごとの当日レビュー数集計（完了）
+   - [x] `hooks/milestones/` - マイルストーン関連フック（完了）
+     - [x] `useMilestones()` - マイルストーン一覧取得（完了）
+     - [x] `useCreateMilestone()` - マイルストーン作成（完了）
+     - [x] `useUpdateMilestone()` - マイルストーン更新（完了）
+     - [x] `useDeleteMilestone()` - マイルストーン削除（完了）
+   - [x] `hooks/review/` - 復習関連フック（完了）
+     - [x] `useReviewCard()` - カード復習（完了）
+   - [x] テストが通るまで実装を繰り返す（Green）（完了）
+   - [x] リファクタリング（Refactor）（完了）
 
 4. **Server Actions呼び出し箇所の置き換え** (0.5日)
-   - [ ] Server Actionsの呼び出し箇所を特定
-   - [ ] カスタムフックへの置き換え
-   - [ ] テスト・動作確認
+   - [x] Server Actionsの呼び出し箇所を特定（完了）
+   - [x] カスタムフックへの置き換え（完了）
+   - [x] `app/(protected)/goals/_components/GoalsList.tsx` - `updateGoalsPriority` を `useUpdateGoalsPriority` に置き換え（完了）
+   - [x] テスト・動作確認（完了）
 
-**注意**: **テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。
+5. **Phase 2対応: RPC関数実装とトランザクション管理** (1日)
+   - [x] PR #164のレビューコメント対応として、RPC関数を作成（完了）
+   - [x] `database/migrations/20251117_01_phase2_rpc_functions.sql` - 3つのRPC関数を作成（完了）
+     - [x] `review_card` - カードレビュー処理のトランザクション化（完了）
+     - [x] `update_goals_priority` - 優先順位一括更新のトランザクション化（完了）
+     - [x] `get_today_review_counts_by_deck` - デッキごとの当日レビュー数集計（完了）
+   - [x] フックの更新（完了）
+     - [x] `useReviewCard.ts` - RPC関数呼び出しに変更（完了）
+     - [x] `useUpdateGoalsPriority.ts` - RPC関数呼び出しに変更（完了）
+     - [x] `useTodayReviewCountsByDeck.ts` - RPC関数呼び出しに変更（完了）
+   - [x] テストの更新（完了）
+     - [x] `useReviewCard.test.ts` - RPC関数呼び出しに対応（完了）
+     - [x] `useUpdateGoalsPriority.test.ts` - RPC関数呼び出しに対応（完了）
+     - [x] `useGoalLimits.test.ts` - エラーハンドリング変更に対応（完了）
+
+**実装完了内容**:
+- **Study Goals**: 7つのカスタムフックを作成（useStudyGoals, useCreateStudyGoal, useUpdateStudyGoal, useDeleteStudyGoal, useCompleteStudyGoal, useUpdateGoalsPriority, useGoalLimits）
+- **Learning Logs**: 8つのカスタムフックを作成（useLearningLogs, useLearningLog, useCreateLearningLog, useUpdateLearningLog, useDeleteLearningLog, useRecentActivity, useReviewCards, useTodayReviewCountsByDeck）
+- **Milestones**: 4つのカスタムフックを作成（useMilestones, useCreateMilestone, useUpdateMilestone, useDeleteMilestone）
+- **Review**: 1つのカスタムフックを作成（useReviewCard）
+- すべてのテストケースを作成・実装
+- RPC関数3つを作成（トランザクション管理とパフォーマンス改善）
+- 主要なコンポーネントでのServer Actions呼び出しをカスタムフックに置き換え
+
+**参照ファイル**:
+- `app/_actions/study_goals.ts` - 移行元Server Actions
+- `app/_actions/learning_logs.ts` - 移行元Server Actions
+- `app/_actions/milestone.ts` - 移行元Server Actions
+- `app/_actions/review.ts` - 移行元Server Actions
+- `app/(protected)/goals/` - 使用箇所（置き換え完了）
+- `hooks/study_goals/*` - 新規作成（7個のフックファイル + index.ts）
+- `hooks/learning_logs/*` - 新規作成（8個のフックファイル + index.ts）
+- `hooks/milestones/*` - 新規作成（4個のフックファイル + index.ts）
+- `hooks/review/*` - 新規作成（1個のフックファイル + index.ts）
+- `database/migrations/20251117_01_phase2_rpc_functions.sql` - RPC関数（3つ）
+
+**注意**: **テスト駆動開発（TDD）のアプローチを採用**し、テストを先に作成してから実装を行う。Phase 2対応として、トランザクション管理が必要な処理はRPC関数を使用して実装する。
 
 #### 完了条件
 
@@ -525,26 +586,26 @@ export function useCreateNote() {
 #### 実装手順
 
 1. **Tauri Deep Link設定** (1-2日)
-   - [ ] `src-tauri/tauri.conf.json` にDeep Link設定追加
-   - [ ] Rust側のDeep Linkハンドラー実装
-   - [ ] TypeScript側のDeep Linkハンドラー実装
+   - [x] `src-tauri/tauri.conf.json` にDeep Link設定追加（完了）
+   - [x] Rust側のDeep Linkハンドラー実装（shell plugin追加、完了）
+   - [x] TypeScript側のDeep Linkハンドラー実装（完了）
 
 2. **SupabaseクライアントのTauri対応** (1-2日)
-   - [ ] `lib/supabase/tauri-client.ts` 作成
-   - [ ] カスタムスキーム対応
-   - [ ] localStorage ベースのセッション管理実装
+   - [x] `lib/supabase/tauri-client.ts` 作成（完了）
+   - [x] カスタムスキーム対応（完了）
+   - [x] localStorage ベースのセッション管理実装（完了）
 
 3. **認証フローの実装** (2-3日)
-   - [ ] `lib/auth/tauri-auth-handler.ts` 作成
-   - [ ] `lib/auth/tauri-login.ts` 作成（Google OAuth）
-   - [ ] `lib/auth/tauri-magic-link.ts` 作成（Magic Link）
-   - [ ] `lib/hooks/use-auth.ts` 作成（セッション状態管理）
-   - [ ] `app/layout.tsx` にDeep Linkハンドラー設定
+   - [x] `lib/auth/tauri-auth-handler.ts` 作成（完了）
+   - [x] `lib/auth/tauri-login.ts` 作成（Google OAuth、完了）
+   - [x] `lib/auth/tauri-magic-link.ts` 作成（Magic Link、完了）
+   - [x] `lib/hooks/use-auth.ts` 作成（セッション状態管理、完了）
+   - [x] `components/auth/TauriAuthHandler.tsx` 作成（Deep Linkハンドラー設定、完了）
 
 4. **既存認証コードの置き換え** (1-2日)
-   - [ ] `app/_actions/auth.ts` の呼び出し箇所を特定
-   - [ ] 新しい認証フックへの置き換え
-   - [ ] テスト・動作確認
+   - [x] `app/_actions/auth.ts` の呼び出し箇所を特定（完了）
+   - [x] `app/auth/login/_components/LoginForm.tsx` を更新（Tauri環境で新しい認証フックを使用、完了）
+   - [x] テスト・動作確認（完了、21テストすべて成功）
 
 #### 参照ファイル
 
@@ -833,15 +894,24 @@ export function useUploadImage() {
 - [x] Decks関連の移行完了（2025-11-16完了）
 - [x] Pages関連の移行完了（2025-11-16完了）
 - [x] Cards関連の移行完了（2025-11-17完了）
-- [ ] その他のCRUD操作の移行完了
-- [ ] `revalidatePath()` の削除完了
+- [x] その他のCRUD操作の移行完了（2025-11-17完了）
+  - [x] Study Goals関連（7フック）
+  - [x] Learning Logs関連（8フック）
+  - [x] Milestones関連（4フック）
+  - [x] Review関連（1フック）
+- [x] Phase 2対応: RPC関数実装とトランザクション管理（2025-11-17完了）
+  - [x] `review_card` RPC関数作成
+  - [x] `update_goals_priority` RPC関数作成
+  - [x] `get_today_review_counts_by_deck` RPC関数作成
+- [ ] `revalidatePath()` の削除完了（一部残存）
 
 ### Phase 2: 認証
-- [ ] Tauri Deep Link設定
-- [ ] SupabaseクライアントのTauri対応
-- [ ] OAuth認証フローの実装
-- [ ] Magic Link認証フローの実装
-- [ ] セッション管理のlocalStorage移行
+- [x] Tauri Deep Link設定（完了）
+- [x] SupabaseクライアントのTauri対応（完了）
+- [x] OAuth認証フローの実装（完了）
+- [x] Magic Link認証フローの実装（完了）
+- [x] セッション管理のlocalStorage移行（完了）
+- [x] テスト・動作確認（完了、21テストすべて成功）
 
 ### Phase 3: ファイルアップロード
 - [ ] Tauriファイルダイアログの統合
@@ -905,4 +975,7 @@ export function useUploadImage() {
 - 2025-11-16: Phase 1.2（Decks関連）の移行完了を反映。8つのカスタムフック作成、RPC関数実装、コンポーネントリネーム・再構成、ページクライアントコンポーネント追加を完了。
 - 2025-11-16: Phase 1.3（Pages関連）の移行完了を反映。7つのカスタムフック作成、すべてのテストケース作成・実装（36テスト、すべて成功）、`linkPageToDefaultNote` のクライアント側実装追加、Server Actions呼び出し箇所の一部置き換えを完了。
 - 2025-11-17: Phase 1.4（Cards関連）の移行完了を反映。9つのカスタムフック作成、すべてのテストケース作成・実装（33テスト、すべて成功）、主要なクライアントコンポーネントでのServer Actions呼び出しをカスタムフックに置き換え、バックグラウンド処理（Edge Functions呼び出し）を実装。
+- 2025-11-17: Phase 1.5（その他のCRUD操作）の移行完了を反映。Study Goals（7フック）、Learning Logs（8フック）、Milestones（4フック）、Review（1フック）の合計20個のカスタムフックを作成。Phase 2対応として、トランザクション管理とパフォーマンス改善のためのRPC関数3つ（`review_card`, `update_goals_priority`, `get_today_review_counts_by_deck`）を作成し、対応するフックを更新。すべてのテストケースを作成・実装し、主要なコンポーネントでのServer Actions呼び出しをカスタムフックに置き換え。
+- 2025-11-17: Phase 2（認証・セッション管理の移行）の実装を開始。Tauri Deep Link設定、SupabaseクライアントのTauri対応、認証フローの実装、既存認証コードの置き換えを完了。実装ファイル: `lib/supabase/tauri-client.ts`, `lib/auth/tauri-auth-handler.ts`, `lib/auth/tauri-login.ts`, `lib/auth/tauri-magic-link.ts`, `lib/hooks/use-auth.ts`, `components/auth/TauriAuthHandler.tsx`。`app/auth/login/_components/LoginForm.tsx`を更新してTauri環境で新しい認証フックを使用するように変更。
+- 2025-11-17: Phase 2のテスト実装を完了。5つのテストファイル（`lib/auth/__tests__/tauri-login.test.ts`, `lib/auth/__tests__/tauri-magic-link.test.ts`, `lib/auth/__tests__/tauri-auth-handler.test.ts`, `lib/hooks/__tests__/use-auth.test.ts`, `lib/supabase/__tests__/tauri-client.test.ts`）を作成し、合計21テストすべてが成功。テストヘルパー（`lib/auth/__tests__/helpers.ts`）も作成。
 
