@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境でのGoogle OAuthログイン
@@ -19,15 +20,11 @@ import { createClient } from "@/lib/supabase/client";
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export async function loginWithGoogleTauri() {
-	const supabase = createClient();
-	const isTauri =
-		typeof window !== "undefined" &&
-		"__TAURI__" in window &&
-		window.__TAURI__ !== undefined;
-
-	if (!isTauri) {
+	if (!isTauri()) {
 		throw new Error("This function is only available in Tauri environment");
 	}
+
+	const supabase = createClient();
 
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "google",

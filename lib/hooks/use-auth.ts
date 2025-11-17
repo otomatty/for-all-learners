@@ -21,11 +21,14 @@ import { createClient } from "@/lib/supabase/client";
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export function useAuth() {
-	const supabase = createClient();
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		// useEffect内でクライアントを作成することで、依存配列を空にできる
+		// これにより、無限リレンダーを防止
+		const supabase = createClient();
+
 		// 初期セッション取得
 		supabase.auth
 			.getSession()
@@ -48,7 +51,7 @@ export function useAuth() {
 		});
 
 		return () => subscription.unsubscribe();
-	}, [supabase]);
+	}, []); // 依存配列を空にして、無限リレンダーを防止
 
 	return { user, loading };
 }

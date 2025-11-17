@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { setupTauriAuthHandler } from "@/lib/auth/tauri-auth-handler";
+import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境での認証ハンドラーを初期化するコンポーネント
@@ -21,11 +22,7 @@ import { setupTauriAuthHandler } from "@/lib/auth/tauri-auth-handler";
 export function TauriAuthHandler() {
 	useEffect(() => {
 		// Tauri環境でのみDeep Linkハンドラーを設定
-		if (
-			typeof window !== "undefined" &&
-			"__TAURI__" in window &&
-			window.__TAURI__ !== undefined
-		) {
+		if (isTauri()) {
 			setupTauriAuthHandler();
 		}
 	}, []);

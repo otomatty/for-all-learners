@@ -2,6 +2,7 @@
 
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
+import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境でのOAuth認証コールバックを処理
@@ -23,11 +24,7 @@ import { createClient } from "@/lib/supabase/client";
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export async function setupTauriAuthHandler() {
-	if (
-		typeof window === "undefined" ||
-		!("__TAURI__" in window) ||
-		window.__TAURI__ === undefined
-	) {
+	if (!isTauri()) {
 		return; // Web環境では不要
 	}
 
@@ -95,7 +92,18 @@ async function handleAuthCallback({
 	// ユーザー情報を取得してアカウント初期化
 	const {
 		data: { user },
+		error: getUserError,
 	} = await supabase.auth.getUser();
+
+	if (getUserError) {
+		logger.error(
+			{ error: getUserError },
+			"Get user error: Failed to get user after authentication",
+		);
+		window.location.href = "/auth/login?error=get_user_failed";
+		return;
+	}
+
 	if (user) {
 		await initializeUserAccount(user);
 	}

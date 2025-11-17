@@ -3,12 +3,14 @@
 import { Mail } from "lucide-react";
 import Image from "next/image";
 import { useId, useState } from "react";
+import { toast } from "sonner";
 import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginWithGoogleTauri } from "@/lib/auth/tauri-login";
 import { loginWithMagicLinkTauri } from "@/lib/auth/tauri-magic-link";
+import { isTauri } from "@/lib/utils/environment";
 
 interface LoginFormProps {
 	message?: string;
@@ -23,10 +25,6 @@ export function LoginForm({
 }: LoginFormProps) {
 	const emailId = useId();
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const isTauri =
-		typeof window !== "undefined" &&
-		"__TAURI__" in window &&
-		window.__TAURI__ !== undefined;
 
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -76,7 +74,7 @@ export function LoginForm({
 			)}
 
 			{/* Magic Link ログインフォーム */}
-			{isTauri ? (
+			{isTauri() ? (
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
@@ -84,15 +82,16 @@ export function LoginForm({
 						const formData = new FormData(e.currentTarget);
 						const email = formData.get("email") as string;
 						if (!email) {
-							alert("メールアドレスを入力してください");
+							toast.error("メールアドレスを入力してください");
 							setIsSubmitting(false);
 							return;
 						}
 						try {
 							await loginWithMagicLinkTauri(email);
+							toast.success("認証メールを送信しました");
 							window.location.href = "/auth/login?message=magic_link_sent";
 						} catch (err) {
-							alert(
+							toast.error(
 								err instanceof Error ? err.message : "エラーが発生しました",
 							);
 							setIsSubmitting(false);
@@ -153,15 +152,16 @@ export function LoginForm({
 			</div>
 
 			{/* Google ログインフォーム */}
-			{isTauri ? (
+			{isTauri() ? (
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
 						setIsSubmitting(true);
 						try {
 							await loginWithGoogleTauri();
+							toast.success("認証ページを開きました");
 						} catch (err) {
-							alert(
+							toast.error(
 								err instanceof Error ? err.message : "エラーが発生しました",
 							);
 							setIsSubmitting(false);

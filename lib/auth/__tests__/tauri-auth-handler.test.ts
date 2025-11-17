@@ -205,4 +205,34 @@ describe("setupTauriAuthHandler", () => {
 			mockSupabaseClient.auth.exchangeCodeForSession,
 		).not.toHaveBeenCalled();
 	});
+
+	// TC-007: 異常系 - getUser()エラー
+	test("TC-007: Should handle getUser error", async () => {
+		setupTauriMock();
+
+		// Set URL parameters
+		Object.defineProperty(window, "location", {
+			value: {
+				search: "?access_token=token123&refresh_token=refresh123",
+				href: "",
+			},
+			configurable: true,
+		});
+
+		mockSupabaseClient.auth.setSession = vi.fn().mockResolvedValue({
+			data: { session: mockSession, user: mockUser },
+			error: null,
+		});
+		const mockGetUserError = { message: "Get user error" };
+		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
+			data: { user: null },
+			error: mockGetUserError,
+		});
+
+		await setupTauriAuthHandler();
+
+		expect(mockSupabaseClient.auth.setSession).toHaveBeenCalled();
+		expect(mockSupabaseClient.auth.getUser).toHaveBeenCalled();
+		expect(window.location.href).toBe("/auth/login?error=get_user_failed");
+	});
 });

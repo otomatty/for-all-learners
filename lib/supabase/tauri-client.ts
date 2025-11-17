@@ -2,6 +2,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database.types";
+import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境とWeb環境の両方に対応したSupabaseクライアント
@@ -29,16 +30,11 @@ export function createClient() {
 		);
 	}
 
-	const isTauri =
-		typeof window !== "undefined" &&
-		"__TAURI__" in window &&
-		window.__TAURI__ !== undefined;
-
 	// Tauri環境では、カスタムストレージアダプターを使用
 	return createBrowserClient<Database>(url, key, {
 		auth: {
 			// Tauri環境では localStorage を明示的に使用
-			storage: isTauri
+			storage: isTauri()
 				? {
 						getItem: (key: string) => {
 							return localStorage.getItem(key);
@@ -55,7 +51,7 @@ export function createClient() {
 			// セッションの永続化設定
 			persistSession: true,
 			autoRefreshToken: true,
-			detectSessionInUrl: !isTauri, // Tauri環境ではURL検出を無効化
+			detectSessionInUrl: !isTauri(), // Tauri環境ではURL検出を無効化
 		},
 	});
 }
