@@ -138,7 +138,7 @@ PR #165に対して、以下の2つのレビューが作成されました：
 
 3. コード重複の解消
    - [x] Tauri環境判定を共通化（`lib/utils/environment.ts`作成、完了）
-   - [ ] フォームUIを共通コンポーネントに抽出（将来対応）
+   - [x] フォームUIを共通コンポーネントに抽出（`MagicLinkForm.tsx`、`GoogleLoginForm.tsx`作成、完了）
 
 ### Phase 3: Medium/Low Priority（完了）
 
