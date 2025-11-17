@@ -28,6 +28,9 @@
 		"withGlobalTauri": true
 	},
 	"plugins": {
+		"deep-link": {
+			"schemes": ["tauri"]
+		},
 		"shell": {
 			"open": true
 		}
