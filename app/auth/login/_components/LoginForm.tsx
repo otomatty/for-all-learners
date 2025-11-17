@@ -1,16 +1,10 @@
 "use client";
 
-import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useId, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { loginWithGoogleTauri } from "@/lib/auth/tauri-login";
-import { loginWithMagicLinkTauri } from "@/lib/auth/tauri-magic-link";
+import { useMemo, useState } from "react";
 import { isTauri } from "@/lib/utils/environment";
+import { GoogleLoginForm } from "./GoogleLoginForm";
+import { MagicLinkForm } from "./MagicLinkForm";
 
 interface LoginFormProps {
 	message?: string;
@@ -23,7 +17,6 @@ export function LoginForm({
 	error,
 	errorDescription,
 }: LoginFormProps) {
-	const emailId = useId();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	// Tauri環境判定をメモ化（パフォーマンス最適化）
 	const tauriEnv = useMemo(() => isTauri(), []);
@@ -76,70 +69,11 @@ export function LoginForm({
 			)}
 
 			{/* Magic Link ログインフォーム */}
-			{tauriEnv ? (
-				<form
-					onSubmit={async (e) => {
-						e.preventDefault();
-						setIsSubmitting(true);
-						const formData = new FormData(e.currentTarget);
-						const email = formData.get("email") as string;
-						// HTML5のrequired属性で検証されるため、JS検証は不要
-						try {
-							await loginWithMagicLinkTauri(email);
-							toast.success("認証メールを送信しました");
-							// フォームをリセット
-							e.currentTarget.reset();
-							setIsSubmitting(false);
-							window.location.href = "/auth/login?message=magic_link_sent";
-						} catch (err) {
-							toast.error(
-								err instanceof Error ? err.message : "エラーが発生しました",
-							);
-							setIsSubmitting(false);
-						}
-					}}
-					className="grid gap-4 mb-6"
-				>
-					<div>
-						<Label htmlFor={emailId} className="sr-only">
-							メールアドレス
-						</Label>
-						<Input
-							type="email"
-							name="email"
-							id={emailId}
-							placeholder="メールアドレス"
-							required
-							className="w-full"
-							disabled={isSubmitting}
-						/>
-					</div>
-					<Button type="submit" variant="default" disabled={isSubmitting}>
-						<Mail className="mr-2 h-4 w-4" />
-						メールアドレスでログイン
-					</Button>
-				</form>
-			) : (
-				<form action={loginWithMagicLink} className="grid gap-4 mb-6">
-					<div>
-						<Label htmlFor={emailId} className="sr-only">
-							メールアドレス
-						</Label>
-						<Input
-							type="email"
-							name="email"
-							id={emailId}
-							placeholder="メールアドレス"
-							required
-							className="w-full"
-						/>
-					</div>
-					<Button type="submit" variant="default">
-						<Mail className="mr-2 h-4 w-4" />
-						メールアドレスでログイン
-					</Button>
-				</form>
-			)}
+			<MagicLinkForm
+				isTauri={tauriEnv}
+				isSubmitting={isSubmitting}
+				onSubmittingChange={setIsSubmitting}
+			/>
 
 			<div className="relative mb-6">
 				<div className="absolute inset-0 flex items-center">
@@ -153,48 +87,11 @@ export function LoginForm({
 			</div>
 
 			{/* Google ログインフォーム */}
-			{tauriEnv ? (
-				<form
-					onSubmit={async (e) => {
-						e.preventDefault();
-						setIsSubmitting(true);
-						try {
-							await loginWithGoogleTauri();
-							toast.success("認証ページを開きました");
-						} catch (err) {
-							toast.error(
-								err instanceof Error ? err.message : "エラーが発生しました",
-							);
-							setIsSubmitting(false);
-						}
-					}}
-					className="grid gap-6"
-				>
-					<Button type="submit" variant="outline" disabled={isSubmitting}>
-						<Image
-							src="/images/google-logo.svg"
-							alt="Google Logo"
-							width={20}
-							height={20}
-							className="mr-2"
-						/>
-						<span>Googleでログイン</span>
-					</Button>
-				</form>
-			) : (
-				<form action={loginWithGoogle} className="grid gap-6">
-					<Button type="submit" variant="outline">
-						<Image
-							src="/images/google-logo.svg"
-							alt="Google Logo"
-							width={20}
-							height={20}
-							className="mr-2"
-						/>
-						<span>Googleでログイン</span>
-					</Button>
-				</form>
-			)}
+			<GoogleLoginForm
+				isTauri={tauriEnv}
+				isSubmitting={isSubmitting}
+				onSubmittingChange={setIsSubmitting}
+			/>
 		</div>
 	);
 }
