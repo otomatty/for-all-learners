@@ -18,9 +18,9 @@
 
 export type { AudioRecording } from "./useAudioRecordings";
 export { useAudioRecordings } from "./useAudioRecordings";
+export type { UploadAudioOptions, UploadAudioResult } from "./useUploadAudio";
+export { useUploadAudio } from "./useUploadAudio";
 export type { UploadImageResult } from "./useUploadImage";
 export { useUploadImage } from "./useUploadImage";
 export type { UploadPdfOptions, UploadPdfResult } from "./useUploadPdf";
 export { useUploadPdf } from "./useUploadPdf";
-export type { UploadAudioOptions, UploadAudioResult } from "./useUploadAudio";
-export { useUploadAudio } from "./useUploadAudio";

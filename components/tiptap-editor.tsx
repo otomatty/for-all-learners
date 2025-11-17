@@ -10,8 +10,8 @@ import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
-import { useUploadImage } from "@/lib/hooks/storage";
 import { Button } from "@/components/ui/button"; // Buttonをインポート
+import { useUploadImage } from "@/lib/hooks/storage";
 import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
 import { CustomCodeBlock } from "@/lib/tiptap-extensions/code-block";
@@ -183,7 +183,11 @@ const TiptapEditor = ({
 									if (result.error) {
 										toast.error(`画像アップロードエラー: ${result.error}`);
 									} else if (result.publicUrl) {
-										editor.chain().focus().setImage({ src: result.publicUrl }).run();
+										editor
+											.chain()
+											.focus()
+											.setImage({ src: result.publicUrl })
+											.run();
 										toast.success("画像を挿入しました");
 									}
 								} catch (error) {

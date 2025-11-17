@@ -1,13 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "../../../supabase/client";
 import { useUploadAudio } from "../useUploadAudio";
-import {
-	createMockSupabaseClient,
-	createMockFile,
-} from "./helpers";
+import { createMockFile, createMockSupabaseClient } from "./helpers";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
@@ -94,9 +91,9 @@ describe("useUploadAudio", () => {
 
 		const mutation = result.current;
 
-		await expect(
-			mutation.mutateAsync({ file: mockFile }),
-		).rejects.toThrow("Not authenticated");
+		await expect(mutation.mutateAsync({ file: mockFile })).rejects.toThrow(
+			"Not authenticated",
+		);
 	});
 
 	it("should throw error when file size exceeds limit", async () => {
@@ -327,4 +324,3 @@ describe("useUploadAudio", () => {
 		);
 	});
 });
-
