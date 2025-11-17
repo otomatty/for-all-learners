@@ -37,45 +37,27 @@ export function useGoalLimits() {
 				};
 			}
 
-			try {
-				const { data: currentGoals, error: goalsError } = await supabase
-					.from("study_goals")
-					.select("*")
-					.eq("user_id", user.id)
-					.order("priority_order", { ascending: true })
-					.order("created_at", { ascending: false });
+			const { data: currentGoals, error: goalsError } = await supabase
+				.from("study_goals")
+				.select("*")
+				.eq("user_id", user.id)
+				.order("priority_order", { ascending: true })
+				.order("created_at", { ascending: false });
 
-				if (goalsError) throw goalsError;
+			if (goalsError) throw goalsError;
 
-				const isPaid = await isUserPaid(user.id);
-				const maxGoals = isPaid ? 10 : 3;
-				const currentCount = currentGoals?.length ?? 0;
-				const canAddMore = currentCount < maxGoals;
+			const isPaid = await isUserPaid(user.id);
+			const maxGoals = isPaid ? 10 : 3;
+			const currentCount = currentGoals?.length ?? 0;
+			const canAddMore = currentCount < maxGoals;
 
-				return {
-					currentCount,
-					maxGoals,
-					canAddMore,
-					isPaid,
-					remainingGoals: maxGoals - currentCount,
-				};
-			} catch (_error) {
-				// エラーが発生した場合は無料プランとして扱う
-				const { data: currentGoals } = await supabase
-					.from("study_goals")
-					.select("*")
-					.eq("user_id", user.id)
-					.order("priority_order", { ascending: true })
-					.order("created_at", { ascending: false });
-
-				return {
-					currentCount: currentGoals?.length ?? 0,
-					maxGoals: 3,
-					canAddMore: (currentGoals?.length ?? 0) < 3,
-					isPaid: false,
-					remainingGoals: 3 - (currentGoals?.length ?? 0),
-				};
-			}
+			return {
+				currentCount,
+				maxGoals,
+				canAddMore,
+				isPaid,
+				remainingGoals: maxGoals - currentCount,
+			};
 		},
 	});
 }

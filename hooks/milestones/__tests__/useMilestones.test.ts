@@ -89,11 +89,12 @@ describe("useMilestones", () => {
 		});
 
 		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
+			expect(result.current.isError).toBe(true);
 		});
 
-		// Should return empty array on error
-		expect(result.current.data).toEqual([]);
+		// Should throw error instead of returning empty array
+		expect(result.current.error).toBeDefined();
+		expect(result.current.data).toBeUndefined();
 	});
 
 	// TC-003: エッジケース - 空の結果セット

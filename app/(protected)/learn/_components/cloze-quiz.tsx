@@ -129,7 +129,7 @@ export default function ClozeQuiz({
 				});
 			});
 		}
-	}, [finished, results, reviewCard]);
+	}, [finished, reviewCard]);
 
 	// 回答確認・次へ処理 (stable via useCallback)
 	const handleCheck = useCallback(() => {

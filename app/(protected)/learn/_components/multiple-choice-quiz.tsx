@@ -195,7 +195,7 @@ export default function MultipleChoiceQuiz({
 				});
 			});
 		}
-	}, [isFinished, results, reviewCard]);
+	}, [isFinished, reviewCard]);
 
 	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
 	useEffect(() => {

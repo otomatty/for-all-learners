@@ -82,57 +82,45 @@ export default function MilestoneAdminView({
 		setFormData((prev) => ({ ...prev, [name]: processedValue }));
 	};
 
-	const handleSubmit = async (e: FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
 		setError(null);
 
-		try {
-			if (editingMilestone) {
-				updateMilestone.mutate(
-					{
-						id: editingMilestone.id,
-						updates: formData as MilestoneUpdate,
-					},
-					{
-						onSuccess: (result) => {
-							if (!result) throw new Error("Update failed");
-							closeForm();
-						},
-						onError: (err) => {
-							const errorMessage =
-								err instanceof Error ? err.message : "Unknown error";
-							setError(`マイルストーンの更新に失敗しました: ${errorMessage}`);
-						},
-						onSettled: () => {
-							setIsLoading(false);
-						},
-					},
-				);
-			} else {
-				createMilestone.mutate(formData as MilestoneInsert, {
-					onSuccess: (result) => {
-						if (!result) throw new Error("Create failed");
+		if (editingMilestone) {
+			updateMilestone.mutate(
+				{
+					id: editingMilestone.id,
+					updates: formData as MilestoneUpdate,
+				},
+				{
+					onSuccess: () => {
 						closeForm();
 					},
 					onError: (err) => {
 						const errorMessage =
 							err instanceof Error ? err.message : "Unknown error";
-						setError(`マイルストーンの作成に失敗しました: ${errorMessage}`);
+						setError(`マイルストーンの更新に失敗しました: ${errorMessage}`);
 					},
 					onSettled: () => {
 						setIsLoading(false);
 					},
-				});
-			}
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : "Unknown error";
-			setError(
-				editingMilestone
-					? `マイルストーンの更新に失敗しました: ${errorMessage}`
-					: `マイルストーンの作成に失敗しました: ${errorMessage}`,
+				},
 			);
-			setIsLoading(false);
+		} else {
+			createMilestone.mutate(formData as MilestoneInsert, {
+				onSuccess: () => {
+					closeForm();
+				},
+				onError: (err) => {
+					const errorMessage =
+						err instanceof Error ? err.message : "Unknown error";
+					setError(`マイルストーンの作成に失敗しました: ${errorMessage}`);
+				},
+				onSettled: () => {
+					setIsLoading(false);
+				},
+			});
 		}
 	};
 
@@ -157,8 +145,8 @@ export default function MilestoneAdminView({
 		setIsLoading(true);
 		setError(null);
 		deleteMilestone.mutate(id, {
-			onSuccess: (result) => {
-				if (!result.success) throw new Error(result.error || "Delete failed");
+			onSuccess: () => {
+				// Successfully deleted
 			},
 			onError: (err) => {
 				const errorMessage =

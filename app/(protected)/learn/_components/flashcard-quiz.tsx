@@ -85,7 +85,7 @@ export default function FlashcardQuiz({
 				});
 			});
 		}
-	}, [finished, results, reviewCard]);
+	}, [finished, reviewCard]);
 
 	const handleReveal = useCallback(() => {
 		// record when user reveals answer
