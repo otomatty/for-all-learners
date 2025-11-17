@@ -10,7 +10,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Upload } from "lucide-react"; // Uploadアイコンをインポート
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner"; // toastをインポート
-import { uploadImageToCardImages } from "@/app/_actions/storage"; // Server Actionをインポート
+import { useUploadImage } from "@/lib/hooks/storage";
 import { Button } from "@/components/ui/button"; // Buttonをインポート
 import { getEditorManager } from "@/lib/plugins/editor-manager";
 import { getTiptapExtensions } from "@/lib/plugins/editor-registry";
@@ -37,6 +37,7 @@ const TiptapEditor = ({
 	userId, // userIdを受け取る
 }: TiptapEditorProps) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const uploadImageMutation = useUploadImage();
 
 	// Memoize base extensions to prevent unnecessary re-renders
 	// Note: Plugin extensions are included at editor creation time
@@ -177,15 +178,18 @@ const TiptapEditor = ({
 							const file = event.target.files?.[0];
 							if (file && userId) {
 								toast.info("画像をアップロードしています...");
-								const { publicUrl, error } = await uploadImageToCardImages(
-									userId,
-									file,
-								);
-								if (error) {
-									toast.error(`画像アップロードエラー: ${error}`);
-								} else if (publicUrl) {
-									editor.chain().focus().setImage({ src: publicUrl }).run();
-									toast.success("画像を挿入しました");
+								try {
+									const result = await uploadImageMutation.mutateAsync(file);
+									if (result.error) {
+										toast.error(`画像アップロードエラー: ${result.error}`);
+									} else if (result.publicUrl) {
+										editor.chain().focus().setImage({ src: result.publicUrl }).run();
+										toast.success("画像を挿入しました");
+									}
+								} catch (error) {
+									toast.error(
+										`画像アップロードエラー: ${error instanceof Error ? error.message : "Unknown error"}`,
+									);
 								}
 								// Reset file input
 								if (fileInputRef.current) {

@@ -9,7 +9,8 @@
  * Dependencies (External files that this file imports):
  *   ├─ ./useUploadImage
  *   ├─ ./useUploadPdf
- *   └─ ./useAudioRecordings
+ *   ├─ ./useAudioRecordings
+ *   └─ ./useUploadAudio
  *
  * Related Documentation:
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
@@ -21,3 +22,5 @@ export type { UploadImageResult } from "./useUploadImage";
 export { useUploadImage } from "./useUploadImage";
 export type { UploadPdfOptions, UploadPdfResult } from "./useUploadPdf";
 export { useUploadPdf } from "./useUploadPdf";
+export type { UploadAudioOptions, UploadAudioResult } from "./useUploadAudio";
+export { useUploadAudio } from "./useUploadAudio";
