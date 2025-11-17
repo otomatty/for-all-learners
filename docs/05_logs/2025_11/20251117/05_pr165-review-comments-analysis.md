@@ -124,21 +124,21 @@ PR #165に対して、以下の2つのレビューが作成されました：
    - [x] `src-tauri/src/lib.rs` に `.plugin(tauri_plugin_deep_link::init())` 追加（完了）
    - [x] `src-tauri/tauri.conf.json` に deep-link設定追加（完了）
 
-### Phase 2: High Priority Issues（次回PR）
+### Phase 2: High Priority Issues（完了）
 
 **所要時間**: 1-2時間
 
 1. useAuthフックの修正
-   - [ ] 依存配列を空にする
-   - [ ] クライアントをuseEffect内で作成
+   - [x] 依存配列を空にする（完了）
+   - [x] クライアントをuseEffect内で作成（完了）
 
 2. エラーハンドリングの改善
-   - [ ] `getUser()` のエラーハンドリング追加
-   - [ ] `alert()` を `toast` に置き換え
+   - [x] `getUser()` のエラーハンドリング追加（完了）
+   - [x] `alert()` を `toast` に置き換え（完了）
 
 3. コード重複の解消
-   - [ ] フォームUIを共通コンポーネントに抽出
-   - [ ] Tauri環境判定を共通化
+   - [x] Tauri環境判定を共通化（`lib/utils/environment.ts`作成、完了）
+   - [ ] フォームUIを共通コンポーネントに抽出（将来対応）
 
 ### Phase 3: Medium/Low Priority（将来対応）
 
