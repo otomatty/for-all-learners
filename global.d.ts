@@ -1,6 +1,21 @@
 // global.d.ts
 declare module "shiki/themes/*.json";
 
+// Tauri type definitions
+declare global {
+	interface Window {
+		__TAURI__?: {
+			invoke: (cmd: string, args?: unknown) => Promise<unknown>;
+			event: {
+				listen: (
+					event: string,
+					handler: (event: unknown) => void,
+				) => Promise<() => void>;
+			};
+		};
+	}
+}
+
 // TipTap custom commands
 import "@tiptap/core";
 import type { UnifiedLinkAttributes } from "./lib/tiptap-extensions/unified-link-mark";

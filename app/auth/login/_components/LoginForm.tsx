@@ -2,11 +2,13 @@
 
 import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { loginWithGoogle, loginWithMagicLink } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loginWithGoogleTauri } from "@/lib/auth/tauri-login";
+import { loginWithMagicLinkTauri } from "@/lib/auth/tauri-magic-link";
 
 interface LoginFormProps {
 	message?: string;
@@ -20,6 +22,11 @@ export function LoginForm({
 	errorDescription,
 }: LoginFormProps) {
 	const emailId = useId();
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const isTauri =
+		typeof window !== "undefined" &&
+		"__TAURI__" in window &&
+		window.__TAURI__ !== undefined;
 
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -69,25 +76,70 @@ export function LoginForm({
 			)}
 
 			{/* Magic Link ログインフォーム */}
-			<form action={loginWithMagicLink} className="grid gap-4 mb-6">
-				<div>
-					<Label htmlFor={emailId} className="sr-only">
-						メールアドレス
-					</Label>
-					<Input
-						type="email"
-						name="email"
-						id={emailId}
-						placeholder="メールアドレス"
-						required
-						className="w-full"
-					/>
-				</div>
-				<Button type="submit" variant="default">
-					<Mail className="mr-2 h-4 w-4" />
-					メールアドレスでログイン
-				</Button>
-			</form>
+			{isTauri ? (
+				<form
+					onSubmit={async (e) => {
+						e.preventDefault();
+						setIsSubmitting(true);
+						const formData = new FormData(e.currentTarget);
+						const email = formData.get("email") as string;
+						if (!email) {
+							alert("メールアドレスを入力してください");
+							setIsSubmitting(false);
+							return;
+						}
+						try {
+							await loginWithMagicLinkTauri(email);
+							window.location.href = "/auth/login?message=magic_link_sent";
+						} catch (err) {
+							alert(
+								err instanceof Error ? err.message : "エラーが発生しました",
+							);
+							setIsSubmitting(false);
+						}
+					}}
+					className="grid gap-4 mb-6"
+				>
+					<div>
+						<Label htmlFor={emailId} className="sr-only">
+							メールアドレス
+						</Label>
+						<Input
+							type="email"
+							name="email"
+							id={emailId}
+							placeholder="メールアドレス"
+							required
+							className="w-full"
+							disabled={isSubmitting}
+						/>
+					</div>
+					<Button type="submit" variant="default" disabled={isSubmitting}>
+						<Mail className="mr-2 h-4 w-4" />
+						メールアドレスでログイン
+					</Button>
+				</form>
+			) : (
+				<form action={loginWithMagicLink} className="grid gap-4 mb-6">
+					<div>
+						<Label htmlFor={emailId} className="sr-only">
+							メールアドレス
+						</Label>
+						<Input
+							type="email"
+							name="email"
+							id={emailId}
+							placeholder="メールアドレス"
+							required
+							className="w-full"
+						/>
+					</div>
+					<Button type="submit" variant="default">
+						<Mail className="mr-2 h-4 w-4" />
+						メールアドレスでログイン
+					</Button>
+				</form>
+			)}
 
 			<div className="relative mb-6">
 				<div className="absolute inset-0 flex items-center">
@@ -101,18 +153,47 @@ export function LoginForm({
 			</div>
 
 			{/* Google ログインフォーム */}
-			<form action={loginWithGoogle} className="grid gap-6">
-				<Button type="submit" variant="outline">
-					<Image
-						src="/images/google-logo.svg"
-						alt="Google Logo"
-						width={20}
-						height={20}
-						className="mr-2"
-					/>
-					<span>Googleでログイン</span>
-				</Button>
-			</form>
+			{isTauri ? (
+				<form
+					onSubmit={async (e) => {
+						e.preventDefault();
+						setIsSubmitting(true);
+						try {
+							await loginWithGoogleTauri();
+						} catch (err) {
+							alert(
+								err instanceof Error ? err.message : "エラーが発生しました",
+							);
+							setIsSubmitting(false);
+						}
+					}}
+					className="grid gap-6"
+				>
+					<Button type="submit" variant="outline" disabled={isSubmitting}>
+						<Image
+							src="/images/google-logo.svg"
+							alt="Google Logo"
+							width={20}
+							height={20}
+							className="mr-2"
+						/>
+						<span>Googleでログイン</span>
+					</Button>
+				</form>
+			) : (
+				<form action={loginWithGoogle} className="grid gap-6">
+					<Button type="submit" variant="outline">
+						<Image
+							src="/images/google-logo.svg"
+							alt="Google Logo"
+							width={20}
+							height={20}
+							className="mr-2"
+						/>
+						<span>Googleでログイン</span>
+					</Button>
+				</form>
+			)}
 		</div>
 	);
 }
