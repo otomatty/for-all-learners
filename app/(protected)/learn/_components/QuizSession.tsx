@@ -17,9 +17,9 @@ import type {
 	FlashcardQuestion,
 	MultipleChoiceQuestion,
 } from "@/lib/gemini";
-import ClozeQuiz from "./cloze-quiz";
-import FlashcardQuiz from "./flashcard-quiz";
-import MultipleChoiceQuiz from "./multiple-choice-quiz";
+import ClozeQuiz from "./ClozeQuiz";
+import FlashcardQuiz from "./FlashcardQuiz";
+import MultipleChoiceQuiz from "./MultipleChoiceQuiz";
 
 interface QuizSessionProps {
 	mode: QuizMode;

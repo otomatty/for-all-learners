@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { GoalItem } from "./goal-item";
+import { GoalItem } from "./GoalItem/GoalItem";
 
 interface StudyGoal {
 	id: string;
@@ -54,7 +54,7 @@ export function SortableGoalItem({ goal }: SortableGoalItemProps) {
 
 				{/* 優先順位番号 */}
 				{goal.priority_order && goal.priority_order > 0 && (
-					<div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
+					<div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
 						{goal.priority_order}
 					</div>
 				)}

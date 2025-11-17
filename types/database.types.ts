@@ -2718,6 +2718,13 @@ export type Database = {
 					updated_at: string;
 				}[];
 			};
+			get_today_review_counts_by_deck: {
+				Args: { p_user_id: string };
+				Returns: {
+					deck_id: string;
+					review_count: number;
+				}[];
+			};
 			increment_plugin_downloads: {
 				Args: { p_plugin_id: string };
 				Returns: undefined;
@@ -2726,6 +2733,14 @@ export type Database = {
 			is_superadmin: { Args: never; Returns: boolean };
 			maintain_pdf_jobs: { Args: never; Returns: Json };
 			rebalance_pdf_job_priorities: { Args: never; Returns: number };
+			review_card: {
+				Args: {
+					p_card_id: string;
+					p_practice_mode?: string;
+					p_quality: number;
+				};
+				Returns: Json;
+			};
 			search_all: {
 				Args: { p_limit?: number; p_query: string };
 				Returns: {
@@ -2761,6 +2776,10 @@ export type Database = {
 			show_trgm: { Args: { "": string }; Returns: string[] };
 			toggle_review_helpful: {
 				Args: { p_review_id: string };
+				Returns: boolean;
+			};
+			update_goals_priority: {
+				Args: { p_goal_ids: string[]; p_user_id: string };
 				Returns: boolean;
 			};
 			update_pdf_job_heartbeat: {

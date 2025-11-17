@@ -1,4 +1,4 @@
-import { AddGoalDialog } from "@/components/goals/add-goal-dialog";
+import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import { Card } from "@/components/ui/card";
 import ServerGoalDecksSection from "./GoalDeckSection";
 import GoalSummaryClient from "./GoalSummaryClient";

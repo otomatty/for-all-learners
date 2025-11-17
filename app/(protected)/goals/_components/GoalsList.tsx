@@ -14,9 +14,8 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { updateGoalsPriority } from "@/app/_actions/study_goals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +25,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { GoalItem } from "./goal-item";
-import { SortableGoalItem } from "./sortable-goal-item";
+import { useUpdateGoalsPriority } from "@/hooks/study_goals";
+import { GoalItem } from "./GoalItem/GoalItem";
+import { SortableGoalItem } from "./SortableGoalItem";
 
 interface StudyGoal {
 	id: string;
@@ -58,7 +58,7 @@ export function GoalsList({ goals }: GoalsListProps) {
 	const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 	const [sortBy, setSortBy] = useState<SortBy>("priority_asc");
 	const [localGoals, setLocalGoals] = useState(goals);
-	const [isPending, startTransition] = useTransition();
+	const updateGoalsPriority = useUpdateGoalsPriority();
 	const [isMounted, setIsMounted] = useState(false);
 
 	// クライアントサイドでのマウント後にドラッグ&ドロップを有効化
@@ -107,17 +107,16 @@ export function GoalsList({ goals }: GoalsListProps) {
 		setLocalGoals(updatedGoals);
 
 		// サーバーに優先順位更新を送信（非同期）
-		startTransition(async () => {
-			const goalIds = updatedGoals.map((goal) => goal.id);
-			const result = await updateGoalsPriority(goalIds);
-
-			if (!result.success) {
-				toast.error("優先順位の更新に失敗しました");
+		const goalIds = updatedGoals.map((goal) => goal.id);
+		updateGoalsPriority.mutate(goalIds, {
+			onSuccess: () => {
+				toast.success("ゴールの優先順位を更新しました");
+			},
+			onError: (error) => {
+				toast.error(error.message || "優先順位の更新に失敗しました");
 				// エラー時は元の状態に戻す
 				setLocalGoals(goals);
-			} else {
-				toast.success("ゴールの優先順位を更新しました");
-			}
+			},
 		});
 	};
 
@@ -308,7 +307,7 @@ export function GoalsList({ goals }: GoalsListProps) {
 			)}
 
 			{/* ローディング状態表示 */}
-			{isPending && (
+			{updateGoalsPriority.isPending && (
 				<div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow-lg">
 					優先順位を更新中...
 				</div>

@@ -4,7 +4,6 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { recordLearningTime } from "@/app/_actions/actionLogs";
-import { reviewCard } from "@/app/_actions/review";
 import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +15,9 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useReviewCard } from "@/hooks/review";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
-import QuizFinished, { type AnswerSummary } from "./quiz-finished";
+import QuizFinished, { type AnswerSummary } from "./QuizFinished";
 
 interface MultipleChoiceQuizProps {
 	questions: (MultipleChoiceQuestion & {
@@ -33,6 +33,7 @@ export default function MultipleChoiceQuiz({
 	startTime,
 	timeLimit,
 }: MultipleChoiceQuizProps) {
+	const reviewCard = useReviewCard();
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
 	);
@@ -186,15 +187,15 @@ export default function MultipleChoiceQuiz({
 	// On finish, perform review and render summary
 	useEffect(() => {
 		if (isFinished) {
-			(async () => {
-				await Promise.all(
-					results.map(({ cardId, quality }) =>
-						reviewCard(cardId, quality, "mcq"),
-					),
-				);
-			})();
+			results.forEach(({ cardId, quality }) => {
+				reviewCard.mutate({
+					cardId,
+					quality,
+					practiceMode: "mcq",
+				});
+			});
 		}
-	}, [isFinished, results]);
+	}, [isFinished, results, reviewCard]);
 
 	// Keyboard navigation: number keys for option selection, and Space/Enter/ArrowRight for Next
 	useEffect(() => {

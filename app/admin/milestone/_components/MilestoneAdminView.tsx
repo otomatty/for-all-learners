@@ -1,15 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
-import {
-	createMilestone,
-	deleteMilestone,
-	type MilestoneInsert,
-	type MilestoneUpdate,
-	updateMilestone,
-} from "@/app/_actions/milestone";
 import type { MilestoneEntry } from "@/app/(public)/milestones/_components/milestone-timeline";
+import {
+	useCreateMilestone,
+	useDeleteMilestone,
+	useUpdateMilestone,
+} from "@/hooks/milestones";
+import type { Database } from "@/types/database.types";
+
+type MilestoneInsert = Database["public"]["Tables"]["milestones"]["Insert"];
+type MilestoneUpdate = Database["public"]["Tables"]["milestones"]["Update"];
 
 const initialFormData: MilestoneInsert = {
 	milestone_id: "",
@@ -31,10 +32,12 @@ interface MilestoneAdminViewProps {
 export default function MilestoneAdminView({
 	initialMilestones,
 }: MilestoneAdminViewProps) {
-	const router = useRouter();
+	const createMilestone = useCreateMilestone();
+	const updateMilestone = useUpdateMilestone();
+	const deleteMilestone = useDeleteMilestone();
 	const [milestones, setMilestones] =
 		useState<MilestoneEntry[]>(initialMilestones);
-	const [isLoading, setIsLoading] = useState(false); // 初期ロードはサーバーで行うためfalseに
+	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const [isFormOpen, setIsFormOpen] = useState(false);
@@ -79,34 +82,45 @@ export default function MilestoneAdminView({
 		setFormData((prev) => ({ ...prev, [name]: processedValue }));
 	};
 
-	const handleSubmit = async (e: FormEvent) => {
+	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
 		setError(null);
 
-		try {
-			if (editingMilestone) {
-				const result = await updateMilestone(
-					editingMilestone.id,
-					formData as MilestoneUpdate,
-				);
-				if (!result) throw new Error("Update failed");
-			} else {
-				const result = await createMilestone(formData as MilestoneInsert);
-				if (!result) throw new Error("Create failed");
-			}
-			// revalidatePathがサーバーアクション内で行われるため、router.refresh()でUIを更新
-			router.refresh();
-			closeForm();
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : "Unknown error";
-			setError(
-				editingMilestone
-					? `マイルストーンの更新に失敗しました: ${errorMessage}`
-					: `マイルストーンの作成に失敗しました: ${errorMessage}`,
+		if (editingMilestone) {
+			updateMilestone.mutate(
+				{
+					id: editingMilestone.id,
+					updates: formData as MilestoneUpdate,
+				},
+				{
+					onSuccess: () => {
+						closeForm();
+					},
+					onError: (err) => {
+						const errorMessage =
+							err instanceof Error ? err.message : "Unknown error";
+						setError(`マイルストーンの更新に失敗しました: ${errorMessage}`);
+					},
+					onSettled: () => {
+						setIsLoading(false);
+					},
+				},
 			);
-		} finally {
-			setIsLoading(false);
+		} else {
+			createMilestone.mutate(formData as MilestoneInsert, {
+				onSuccess: () => {
+					closeForm();
+				},
+				onError: (err) => {
+					const errorMessage =
+						err instanceof Error ? err.message : "Unknown error";
+					setError(`マイルストーンの作成に失敗しました: ${errorMessage}`);
+				},
+				onSettled: () => {
+					setIsLoading(false);
+				},
+			});
 		}
 	};
 
@@ -130,16 +144,19 @@ export default function MilestoneAdminView({
 		if (!confirm("本当にこのマイルストーンを削除しますか？")) return;
 		setIsLoading(true);
 		setError(null);
-		try {
-			const result = await deleteMilestone(id);
-			if (!result.success) throw new Error(result.error || "Delete failed");
-			router.refresh(); // UIを更新
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : "Unknown error";
-			setError(`マイルストーンの削除に失敗しました: ${errorMessage}`);
-		} finally {
-			setIsLoading(false);
-		}
+		deleteMilestone.mutate(id, {
+			onSuccess: () => {
+				// Successfully deleted
+			},
+			onError: (err) => {
+				const errorMessage =
+					err instanceof Error ? err.message : "Unknown error";
+				setError(`マイルストーンの削除に失敗しました: ${errorMessage}`);
+			},
+			onSettled: () => {
+				setIsLoading(false);
+			},
+		});
 	};
 	const openForm = () => {
 		setEditingMilestone(null);

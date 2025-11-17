@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
 import { Container } from "@/components/layouts/container";
-import QuizSession from "./_components/quiz-session";
+import QuizSession from "./_components/QuizSession";
 
 export default async function SessionPage() {
 	const cookieStore = await cookies();
