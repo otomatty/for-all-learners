@@ -10,6 +10,10 @@ export type TodayReviewCountByDeck = {
 
 /**
  * ユーザーが当日レビュー済みのカード数をデッキごとに集計して返します。
+ *
+ * Phase 2対応: RPC関数 `get_today_review_counts_by_deck` を使用して
+ * データベース側で集計処理を実行し、パフォーマンスを改善します。
+ * GROUP BY句を使用して効率的に集計を行います。
  */
 export function useTodayReviewCountsByDeck() {
 	const supabase = createClient();
@@ -23,33 +27,25 @@ export function useTodayReviewCountsByDeck() {
 			} = await supabase.auth.getUser();
 			if (userError || !user) throw new Error("Not authenticated");
 
-			const today = new Date();
-			today.setHours(0, 0, 0, 0);
-			const tomorrow = new Date(today);
-			tomorrow.setDate(tomorrow.getDate() + 1);
+			// RPC関数を呼び出してデータベース側で集計
+			const { data, error } = await supabase.rpc(
+				"get_today_review_counts_by_deck",
+				{
+					p_user_id: user.id,
+				},
+			);
 
-			const { data: logs, error } = await supabase
-				.from("learning_logs")
-				.select("card_id, cards(deck_id)")
-				.eq("user_id", user.id)
-				.gte("answered_at", today.toISOString())
-				.lt("answered_at", tomorrow.toISOString());
-
-			if (error) throw error;
-
-			const map = new Map<string, number>();
-			for (const log of logs ?? []) {
-				const card = log as { cards: { deck_id: string } };
-				if (card.cards?.deck_id) {
-					const deckId = card.cards.deck_id;
-					map.set(deckId, (map.get(deckId) ?? 0) + 1);
-				}
+			if (error) {
+				throw new Error(error.message || "レビュー数の取得に失敗しました");
 			}
 
-			return Array.from(map.entries()).map(([deck_id, review_count]) => ({
-				deck_id,
-				review_count,
-			}));
+			// RPC関数の戻り値を型に合わせて変換
+			return (data ?? []).map(
+				(row: { deck_id: string; review_count: number }) => ({
+					deck_id: row.deck_id,
+					review_count: row.review_count,
+				}),
+			);
 		},
 	});
 }
