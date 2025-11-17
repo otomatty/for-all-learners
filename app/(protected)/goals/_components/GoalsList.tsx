@@ -16,7 +16,6 @@ import {
 } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useUpdateGoalsPriority } from "@/hooks/study_goals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useUpdateGoalsPriority } from "@/hooks/study_goals";
 import { GoalItem } from "./GoalItem/GoalItem";
 import { SortableGoalItem } from "./SortableGoalItem";
 

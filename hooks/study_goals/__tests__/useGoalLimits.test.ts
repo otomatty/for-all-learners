@@ -134,24 +134,21 @@ describe("useGoalLimits", () => {
 		}
 	});
 
-	// TC-003: 異常系 - データベースエラー（フォールバック動作）
-	test("TC-003: Should handle database error with fallback", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockRejectedValue(new Error("Database error"));
-
+	// TC-003: 異常系 - データベースエラー（エラーをthrow）
+	test("TC-003: Should handle database error by throwing", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		// Mock goals query (first call - throws error, second call - fallback)
-		let orderCallCount1 = 0;
+		// Mock goals query to return error
+		let orderCallCount = 0;
 		const mockGoalsQueryError = {
 			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockReturnThis(),
 			order: vi.fn().mockImplementation(() => {
-				orderCallCount1++;
-				if (orderCallCount1 === 2) {
+				orderCallCount++;
+				if (orderCallCount === 2) {
 					return Promise.resolve({
 						data: null,
 						error: { message: "Database error", code: "PGRST116" },
@@ -161,41 +158,18 @@ describe("useGoalLimits", () => {
 			}),
 		};
 
-		let orderCallCount2 = 0;
-		const mockGoalsQueryFallback = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			order: vi.fn().mockImplementation(() => {
-				orderCallCount2++;
-				if (orderCallCount2 === 2) {
-					return Promise.resolve({
-						data: [mockStudyGoal],
-						error: null,
-					});
-				}
-				return mockGoalsQueryFallback; // Return this for chaining
-			}),
-		};
-
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockGoalsQueryError) // First call (throws error)
-			.mockReturnValueOnce(mockGoalsQueryFallback); // Second call (fallback)
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockGoalsQueryError);
 
 		const { result } = renderHook(() => useGoalLimits(), {
 			wrapper: createWrapper(),
 		});
 
 		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
+			expect(result.current.isError).toBe(true);
 		});
 
-		expect(result.current.data).toBeDefined();
-		// Should fallback to free plan
-		if (result.current.data) {
-			expect(result.current.data.maxGoals).toBe(3);
-			expect(result.current.data.isPaid).toBe(false);
-		}
+		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toContain("Database error");
 	});
 
 	// TC-004: エッジケース - 空のuserIdの場合は無料プランとして扱う

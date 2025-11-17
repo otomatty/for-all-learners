@@ -37,31 +37,11 @@ describe("useUpdateGoalsPriority", () => {
 
 		const goalIds = ["goal-1", "goal-2", "goal-3"];
 
-		// Mock update query (called multiple times for each goal)
-		// Each goal needs its own query chain
-		const mockQueries = goalIds.map(() => {
-			let eqCallCount = 0;
-			const query = {
-				update: vi.fn().mockReturnThis(),
-				eq: vi.fn().mockImplementation(() => {
-					eqCallCount++;
-					if (eqCallCount === 2) {
-						return Promise.resolve({
-							data: null,
-							error: null,
-						});
-					}
-					return query; // Return this for chaining
-				}),
-			};
-			return query;
+		// Mock RPC function to return success
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: true,
+			error: null,
 		});
-
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockQueries[0])
-			.mockReturnValueOnce(mockQueries[1])
-			.mockReturnValueOnce(mockQueries[2]);
 
 		const { result } = renderHook(() => useUpdateGoalsPriority(), {
 			wrapper: createWrapper(),
@@ -73,16 +53,14 @@ describe("useUpdateGoalsPriority", () => {
 			expect(result.current.isSuccess).toBe(true);
 		});
 
-		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.success).toBe(true);
-		// Verify that update was called for each goal
-		for (let i = 0; i < goalIds.length; i++) {
-			expect(mockQueries[i].update).toHaveBeenCalledWith({
-				priority_order: i + 1,
-			});
-			expect(mockQueries[i].eq).toHaveBeenCalledWith("id", goalIds[i]);
-			expect(mockQueries[i].eq).toHaveBeenCalledWith("user_id", mockUser.id);
-		}
+		// Verify that RPC function was called
+		expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
+			"update_goals_priority",
+			{
+				p_user_id: mockUser.id,
+				p_goal_ids: goalIds,
+			},
+		);
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -101,18 +79,11 @@ describe("useUpdateGoalsPriority", () => {
 		result.current.mutate(goalIds);
 
 		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
+			expect(result.current.isError).toBe(true);
 		});
 
-		expect(result.current.data).toBeDefined();
-		if (!result.current.data) {
-			throw new Error("Expected data to be defined");
-		}
-		const data = result.current.data;
-		expect(data.success).toBe(false);
-		if (!data.success) {
-			expect(data.error).toContain("Not authenticated");
-		}
+		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toContain("Not authenticated");
 	});
 
 	// TC-003: 異常系 - データベースエラー
@@ -124,35 +95,11 @@ describe("useUpdateGoalsPriority", () => {
 
 		const goalIds = ["goal-1", "goal-2"];
 
-		// Mock update query with error on second goal
-		const mockQuery1 = {
-			update: vi.fn().mockReturnThis(),
-			eq: vi
-				.fn()
-				.mockReturnThis() // First eq() call returns this
-				.mockResolvedValueOnce({
-					// Second eq() call returns success
-					data: null,
-					error: null,
-				}),
-		};
-
-		const mockQuery2 = {
-			update: vi.fn().mockReturnThis(),
-			eq: vi
-				.fn()
-				.mockReturnThis() // First eq() call returns this
-				.mockResolvedValueOnce({
-					// Second eq() call returns error
-					data: null,
-					error: { message: "Database error", code: "PGRST116" },
-				}),
-		};
-
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockQuery1)
-			.mockReturnValueOnce(mockQuery2);
+		// Mock RPC function to return error
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: null,
+			error: { message: "Database error", code: "PGRST116" },
+		});
 
 		const { result } = renderHook(() => useUpdateGoalsPriority(), {
 			wrapper: createWrapper(),
@@ -161,24 +108,23 @@ describe("useUpdateGoalsPriority", () => {
 		result.current.mutate(goalIds);
 
 		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
+			expect(result.current.isError).toBe(true);
 		});
 
-		expect(result.current.data).toBeDefined();
-		if (!result.current.data) {
-			throw new Error("Expected data to be defined");
-		}
-		const data = result.current.data;
-		expect(data.success).toBe(false);
-		if (!data.success) {
-			expect(data.error).toBeDefined();
-		}
+		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toContain("Database error");
 	});
 
 	// TC-004: エッジケース - 空の配列
 	test("TC-004: Should handle empty array", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
+			error: null,
+		});
+
+		// Mock RPC function to return success for empty array
+		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
+			data: true,
 			error: null,
 		});
 
@@ -192,9 +138,13 @@ describe("useUpdateGoalsPriority", () => {
 			expect(result.current.isSuccess).toBe(true);
 		});
 
-		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.success).toBe(true);
-		// No updates should be called for empty array
-		expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+		// Verify that RPC function was called with empty array
+		expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
+			"update_goals_priority",
+			{
+				p_user_id: mockUser.id,
+				p_goal_ids: [],
+			},
+		);
 	});
 });

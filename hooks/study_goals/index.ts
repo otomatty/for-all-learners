@@ -11,7 +11,6 @@ export { useGoalLimits } from "./useGoalLimits";
 
 export type { StudyGoal } from "./useStudyGoals";
 export { useStudyGoals } from "./useStudyGoals";
-export type { UpdateGoalsPriorityResult } from "./useUpdateGoalsPriority";
 export { useUpdateGoalsPriority } from "./useUpdateGoalsPriority";
 export type {
 	UpdateStudyGoalPayload,
