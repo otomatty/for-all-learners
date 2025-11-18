@@ -37,7 +37,6 @@ describe("useUploadAudio", () => {
 	it("should upload audio file successfully", async () => {
 		const mockFile = createMockFile("test-audio.wav", 1024 * 1024, "audio/wav");
 		const mockSignedUrl = "https://example.com/signed-url";
-		const mockFilePath = "audio/user-id/1234567890-test-audio.wav";
 
 		// Mock auth.getUser
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
@@ -50,12 +49,16 @@ describe("useUploadAudio", () => {
 			error: null,
 		});
 
-		// Mock storage upload
-		mockSupabaseClient.storage.from = vi.fn(() => ({
-			upload: vi.fn().mockResolvedValue({
-				data: { path: mockFilePath },
+		// Mock storage upload - filePathは動的に生成されるため、実際のパスを返すようにする
+		const mockUpload = vi.fn().mockImplementation(async (filePath: string) => {
+			return {
+				data: { path: filePath },
 				error: null,
-			}),
+			};
+		});
+
+		mockSupabaseClient.storage.from = vi.fn(() => ({
+			upload: mockUpload,
 			createSignedUrl: vi.fn().mockResolvedValue({
 				data: { signedUrl: mockSignedUrl },
 				error: null,
@@ -72,8 +75,8 @@ describe("useUploadAudio", () => {
 		});
 
 		await waitFor(() => {
-			expect(uploadResult.success).toBe(true);
 			expect(uploadResult.signedUrl).toBe(mockSignedUrl);
+			expect(uploadResult.filePath).toMatch(/^audio\/user-id\/\d+-test-audio\.wav$/);
 		});
 	});
 
@@ -250,7 +253,6 @@ describe("useUploadAudio", () => {
 		});
 
 		expect(uploadResult).toEqual({
-			success: true,
 			filePath: expect.stringContaining("audio/user-id/"),
 			signedUrl: mockSignedUrl,
 		});

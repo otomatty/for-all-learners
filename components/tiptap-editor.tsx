@@ -179,17 +179,10 @@ const TiptapEditor = ({
 							if (file && userId) {
 								toast.info("画像をアップロードしています...");
 								try {
-									const result = await uploadImageMutation.mutateAsync(file);
-									if (result.error) {
-										toast.error(`画像アップロードエラー: ${result.error}`);
-									} else if (result.publicUrl) {
-										editor
-											.chain()
-											.focus()
-											.setImage({ src: result.publicUrl })
-											.run();
-										toast.success("画像を挿入しました");
-									}
+									const { publicUrl } =
+										await uploadImageMutation.mutateAsync(file);
+									editor.chain().focus().setImage({ src: publicUrl }).run();
+									toast.success("画像を挿入しました");
 								} catch (error) {
 									toast.error(
 										`画像アップロードエラー: ${error instanceof Error ? error.message : "Unknown error"}`,

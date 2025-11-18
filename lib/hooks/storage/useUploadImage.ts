@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export interface UploadImageResult {
 	publicUrl: string;
-	error: string | null;
 }
 
 /**
@@ -61,7 +60,7 @@ export function useUploadImage() {
 				throw new Error("Failed to get public URL for uploaded image.");
 			}
 
-			return { publicUrl: publicUrlData.publicUrl, error: null };
+			return { publicUrl: publicUrlData.publicUrl };
 		},
 	});
 }

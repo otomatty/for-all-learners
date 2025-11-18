@@ -5,8 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 
 export interface AudioRecording {
 	name: string;
-	created_at: string;
-	updated_at: string;
+	created_at: string | null;
+	updated_at: string | null;
 	url: string;
 	title: string | null;
 	duration_sec: number | null;
@@ -63,28 +63,30 @@ export function useAudioRecordings() {
 				throw error;
 			}
 
-			const recordings: AudioRecording[] = [];
-			for (const file of data) {
-				const filePath = `audio/${user.id}/${file.name}`;
-				const { data: signedData, error: signedError } = await supabase.storage
-					.from("audio-recordings")
-					.createSignedUrl(filePath, 60 * 60);
+			// Promise.all を使用して並列化
+			const recordings = await Promise.all(
+				data.map(async (file) => {
+					const filePath = `audio/${user.id}/${file.name}`;
+					const { data: signedData, error: signedError } = await supabase.storage
+						.from("audio-recordings")
+						.createSignedUrl(filePath, 60 * 60);
 
-				if (signedError) {
-					throw signedError;
-				}
+					if (signedError) {
+						throw signedError;
+					}
 
-				// transcription メタデータをマージ
-				const meta = transMap.get(filePath);
-				recordings.push({
-					name: file.name,
-					created_at: file.created_at ?? "",
-					updated_at: file.updated_at ?? "",
-					url: signedData.signedUrl,
-					title: meta?.title ?? null,
-					duration_sec: meta?.duration_sec ?? null,
-				});
-			}
+					// transcription メタデータをマージ
+					const meta = transMap.get(filePath);
+					return {
+						name: file.name,
+						created_at: file.created_at ?? null,
+						updated_at: file.updated_at ?? null,
+						url: signedData.signedUrl,
+						title: meta?.title ?? null,
+						duration_sec: meta?.duration_sec ?? null,
+					};
+				}),
+			);
 
 			return recordings;
 		},

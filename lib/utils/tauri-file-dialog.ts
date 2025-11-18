@@ -18,6 +18,37 @@
 
 import { isTauri } from "./environment";
 
+/**
+ * ファイル拡張子からMIME typeを取得
+ */
+function getMimeTypeFromExtension(extension: string): string {
+	const mimeTypes: Record<string, string> = {
+		// Images
+		jpg: "image/jpeg",
+		jpeg: "image/jpeg",
+		png: "image/png",
+		gif: "image/gif",
+		webp: "image/webp",
+		svg: "image/svg+xml",
+		// Documents
+		pdf: "application/pdf",
+		doc: "application/msword",
+		docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		// Audio
+		mp3: "audio/mpeg",
+		wav: "audio/wav",
+		ogg: "audio/ogg",
+		// Video
+		mp4: "video/mp4",
+		webm: "video/webm",
+		// Text
+		txt: "text/plain",
+		csv: "text/csv",
+		json: "application/json",
+	};
+	return mimeTypes[extension] || "application/octet-stream";
+}
+
 export interface FileDialogFilter {
 	name: string;
 	extensions: string[];
@@ -25,7 +56,6 @@ export interface FileDialogFilter {
 
 export interface FileDialogOptions {
 	filters?: FileDialogFilter[];
-	multiple?: boolean;
 	directory?: boolean;
 }
 
@@ -47,7 +77,7 @@ export async function openFileDialog(
 
 		const result = await open({
 			filters: options.filters,
-			multiple: options.multiple ?? false,
+			multiple: false,
 			directory: options.directory ?? false,
 		});
 
@@ -63,11 +93,14 @@ export async function openFileDialog(
 			try {
 				const { readFile } = await import("@tauri-apps/plugin-fs");
 				const fileData = await readFile(result);
-				const fileName =
-					result.split("/").pop() ?? result.split("\\").pop() ?? "file";
+				const pathParts = result.split(/[\\/]/);
+				const fileName = pathParts[pathParts.length - 1] || "file";
+				// ファイル拡張子からMIME typeを推定
+				const extension = fileName.split(".").pop()?.toLowerCase() || "";
+				const mimeType = getMimeTypeFromExtension(extension);
 				// Uint8ArrayをBlobに変換
-				const blob = new Blob([fileData]);
-				return new File([blob], fileName);
+				const blob = new Blob([fileData], { type: mimeType });
+				return new File([blob], fileName, { type: mimeType });
 			} catch (error) {
 				throw new Error(
 					`Failed to read file: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -91,8 +124,9 @@ export async function openFileDialog(
 			input.accept = accept;
 		}
 
-		if (options.multiple) {
-			input.multiple = true;
+		if (options.directory) {
+			input.setAttribute("webkitdirectory", "");
+			input.setAttribute("directory", "");
 		}
 
 		input.addEventListener("change", () => {

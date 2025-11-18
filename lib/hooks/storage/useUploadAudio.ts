@@ -10,10 +10,8 @@ export interface UploadAudioOptions {
 }
 
 export interface UploadAudioResult {
-	success: boolean;
 	filePath: string;
 	signedUrl: string;
-	error?: string;
 }
 
 /**
@@ -86,7 +84,6 @@ export function useUploadAudio() {
 			}
 
 			return {
-				success: true,
 				filePath,
 				signedUrl: signedUrlResult.data.signedUrl,
 			};

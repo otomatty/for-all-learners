@@ -75,7 +75,6 @@ describe("useUploadImage", () => {
 
 		await waitFor(() => {
 			expect(uploadResult.publicUrl).toBe(mockPublicUrl);
-			expect(uploadResult.error).toBeNull();
 		});
 	});
 

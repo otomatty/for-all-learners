@@ -79,8 +79,8 @@ describe("useUploadPdf", () => {
 		});
 
 		await waitFor(() => {
-			expect(uploadResult.success).toBe(true);
 			expect(uploadResult.pdfUrl).toBe(mockSignedUrl);
+			expect(uploadResult.message).toBe("PDFアップロードが完了しました");
 		});
 	});
 

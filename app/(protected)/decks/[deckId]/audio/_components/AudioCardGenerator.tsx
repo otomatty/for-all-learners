@@ -116,18 +116,12 @@ export function AudioCardGenerator({
 
 		try {
 			// 音声データをアップロード
-			const uploadResult = await uploadAudioMutation.mutateAsync({
-				file: audioBlob,
-				fileName: `${Date.now()}.wav`,
-				expiresIn: 60 * 5, // 5分
-			});
-
-			if (!uploadResult.success) {
-				throw new Error(uploadResult.error || "アップロードに失敗しました");
-			}
-
-			const audioFileUrl = uploadResult.signedUrl;
-			const filePath = uploadResult.filePath;
+			const { signedUrl: audioFileUrl, filePath } =
+				await uploadAudioMutation.mutateAsync({
+					file: audioBlob,
+					fileName: `${Date.now()}.wav`,
+					expiresIn: 60 * 5, // 5分
+				});
 
 			// 1. サーバーアクションで文字起こしを実行 (URLを渡す)
 			const transcript = await transcribeAudio(audioFileUrl);

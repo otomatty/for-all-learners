@@ -9,10 +9,8 @@ export interface UploadPdfOptions {
 }
 
 export interface UploadPdfResult {
-	success: boolean;
 	message: string;
-	pdfUrl?: string;
-	error?: string;
+	pdfUrl: string;
 }
 
 /**
@@ -88,7 +86,6 @@ export function useUploadPdf() {
 			}
 
 			return {
-				success: true,
 				message: "PDFアップロードが完了しました",
 				pdfUrl: signedData.signedUrl,
 			};
