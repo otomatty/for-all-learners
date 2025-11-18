@@ -67,9 +67,10 @@ export function useAudioRecordings() {
 			const recordings = await Promise.all(
 				data.map(async (file) => {
 					const filePath = `audio/${user.id}/${file.name}`;
-					const { data: signedData, error: signedError } = await supabase.storage
-						.from("audio-recordings")
-						.createSignedUrl(filePath, 60 * 60);
+					const { data: signedData, error: signedError } =
+						await supabase.storage
+							.from("audio-recordings")
+							.createSignedUrl(filePath, 60 * 60);
 
 					if (signedError) {
 						throw signedError;

@@ -76,7 +76,9 @@ describe("useUploadAudio", () => {
 
 		await waitFor(() => {
 			expect(uploadResult.signedUrl).toBe(mockSignedUrl);
-			expect(uploadResult.filePath).toMatch(/^audio\/user-id\/\d+-test-audio\.wav$/);
+			expect(uploadResult.filePath).toMatch(
+				/^audio\/user-id\/\d+-test-audio\.wav$/,
+			);
 		});
 	});
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "@/types/database.types";
 import { isTauri } from "@/lib/utils/environment";
+import type { Database } from "@/types/database.types";
 
 /**
  * Tauri環境とWeb環境の両方に対応したSupabaseクライアント
