@@ -22,7 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateCards } from "@/hooks/cards";
-import { createClient } from "@/lib/supabase/client";
+import { useUploadAudio } from "@/lib/hooks/storage";
 
 interface AudioCardGeneratorProps {
 	deckId: string;
@@ -33,9 +33,9 @@ export function AudioCardGenerator({
 	deckId,
 	userId,
 }: AudioCardGeneratorProps) {
-	const supabase = createClient();
 	const router = useRouter();
 	const createCardsMutation = useCreateCards();
+	const uploadAudioMutation = useUploadAudio();
 	const [isRecording, setIsRecording] = useState(false);
 	const recordingStartRef = useRef<number>(0);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -116,25 +116,12 @@ export function AudioCardGenerator({
 
 		try {
 			// 音声データをアップロード
-			const timestamp = Date.now();
-			const filePath = `audio/${userId}/${timestamp}.wav`;
-
-			const { data: _uploadData, error: uploadError } = await supabase.storage
-				.from("audio-recordings")
-				.upload(filePath, audioBlob);
-
-			if (uploadError) {
-				throw uploadError;
-			}
-
-			// 音声ファイルの署名付きURLを取得（プライベートバケット対応）
-			const { data: signedData, error: signedError } = await supabase.storage
-				.from("audio-recordings")
-				.createSignedUrl(filePath, 60 * 5); // 有効期限5分
-			if (signedError || !signedData.signedUrl) {
-				throw signedError || new Error("Failed to create signed URL");
-			}
-			const audioFileUrl = signedData.signedUrl;
+			const { signedUrl: audioFileUrl, filePath } =
+				await uploadAudioMutation.mutateAsync({
+					file: audioBlob,
+					fileName: `${Date.now()}.wav`,
+					expiresIn: 60 * 5, // 5分
+				});
 
 			// 1. サーバーアクションで文字起こしを実行 (URLを渡す)
 			const transcript = await transcribeAudio(audioFileUrl);
