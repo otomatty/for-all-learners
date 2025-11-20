@@ -5,6 +5,7 @@ import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
 } from "@/lib/utils/geminiQuotaManager";
+import logger from "@/lib/logger";
 
 /**
  * POST /api/batch/audio/transcribe - Batch audio transcription processing
@@ -234,9 +235,18 @@ export async function POST(request: NextRequest) {
 		const cleanupPromises = validUploads.map(async (upload) => {
 			try {
 				await supabase.storage.from("audio-files").remove([upload.filePath]);
-			} catch (_error) {}
+			} catch (error) {
+				logger.error(
+					{ error, filePath: upload.filePath },
+					`Failed to cleanup uploaded file: ${upload.filePath}`,
+				);
+			}
 		});
-		Promise.all(cleanupPromises).catch((_error) => {});
+		try {
+			await Promise.all(cleanupPromises);
+		} catch (error) {
+			logger.error({ error }, "Cleanup of uploaded files failed");
+		}
 
 		const successfulTranscriptions = transcriptionResults.filter(
 			(result) => result.success,

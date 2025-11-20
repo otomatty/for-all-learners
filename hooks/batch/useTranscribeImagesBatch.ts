@@ -6,8 +6,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this hook):
- *   ├─ hooks/use-pdf-processing.ts
- *   ├─ (To be updated after migration)
+ *   ├─ (None - to be integrated)
  *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
@@ -89,8 +88,14 @@ export function useTranscribeImagesBatch(
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.message || "バッチOCR処理に失敗しました");
+				let errorMessage = "バッチOCR処理に失敗しました";
+				try {
+					const errorData = await response.json();
+					errorMessage = errorData.message || errorMessage;
+				} catch {
+					// Response is not valid JSON, use default message
+				}
+				throw new Error(errorMessage);
 			}
 
 			return await response.json();

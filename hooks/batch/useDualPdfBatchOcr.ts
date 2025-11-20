@@ -6,8 +6,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this hook):
- *   ├─ hooks/use-pdf-processing.ts
- *   ├─ (To be updated after migration)
+ *   ├─ (None - to be integrated)
  *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
@@ -88,10 +87,14 @@ export function useDualPdfBatchOcr(options?: UseDualPdfBatchOcrOptions) {
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(
-					errorData.message || "Dual PDF batch OCR processing failed",
-				);
+				let errorMessage = "Dual PDF batch OCR processing failed";
+				try {
+					const errorData = await response.json();
+					errorMessage = errorData.message || errorMessage;
+				} catch {
+					// Response is not valid JSON, use default message
+				}
+				throw new Error(errorMessage);
 			}
 
 			return await response.json();

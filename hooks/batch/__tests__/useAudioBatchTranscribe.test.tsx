@@ -31,6 +31,7 @@ const createWrapper = () => {
 
 describe("useAudioBatchTranscribe", () => {
 	beforeEach(() => {
+		172;
 		vi.clearAllMocks();
 	});
 

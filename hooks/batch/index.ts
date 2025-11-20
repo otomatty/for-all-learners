@@ -4,31 +4,34 @@
  * Collection of hooks for batch processing operations
  */
 
+// Audio Transcription
 export type {
 	AudioBatchInput,
 	AudioBatchResult,
 	UseAudioBatchTranscribeOptions,
 } from "./useAudioBatchTranscribe";
-// Audio Transcription
 export { useAudioBatchTranscribe } from "./useAudioBatchTranscribe";
+
+// Dual PDF OCR
 export type {
 	DualPdfBatchOcrResult,
 	DualPdfImagePage,
 	UseDualPdfBatchOcrOptions,
 } from "./useDualPdfBatchOcr";
-// Dual PDF OCR
 export { useDualPdfBatchOcr } from "./useDualPdfBatchOcr";
+
+// PDF OCR
 export type {
 	PdfBatchOcrResult,
 	PdfOcrImagePage,
 	UsePdfBatchOcrOptions,
 } from "./usePdfBatchOcr";
-// PDF OCR
 export { usePdfBatchOcr } from "./usePdfBatchOcr";
+
+// Image OCR
 export type {
 	BatchOcrPage,
 	BatchOcrResult,
 	UseTranscribeImagesBatchOptions,
 } from "./useTranscribeImagesBatch";
-// Image OCR
 export { useTranscribeImagesBatch } from "./useTranscribeImagesBatch";

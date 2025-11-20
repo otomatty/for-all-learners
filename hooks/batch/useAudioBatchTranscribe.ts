@@ -98,10 +98,14 @@ export function useAudioBatchTranscribe(
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(
-					errorData.message || "Audio batch transcription failed",
-				);
+				let errorMessage = "Audio batch transcription failed";
+				try {
+					const errorData = await response.json();
+					errorMessage = errorData.message || errorMessage;
+				} catch {
+					// Response is not valid JSON, use default message
+				}
+				throw new Error(errorMessage);
 			}
 
 			return await response.json();
