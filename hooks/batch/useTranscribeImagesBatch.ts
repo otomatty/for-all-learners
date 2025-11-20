@@ -1,17 +1,17 @@
 /**
  * Custom Hook: useTranscribeImagesBatch
- * 
+ *
  * Batch OCR processing for multiple images
- * 
+ *
  * DEPENDENCY MAP:
- * 
+ *
  * Parents (Files that import this hook):
  *   ├─ hooks/use-pdf-processing.ts
  *   ├─ (To be updated after migration)
- * 
+ *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
- * 
+ *
  * Related Documentation:
  *   ├─ API Route: app/api/batch/image/ocr/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useTranscribeImagesBatch.test.ts
@@ -45,10 +45,10 @@ export interface UseTranscribeImagesBatchOptions {
 
 /**
  * Hook for batch OCR processing of multiple images
- * 
+ *
  * @param options - Configuration options
  * @returns Mutation hook for batch OCR processing
- * 
+ *
  * @example
  * ```tsx
  * const { mutate, isPending, data } = useTranscribeImagesBatch({
@@ -57,7 +57,7 @@ export interface UseTranscribeImagesBatchOptions {
  *     console.log(`Processed ${result.processedCount} pages`);
  *   },
  * });
- * 
+ *
  * // Process images
  * mutate({
  *   pages: [
@@ -90,9 +90,7 @@ export function useTranscribeImagesBatch(
 
 			if (!response.ok) {
 				const errorData = await response.json();
-				throw new Error(
-					errorData.message || "バッチOCR処理に失敗しました",
-				);
+				throw new Error(errorData.message || "バッチOCR処理に失敗しました");
 			}
 
 			return await response.json();

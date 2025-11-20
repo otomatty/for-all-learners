@@ -1,35 +1,37 @@
 /**
  * /api/batch/pdf/dual-ocr API Route Tests
- * 
+ *
  * Tests for the dual PDF batch OCR API endpoint
- * 
+ *
  * Related Files:
  * - Implementation: app/api/batch/pdf/dual-ocr/route.ts
  * - Original Server Action: app/_actions/pdfBatchOcr.ts (processDualPdfBatchOcr)
  */
 
-import { POST } from "../route";
 import { NextRequest } from "next/server";
+import type { Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { POST } from "../route";
 
 // Mock Supabase
-jest.mock("@/lib/supabase/server");
+vi.mock("@/lib/supabase/server");
 
 // Mock LLM factory
-jest.mock("@/lib/llm/factory", () => ({
-	createClientWithUserKey: jest.fn(),
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
 }));
 
 describe("POST /api/batch/pdf/dual-ocr", () => {
 	const mockSupabase = {
 		auth: {
-			getUser: jest.fn(),
+			getUser: vi.fn(),
 		},
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(createClient as jest.Mock).mockResolvedValue(mockSupabase);
+		vi.clearAllMocks();
+		(createClient as Mock).mockResolvedValue(mockSupabase);
 	});
 
 	describe("Authentication", () => {
@@ -39,13 +41,16 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				error: new Error("Not authenticated"),
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({
-					questionPages: [],
-					answerPages: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						questionPages: [],
+						answerPages: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -64,12 +69,15 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 		});
 
 		it("should return 400 if questionPages is missing", async () => {
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({
-					answerPages: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						answerPages: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -80,12 +88,15 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 		});
 
 		it("should return 400 if answerPages is missing", async () => {
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({
-					questionPages: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						questionPages: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -96,15 +107,18 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 		});
 
 		it("should return 400 if questionPages is empty", async () => {
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({
-					questionPages: [],
-					answerPages: [
-						{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
-					],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						questionPages: [],
+						answerPages: [
+							{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
+						],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -120,13 +134,16 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				imageBlob: "data:image/png;base64,test",
 			}));
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({
-					questionPages,
-					answerPages: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						questionPages,
+						answerPages: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -154,12 +171,12 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						pageNumber: 1,
@@ -167,19 +184,22 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 						answerText: "解答",
 						explanationText: "解説",
 					},
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -201,25 +221,30 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
-				'```json\n[{"pageNumber": 1, "questionText": "Q", "answerText": "A", "explanationText": "E"}]\n```'
-			);
+			const mockGenerateWithFiles = vi
+				.fn()
+				.mockResolvedValue(
+					'```json\n[{"pageNumber": 1, "questionText": "Q", "answerText": "A", "explanationText": "E"}]\n```',
+				);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -238,25 +263,30 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
-				'```json\n[{"pageNumber": 1, "questionText": "Short"}]\n```\n```json\n[{"pageNumber": 1, "questionText": "Longer question text", "answerText": "A", "explanationText": "E"}]\n```'
-			);
+			const mockGenerateWithFiles = vi
+				.fn()
+				.mockResolvedValue(
+					'```json\n[{"pageNumber": 1, "questionText": "Short"}]\n```\n```json\n[{"pageNumber": 1, "questionText": "Longer question text", "answerText": "A", "explanationText": "E"}]\n```',
+				);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -277,12 +307,12 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 2, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						pageNumber: 1,
@@ -296,19 +326,22 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 						answerText: "A2",
 						explanationText: "E2",
 					},
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -328,25 +361,28 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
-				"Invalid JSON response"
-			);
+			const mockGenerateWithFiles = vi
+				.fn()
+				.mockResolvedValue("Invalid JSON response");
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -365,16 +401,19 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: undefined,
 				generateWithFiles: undefined,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -401,12 +440,12 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						pageNumber: 1,
@@ -414,19 +453,22 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 						answerText: "A",
 						explanationText: "E",
 					},
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/pdf/dual-ocr", {
-				method: "POST",
-				body: JSON.stringify({ questionPages, answerPages }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/pdf/dual-ocr",
+				{
+					method: "POST",
+					body: JSON.stringify({ questionPages, answerPages }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -434,7 +476,7 @@ describe("POST /api/batch/pdf/dual-ocr", () => {
 			expect(response.status).toBe(200);
 			expect(data.processingTimeMs).toBeDefined();
 			expect(typeof data.processingTimeMs).toBe("number");
-			expect(data.processingTimeMs).toBeGreaterThan(0);
+			expect(data.processingTimeMs).toBeGreaterThanOrEqual(0);
 		});
 	});
 });

@@ -1,18 +1,20 @@
 /**
  * Tests for useTranscribeImagesBatch hook
- * 
+ *
  * Related Files:
  * - Implementation: hooks/batch/useTranscribeImagesBatch.ts
  * - API Route: app/api/batch/image/ocr/route.ts
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTranscribeImagesBatch } from "../useTranscribeImagesBatch";
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const createWrapper = () => {
 	const queryClient = new QueryClient({
@@ -29,11 +31,11 @@ const createWrapper = () => {
 
 describe("useTranscribeImagesBatch", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("should successfully process batch OCR", async () => {
@@ -48,7 +50,7 @@ describe("useTranscribeImagesBatch", () => {
 			skippedCount: 0,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -87,7 +89,7 @@ describe("useTranscribeImagesBatch", () => {
 			skippedCount: 0,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -100,14 +102,12 @@ describe("useTranscribeImagesBatch", () => {
 		);
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-		const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchCall = (global.fetch as Mock).mock.calls[0];
 		const requestBody = JSON.parse(fetchCall[1].body);
 		expect(requestBody.batchSize).toBe(2);
 	});
@@ -121,7 +121,7 @@ describe("useTranscribeImagesBatch", () => {
 			skippedCount: 0,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -134,24 +134,25 @@ describe("useTranscribeImagesBatch", () => {
 		);
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 			batchSize: 6, // Override hook-level batchSize
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-		const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+		const fetchCall = (global.fetch as Mock).mock.calls[0];
 		const requestBody = JSON.parse(fetchCall[1].body);
 		expect(requestBody.batchSize).toBe(6);
 	});
 
 	it("should handle API errors", async () => {
 		const errorMessage = "バッチOCR処理に失敗しました";
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
-			json: async () => ({ error: "Internal server error", message: errorMessage }),
+			json: async () => ({
+				error: "Internal server error",
+				message: errorMessage,
+			}),
 		});
 
 		const { result } = renderHook(() => useTranscribeImagesBatch(), {
@@ -159,9 +160,7 @@ describe("useTranscribeImagesBatch", () => {
 		});
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 		});
 
 		await waitFor(() => expect(result.current.isError).toBe(true));
@@ -179,12 +178,12 @@ describe("useTranscribeImagesBatch", () => {
 			skippedCount: 0,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
 
-		const onSuccess = jest.fn();
+		const onSuccess = vi.fn();
 		const { result } = renderHook(
 			() => useTranscribeImagesBatch({ onSuccess }),
 			{
@@ -193,31 +192,27 @@ describe("useTranscribeImagesBatch", () => {
 		);
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-		expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+		await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 
 	it("should call onError callback", async () => {
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
 			json: async () => ({ error: "Error", message: "Test error" }),
 		});
 
-		const onError = jest.fn();
+		const onError = vi.fn();
 		const { result } = renderHook(() => useTranscribeImagesBatch({ onError }), {
 			wrapper: createWrapper(),
 		});
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 		});
 
 		await waitFor(() => expect(result.current.isError).toBe(true));
@@ -227,18 +222,14 @@ describe("useTranscribeImagesBatch", () => {
 	});
 
 	it("should handle network errors", async () => {
-		(global.fetch as jest.Mock).mockRejectedValueOnce(
-			new Error("Network error"),
-		);
+		(global.fetch as Mock).mockRejectedValueOnce(new Error("Network error"));
 
 		const { result } = renderHook(() => useTranscribeImagesBatch(), {
 			wrapper: createWrapper(),
 		});
 
 		result.current.mutate({
-			pages: [
-				{ pageNumber: 1, imageUrl: "https://example.com/page1.png" },
-			],
+			pages: [{ pageNumber: 1, imageUrl: "https://example.com/page1.png" }],
 		});
 
 		await waitFor(() => expect(result.current.isError).toBe(true));

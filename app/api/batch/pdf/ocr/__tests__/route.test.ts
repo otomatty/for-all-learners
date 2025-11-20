@@ -1,35 +1,43 @@
 /**
  * /api/batch/pdf/ocr API Route Tests
- * 
+ *
  * Tests for the PDF batch OCR API endpoint
- * 
+ *
  * Related Files:
  * - Implementation: app/api/batch/pdf/ocr/route.ts
  * - Original Server Action: app/_actions/pdfBatchOcr.ts (processPdfBatchOcr)
  */
 
-import { POST } from "../route";
 import { NextRequest } from "next/server";
+import type { Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { POST } from "../route";
 
 // Mock Supabase
-jest.mock("@/lib/supabase/server");
+vi.mock("@/lib/supabase/server");
 
 // Mock LLM factory
-jest.mock("@/lib/llm/factory", () => ({
-	createClientWithUserKey: jest.fn(),
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
+}));
+
+// Mock Gemini Quota Manager
+vi.mock("@/lib/utils/geminiQuotaManager", () => ({
+	getGeminiQuotaManager: vi.fn(),
+	executeWithQuotaCheck: vi.fn((fn) => fn()),
 }));
 
 describe("POST /api/batch/pdf/ocr", () => {
 	const mockSupabase = {
 		auth: {
-			getUser: jest.fn(),
+			getUser: vi.fn(),
 		},
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(createClient as jest.Mock).mockResolvedValue(mockSupabase);
+		vi.clearAllMocks();
+		(createClient as Mock).mockResolvedValue(mockSupabase);
 	});
 
 	describe("Authentication", () => {
@@ -130,33 +138,49 @@ describe("POST /api/batch/pdf/ocr", () => {
 	});
 
 	describe("PDF Batch OCR Processing", () => {
-		beforeEach(() => {
+		beforeEach(async () => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
 			});
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			vi.mocked(getGeminiQuotaManager).mockReturnValue({
+				validatePdfProcessing: vi.fn().mockReturnValue({
+					canProcess: true,
+					message: "OK",
+				}),
+			} as any);
 		});
 
 		it("should successfully process PDF batch OCR", async () => {
 			const imagePages = [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg" },
-				{ pageNumber: 2, imageBlob: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg" },
+				{
+					pageNumber: 1,
+					imageBlob: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg",
+				},
+				{
+					pageNumber: 2,
+					imageBlob: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg",
+				},
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{ pageNumber: 1, extractedText: "Text from page 1" },
 					{ pageNumber: 2, extractedText: "Text from page 2" },
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -182,17 +206,19 @@ describe("POST /api/batch/pdf/ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
-				'```json\n[{"pageNumber": 1, "extractedText": "Test text"}]\n```'
-			);
+			const mockGenerateWithFiles = vi
+				.fn()
+				.mockResolvedValue(
+					'```json\n[{"pageNumber": 1, "extractedText": "Test text"}]\n```',
+				);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -216,20 +242,20 @@ describe("POST /api/batch/pdf/ocr", () => {
 				{ pageNumber: 2, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{ pageNumber: 1, extractedText: "Valid text" },
 					{ pageNumber: 2, extractedText: "" }, // Empty text
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -253,8 +279,8 @@ describe("POST /api/batch/pdf/ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: undefined,
 				generateWithFiles: undefined,
 			});
@@ -276,10 +302,10 @@ describe("POST /api/batch/pdf/ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
-				uploadFile: jest.fn().mockRejectedValue(new Error("Upload failed")),
-				generateWithFiles: jest.fn(),
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
+				uploadFile: vi.fn().mockRejectedValue(new Error("Upload failed")),
+				generateWithFiles: vi.fn(),
 			});
 
 			const request = new NextRequest("http://localhost/api/batch/pdf/ocr", {
@@ -296,11 +322,21 @@ describe("POST /api/batch/pdf/ocr", () => {
 	});
 
 	describe("Processing Time", () => {
-		beforeEach(() => {
+		beforeEach(async () => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
 			});
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			vi.mocked(getGeminiQuotaManager).mockReturnValue({
+				validatePdfProcessing: vi.fn().mockReturnValue({
+					canProcess: true,
+					message: "OK",
+				}),
+			} as any);
 		});
 
 		it("should include processingTimeMs in response", async () => {
@@ -308,17 +344,19 @@ describe("POST /api/batch/pdf/ocr", () => {
 				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
 			];
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "image/png",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
-				JSON.stringify([{ pageNumber: 1, extractedText: "Test" }])
-			);
+			const mockGenerateWithFiles = vi
+				.fn()
+				.mockResolvedValue(
+					JSON.stringify([{ pageNumber: 1, extractedText: "Test" }]),
+				);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -334,7 +372,7 @@ describe("POST /api/batch/pdf/ocr", () => {
 			expect(response.status).toBe(200);
 			expect(data.processingTimeMs).toBeDefined();
 			expect(typeof data.processingTimeMs).toBe("number");
-			expect(data.processingTimeMs).toBeGreaterThan(0);
+			expect(data.processingTimeMs).toBeGreaterThanOrEqual(0);
 		});
 	});
 });

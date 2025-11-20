@@ -1,55 +1,57 @@
 /**
  * /api/batch/audio/transcribe API Route Tests
- * 
+ *
  * Tests for the audio batch transcription API endpoint
- * 
+ *
  * Related Files:
  * - Implementation: app/api/batch/audio/transcribe/route.ts
  * - Original Server Action: app/_actions/audioBatchProcessing.ts
  */
 
-import { POST } from "../route";
 import { NextRequest } from "next/server";
+import type { Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { POST } from "../route";
 
 // Mock Supabase
-jest.mock("@/lib/supabase/server");
+vi.mock("@/lib/supabase/server");
 
 // Mock LLM factory
-jest.mock("@/lib/llm/factory", () => ({
-	createClientWithUserKey: jest.fn(),
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn(),
 }));
 
 // Mock Gemini Quota Manager
-jest.mock("@/lib/utils/geminiQuotaManager", () => ({
-	getGeminiQuotaManager: jest.fn(() => ({
-		checkQuota: jest.fn(() => ({
+vi.mock("@/lib/utils/geminiQuotaManager", () => ({
+	getGeminiQuotaManager: vi.fn(() => ({
+		checkQuota: vi.fn(() => ({
 			canProceed: true,
 			reason: "",
 		})),
 	})),
-	executeWithQuotaCheck: jest.fn((fn) => fn()),
+	executeWithQuotaCheck: vi.fn((fn) => fn()),
 }));
 
 describe("POST /api/batch/audio/transcribe", () => {
 	const mockSupabase = {
 		auth: {
-			getUser: jest.fn(),
+			getUser: vi.fn(),
 		},
 		storage: {
-			from: jest.fn(),
+			from: vi.fn(),
 		},
 	};
 
 	const mockStorage = {
-		upload: jest.fn(),
-		createSignedUrl: jest.fn(),
-		remove: jest.fn(),
+		upload: vi.fn(),
+		createSignedUrl: vi.fn(),
+		remove: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(createClient as jest.Mock).mockResolvedValue(mockSupabase);
+		vi.clearAllMocks();
+		(createClient as Mock).mockResolvedValue(mockSupabase);
 		mockSupabase.storage.from.mockReturnValue(mockStorage);
 	});
 
@@ -60,12 +62,15 @@ describe("POST /api/batch/audio/transcribe", () => {
 				error: new Error("Not authenticated"),
 			});
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({
-					audioFiles: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						audioFiles: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -84,10 +89,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 		});
 
 		it("should return 400 if audioFiles array is missing", async () => {
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -98,12 +106,15 @@ describe("POST /api/batch/audio/transcribe", () => {
 		});
 
 		it("should return 400 if audioFiles array is empty", async () => {
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({
-					audioFiles: [],
-				}),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						audioFiles: [],
+					}),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -120,10 +131,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				audioBlob: "data:audio/mp3;base64,test",
 			}));
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -143,13 +157,15 @@ describe("POST /api/batch/audio/transcribe", () => {
 		});
 
 		it("should check quota before processing", async () => {
-			const { getGeminiQuotaManager } = require("@/lib/utils/geminiQuotaManager");
-			const mockCheckQuota = jest.fn().mockReturnValue({
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			const mockCheckQuota = vi.fn().mockReturnValue({
 				canProceed: false,
 				reason: "Quota exceeded",
 			});
 
-			getGeminiQuotaManager.mockReturnValue({
+			(getGeminiQuotaManager as Mock).mockReturnValue({
 				checkQuota: mockCheckQuota,
 			});
 
@@ -161,10 +177,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -176,11 +195,21 @@ describe("POST /api/batch/audio/transcribe", () => {
 	});
 
 	describe("Audio Upload to Supabase", () => {
-		beforeEach(() => {
+		beforeEach(async () => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
 			});
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			vi.mocked(getGeminiQuotaManager).mockReturnValue({
+				checkQuota: vi.fn().mockReturnValue({
+					canProceed: true,
+					reason: "",
+				}),
+			} as any);
 		});
 
 		it("should upload audio files to Supabase Storage", async () => {
@@ -196,12 +225,12 @@ describe("POST /api/batch/audio/transcribe", () => {
 
 			mockStorage.remove.mockResolvedValue({ error: null });
 
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "audio/mp3",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						audioIndex: 1,
@@ -209,11 +238,11 @@ describe("POST /api/batch/audio/transcribe", () => {
 						language: "ja",
 						confidence: 0.9,
 					},
-				])
+				]),
 			);
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -226,13 +255,16 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
-			const data = await response.json();
+			const _data = await response.json();
 
 			expect(response.status).toBe(200);
 			expect(mockStorage.upload).toHaveBeenCalled();
@@ -254,10 +286,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -269,7 +304,7 @@ describe("POST /api/batch/audio/transcribe", () => {
 	});
 
 	describe("Batch Transcription Processing", () => {
-		beforeEach(() => {
+		beforeEach(async () => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
@@ -286,15 +321,25 @@ describe("POST /api/batch/audio/transcribe", () => {
 			});
 
 			mockStorage.remove.mockResolvedValue({ error: null });
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			vi.mocked(getGeminiQuotaManager).mockReturnValue({
+				checkQuota: vi.fn().mockReturnValue({
+					canProceed: true,
+					reason: "",
+				}),
+			} as any);
 		});
 
 		it("should successfully transcribe audio files in batches", async () => {
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "audio/mp3",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						audioIndex: 1,
@@ -314,16 +359,16 @@ describe("POST /api/batch/audio/transcribe", () => {
 						language: "ja",
 						confidence: 0.95,
 					},
-				])
+				]),
 			);
 
-			global.fetch = jest.fn().mockResolvedValue({
+			global.fetch = vi.fn().mockResolvedValue({
 				ok: true,
 				blob: async () => new Blob(["test"], { type: "audio/mp3" }),
 			});
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -346,10 +391,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -362,33 +410,53 @@ describe("POST /api/batch/audio/transcribe", () => {
 		});
 
 		it("should process multiple batches with rate limiting", async () => {
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "audio/mp3",
 			});
 
-			const mockGenerateWithFiles = jest
+			const mockGenerateWithFiles = vi
 				.fn()
 				.mockResolvedValueOnce(
 					JSON.stringify([
-						{ audioIndex: 1, transcript: "T1", language: "ja", confidence: 0.9 },
-						{ audioIndex: 2, transcript: "T2", language: "ja", confidence: 0.9 },
-						{ audioIndex: 3, transcript: "T3", language: "ja", confidence: 0.9 },
-					])
+						{
+							audioIndex: 1,
+							transcript: "T1",
+							language: "ja",
+							confidence: 0.9,
+						},
+						{
+							audioIndex: 2,
+							transcript: "T2",
+							language: "ja",
+							confidence: 0.9,
+						},
+						{
+							audioIndex: 3,
+							transcript: "T3",
+							language: "ja",
+							confidence: 0.9,
+						},
+					]),
 				)
 				.mockResolvedValueOnce(
 					JSON.stringify([
-						{ audioIndex: 1, transcript: "T4", language: "ja", confidence: 0.9 },
-					])
+						{
+							audioIndex: 1,
+							transcript: "T4",
+							language: "ja",
+							confidence: 0.9,
+						},
+					]),
 				);
 
-			global.fetch = jest.fn().mockResolvedValue({
+			global.fetch = vi.fn().mockResolvedValue({
 				ok: true,
 				blob: async () => new Blob(["test"], { type: "audio/mp3" }),
 			});
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -400,10 +468,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				audioBlob: "data:audio/mp3;base64,dGVzdA==",
 			}));
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -414,12 +485,12 @@ describe("POST /api/batch/audio/transcribe", () => {
 		});
 
 		it("should handle unclear audio ([不明瞭])", async () => {
-			const mockUploadFile = jest.fn().mockResolvedValue({
+			const mockUploadFile = vi.fn().mockResolvedValue({
 				uri: "test-uri",
 				mimeType: "audio/mp3",
 			});
 
-			const mockGenerateWithFiles = jest.fn().mockResolvedValue(
+			const mockGenerateWithFiles = vi.fn().mockResolvedValue(
 				JSON.stringify([
 					{
 						audioIndex: 1,
@@ -427,16 +498,16 @@ describe("POST /api/batch/audio/transcribe", () => {
 						language: "ja",
 						confidence: 0.1,
 					},
-				])
+				]),
 			);
 
-			global.fetch = jest.fn().mockResolvedValue({
+			global.fetch = vi.fn().mockResolvedValue({
 				ok: true,
 				blob: async () => new Blob(["test"], { type: "audio/mp3" }),
 			});
 
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
 				uploadFile: mockUploadFile,
 				generateWithFiles: mockGenerateWithFiles,
 			});
@@ -449,10 +520,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();
@@ -464,7 +538,7 @@ describe("POST /api/batch/audio/transcribe", () => {
 	});
 
 	describe("Error Handling", () => {
-		beforeEach(() => {
+		beforeEach(async () => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
@@ -481,13 +555,23 @@ describe("POST /api/batch/audio/transcribe", () => {
 			});
 
 			mockStorage.remove.mockResolvedValue({ error: null });
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			vi.mocked(getGeminiQuotaManager).mockReturnValue({
+				checkQuota: vi.fn().mockReturnValue({
+					canProceed: true,
+					reason: "",
+				}),
+			} as any);
 		});
 
 		it("should handle batch processing errors gracefully", async () => {
-			const { createClientWithUserKey } = require("@/lib/llm/factory");
-			createClientWithUserKey.mockResolvedValue({
-				uploadFile: jest.fn().mockRejectedValue(new Error("Upload failed")),
-				generateWithFiles: jest.fn(),
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			(createClientWithUserKey as Mock).mockResolvedValue({
+				uploadFile: vi.fn().mockRejectedValue(new Error("Upload failed")),
+				generateWithFiles: vi.fn(),
 			});
 
 			const audioFiles = [
@@ -498,10 +582,13 @@ describe("POST /api/batch/audio/transcribe", () => {
 				},
 			];
 
-			const request = new NextRequest("http://localhost/api/batch/audio/transcribe", {
-				method: "POST",
-				body: JSON.stringify({ audioFiles }),
-			});
+			const request = new NextRequest(
+				"http://localhost/api/batch/audio/transcribe",
+				{
+					method: "POST",
+					body: JSON.stringify({ audioFiles }),
+				},
+			);
 
 			const response = await POST(request);
 			const data = await response.json();

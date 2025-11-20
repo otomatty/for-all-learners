@@ -1,18 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClientWithUserKey } from "@/lib/llm/factory";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/batch/pdf/dual-ocr - Dual PDF batch OCR processing
- * 
+ *
  * Process both question PDF and answer PDF simultaneously for high-quality card generation
- * 
+ *
  * Request body:
  * {
  *   questionPages: Array<{ pageNumber: number; imageBlob: string (base64) }>,
  *   answerPages: Array<{ pageNumber: number; imageBlob: string (base64) }>
  * }
- * 
+ *
  * Response:
  * {
  *   success: boolean,
@@ -25,7 +25,7 @@ import { createClientWithUserKey } from "@/lib/llm/factory";
  *   }>,
  *   processingTimeMs?: number
  * }
- * 
+ *
  * Related Documentation:
  * - Original Server Action: app/_actions/pdfBatchOcr.ts (processDualPdfBatchOcr)
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
@@ -69,7 +69,10 @@ export async function POST(request: NextRequest) {
 
 		if (questionPages.length === 0) {
 			return NextResponse.json(
-				{ error: "Bad request", message: "少なくとも1つの問題ページが必要です" },
+				{
+					error: "Bad request",
+					message: "少なくとも1つの問題ページが必要です",
+				},
 				{ status: 400 },
 			);
 		}
@@ -251,7 +254,9 @@ export async function POST(request: NextRequest) {
 
 		// Convert result
 		const extractedText = parsed
-			.filter((item) => item.questionText && item.questionText.trim().length > 0)
+			.filter(
+				(item) => item.questionText && item.questionText.trim().length > 0,
+			)
 			.map((item) => ({
 				pageNumber: item.pageNumber,
 				questionText: item.questionText.trim(),

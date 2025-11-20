@@ -1,18 +1,20 @@
 /**
  * Tests for useDualPdfBatchOcr hook
- * 
+ *
  * Related Files:
  * - Implementation: hooks/batch/useDualPdfBatchOcr.ts
  * - API Route: app/api/batch/pdf/dual-ocr/route.ts
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDualPdfBatchOcr } from "../useDualPdfBatchOcr";
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const createWrapper = () => {
 	const queryClient = new QueryClient({
@@ -29,17 +31,18 @@ const createWrapper = () => {
 
 describe("useDualPdfBatchOcr", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("should successfully process dual PDF batch OCR", async () => {
 		const mockResponse = {
 			success: true,
-			message: "デュアルPDF処理で1個の詳細な問題・解答・解説セットを生成しました",
+			message:
+				"デュアルPDF処理で1個の詳細な問題・解答・解説セットを生成しました",
 			extractedText: [
 				{
 					pageNumber: 1,
@@ -51,7 +54,7 @@ describe("useDualPdfBatchOcr", () => {
 			processingTimeMs: 2000,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -85,9 +88,12 @@ describe("useDualPdfBatchOcr", () => {
 
 	it("should handle API errors", async () => {
 		const errorMessage = "Dual PDF batch OCR processing failed";
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
-			json: async () => ({ error: "Internal server error", message: errorMessage }),
+			json: async () => ({
+				error: "Internal server error",
+				message: errorMessage,
+			}),
 		});
 
 		const { result } = renderHook(() => useDualPdfBatchOcr(), {
@@ -124,27 +130,23 @@ describe("useDualPdfBatchOcr", () => {
 			processingTimeMs: 1500,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
 
-		const onSuccess = jest.fn();
+		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDualPdfBatchOcr({ onSuccess }), {
 			wrapper: createWrapper(),
 		});
 
 		result.current.mutate({
-			questionPages: [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,q" },
-			],
-			answerPages: [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,a" },
-			],
+			questionPages: [{ pageNumber: 1, imageBlob: "data:image/png;base64,q" }],
+			answerPages: [{ pageNumber: 1, imageBlob: "data:image/png;base64,a" }],
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-		expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+		await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 });

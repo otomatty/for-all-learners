@@ -1,17 +1,17 @@
 /**
  * Custom Hook: useDualPdfBatchOcr
- * 
+ *
  * Dual PDF batch OCR processing (question + answer PDFs)
- * 
+ *
  * DEPENDENCY MAP:
- * 
+ *
  * Parents (Files that import this hook):
  *   ├─ hooks/use-pdf-processing.ts
  *   ├─ (To be updated after migration)
- * 
+ *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
- * 
+ *
  * Related Documentation:
  *   ├─ API Route: app/api/batch/pdf/dual-ocr/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useDualPdfBatchOcr.test.tsx
@@ -47,10 +47,10 @@ export interface UseDualPdfBatchOcrOptions {
 
 /**
  * Hook for dual PDF batch OCR processing
- * 
+ *
  * @param options - Configuration options
  * @returns Mutation hook for dual PDF batch OCR
- * 
+ *
  * @example
  * ```tsx
  * const { mutate, isPending, data } = useDualPdfBatchOcr({
@@ -58,7 +58,7 @@ export interface UseDualPdfBatchOcrOptions {
  *     console.log(`Generated ${result.extractedText?.length} Q&A sets`);
  *   },
  * });
- * 
+ *
  * // Process question and answer PDFs
  * mutate({
  *   questionPages: [

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClientWithUserKey } from "@/lib/llm/factory";
+import { createClient } from "@/lib/supabase/server";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
@@ -8,7 +8,7 @@ import {
 
 /**
  * POST /api/batch/audio/transcribe - Batch audio transcription processing
- * 
+ *
  * Request body:
  * {
  *   audioFiles: Array<{
@@ -22,7 +22,7 @@ import {
  *     }
  *   }>
  * }
- * 
+ *
  * Response:
  * {
  *   success: boolean,
@@ -39,7 +39,7 @@ import {
  *   totalProcessingTimeMs: number,
  *   apiRequestsUsed: number
  * }
- * 
+ *
  * Related Documentation:
  * - Original Server Action: app/_actions/audioBatchProcessing.ts
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
 
 		if (audioFiles.length === 0) {
 			return NextResponse.json(
-				{ error: "Bad request", message: "少なくとも1つの音声ファイルが必要です" },
+				{
+					error: "Bad request",
+					message: "少なくとも1つの音声ファイルが必要です",
+				},
 				{ status: 400 },
 			);
 		}
@@ -140,9 +143,10 @@ export async function POST(request: NextRequest) {
 					}
 
 					// Create signed URL (30 minutes)
-					const { data: signedData, error: signedError } = await supabase.storage
-						.from("audio-files")
-						.createSignedUrl(filePath, 60 * 30);
+					const { data: signedData, error: signedError } =
+						await supabase.storage
+							.from("audio-files")
+							.createSignedUrl(filePath, 60 * 30);
 
 					if (signedError || !signedData.signedUrl) {
 						return null;
@@ -169,12 +173,14 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({
 				success: false,
 				message: "すべての音声ファイルのアップロードに失敗しました",
-				transcriptions: audioFiles.map((f: { audioId: string; audioName: string }) => ({
-					audioId: f.audioId,
-					audioName: f.audioName,
-					success: false,
-					error: "アップロード失敗",
-				})),
+				transcriptions: audioFiles.map(
+					(f: { audioId: string; audioName: string }) => ({
+						audioId: f.audioId,
+						audioName: f.audioName,
+						success: false,
+						error: "アップロード失敗",
+					}),
+				),
 				totalCards: 0,
 				totalProcessingTimeMs: Date.now() - startTime,
 				apiRequestsUsed: 0,

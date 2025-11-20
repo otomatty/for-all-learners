@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClientWithUserKey } from "@/lib/llm/factory";
+import { createClient } from "@/lib/supabase/server";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
@@ -8,13 +8,13 @@ import {
 
 /**
  * POST /api/batch/image/ocr - Batch OCR processing for multiple images
- * 
+ *
  * Request body:
  * {
  *   pages: Array<{ pageNumber: number; imageUrl: string }>,
  *   batchSize?: number (default: 4, max: 10)
  * }
- * 
+ *
  * Response:
  * {
  *   success: boolean,
@@ -23,7 +23,7 @@ import {
  *   processedCount?: number,
  *   skippedCount?: number
  * }
- * 
+ *
  * Related Documentation:
  * - Original Server Action: app/_actions/transcribeImageBatch.ts
  * - Tests: app/api/batch/image/ocr/__tests__/route.test.ts

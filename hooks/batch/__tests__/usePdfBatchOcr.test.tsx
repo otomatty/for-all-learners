@@ -1,18 +1,20 @@
 /**
  * Tests for usePdfBatchOcr hook
- * 
+ *
  * Related Files:
  * - Implementation: hooks/batch/usePdfBatchOcr.ts
  * - API Route: app/api/batch/pdf/ocr/route.ts
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePdfBatchOcr } from "../usePdfBatchOcr";
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const createWrapper = () => {
 	const queryClient = new QueryClient({
@@ -29,11 +31,11 @@ const createWrapper = () => {
 
 describe("usePdfBatchOcr", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("should successfully process PDF batch OCR", async () => {
@@ -47,7 +49,7 @@ describe("usePdfBatchOcr", () => {
 			processingTimeMs: 1000,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -79,9 +81,12 @@ describe("usePdfBatchOcr", () => {
 
 	it("should handle API errors", async () => {
 		const errorMessage = "PDF batch OCR processing failed";
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
-			json: async () => ({ error: "Internal server error", message: errorMessage }),
+			json: async () => ({
+				error: "Internal server error",
+				message: errorMessage,
+			}),
 		});
 
 		const { result } = renderHook(() => usePdfBatchOcr(), {
@@ -89,9 +94,7 @@ describe("usePdfBatchOcr", () => {
 		});
 
 		result.current.mutate({
-			imagePages: [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
-			],
+			imagePages: [{ pageNumber: 1, imageBlob: "data:image/png;base64,test" }],
 		});
 
 		await waitFor(() => expect(result.current.isError).toBe(true));
@@ -108,42 +111,38 @@ describe("usePdfBatchOcr", () => {
 			processingTimeMs: 500,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
 
-		const onSuccess = jest.fn();
+		const onSuccess = vi.fn();
 		const { result } = renderHook(() => usePdfBatchOcr({ onSuccess }), {
 			wrapper: createWrapper(),
 		});
 
 		result.current.mutate({
-			imagePages: [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
-			],
+			imagePages: [{ pageNumber: 1, imageBlob: "data:image/png;base64,test" }],
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-		expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+		await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 
 	it("should call onError callback", async () => {
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
 			json: async () => ({ error: "Error", message: "Test error" }),
 		});
 
-		const onError = jest.fn();
+		const onError = vi.fn();
 		const { result } = renderHook(() => usePdfBatchOcr({ onError }), {
 			wrapper: createWrapper(),
 		});
 
 		result.current.mutate({
-			imagePages: [
-				{ pageNumber: 1, imageBlob: "data:image/png;base64,test" },
-			],
+			imagePages: [{ pageNumber: 1, imageBlob: "data:image/png;base64,test" }],
 		});
 
 		await waitFor(() => expect(result.current.isError).toBe(true));

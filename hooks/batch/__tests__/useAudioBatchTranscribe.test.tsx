@@ -1,18 +1,20 @@
 /**
  * Tests for useAudioBatchTranscribe hook
- * 
+ *
  * Related Files:
  * - Implementation: hooks/batch/useAudioBatchTranscribe.ts
  * - API Route: app/api/batch/audio/transcribe/route.ts
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAudioBatchTranscribe } from "../useAudioBatchTranscribe";
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 const createWrapper = () => {
 	const queryClient = new QueryClient({
@@ -29,11 +31,11 @@ const createWrapper = () => {
 
 describe("useAudioBatchTranscribe", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("should successfully transcribe audio files", async () => {
@@ -61,7 +63,7 @@ describe("useAudioBatchTranscribe", () => {
 			apiRequestsUsed: 1,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -101,9 +103,12 @@ describe("useAudioBatchTranscribe", () => {
 
 	it("should handle API errors", async () => {
 		const errorMessage = "Audio batch transcription failed";
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: false,
-			json: async () => ({ error: "Internal server error", message: errorMessage }),
+			json: async () => ({
+				error: "Internal server error",
+				message: errorMessage,
+			}),
 		});
 
 		const { result } = renderHook(() => useAudioBatchTranscribe(), {
@@ -144,15 +149,18 @@ describe("useAudioBatchTranscribe", () => {
 			apiRequestsUsed: 1,
 		};
 
-		(global.fetch as jest.Mock).mockResolvedValueOnce({
+		(global.fetch as Mock).mockResolvedValueOnce({
 			ok: true,
 			json: async () => mockResponse,
 		});
 
-		const onSuccess = jest.fn();
-		const { result } = renderHook(() => useAudioBatchTranscribe({ onSuccess }), {
-			wrapper: createWrapper(),
-		});
+		const onSuccess = vi.fn();
+		const { result } = renderHook(
+			() => useAudioBatchTranscribe({ onSuccess }),
+			{
+				wrapper: createWrapper(),
+			},
+		);
 
 		result.current.mutate({
 			audioFiles: [
@@ -165,7 +173,7 @@ describe("useAudioBatchTranscribe", () => {
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-		expect(onSuccess).toHaveBeenCalledWith(mockResponse);
+		await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 });

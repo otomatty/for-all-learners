@@ -1,15 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClientWithUserKey } from "@/lib/llm/factory";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/batch/pdf/ocr - Batch OCR processing for PDF images
- * 
+ *
  * Request body:
  * {
  *   imagePages: Array<{ pageNumber: number; imageBlob: string (base64) }>
  * }
- * 
+ *
  * Response:
  * {
  *   success: boolean,
@@ -17,7 +17,7 @@ import { createClientWithUserKey } from "@/lib/llm/factory";
  *   extractedText?: Array<{ pageNumber: number; text: string }>,
  *   processingTimeMs?: number
  * }
- * 
+ *
  * Related Documentation:
  * - Original Server Action: app/_actions/pdfBatchOcr.ts
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md

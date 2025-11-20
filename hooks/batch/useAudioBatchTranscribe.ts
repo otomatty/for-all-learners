@@ -1,16 +1,16 @@
 /**
  * Custom Hook: useAudioBatchTranscribe
- * 
+ *
  * Audio batch transcription processing
- * 
+ *
  * DEPENDENCY MAP:
- * 
+ *
  * Parents (Files that import this hook):
  *   ├─ (To be updated after migration)
- * 
+ *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
- * 
+ *
  * Related Documentation:
  *   ├─ API Route: app/api/batch/audio/transcribe/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useAudioBatchTranscribe.test.tsx
@@ -56,10 +56,10 @@ export interface UseAudioBatchTranscribeOptions {
 
 /**
  * Hook for audio batch transcription
- * 
+ *
  * @param options - Configuration options
  * @returns Mutation hook for audio batch transcription
- * 
+ *
  * @example
  * ```tsx
  * const { mutate, isPending, data } = useAudioBatchTranscribe({
@@ -67,7 +67,7 @@ export interface UseAudioBatchTranscribeOptions {
  *     console.log(`Transcribed ${result.transcriptions.length} files`);
  *   },
  * });
- * 
+ *
  * // Process audio files
  * mutate({
  *   audioFiles: [
