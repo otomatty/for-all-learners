@@ -757,7 +757,7 @@ export function useUploadImage() {
 
 **移行パターン**: パターン2（API Routes）または パターン3（Tauri Command）
 
-#### Phase 4.1: バッチ処理の移行（1-2週間）
+#### Phase 4.1: バッチ処理の移行（1-2週間）🔄 進行中（2025-11-17）
 
 **対象ファイル**:
 - `app/_actions/audioBatchProcessing.ts` - 音声ファイルのバッチ文字起こし
@@ -772,12 +772,40 @@ export function useUploadImage() {
 - **Tauri Command**: パフォーマンスが重要、オフライン処理が必要な場合
 
 **実装手順**:
-- [ ] 各バッチ処理の要件分析
-- [ ] 移行パターンの決定（API Routes / Tauri Command）
-- [ ] API Routes実装 または Tauri Command実装
-- [ ] クライアント側の呼び出し実装
-- [ ] 進捗管理の実装
-- [ ] テスト・動作確認
+- [x] 各バッチ処理の要件分析（完了、2025-11-17）
+- [x] 移行パターンの決定（API Routes / Tauri Command）（完了、2025-11-17）
+- [x] API Routes実装（完了、2025-11-17）
+  - [x] `app/api/batch/image-ocr/route.ts` - 画像バッチOCR API Route
+  - [x] `app/api/batch/audio/route.ts` - 音声バッチ処理 API Route
+  - [x] `app/api/batch/unified/route.ts` - 統合バッチプロセッサー API Route
+  - [x] `app/api/batch/pdf-jobs/route.ts` - PDF処理ジョブ管理 API Route
+- [x] クライアント側の呼び出し実装（完了、2025-11-17）
+  - [x] `hooks/batch/useImageBatchOcr.ts` - 画像バッチOCRフック
+  - [x] `hooks/batch/useAudioBatchProcessing.ts` - 音声バッチ処理フック
+  - [x] `hooks/batch/index.ts` - エクスポートファイル
+- [ ] 進捗管理の実装（未実装）
+- [ ] テスト・動作確認（未実装）
+
+**実装完了内容（2025-11-17時点）**:
+- **API Routes**: 4つのAPI Routeを作成
+  - 画像バッチOCR (`/api/batch/image-ocr`)
+  - 音声バッチ処理 (`/api/batch/audio`)
+  - 統合バッチプロセッサー (`/api/batch/unified`)
+  - PDF処理ジョブ管理 (`/api/batch/pdf-jobs`)
+- **カスタムフック**: 2つのフックを作成
+  - `useImageBatchOcr()` - 画像バッチOCR処理
+  - `useAudioBatchProcessing()` - 音声バッチ処理
+- **テスト**: 画像バッチOCRのテストケースを作成（`app/api/batch/image-ocr/__tests__/route.test.ts`）
+- **仕様書**: 画像バッチOCRの仕様書を作成（`app/api/batch/image-ocr/route.spec.md`）
+
+**参照ファイル**:
+- `app/api/batch/image-ocr/route.ts` - 新規作成
+- `app/api/batch/audio/route.ts` - 新規作成
+- `app/api/batch/unified/route.ts` - 新規作成
+- `app/api/batch/pdf-jobs/route.ts` - 新規作成
+- `hooks/batch/useImageBatchOcr.ts` - 新規作成
+- `hooks/batch/useAudioBatchProcessing.ts` - 新規作成
+- `hooks/batch/index.ts` - 新規作成
 
 #### Phase 4.2: AI処理の移行（1週間）
 
