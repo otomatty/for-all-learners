@@ -757,27 +757,66 @@ export function useUploadImage() {
 
 **移行パターン**: パターン2（API Routes）または パターン3（Tauri Command）
 
-#### Phase 4.1: バッチ処理の移行（1-2週間）
+#### Phase 4.1: バッチ処理の移行（1-2週間）🔄 進行中（2025-11-17）
 
 **対象ファイル**:
 - `app/_actions/audioBatchProcessing.ts` - 音声ファイルのバッチ文字起こし
 - `app/_actions/transcribeImageBatch.ts` - 画像のバッチOCR
 - `app/_actions/pdfBatchOcr.ts` - PDFページのバッチOCR
-- `app/_actions/pdfJobManager.ts` - PDF処理ジョブ管理
+- `app/_actions/pdfJobManager.ts` - PDF処理ジョブ管理（後で対応）
 - `app/_actions/unifiedBatchProcessor.ts` - 統合バッチプロセッサー
 - `app/_actions/multiFileBatchProcessing.ts` - 複数ファイルバッチ処理
 
 **判断基準**:
-- **API Routes**: 外部API（Gemini API）との連携が必要な場合
-- **Tauri Command**: パフォーマンスが重要、オフライン処理が必要な場合
+- **API Routes**: 外部API（Gemini API）との連携が必要な場合 ✅ 採用
+- **Tauri Command**: パフォーマンスが重要、オフライン処理が必要な場合（今回は該当せず）
 
 **実装手順**:
-- [ ] 各バッチ処理の要件分析
-- [ ] 移行パターンの決定（API Routes / Tauri Command）
-- [ ] API Routes実装 または Tauri Command実装
-- [ ] クライアント側の呼び出し実装
-- [ ] 進捗管理の実装
+- [x] 各バッチ処理の要件分析（完了）
+- [x] 移行パターンの決定（API Routes / Tauri Command）（完了、API Routesを採用）
+- [x] API Routes実装（完了）
+  - [x] `app/api/batch/audio/route.ts` - 音声バッチ処理API（完了）
+  - [x] `app/api/batch/images/route.ts` - 画像バッチOCR API（完了）
+  - [x] `app/api/batch/pdf/route.ts` - PDFバッチOCR API（完了）
+  - [x] `app/api/batch/unified/route.ts` - 統合バッチ処理API（完了）
+  - [x] `app/api/batch/multi-file/route.ts` - マルチファイルバッチ処理API（完了）
+- [x] クライアント側の呼び出し実装（完了）
+  - [x] `hooks/batch/useAudioBatchProcessing.ts` - 音声バッチ処理フック（完了）
+  - [x] `hooks/batch/useImageBatchProcessing.ts` - 画像バッチOCRフック（完了）
+  - [x] `hooks/batch/usePdfBatchProcessing.ts` - PDFバッチOCRフック（完了）
+  - [x] `hooks/batch/useUnifiedBatchProcessing.ts` - 統合バッチ処理フック（完了）
+  - [x] `hooks/batch/useMultiFileBatchProcessing.ts` - マルチファイルバッチ処理フック（完了）
+  - [x] `hooks/batch/index.ts` - エクスポートファイル（完了）
+- [ ] 進捗管理の実装（基本的な進捗通知は実装済み、リアルタイム進捗は将来実装）
 - [ ] テスト・動作確認
+
+**実装完了内容（2025-11-17時点）**:
+- **API Routes**: 5つのAPI Routesを作成
+  - `/api/batch/audio` - 音声ファイルのバッチ文字起こし
+  - `/api/batch/images` - 画像のバッチOCR
+  - `/api/batch/pdf` - PDFページのバッチOCR（単一・デュアルモード対応）
+  - `/api/batch/unified` - 統合バッチプロセッサー
+  - `/api/batch/multi-file` - 複数ファイルバッチ処理
+- **カスタムフック**: 5つのカスタムフックを作成
+  - `useAudioBatchProcessing()` - 音声バッチ処理
+  - `useImageBatchProcessing()` - 画像バッチOCR
+  - `usePdfBatchProcessing()` / `useDualPdfBatchProcessing()` - PDFバッチOCR
+  - `useUnifiedBatchProcessing()` - 統合バッチ処理
+  - `useMultiFileBatchProcessing()` - マルチファイルバッチ処理
+- **Base64エンコード**: クライアント側でBlobをBase64に変換してAPIに送信
+- **認証**: すべてのAPI Routesで認証チェックを実装
+- **エラーハンドリング**: 適切なエラーレスポンスとログ記録を実装
+
+**参照ファイル**:
+- `app/api/batch/*` - 新規作成（5つのAPI Routes）
+- `hooks/batch/*` - 新規作成（5つのカスタムフック + index.ts）
+- `app/_actions/audioBatchProcessing.ts` - 移行元Server Actions
+- `app/_actions/transcribeImageBatch.ts` - 移行元Server Actions
+- `app/_actions/pdfBatchOcr.ts` - 移行元Server Actions
+- `app/_actions/unifiedBatchProcessor.ts` - 移行元Server Actions
+- `app/_actions/multiFileBatchProcessing.ts` - 移行元Server Actions
+
+**注意**: 進捗管理については、現在は基本的な進捗通知（処理開始・完了）のみ実装。リアルタイム進捗表示は、将来的にWebSocketやServer-Sent Events (SSE) を使用して実装する予定。
 
 #### Phase 4.2: AI処理の移行（1週間）
 
