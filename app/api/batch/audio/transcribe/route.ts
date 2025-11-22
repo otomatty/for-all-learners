@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClientWithUserKey } from "@/lib/llm/factory";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import {
 	executeWithQuotaCheck,
 	getGeminiQuotaManager,
 } from "@/lib/utils/geminiQuotaManager";
-import logger from "@/lib/logger";
 
 /**
  * POST /api/batch/audio/transcribe - Batch audio transcription processing
