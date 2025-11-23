@@ -8,6 +8,7 @@
  *
  * Dependencies (External files that this route uses):
  *   ├─ @/lib/supabase/server (createClient)
+ *   ├─ @/lib/utils/blobUtils (base64ToBlob, getMimeTypeForFileType)
  *   └─ @/app/_actions/multiFileBatchProcessing (processMultiFilesBatch)
  *
  * Related Documentation:
@@ -19,6 +20,10 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+	base64ToBlob,
+	getMimeTypeForFileType,
+} from "@/lib/utils/blobUtils";
 import {
 	type MultiFileInput,
 	processMultiFilesBatch,
@@ -210,16 +215,10 @@ export async function POST(request: NextRequest) {
 						priority?: number;
 					};
 				}) => {
-					const base64Data = file.fileBlob.split(",")[1] || file.fileBlob;
-					const binaryString = Buffer.from(base64Data, "base64");
-					const blob = new Blob([binaryString], {
-						type:
-							file.fileType === "pdf"
-								? "application/pdf"
-								: file.fileType === "image"
-									? "image/png"
-									: "audio/mp3",
-					});
+					const blob = base64ToBlob(
+						file.fileBlob,
+						getMimeTypeForFileType(file.fileType),
+					);
 
 					return {
 						fileId: file.fileId,
@@ -232,7 +231,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// 3. Input validation (for FormData path)
+		// 3. Common validation (applies to both FormData and JSON paths)
 		if (files.length === 0) {
 			return NextResponse.json(
 				{
@@ -253,21 +252,23 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Validate file structure (for FormData path)
-		for (const file of files) {
-			if (
-				!file.fileId ||
-				!file.fileName ||
-				!["pdf", "image", "audio"].includes(file.fileType) ||
-				!(file.fileBlob instanceof Blob)
-			) {
-				return NextResponse.json(
-					{
-						error: "Bad request",
-						message: "無効なファイルデータ形式です",
-					},
-					{ status: 400 },
-				);
+		// Validate file structure (only for FormData path - JSON path already validated)
+		if (contentType.includes("multipart/form-data")) {
+			for (const file of files) {
+				if (
+					!file.fileId ||
+					!file.fileName ||
+					!["pdf", "image", "audio"].includes(file.fileType) ||
+					!(file.fileBlob instanceof Blob)
+				) {
+					return NextResponse.json(
+						{
+							error: "Bad request",
+							message: "無効なファイルデータ形式です",
+						},
+						{ status: 400 },
+					);
+				}
 			}
 		}
 

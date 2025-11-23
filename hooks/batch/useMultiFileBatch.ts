@@ -10,6 +10,7 @@
  *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
+ *   └─ hooks/utils/apiUtils (handleApiError)
  *
  * Related Documentation:
  *   ├─ API Route: app/api/batch/multi-file/route.ts
@@ -21,12 +22,13 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { handleApiError } from "../utils/apiUtils";
 
 export interface MultiFileInput {
 	fileId: string;
 	fileName: string;
 	fileType: "pdf" | "image" | "audio";
-	fileBlob: string; // base64 encoded or File object
+	fileBlob: string; // base64 encoded
 	metadata?: {
 		isQuestion?: boolean;
 		isAnswer?: boolean;
@@ -120,14 +122,7 @@ export function useMultiFileBatch(options?: UseMultiFileBatchOptions) {
 			}
 
 			if (!response.ok) {
-				let errorMessage = "Multi-file batch processing failed";
-				try {
-					const errorData = await response.json();
-					errorMessage = errorData.message || errorMessage;
-				} catch {
-					// Response is not valid JSON, use default message
-				}
-				throw new Error(errorMessage);
+				await handleApiError(response, "Multi-file batch processing failed");
 			}
 
 			return await response.json();

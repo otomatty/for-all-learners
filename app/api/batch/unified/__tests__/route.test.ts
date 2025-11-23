@@ -38,7 +38,28 @@ vi.mock("@/lib/utils/geminiQuotaManager", () => ({
 			used: 0,
 			limit: 100,
 		})),
+		checkQuota: vi.fn(() => ({
+			canProceed: true,
+			reason: "",
+		})),
 	})),
+}));
+
+// Mock Blob Utils
+vi.mock("@/lib/utils/blobUtils", () => ({
+	base64ToBlob: vi.fn((base64: string, mimeType: string) => {
+		const base64Data = base64.split(",")[1] || base64;
+		const binaryString = Buffer.from(base64Data, "base64");
+		return new Blob([binaryString], { type: mimeType });
+	}),
+	getMimeTypeForFileType: vi.fn((fileType: string) => {
+		const mimeTypes: Record<string, string> = {
+			pdf: "application/pdf",
+			image: "image/png",
+			audio: "audio/mp3",
+		};
+		return mimeTypes[fileType] || "application/octet-stream";
+	}),
 }));
 
 describe("POST /api/batch/unified", () => {
@@ -161,11 +182,75 @@ describe("POST /api/batch/unified", () => {
 		});
 	});
 
-	describe("Batch Processing", () => {
+	describe("Quota Management", () => {
 		beforeEach(() => {
 			mockSupabase.auth.getUser.mockResolvedValue({
 				data: { user: { id: "test-user-id" } },
 				error: null,
+			});
+		});
+
+		it("should check quota before processing", async () => {
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			const mockCheckQuota = vi.fn().mockReturnValue({
+				canProceed: false,
+				reason: "Quota exceeded",
+			});
+
+			(getGeminiQuotaManager as Mock).mockReturnValue({
+				getQuotaStatus: vi.fn(() => ({
+					remaining: 0,
+					used: 100,
+					limit: 100,
+				})),
+				checkQuota: mockCheckQuota,
+			});
+
+			const request = new NextRequest("http://localhost/api/batch/unified", {
+				method: "POST",
+				body: JSON.stringify({
+					batchType: "audio-batch",
+					audioFiles: [
+						{
+							audioId: "audio-1",
+							audioName: "test.mp3",
+							audioBlob: "data:audio/mp3;base64,dGVzdA==",
+						},
+					],
+				}),
+			});
+
+			const response = await POST(request);
+			const data = await response.json();
+
+			expect(response.status).toBe(429);
+			expect(data.error).toBe("Too Many Requests");
+			expect(mockCheckQuota).toHaveBeenCalled();
+		});
+	});
+
+	describe("Batch Processing", () => {
+		beforeEach(async () => {
+			mockSupabase.auth.getUser.mockResolvedValue({
+				data: { user: { id: "test-user-id" } },
+				error: null,
+			});
+
+			const { getGeminiQuotaManager } = await import(
+				"@/lib/utils/geminiQuotaManager"
+			);
+			(getGeminiQuotaManager as Mock).mockReturnValue({
+				getQuotaStatus: vi.fn(() => ({
+					remaining: 100,
+					used: 0,
+					limit: 100,
+				})),
+				checkQuota: vi.fn(() => ({
+					canProceed: true,
+					reason: "",
+				})),
 			});
 		});
 

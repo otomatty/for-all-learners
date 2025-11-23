@@ -9,6 +9,7 @@
  * Dependencies (External files that this route uses):
  *   ├─ @/lib/supabase/server (createClient)
  *   ├─ @/lib/utils/geminiQuotaManager (getGeminiQuotaManager)
+ *   ├─ @/lib/utils/blobUtils (base64ToBlob, getMimeTypeForFileType)
  *   ├─ @/app/_actions/audioBatchProcessing (processAudioFilesBatch)
  *   ├─ @/app/_actions/multiFileBatchProcessing (processMultiFilesBatch)
  *   └─ @/app/_actions/transcribeImageBatch (transcribeImagesBatch)
@@ -23,6 +24,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getGeminiQuotaManager } from "@/lib/utils/geminiQuotaManager";
+import {
+	base64ToBlob,
+	getMimeTypeForFileType,
+} from "@/lib/utils/blobUtils";
 import {
 	type AudioBatchInput,
 	processAudioFilesBatch,
@@ -111,9 +116,25 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// 4. Quota check
+		// 4. Estimate API requests and check quota
 		const quotaManager = getGeminiQuotaManager();
-		const quotaStatus = quotaManager.getQuotaStatus();
+		const estimatedRequests =
+			batchType === "audio-batch"
+				? Math.ceil((audioFiles?.length || 0) / 3)
+				: batchType === "image-batch"
+					? Math.ceil((pages?.length || 0) / 4)
+					: files?.length || 0;
+
+		const quotaCheck = quotaManager.checkQuota(estimatedRequests);
+		if (!quotaCheck.canProceed) {
+			return NextResponse.json(
+				{
+					error: "Too Many Requests",
+					message: `統合バッチ処理が制限されました: ${quotaCheck.reason}`,
+				},
+				{ status: 429 },
+			);
+		}
 
 		// 5. Process based on batch type
 		try {
@@ -142,16 +163,10 @@ export async function POST(request: NextRequest) {
 								priority?: number;
 							};
 						}) => {
-							const base64Data = file.fileBlob.split(",")[1] || file.fileBlob;
-							const binaryString = Buffer.from(base64Data, "base64");
-							const blob = new Blob([binaryString], {
-								type:
-									file.fileType === "pdf"
-										? "application/pdf"
-										: file.fileType === "image"
-											? "image/png"
-											: "audio/mp3",
-							});
+							const blob = base64ToBlob(
+								file.fileBlob,
+								getMimeTypeForFileType(file.fileType),
+							);
 
 							return {
 								fileId: file.fileId,
@@ -199,11 +214,7 @@ export async function POST(request: NextRequest) {
 								priority?: number;
 							};
 						}) => {
-							const base64Data = audio.audioBlob.split(",")[1] || audio.audioBlob;
-							const binaryString = Buffer.from(base64Data, "base64");
-							const blob = new Blob([binaryString], {
-								type: "audio/mp3",
-							});
+							const blob = base64ToBlob(audio.audioBlob, "audio/mp3");
 
 							return {
 								audioId: audio.audioId,
@@ -272,15 +283,6 @@ export async function POST(request: NextRequest) {
 						imageBatchResult: result,
 					});
 				}
-
-				default:
-					return NextResponse.json(
-						{
-							error: "Bad request",
-							message: `未対応のバッチタイプ: ${batchType}`,
-						},
-						{ status: 400 },
-					);
 			}
 		} catch (error) {
 			return NextResponse.json(

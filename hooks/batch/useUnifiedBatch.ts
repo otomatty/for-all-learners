@@ -10,6 +10,7 @@
  *
  * Dependencies (External files that this hook uses):
  *   ├─ @tanstack/react-query (useMutation)
+ *   └─ hooks/utils/apiUtils (handleApiError)
  *
  * Related Documentation:
  *   ├─ API Route: app/api/batch/unified/route.ts
@@ -21,6 +22,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { handleApiError } from "../utils/apiUtils";
 
 // Type definitions from Server Actions
 export type UnifiedBatchInput =
@@ -181,14 +183,7 @@ export function useUnifiedBatch(options?: UseUnifiedBatchOptions) {
 			});
 
 			if (!response.ok) {
-				let errorMessage = "Unified batch processing failed";
-				try {
-					const errorData = await response.json();
-					errorMessage = errorData.message || errorMessage;
-				} catch {
-					// Response is not valid JSON, use default message
-				}
-				throw new Error(errorMessage);
+				await handleApiError(response, "Unified batch processing failed");
 			}
 
 			return await response.json();
