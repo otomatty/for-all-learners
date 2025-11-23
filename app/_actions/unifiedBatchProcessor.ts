@@ -1,3 +1,16 @@
+/**
+ * @deprecated This Server Action has been migrated to API Routes.
+ * Please use the following instead:
+ * - API Route: app/api/batch/unified/route.ts
+ * - Hook: hooks/batch/useUnifiedBatch.ts
+ *
+ * Migration completed: 2025-11-23
+ * Related Issue: #177
+ *
+ * This file is kept for backward compatibility and type exports.
+ * New code should use the API Route + TanStack Query hook pattern.
+ */
+
 "use server";
 
 import { getGeminiQuotaManager } from "@/lib/utils/geminiQuotaManager";
