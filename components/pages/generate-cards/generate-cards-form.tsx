@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useGenerateCardsFromPage } from "@/lib/hooks/ai";
+import { useSaveCards } from "@/lib/hooks/cards/useSaveCards";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,6 +36,7 @@ export function GenerateCardsForm({
 }: GenerateCardsFormProps) {
 	const router = useRouter();
 	const generateCardsMutation = useGenerateCardsFromPage();
+	const saveCardsMutation = useSaveCards();
 	const [selectedDeckId, setSelectedDeckId] = useState<string>(
 		decks[0]?.id || "",
 	);
@@ -42,7 +44,7 @@ export function GenerateCardsForm({
 		RawGeneratedCard[] | null
 	>(null);
 	const isGenerating = generateCardsMutation.isPending;
-	const isSaving = generateCardsMutation.isPending;
+	const isSaving = saveCardsMutation.isPending;
 
 	const deckSelectId = useId();
 
@@ -106,19 +108,17 @@ export function GenerateCardsForm({
 		}
 
 		try {
-			// API Routeでカードを生成して保存
-			const response = await generateCardsMutation.mutateAsync({
-				pageContentTiptap: page.content_tiptap,
+			// 編集済みカードを保存
+			const response = await saveCardsMutation.mutateAsync({
+				cards: rawGeneratedCards,
 				pageId: page.id,
 				deckId: selectedDeckId,
-				saveToDatabase: true,
 			});
 
 			if (response.error) {
 				toast.error(`カード保存エラー: ${response.error}`);
 			} else {
-				const savedCount = response.savedCardsCount || response.cards.length;
-				toast.success(`${savedCount}枚のカードが保存されました！`);
+				toast.success(`${response.savedCardsCount}枚のカードが保存されました！`);
 				setRawGeneratedCards(null); // 保存後はリストをクリア
 				router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移
 			}

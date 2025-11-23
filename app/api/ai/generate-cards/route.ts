@@ -22,6 +22,10 @@ import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { LLMProvider } from "@/lib/llm/client";
+import {
+	getProviderValidationErrorMessage,
+	isValidProvider,
+} from "@/lib/validators/ai";
 
 interface GenerateCardsRequest {
 	transcript: string;
@@ -71,14 +75,10 @@ export async function POST(request: NextRequest) {
 		}
 
 		// providerのバリデーション
-		if (
-			body.provider &&
-			!["google", "openai", "anthropic"].includes(body.provider)
-		) {
+		if (body.provider && !isValidProvider(body.provider)) {
 			return NextResponse.json(
 				{
-					error:
-						"無効なproviderです。google, openai, anthropicのいずれかを指定してください",
+					error: getProviderValidationErrorMessage(),
 				},
 				{ status: 400 },
 			);

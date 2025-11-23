@@ -16,7 +16,7 @@ export interface GenerateTitleResponse {
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ (将来の使用箇所)
+ *   └─ app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx
  *
  * Dependencies (External files that this file imports):
  *   └─ @tanstack/react-query

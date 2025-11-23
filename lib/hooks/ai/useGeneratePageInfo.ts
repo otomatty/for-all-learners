@@ -19,7 +19,7 @@ export interface GeneratePageInfoResponse {
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ (将来の使用箇所)
+ *   └─ components/pages/_hooks/useGenerateContent.ts
  *
  * Dependencies (External files that this file imports):
  *   ├─ @tanstack/react-query

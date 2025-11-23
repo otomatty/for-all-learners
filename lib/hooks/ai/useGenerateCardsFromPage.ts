@@ -30,7 +30,7 @@ export interface GenerateCardsFromPageResponse {
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ (将来の使用箇所)
+ *   └─ components/pages/generate-cards/generate-cards-form.tsx
  *
  * Dependencies (External files that this file imports):
  *   ├─ @tanstack/react-query

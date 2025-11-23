@@ -26,6 +26,10 @@ import {
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { LLMProvider } from "@/lib/llm/client";
+import {
+	getProviderValidationErrorMessage,
+	isValidProvider,
+} from "@/lib/validators/ai";
 
 // GET: APIキーの状態取得
 export async function GET(request: NextRequest) {
@@ -102,11 +106,10 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		if (!["google", "openai", "anthropic"].includes(body.provider)) {
+		if (!isValidProvider(body.provider)) {
 			return NextResponse.json(
 				{
-					error:
-						"無効なproviderです。google, openai, anthropicのいずれかを指定してください",
+					error: getProviderValidationErrorMessage(),
 				},
 				{ status: 400 },
 			);
@@ -146,7 +149,7 @@ export async function POST(request: NextRequest) {
 		if (!result.success) {
 			return NextResponse.json(
 				{ error: result.error },
-				{ status: 400 },
+				{ status: 500 },
 			);
 		}
 
@@ -193,11 +196,10 @@ export async function DELETE(request: NextRequest) {
 			);
 		}
 
-		if (!["google", "openai", "anthropic"].includes(body.provider)) {
+		if (!isValidProvider(body.provider)) {
 			return NextResponse.json(
 				{
-					error:
-						"無効なproviderです。google, openai, anthropicのいずれかを指定してください",
+					error: getProviderValidationErrorMessage(),
 				},
 				{ status: 400 },
 			);
@@ -213,7 +215,7 @@ export async function DELETE(request: NextRequest) {
 		if (!result.success) {
 			return NextResponse.json(
 				{ error: result.error },
-				{ status: 400 },
+				{ status: 500 },
 			);
 		}
 
