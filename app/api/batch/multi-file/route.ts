@@ -128,13 +128,13 @@ export async function POST(request: NextRequest) {
 							}
 						}
 
-						return {
-							fileId,
-							fileName,
-							fileType: fileType || "pdf",
-							fileBlob: await value.blob(),
-							metadata,
-						};
+					return {
+						fileId,
+						fileName,
+						fileType: fileType || "pdf",
+						fileBlob: new Blob([value], { type: value.type }),
+						metadata,
+					};
 					}
 
 					throw new Error(`Invalid file entry: ${key}`);
