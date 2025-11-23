@@ -1,22 +1,11 @@
-import { getInquiryCategories } from "@/app/_actions/inquiries";
-// /Users/sugaiakimasa/apps/for-all-learners/app/inquiry/page.tsx
 import { createClient } from "@/lib/supabase/server";
-import InquiryForm from "./_components/inquiry-form";
+import { InquiryClient } from "./_components/InquiryClient";
 
 export default async function InquiryPage() {
 	const supabase = await createClient();
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
-
-	// お問い合わせカテゴリのデータをサーバーアクション経由で取得
-	const { categories, success: categoriesSuccess } =
-		await getInquiryCategories();
-
-	if (!categoriesSuccess) {
-		// エラーハンドリング: カテゴリなしで進めるか、エラーページを表示するかなど
-		// ここでは categories が null または空配列になるので、フォーム側で適切に処理される想定
-	}
 
 	const initialValues = {
 		email: user?.email || "",
@@ -31,11 +20,7 @@ export default async function InquiryPage() {
 					ご不明な点やご要望がございましたら、お気軽にお問い合わせください。
 				</p>
 			</header>
-			<InquiryForm
-				initialValues={initialValues}
-				isAuthenticated={!!user}
-				categories={categories || []} // categories が null の場合も考慮して空配列を渡す
-			/>
+			<InquiryClient initialValues={initialValues} isAuthenticated={!!user} />
 		</div>
 	);
 }

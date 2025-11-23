@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { Progress } from "@/components/ui/progress";
+import { useRecordLearningTime } from "@/hooks/action_logs";
 import { useReviewCard } from "@/hooks/review";
 import type { FlashcardQuestion } from "@/lib/gemini";
 import QuizFinished, { type AnswerSummary } from "./QuizFinished";
@@ -19,6 +19,7 @@ export default function FlashcardQuiz({
 	timeLimit,
 }: FlashcardQuizProps) {
 	const reviewCard = useReviewCard();
+	const recordLearningTimeMutation = useRecordLearningTime();
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
 	);
@@ -70,10 +71,10 @@ export default function FlashcardQuiz({
 	useEffect(() => {
 		if (finished && !timeRecorded) {
 			const durationSec = Math.floor((Date.now() - startedAt) / 1000);
-			recordLearningTime(durationSec);
+			recordLearningTimeMutation.mutate(durationSec);
 			setTimeRecorded(true);
 		}
-	}, [finished, timeRecorded, startedAt]);
+	}, [finished, timeRecorded, startedAt, recordLearningTimeMutation]);
 
 	useEffect(() => {
 		if (finished) {

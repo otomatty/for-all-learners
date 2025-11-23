@@ -1,16 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useId, useState } from "react"; // useFormState を削除し、useActionState を react からインポート
-import { useFormStatus } from "react-dom"; // useFormState を削除
+import { useEffect, useId, useState } from "react";
+import { toast } from "sonner";
+import type { Change, ChangeLogEntry } from "@/app/_actions/changelog";
 import {
-	type ActionResponse,
-	type Change,
-	type ChangeLogEntry, // createChangelogEntry の戻り値の型として必要
 	type CreateChangelogEntryInput,
-	createChangelogEntry, // 新規作成時のみ使用
 	type UpdateChangelogEntryInput,
-	updateChangelogEntry, // 更新時に使用
-} from "@/app/_actions/changelog";
+	useCreateChangelogEntry,
+	useUpdateChangelogEntry,
+} from "@/hooks/changelog";
 
 const changeTypes: Change["type"][] = ["new", "improvement", "fix", "security"];
 const changeTypeLabels: Record<Change["type"], string> = {
@@ -22,36 +20,6 @@ const changeTypeLabels: Record<Change["type"], string> = {
 
 interface ClientChange extends Change {
 	clientId: string; // フォームでの管理用ID
-}
-
-const initialState: ActionResponse<ChangeLogEntry> = {
-	success: false,
-	error: undefined,
-	data: undefined,
-};
-
-interface SubmitButtonProps {
-	isEditMode: boolean;
-}
-
-function SubmitButton({ isEditMode }: SubmitButtonProps) {
-	const { pending } = useFormStatus();
-	const text = isEditMode
-		? pending
-			? "更新中..."
-			: "更新する"
-		: pending
-			? "作成中..."
-			: "作成する";
-	return (
-		<button
-			type="submit"
-			disabled={pending}
-			className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-		>
-			{text}
-		</button>
-	);
 }
 
 interface ChangelogFormProps {
@@ -87,46 +55,16 @@ export function ChangelogForm({
 			})) || [{ clientId: crypto.randomUUID(), type: "new", description: "" }],
 	);
 
-	// useFormState に渡すサーバーアクションをラップ
-	const createChangelogEntryWithChanges = async (
-		_prevState: ActionResponse<ChangeLogEntry>,
-		formData: FormData,
-	): Promise<ActionResponse<ChangeLogEntry>> => {
-		// Ensure published_at is retrieved as string
-		const publishedAtValue = formData.get("published_at");
-		if (publishedAtValue === null) {
-			throw new Error("公開日が取得できませんでした");
-		}
-		// Build input data for changelog entry
-		const inputData: CreateChangelogEntryInput = {
-			// id は CreateChangelogEntryInput にはない
-			version: formData.get("version") as string,
-			title: formData.get("title") as string | null,
-			published_at: publishedAtValue.toString(),
-			changes: changes.map(({ type, description }) => ({ type, description })),
-		};
-		if (isEditMode && initialData?.id) {
-			const updateInput: UpdateChangelogEntryInput = {
-				...inputData,
-				entryId: initialData.id,
-			};
-			return updateChangelogEntry(updateInput);
-		}
-		return createChangelogEntry(inputData); // 新規作成
-	};
-
-	const [state, formAction] = useActionState(
-		// useFormState を useActionState に変更
-		createChangelogEntryWithChanges,
-		initialState,
-	);
+	const createMutation = useCreateChangelogEntry();
+	const updateMutation = useUpdateChangelogEntry();
+	const mutation = isEditMode ? updateMutation : createMutation;
 
 	const versionId = useId();
 	const titleId = useId();
 	const publishedAtId = useId();
 
 	useEffect(() => {
-		if (state.success) {
+		if (mutation.isSuccess && mutation.data?.success) {
 			if (!isEditMode) {
 				// 新規作成時のみフォームリセット
 				setVersion("");
@@ -137,11 +75,19 @@ export function ChangelogForm({
 				]);
 			}
 			onSuccess?.(); // 親コンポーネントに成功を通知
-		} else if (state.error) {
-			// エラーメッセージはフォーム下部に表示されるので、alertは不要かもしれません
-			alert(`エラー: ${state.error}`);
+		} else if (mutation.isError || (mutation.data && !mutation.data.success)) {
+			const errorMessage =
+				mutation.error?.message || mutation.data?.error || "不明なエラー";
+			toast.error(`エラー: ${errorMessage}`);
 		}
-	}, [state, onSuccess, isEditMode]);
+	}, [
+		mutation.isSuccess,
+		mutation.isError,
+		mutation.data,
+		mutation.error,
+		onSuccess,
+		isEditMode,
+	]);
 
 	const handleAddChange = () => {
 		setChanges([
@@ -166,8 +112,28 @@ export function ChangelogForm({
 		);
 	};
 
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		const inputData: CreateChangelogEntryInput = {
+			version,
+			title: title || null,
+			published_at: publishedAt,
+			changes: changes.map(({ type, description }) => ({ type, description })),
+		};
+
+		if (isEditMode && initialData?.id) {
+			const updateInput: UpdateChangelogEntryInput = {
+				...inputData,
+				entryId: initialData.id,
+			};
+			updateMutation.mutate(updateInput);
+		} else {
+			createMutation.mutate(inputData);
+		}
+	};
+
 	return (
-		<form action={formAction} className="space-y-6">
+		<form onSubmit={handleSubmit} className="space-y-6">
 			<div>
 				<label
 					htmlFor={versionId}
@@ -306,9 +272,10 @@ export function ChangelogForm({
 				</div>
 			</fieldset>
 
-			{state.error && (
+			{(mutation.error || (mutation.data && !mutation.data.success)) && (
 				<p className="text-sm text-red-600 dark:text-red-400" role="alert">
-					エラー: {state.error}
+					エラー:{" "}
+					{mutation.error?.message || mutation.data?.error || "不明なエラー"}
 				</p>
 			)}
 
@@ -322,7 +289,19 @@ export function ChangelogForm({
 				>
 					キャンセル
 				</button>
-				<SubmitButton isEditMode={isEditMode} />
+				<button
+					type="submit"
+					disabled={mutation.isPending}
+					className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+				>
+					{isEditMode
+						? mutation.isPending
+							? "更新中..."
+							: "更新する"
+						: mutation.isPending
+							? "作成中..."
+							: "作成する"}
+				</button>
 			</div>
 		</form>
 	);

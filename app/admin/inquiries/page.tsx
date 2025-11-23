@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton"; // shadcn/ui の Skeleton を利用
-import { InquiriesTableContainer } from "./_components/InquiriesTableContainer";
+import { InquiriesTableClient } from "./_components/InquiriesTableClient";
 
 export const metadata = {
 	title: "お問い合わせ管理 | 管理者ダッシュボード",
@@ -34,12 +34,7 @@ function AdminInquiriesPageSkeleton() {
 	);
 }
 
-export default async function AdminInquiriesPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-	const resolvedSearchParams = await searchParams;
+export default function AdminInquiriesPage() {
 	return (
 		<div className="container mx-auto py-8 px-4 md:px-6">
 			<div className="flex items-center justify-between mb-6">
@@ -49,7 +44,7 @@ export default async function AdminInquiriesPage({
 				{/* 必要であれば新規作成ボタンなどをここに追加 */}
 			</div>
 			<Suspense fallback={<AdminInquiriesPageSkeleton />}>
-				<InquiriesTableContainer searchParams={resolvedSearchParams} />
+				<InquiriesTableClient initialCategories={[]} />
 			</Suspense>
 		</div>
 	);

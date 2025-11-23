@@ -6,8 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import { type InquiryFormState, submitInquiry } from "@/app/_actions/inquiries"; // サーバーアクションをインポート
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -29,6 +27,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useSubmitInquiry } from "@/hooks/inquiries";
 import { ImageUploader } from "./image-uploader"; // 作成したImageUploaderをインポート
 
 // page.tsx から渡されるカテゴリの型
@@ -79,6 +78,7 @@ export default function InquiryForm({
 	isAuthenticated,
 	categories,
 }: InquiryFormProps) {
+	const submitInquiryMutation = useSubmitInquiry();
 	const form = useForm<InquiryFormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -114,7 +114,8 @@ export default function InquiryForm({
 		processedAttachments.length > 0 && // そもそもファイルが選択されているか
 		form.formState.isSubmitting; // ImageUploaderが処理中かどうかはImageUploader自身が管理
 
-	const isSubmitDisabled = form.formState.isSubmitting; // || isOverallProcessing from ImageUploader if needed
+	const isSubmitDisabled =
+		form.formState.isSubmitting || submitInquiryMutation.isPending;
 
 	async function onSubmit(values: InquiryFormValues) {
 		const formData = new FormData();
@@ -143,49 +144,53 @@ export default function InquiryForm({
 			return;
 		}
 
-		const promise = new Promise<InquiryFormState>((resolve) =>
-			submitInquiry(formData).then(resolve),
-		);
+		submitInquiryMutation.mutate(
+			{ formData, attachments: processedAttachments },
+			{
+				onSuccess: (data) => {
+					if (data.success) {
+						form.reset(); // フォームをリセット
+						setProcessedAttachments([]); // アップロード済みファイルをクリア
+						// ページパスとUAを再設定
+						if (typeof window !== "undefined") {
+							form.setValue("pagePath", window.location.pathname);
+							form.setValue("userAgent", navigator.userAgent);
+						}
+						if (initialValues.email)
+							form.setValue("email", initialValues.email);
+						if (initialValues.name) form.setValue("name", initialValues.name);
 
-		toast.promise(promise, {
-			loading: "お問い合わせを送信中...",
-			success: (data) => {
-				if (data.success) {
-					form.reset(); // フォームをリセット
-					setProcessedAttachments([]); // アップロード済みファイルをクリア
-					// ページパスとUAを再設定
-					if (typeof window !== "undefined") {
-						form.setValue("pagePath", window.location.pathname);
-						form.setValue("userAgent", navigator.userAgent);
-					}
-					if (initialValues.email) form.setValue("email", initialValues.email);
-					if (initialValues.name) form.setValue("name", initialValues.name);
-
-					return data.message || "お問い合わせが正常に送信されました。";
-				}
-				// サーバーからのフィールドエラーをフォームに反映
-				if (data.errors) {
-					for (const [key, value] of Object.entries(data.errors)) {
-						if (value && value.length > 0) {
-							form.setError(key as keyof InquiryFormValues, {
-								type: "server",
-								message: value.join(", "),
-							});
+						toast.success(
+							data.message || "お問い合わせが正常に送信されました。",
+						);
+					} else {
+						// サーバーからのフィールドエラーをフォームに反映
+						if (data.errors) {
+							for (const [key, value] of Object.entries(data.errors)) {
+								if (value && value.length > 0) {
+									form.setError(key as keyof InquiryFormValues, {
+										type: "server",
+										message: value.join(", "),
+									});
+								}
+							}
+						}
+						// General error も表示
+						if (data.errors?.general) {
+							toast.error(data.errors.general.join(", "));
+						} else {
+							toast.error(data.message || "送信に失敗しました。");
 						}
 					}
-				}
-				// General error も表示
-				if (data.errors?.general) {
-					throw new Error(data.errors.general.join(", "));
-				}
-				throw new Error(data.message || "送信に失敗しました。");
+				},
+				onError: (error) => {
+					toast.error(
+						error.message ||
+							"お問い合わせの送信中に予期せぬエラーが発生しました。",
+					);
+				},
 			},
-			error: (err) => {
-				return (
-					err.message || "お問い合わせの送信中に予期せぬエラーが発生しました。"
-				);
-			},
-		});
+		);
 	}
 
 	return (
@@ -347,7 +352,9 @@ export default function InquiryForm({
 						isSubmitDisabled // ImageUploader内の処理中も考慮する場合は、ImageUploaderからisProcessing状態を受け取る必要がある
 					}
 				>
-					{form.formState.isSubmitting ? "送信中..." : "送信する"}
+					{form.formState.isSubmitting || submitInquiryMutation.isPending
+						? "送信中..."
+						: "送信する"}
 				</Button>
 			</form>
 		</Form>

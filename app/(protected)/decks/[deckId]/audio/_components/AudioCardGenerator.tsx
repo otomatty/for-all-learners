@@ -5,7 +5,6 @@ import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { createActionLog } from "@/app/_actions/actionLogs";
 import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
 import { transcribeAudio } from "@/app/_actions/transcribe";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateActionLog } from "@/hooks/action_logs";
 import { useCreateCards } from "@/hooks/cards";
 import { useGenerateCards, useGenerateTitle } from "@/lib/hooks/ai";
 import { useUploadAudio } from "@/lib/hooks/storage";
@@ -37,6 +37,7 @@ export function AudioCardGenerator({
 	const uploadAudioMutation = useUploadAudio();
 	const generateCardsMutation = useGenerateCards();
 	const generateTitleMutation = useGenerateTitle();
+	const createActionLogMutation = useCreateActionLog();
 	const [isRecording, setIsRecording] = useState(false);
 	const recordingStartRef = useRef<number>(0);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -92,7 +93,10 @@ export function AudioCardGenerator({
 			const durationMs = Date.now() - recordingStartRef.current;
 			const durationSec = Math.floor(durationMs / 1000);
 			try {
-				await createActionLog("audio", durationSec);
+				await createActionLogMutation.mutateAsync({
+					actionType: "audio",
+					duration: durationSec,
+				});
 				toast.success("学習時間を記録しました", {
 					description: `音読時間: ${durationSec}秒`,
 				});

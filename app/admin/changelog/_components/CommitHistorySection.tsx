@@ -8,12 +8,12 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
-import { createChangelogEntry } from "@/app/_actions/changelog";
 import {
 	createVersionCommitStaging,
 	getVersionCommitStagingByVersion,
 	processVersionCommitStaging,
 } from "@/app/_actions/version";
+import { useCreateChangelogEntry } from "@/hooks/changelog";
 
 import { CommitDetails } from "./CommitDetails";
 import { CommitVersionCard } from "./CommitVersionCard";
@@ -65,8 +65,8 @@ export function CommitHistorySection() {
 	const [summaryText, setSummaryText] = useState<string>("");
 	const [previewItems, setPreviewItems] = useState<ReleaseNoteItem[]>([]);
 	const [summaryTitle, setSummaryTitle] = useState<string>("");
-	const [loadingConfirm, setLoadingConfirm] = useState(false);
 	const sensors = useSensors(useSensor(PointerSensor));
+	const createChangelogEntryMutation = useCreateChangelogEntry();
 
 	// データ取得
 	useEffect(() => {
@@ -178,9 +178,8 @@ export function CommitHistorySection() {
 	};
 
 	const handleConfirm = async () => {
-		setLoadingConfirm(true);
-		try {
-			const result = await createChangelogEntry({
+		createChangelogEntryMutation.mutate(
+			{
 				version: selectedGroup?.version ?? "",
 				title: summaryTitle,
 				published_at: selectedGroup?.publishedAt.split("T")[0] ?? "",
@@ -188,15 +187,15 @@ export function CommitHistorySection() {
 					type: item.type,
 					description: item.description,
 				})),
-			});
-			if (result.success) {
-				setStagingStatus("confirmed");
-			} else {
-			}
-		} catch (_e) {
-		} finally {
-			setLoadingConfirm(false);
-		}
+			},
+			{
+				onSuccess: (result) => {
+					if (result.success) {
+						setStagingStatus("confirmed");
+					}
+				},
+			},
+		);
 	};
 
 	return (
@@ -231,7 +230,7 @@ export function CommitHistorySection() {
 						stagingStatus={stagingStatus}
 						stagingId={stagingId}
 						loadingSummary={loadingSummary}
-						loadingConfirm={loadingConfirm}
+						loadingConfirm={createChangelogEntryMutation.isPending}
 						onCreateSummary={handleCreateSummary}
 						onConfirm={handleConfirm}
 						onEdit={(item) =>

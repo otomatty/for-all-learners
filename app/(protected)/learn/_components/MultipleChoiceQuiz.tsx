@@ -3,7 +3,6 @@
 import { CircleCheck, CircleX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useRecordLearningTime } from "@/hooks/action_logs";
 import { useReviewCard } from "@/hooks/review";
 import type { MultipleChoiceQuestion } from "@/lib/gemini";
 import QuizFinished, { type AnswerSummary } from "./QuizFinished";
@@ -34,6 +34,7 @@ export default function MultipleChoiceQuiz({
 	timeLimit,
 }: MultipleChoiceQuizProps) {
 	const reviewCard = useReviewCard();
+	const recordLearningTimeMutation = useRecordLearningTime();
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
 	);
@@ -90,10 +91,10 @@ export default function MultipleChoiceQuiz({
 	useEffect(() => {
 		if (isFinished && !timeRecorded) {
 			const durationSec = Math.floor((Date.now() - startedAt) / 1000);
-			recordLearningTime(durationSec);
+			recordLearningTimeMutation.mutate(durationSec);
 			setTimeRecorded(true);
 		}
-	}, [isFinished, timeRecorded, startedAt]);
+	}, [isFinished, timeRecorded, startedAt, recordLearningTimeMutation]);
 
 	// 質問開始時（timeLimit変更時）に expire 時刻を更新
 	useEffect(() => {
