@@ -3,7 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { updateUserSettings } from "@/app/_actions/user_settings";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUpdateUserSettings } from "@/hooks/user_settings";
 import type { Database } from "@/types/database.types";
 import AppearanceSettings from "./appearance";
 import ExternalServices from "./external-sync-settings";
@@ -46,6 +46,7 @@ export default function UserSettingsForm({
 	const [initialPathname] = useState(pathname);
 	const [showDialog, setShowDialog] = useState(false);
 	const [nextPath, setNextPath] = useState<string | null>(null);
+	const updateUserSettingsMutation = useUpdateUserSettings();
 
 	// Get default tab from query params
 	const defaultTab = searchParams.get("tab") || "general";
@@ -122,7 +123,7 @@ export default function UserSettingsForm({
 				changes.push(`Quizlet 同期: ${before} → ${after}`);
 			}
 			// 設定更新
-			await updateUserSettings({
+			await updateUserSettingsMutation.mutateAsync({
 				theme: settings.theme,
 				mode: settings.mode,
 				locale: settings.locale,

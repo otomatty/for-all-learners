@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { recordLearningTime } from "@/app/_actions/actionLogs";
 import { Progress } from "@/components/ui/progress";
+import { useRecordLearningTime } from "@/hooks/action_logs";
 import { useReviewCard } from "@/hooks/review";
 import type { ClozeQuestion } from "@/lib/gemini";
 import logger from "@/lib/logger";
@@ -24,6 +24,7 @@ export default function ClozeQuiz({
 	timeLimit,
 }: ClozeQuizProps) {
 	const reviewCard = useReviewCard();
+	const recordLearningTimeMutation = useRecordLearningTime();
 	// 各カードのレビュー結果を蓄積
 	const [results, setResults] = useState<{ cardId: string; quality: number }[]>(
 		[],
@@ -209,10 +210,10 @@ export default function ClozeQuiz({
 	useEffect(() => {
 		if (finished && !timeRecorded) {
 			const durationSec = Math.floor((Date.now() - startedAtMs) / 1000);
-			recordLearningTime(durationSec);
+			recordLearningTimeMutation.mutate(durationSec);
 			setTimeRecorded(true);
 		}
-	}, [finished, timeRecorded, startedAtMs]);
+	}, [finished, timeRecorded, startedAtMs, recordLearningTimeMutation]);
 
 	// Guards after hooks - check if there are no questions
 	if (total === 0) {
