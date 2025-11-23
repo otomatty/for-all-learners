@@ -13,14 +13,8 @@ import {
  * Displays installed plugin information with enable/disable and uninstall actions.
  * Includes uninstall confirmation dialog, update functionality, and settings dialog.
  */
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-	disablePlugin,
-	enablePlugin,
-	uninstallPlugin,
-	updatePlugin,
-} from "@/app/_actions/plugins";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -41,6 +35,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import {
+	useDisablePlugin,
+	useEnablePlugin,
+	useUninstallPlugin,
+	useUpdatePlugin,
+} from "@/hooks/plugins";
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 import { PluginSettingsForm } from "./PluginSettingsForm";
 
@@ -61,8 +61,17 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 
 	const [showUninstallDialog, setShowUninstallDialog] = useState(false);
 	const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-	const [isPending, startTransition] = useTransition();
-	const [isUpdating, setIsUpdating] = useState(false);
+
+	const uninstallPlugin = useUninstallPlugin();
+	const enablePlugin = useEnablePlugin();
+	const disablePlugin = useDisablePlugin();
+	const updatePlugin = useUpdatePlugin();
+
+	const isPending =
+		uninstallPlugin.isPending ||
+		enablePlugin.isPending ||
+		disablePlugin.isPending;
+	const isUpdating = updatePlugin.isPending;
 
 	const hasConfigSchema =
 		metadata.manifest.configSchema &&
@@ -70,44 +79,29 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 		metadata.manifest.configSchema.properties &&
 		Object.keys(metadata.manifest.configSchema.properties).length > 0;
 
-	const handleUninstall = () => {
-		startTransition(async () => {
-			try {
-				const formData = new FormData();
-				formData.append("pluginId", userPlugin.pluginId);
-				await uninstallPlugin(formData);
-				toast.success("プラグインをアンインストールしました");
-				setShowUninstallDialog(false);
-				// Refresh the page to update the list
-				window.location.reload();
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "アンインストールに失敗しました",
-				);
-			}
-		});
+	const handleUninstall = async () => {
+		try {
+			await uninstallPlugin.mutateAsync(userPlugin.pluginId);
+			toast.success("プラグインをアンインストールしました");
+			setShowUninstallDialog(false);
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "アンインストールに失敗しました",
+			);
+		}
 	};
 
-	const handleUpdate = () => {
-		setIsUpdating(true);
-		startTransition(async () => {
-			try {
-				const formData = new FormData();
-				formData.append("pluginId", userPlugin.pluginId);
-				await updatePlugin(formData);
-				toast.success("プラグインを更新しました");
-				// Refresh the page to update the list
-				window.location.reload();
-			} catch (error) {
-				toast.error(
-					error instanceof Error ? error.message : "更新に失敗しました",
-				);
-			} finally {
-				setIsUpdating(false);
-			}
-		});
+	const handleUpdate = async () => {
+		try {
+			await updatePlugin.mutateAsync(userPlugin.pluginId);
+			toast.success("プラグインを更新しました");
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "更新に失敗しました",
+			);
+		}
 	};
 
 	return (
@@ -200,19 +194,34 @@ export function InstalledPluginCard({ userPlugin }: InstalledPluginCardProps) {
 							設定
 						</Button>
 					)}
-					<form action={userPlugin.enabled ? disablePlugin : enablePlugin}>
-						<input type="hidden" name="pluginId" value={userPlugin.pluginId} />
-						<Button
-							type="submit"
-							variant={userPlugin.enabled ? "outline" : "default"}
-							size="sm"
-							className="gap-2"
-							disabled={isUpdating || isPending}
-						>
-							<ToggleLeft className="h-4 w-4" />
-							{userPlugin.enabled ? "無効化" : "有効化"}
-						</Button>
-					</form>
+					<Button
+						onClick={async () => {
+							try {
+								if (userPlugin.enabled) {
+									await disablePlugin.mutateAsync(userPlugin.pluginId);
+									toast.success("プラグインを無効化しました");
+								} else {
+									await enablePlugin.mutateAsync(userPlugin.pluginId);
+									toast.success("プラグインを有効化しました");
+								}
+							} catch (error) {
+								toast.error(
+									error instanceof Error
+										? error.message
+										: userPlugin.enabled
+											? "無効化に失敗しました"
+											: "有効化に失敗しました",
+								);
+							}
+						}}
+						variant={userPlugin.enabled ? "outline" : "default"}
+						size="sm"
+						className="gap-2"
+						disabled={isUpdating || isPending}
+					>
+						<ToggleLeft className="h-4 w-4" />
+						{userPlugin.enabled ? "無効化" : "有効化"}
+					</Button>
 
 					<Button
 						variant="destructive"

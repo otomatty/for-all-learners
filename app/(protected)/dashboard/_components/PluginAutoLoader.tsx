@@ -21,7 +21,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getInstalledPlugins } from "@/app/_actions/plugins";
+import { useInstalledPlugins } from "@/hooks/plugins";
 import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import logger from "@/lib/logger";
 import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
@@ -34,11 +34,12 @@ import { getPluginRegistry } from "@/lib/plugins/plugin-registry";
  */
 export function PluginAutoLoader() {
 	const { loadPlugin } = useLoadPlugin();
+	const { data: installedPlugins } = useInstalledPlugins();
 	const hasLoadedRef = useRef(false);
 
 	useEffect(() => {
-		// Only run once on mount
-		if (hasLoadedRef.current) {
+		// Only run once on mount and when plugins are loaded
+		if (hasLoadedRef.current || !installedPlugins) {
 			return;
 		}
 		hasLoadedRef.current = true;
@@ -47,9 +48,6 @@ export function PluginAutoLoader() {
 
 		async function loadInstalledPlugins() {
 			try {
-				// Get installed plugins
-				const installedPlugins = await getInstalledPlugins();
-
 				// Filter only enabled plugins
 				const enabledPlugins = installedPlugins.filter((p) => p.enabled);
 
@@ -97,7 +95,7 @@ export function PluginAutoLoader() {
 		return () => {
 			mounted = false;
 		};
-	}, [loadPlugin]); // loadPlugin is stable from useLoadPlugin hook
+	}, [loadPlugin, installedPlugins]); // loadPlugin is stable from useLoadPlugin hook
 
 	// This component doesn't render anything
 	return null;

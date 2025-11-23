@@ -35,7 +35,6 @@ import {
 	getAllPluginStorage,
 	setPluginStorage,
 } from "@/app/_actions/plugin-storage";
-import { getPlugin } from "@/app/_actions/plugins";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -64,6 +63,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { usePlugin } from "@/hooks/plugins";
 import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import logger from "@/lib/logger";
 import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
@@ -410,6 +410,7 @@ export function PluginSettingsForm({
 		Array<{ full_name: string; name: string }>
 	>([]);
 	const { loadPlugin } = useLoadPlugin();
+	const { data: pluginMetadata } = usePlugin(pluginId);
 
 	// Generate Zod schema from JSON Schema
 	const zodSchema = configSchema ? jsonSchemaToZod(configSchema) : z.object({});
@@ -497,7 +498,6 @@ export function PluginSettingsForm({
 				}
 
 				// Load plugin with new configuration
-				const pluginMetadata = await getPlugin(pluginId);
 				if (pluginMetadata) {
 					const result = await loadPlugin(pluginMetadata);
 					if (result.success) {
