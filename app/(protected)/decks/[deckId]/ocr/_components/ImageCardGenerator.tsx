@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { GeneratedCard } from "@/app/_actions/generateCards";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import { useGenerateCards } from "@/lib/hooks/ai";
 import { createRawInput } from "@/app/_actions/rawInputs";
 import { transcribeImage } from "@/app/_actions/transcribeImage";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,7 @@ export function ImageCardGenerator({
 	const supabase = createClient();
 	const router = useRouter();
 	const createCardsMutation = useCreateCards();
+	const generateCardsMutation = useGenerateCards();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const isSaving = createCardsMutation.isPending;
 	const [imageBlob, setImageBlob] = useState<Blob | null>(null);
@@ -129,7 +130,11 @@ export function ImageCardGenerator({
 				description: `${transcript.substring(0, 50)}...`,
 			});
 
-			const raw = await generateCardsFromTranscript(transcript, imageFileUrl);
+			const cardsResponse = await generateCardsMutation.mutateAsync({
+				transcript,
+				sourceAudioUrl: imageFileUrl,
+			});
+			const raw = cardsResponse.cards;
 			const cardsWithId: CardWithId[] = raw.map((card) => ({
 				...card,
 				id: crypto.randomUUID(),

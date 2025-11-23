@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/react";
 import { marked } from "marked";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
+import { useGeneratePageInfo } from "@/lib/hooks/ai";
 
 /**
  * Hook to generate page content based on title.
@@ -13,6 +13,8 @@ export function useGenerateContent(
 	savePage: () => Promise<void>,
 	setIsGenerating: (generating: boolean) => void,
 ) {
+	const generatePageInfoMutation = useGeneratePageInfo();
+
 	return useCallback(async () => {
 		if (!title.trim()) {
 			toast.error("タイトルを入力してください");
@@ -22,14 +24,20 @@ export function useGenerateContent(
 
 		setIsGenerating(true);
 		try {
-			const markdown = await generatePageInfo(title);
-			const html = marked.parse(markdown);
+			const response = await generatePageInfoMutation.mutateAsync({
+				title,
+			});
+			const html = marked.parse(response.markdown);
 			editor.commands.setContent(html);
 			await savePage();
-		} catch (_error) {
-			toast.error("生成に失敗しました");
+		} catch (error) {
+			if (error instanceof Error) {
+				toast.error(`生成に失敗しました: ${error.message}`);
+			} else {
+				toast.error("生成に失敗しました");
+			}
 		} finally {
 			setIsGenerating(false);
 		}
-	}, [editor, title, savePage, setIsGenerating]);
+	}, [editor, title, savePage, setIsGenerating, generatePageInfoMutation]);
 }
