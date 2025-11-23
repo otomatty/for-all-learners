@@ -11,7 +11,7 @@
  *   └─ app/(protected)/settings/plugins/_components/PluginDetails.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugin-ratings-reviews.ts
+ *   ├─ hooks/plugins/usePluginRatings.ts
  *   ├─ ./StarRating.tsx
  *   ├─ components/ui/button.tsx
  *   └─ sonner (toast)
@@ -20,14 +20,14 @@
  *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-	deletePluginRating,
-	getUserRating,
-	submitPluginRating,
-} from "@/app/_actions/plugin-ratings-reviews";
 import { Button } from "@/components/ui/button";
+import {
+	useDeleteRating,
+	useGetUserRating,
+	useSubmitRating,
+} from "@/hooks/plugins/usePluginRatings";
 import { StarRating } from "./StarRating";
 
 interface PluginRatingFormProps {
@@ -47,74 +47,57 @@ export function PluginRatingForm({
 	onRatingSubmitted,
 }: PluginRatingFormProps) {
 	const [rating, setRating] = useState(0);
-	const [userRating, setUserRating] = useState<number | null>(null);
-	const [isPending, startTransition] = useTransition();
-	const [isLoading, setIsLoading] = useState(true);
 
-	// Load user's existing rating
+	const { data: existingRating, isLoading } = useGetUserRating(pluginId);
+	const submitRatingMutation = useSubmitRating();
+	const deleteRatingMutation = useDeleteRating();
+
+	const userRating = existingRating?.rating || null;
+
+	// Load user's existing rating into form
 	useEffect(() => {
-		async function loadUserRating() {
-			try {
-				const existingRating = await getUserRating(pluginId);
-				if (existingRating) {
-					setRating(existingRating.rating);
-					setUserRating(existingRating.rating);
-				}
-			} catch (_error) {
-			} finally {
-				setIsLoading(false);
-			}
+		if (existingRating) {
+			setRating(existingRating.rating);
+		} else {
+			setRating(0);
 		}
+	}, [existingRating]);
 
-		loadUserRating();
-	}, [pluginId]);
-
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		if (rating === 0) {
 			toast.error("星評価を選択してください");
 			return;
 		}
 
-		startTransition(async () => {
-			try {
-				const result = await submitPluginRating(pluginId, rating);
-				if (result.success) {
-					setUserRating(rating);
-					toast.success("レーティングを投稿しました");
-					onRatingSubmitted?.();
-				} else {
-					toast.error(result.error || "レーティングの投稿に失敗しました");
-				}
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "レーティングの投稿に失敗しました",
-				);
-			}
-		});
+		try {
+			await submitRatingMutation.mutateAsync({
+				pluginId,
+				rating,
+			});
+			toast.success("レーティングを投稿しました");
+			onRatingSubmitted?.();
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "レーティングの投稿に失敗しました",
+			);
+		}
 	};
 
-	const handleDelete = () => {
-		startTransition(async () => {
-			try {
-				const result = await deletePluginRating(pluginId);
-				if (result.success) {
-					setRating(0);
-					setUserRating(null);
-					toast.success("レーティングを削除しました");
-					onRatingSubmitted?.();
-				} else {
-					toast.error(result.error || "レーティングの削除に失敗しました");
-				}
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "レーティングの削除に失敗しました",
-				);
-			}
-		});
+	const handleDelete = async () => {
+		try {
+			await deleteRatingMutation.mutateAsync(pluginId);
+			setRating(0);
+			toast.success("レーティングを削除しました");
+			onRatingSubmitted?.();
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "レーティングの削除に失敗しました",
+			);
+		}
 	};
 
 	if (isLoading) {
@@ -142,7 +125,7 @@ export function PluginRatingForm({
 					type="button"
 					size="sm"
 					onClick={handleSubmit}
-					disabled={isPending || rating === 0}
+					disabled={submitRatingMutation.isPending || rating === 0}
 				>
 					{userRating ? "評価を更新" : "評価を投稿"}
 				</Button>
@@ -153,7 +136,7 @@ export function PluginRatingForm({
 						size="sm"
 						variant="outline"
 						onClick={handleDelete}
-						disabled={isPending}
+						disabled={deleteRatingMutation.isPending}
 					>
 						評価を削除
 					</Button>

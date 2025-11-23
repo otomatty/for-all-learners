@@ -31,11 +31,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import {
-	getAllPluginStorage,
-	setPluginStorage,
-} from "@/app/_actions/plugin-storage";
-import { getPlugin } from "@/app/_actions/plugins";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -64,6 +59,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	useGetAllPluginStorage,
+	usePlugin,
+	useSetPluginStorage,
+} from "@/hooks/plugins";
 import { useLoadPlugin } from "@/lib/hooks/use-load-plugin";
 import logger from "@/lib/logger";
 import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
@@ -410,6 +410,10 @@ export function PluginSettingsForm({
 		Array<{ full_name: string; name: string }>
 	>([]);
 	const { loadPlugin } = useLoadPlugin();
+	const { data: pluginMetadata } = usePlugin(pluginId);
+	const { data: savedStorage, isLoading: isLoadingStorage } =
+		useGetAllPluginStorage(pluginId);
+	const setPluginStorageMutation = useSetPluginStorage();
 
 	// Generate Zod schema from JSON Schema
 	const zodSchema = configSchema ? jsonSchemaToZod(configSchema) : z.object({});
@@ -425,44 +429,35 @@ export function PluginSettingsForm({
 
 	// Load saved configuration
 	useEffect(() => {
-		if (open && configSchema) {
-			setIsLoading(true);
-			getAllPluginStorage(pluginId)
-				.then((config) => {
-					setSavedConfig(config);
+		if (open && configSchema && savedStorage) {
+			const config = savedStorage;
+			setSavedConfig(config);
 
-					// Get GitHub token if exists
-					const token = config.github_oauth_token as string | undefined;
-					setGithubToken(token);
+			// Get GitHub token if exists
+			const token = config.github_oauth_token as string | undefined;
+			setGithubToken(token);
 
-					// Parse repo list if exists
-					if (config.selectedRepos) {
-						const repos =
-							typeof config.selectedRepos === "string"
-								? JSON.parse(config.selectedRepos)
-								: config.selectedRepos;
-						if (Array.isArray(repos) && repos.length > 0) {
-							// Repos are stored as full_name strings, we need to reconstruct
-							// For now, we'll rely on user to re-fetch repos
-							setAvailableRepos([]);
-						}
-					}
+			// Parse repo list if exists
+			if (config.selectedRepos) {
+				const repos =
+					typeof config.selectedRepos === "string"
+						? JSON.parse(config.selectedRepos)
+						: config.selectedRepos;
+				if (Array.isArray(repos) && repos.length > 0) {
+					// Repos are stored as full_name strings, we need to reconstruct
+					// For now, we'll rely on user to re-fetch repos
+					setAvailableRepos([]);
+				}
+			}
 
-					// Merge saved config with defaults
-					const mergedConfig = {
-						...(defaultConfig || {}),
-						...config,
-					};
-					form.reset(mergedConfig as FormValues);
-				})
-				.catch(() => {
-					toast.error("設定の読み込みに失敗しました");
-				})
-				.finally(() => {
-					setIsLoading(false);
-				});
+			// Merge saved config with defaults
+			const mergedConfig = {
+				...(defaultConfig || {}),
+				...config,
+			};
+			form.reset(mergedConfig as FormValues);
 		}
-	}, [open, pluginId, configSchema, defaultConfig, form]);
+	}, [open, configSchema, defaultConfig, form, savedStorage]);
 
 	const handleReposFetched = (
 		repos: Array<{ full_name: string; name: string }>,
@@ -477,7 +472,11 @@ export function PluginSettingsForm({
 			// Save each field to plugin storage
 			const valuesObj = values as Record<string, unknown>;
 			for (const [key, value] of Object.entries(valuesObj)) {
-				await setPluginStorage(pluginId, key, value);
+				await setPluginStorageMutation.mutateAsync({
+					pluginId,
+					key,
+					value,
+				});
 			}
 
 			// Reload plugin with new configuration
@@ -497,7 +496,6 @@ export function PluginSettingsForm({
 				}
 
 				// Load plugin with new configuration
-				const pluginMetadata = await getPlugin(pluginId);
 				if (pluginMetadata) {
 					const result = await loadPlugin(pluginMetadata);
 					if (result.success) {
@@ -557,6 +555,9 @@ export function PluginSettingsForm({
 		);
 	}
 
+	const isFormLoading =
+		isLoading || isLoadingStorage || setPluginStorageMutation.isPending;
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -599,7 +600,7 @@ export function PluginSettingsForm({
 								type="button"
 								variant="outline"
 								onClick={handleReset}
-								disabled={isLoading}
+								disabled={isFormLoading}
 							>
 								デフォルトにリセット
 							</Button>
@@ -608,12 +609,12 @@ export function PluginSettingsForm({
 									type="button"
 									variant="outline"
 									onClick={() => onOpenChange(false)}
-									disabled={isLoading}
+									disabled={isFormLoading}
 								>
 									キャンセル
 								</Button>
-								<Button type="submit" disabled={isLoading}>
-									{isLoading ? "保存中..." : "保存"}
+								<Button type="submit" disabled={isFormLoading}>
+									{isFormLoading ? "保存中..." : "保存"}
 								</Button>
 							</div>
 						</DialogFooter>

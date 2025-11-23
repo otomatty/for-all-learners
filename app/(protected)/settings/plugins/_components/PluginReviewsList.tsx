@@ -11,7 +11,7 @@
  *   └─ app/(protected)/settings/plugins/_components/PluginDetails.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugin-ratings-reviews.ts
+ *   ├─ hooks/plugins/usePluginReviews.ts
  *   ├─ components/ui/button.tsx
  *   ├─ components/ui/card.tsx
  *   └─ sonner (toast)
@@ -21,15 +21,15 @@
  */
 
 import { ThumbsUp } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-	getPluginReviews,
-	type PluginReviewWithUser,
-	toggleReviewHelpful,
-} from "@/app/_actions/plugin-ratings-reviews";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+	type PluginReviewWithUser,
+	usePluginReviews,
+	useToggleHelpful,
+} from "@/hooks/plugins/usePluginReviews";
 
 interface PluginReviewsListProps {
 	/**
@@ -55,76 +55,48 @@ export function PluginReviewsList({
 	initialReviews,
 	initialTotal,
 }: PluginReviewsListProps) {
-	const [reviews, setReviews] = useState<PluginReviewWithUser[]>(
-		initialReviews || [],
-	);
-	const [total, setTotal] = useState(initialTotal || 0);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [sortBy, setSortBy] = useState<"created_at" | "helpful_count">(
 		"created_at",
 	);
-	const [isPending, startTransition] = useTransition();
-	const [isLoading, setIsLoading] = useState(!initialReviews);
 
-	// Load reviews
+	const offset = (currentPage - 1) * REVIEWS_PER_PAGE;
+	const {
+		data: reviewsData,
+		isLoading,
+		error: reviewsError,
+	} = usePluginReviews(pluginId, {
+		limit: REVIEWS_PER_PAGE,
+		offset,
+		sortBy,
+	});
+
+	const toggleHelpfulMutation = useToggleHelpful();
+
+	const reviews = reviewsData?.reviews || initialReviews || [];
+	const total = reviewsData?.total || initialTotal || 0;
+
 	useEffect(() => {
-		async function loadReviews() {
-			setIsLoading(true);
-			try {
-				const offset = (currentPage - 1) * REVIEWS_PER_PAGE;
-				const result = await getPluginReviews(
-					pluginId,
-					REVIEWS_PER_PAGE,
-					offset,
-					sortBy,
-				);
-				setReviews(result.reviews);
-				setTotal(result.total);
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "レビューの読み込みに失敗しました",
-				);
-			} finally {
-				setIsLoading(false);
-			}
+		if (reviewsError) {
+			toast.error(
+				reviewsError instanceof Error
+					? reviewsError.message
+					: "レビューの読み込みに失敗しました",
+			);
 		}
+	}, [reviewsError]);
 
-		if (!initialReviews || currentPage > 1) {
-			loadReviews();
+	const handleToggleHelpful = async (reviewId: string) => {
+		try {
+			const isHelpful = await toggleHelpfulMutation.mutateAsync(reviewId);
+			toast.success(
+				isHelpful ? "役立ったに追加しました" : "役立ったを解除しました",
+			);
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "投票に失敗しました",
+			);
 		}
-	}, [pluginId, currentPage, sortBy, initialReviews]);
-
-	const handleToggleHelpful = (reviewId: string) => {
-		startTransition(async () => {
-			try {
-				const result = await toggleReviewHelpful(reviewId);
-				if (result.success) {
-					// Update local state
-					setReviews((prev) =>
-						prev.map((review) => {
-							if (review.id === reviewId) {
-								return {
-									...review,
-									isHelpful: result.isHelpful,
-									helpfulCount: result.isHelpful
-										? review.helpfulCount + 1
-										: review.helpfulCount - 1,
-								};
-							}
-							return review;
-						}),
-					);
-				} else {
-					toast.error(result.error || "投票に失敗しました");
-				}
-			} catch (error) {
-				toast.error(
-					error instanceof Error ? error.message : "投票に失敗しました",
-				);
-			}
-		});
 	};
 
 	const totalPages = Math.ceil(total / REVIEWS_PER_PAGE);
@@ -210,7 +182,7 @@ export function PluginReviewsList({
 									variant={review.isHelpful ? "default" : "outline"}
 									className="gap-2"
 									onClick={() => handleToggleHelpful(review.id)}
-									disabled={isPending}
+									disabled={toggleHelpfulMutation.isPending}
 								>
 									<ThumbsUp className="h-4 w-4" />
 									役立った ({review.helpfulCount})

@@ -11,7 +11,7 @@
  *   └─ app/(protected)/settings/plugins/_components/PluginDetails.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugin-ratings-reviews.ts
+ *   ├─ hooks/plugins/usePluginReviews.ts
  *   ├─ components/ui/button.tsx
  *   ├─ components/ui/textarea.tsx
  *   ├─ components/ui/input.tsx
@@ -21,17 +21,17 @@
  *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-	deletePluginReview,
-	getUserReview,
-	submitPluginReview,
-} from "@/app/_actions/plugin-ratings-reviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	useDeleteReview,
+	useGetUserReview,
+	useSubmitReview,
+} from "@/hooks/plugins/usePluginReviews";
 
 interface PluginReviewFormProps {
 	/**
@@ -51,32 +51,27 @@ export function PluginReviewForm({
 }: PluginReviewFormProps) {
 	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
-	const [existingReviewId, setExistingReviewId] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
-	const [isLoading, setIsLoading] = useState(true);
 	const [isEditing, setIsEditing] = useState(false);
 
-	// Load user's existing review
+	const { data: existingReview, isLoading } = useGetUserReview(pluginId);
+	const submitReviewMutation = useSubmitReview();
+	const deleteReviewMutation = useDeleteReview();
+
+	const existingReviewId = existingReview?.id || null;
+
+	// Load user's existing review into form
 	useEffect(() => {
-		async function loadUserReview() {
-			try {
-				const existingReview = await getUserReview(pluginId);
-				if (existingReview) {
-					setTitle(existingReview.title || "");
-					setContent(existingReview.content);
-					setExistingReviewId(existingReview.id);
-					setIsEditing(false);
-				}
-			} catch (_error) {
-			} finally {
-				setIsLoading(false);
-			}
+		if (existingReview) {
+			setTitle(existingReview.title || "");
+			setContent(existingReview.content);
+			setIsEditing(false);
+		} else {
+			setTitle("");
+			setContent("");
 		}
+	}, [existingReview]);
 
-		loadUserReview();
-	}, [pluginId]);
-
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		if (!content.trim()) {
 			toast.error("レビュー内容を入力してください");
 			return;
@@ -92,59 +87,39 @@ export function PluginReviewForm({
 			return;
 		}
 
-		startTransition(async () => {
-			try {
-				const result = await submitPluginReview(
-					pluginId,
-					content.trim(),
-					title.trim() || null,
-				);
-				if (result.success) {
-					if (result.reviewId) {
-						setExistingReviewId(result.reviewId);
-					}
-					setIsEditing(false);
-					toast.success("レビューを投稿しました");
-					onReviewSubmitted?.();
-				} else {
-					toast.error(result.error || "レビューの投稿に失敗しました");
-				}
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "レビューの投稿に失敗しました",
-				);
-			}
-		});
+		try {
+			await submitReviewMutation.mutateAsync({
+				pluginId,
+				content: content.trim(),
+				title: title.trim() || null,
+			});
+			setIsEditing(false);
+			toast.success("レビューを投稿しました");
+			onReviewSubmitted?.();
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "レビューの投稿に失敗しました",
+			);
+		}
 	};
 
-	const handleDelete = () => {
+	const handleDelete = async () => {
 		if (!existingReviewId) {
 			return;
 		}
 
-		startTransition(async () => {
-			try {
-				const result = await deletePluginReview(existingReviewId);
-				if (result.success) {
-					setTitle("");
-					setContent("");
-					setExistingReviewId(null);
-					setIsEditing(false);
-					toast.success("レビューを削除しました");
-					onReviewSubmitted?.();
-				} else {
-					toast.error(result.error || "レビューの削除に失敗しました");
-				}
-			} catch (error) {
-				toast.error(
-					error instanceof Error
-						? error.message
-						: "レビューの削除に失敗しました",
-				);
-			}
-		});
+		try {
+			await deleteReviewMutation.mutateAsync(existingReviewId);
+			setTitle("");
+			setContent("");
+			setIsEditing(false);
+			toast.success("レビューを削除しました");
+			onReviewSubmitted?.();
+		} catch (error) {
+			toast.error(
+				error instanceof Error ? error.message : "レビューの削除に失敗しました",
+			);
+		}
 	};
 
 	if (isLoading) {
@@ -181,7 +156,7 @@ export function PluginReviewForm({
 						size="sm"
 						variant="destructive"
 						onClick={handleDelete}
-						disabled={isPending}
+						disabled={deleteReviewMutation.isPending}
 					>
 						削除
 					</Button>
@@ -200,7 +175,7 @@ export function PluginReviewForm({
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
 					maxLength={200}
-					disabled={isPending}
+					disabled={submitReviewMutation.isPending}
 				/>
 				<p className="text-xs text-muted-foreground">{title.length}/200文字</p>
 			</div>
@@ -214,7 +189,7 @@ export function PluginReviewForm({
 					onChange={(e) => setContent(e.target.value)}
 					maxLength={5000}
 					rows={6}
-					disabled={isPending}
+					disabled={submitReviewMutation.isPending}
 				/>
 				<p className="text-xs text-muted-foreground">
 					{content.length}/5000文字
@@ -226,7 +201,7 @@ export function PluginReviewForm({
 					type="button"
 					size="sm"
 					onClick={handleSubmit}
-					disabled={isPending || !content.trim()}
+					disabled={submitReviewMutation.isPending || !content.trim()}
 				>
 					{existingReviewId ? "レビューを更新" : "レビューを投稿"}
 				</Button>
@@ -238,15 +213,13 @@ export function PluginReviewForm({
 						variant="outline"
 						onClick={() => {
 							setIsEditing(false);
-							// Reload original review
-							getUserReview(pluginId).then((review) => {
-								if (review) {
-									setTitle(review.title || "");
-									setContent(review.content);
-								}
-							});
+							// Reset form to original review
+							if (existingReview) {
+								setTitle(existingReview.title || "");
+								setContent(existingReview.content);
+							}
 						}}
-						disabled={isPending}
+						disabled={submitReviewMutation.isPending}
 					>
 						キャンセル
 					</Button>

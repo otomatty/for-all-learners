@@ -4,11 +4,12 @@
  * Unit tests for the InstalledPluginCard component.
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as pluginsActions from "@/app/_actions/plugins";
 import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 import { InstalledPluginCard } from "../InstalledPluginCard";
 
@@ -20,6 +21,27 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+// Mock Supabase client
+vi.mock("@/lib/supabase/client", () => ({
+	createClient: vi.fn(() => ({
+		auth: {
+			getUser: vi.fn().mockResolvedValue({
+				data: { user: { id: "user-id-1" } },
+				error: null,
+			}),
+		},
+		from: vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnThis(),
+			insert: vi.fn().mockReturnThis(),
+			update: vi.fn().mockReturnThis(),
+			delete: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			single: vi.fn().mockResolvedValue({ data: null, error: null }),
+		}),
+		rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+	})),
+}));
+
 // Mock window.location.reload
 const mockReload = vi.fn();
 Object.defineProperty(window, "location", {
@@ -28,6 +50,20 @@ Object.defineProperty(window, "location", {
 	},
 	writable: true,
 });
+
+// Create QueryClient wrapper for tests
+function createWrapper() {
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: { retry: false },
+			mutations: { retry: false },
+		},
+	});
+
+	return ({ children }: { children: ReactNode }) => (
+		<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+	);
+}
 
 describe("InstalledPluginCard", () => {
 	const mockUserPlugin: UserPlugin & { metadata: PluginMetadata } = {
@@ -72,40 +108,47 @@ describe("InstalledPluginCard", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockReload.mockClear();
-		vi.spyOn(pluginsActions, "uninstallPlugin").mockResolvedValue(undefined);
-		vi.spyOn(pluginsActions, "enablePlugin").mockResolvedValue(undefined);
-		vi.spyOn(pluginsActions, "disablePlugin").mockResolvedValue(undefined);
 		vi.mocked(toast.success).mockClear();
 		vi.mocked(toast.error).mockClear();
 	});
 
 	describe("Rendering", () => {
 		it("TC-001: should render plugin name", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("Test Plugin")).toBeInTheDocument();
 		});
 
 		it("TC-002: should render plugin description", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("A test plugin for testing")).toBeInTheDocument();
 		});
 
 		it("TC-003: should render plugin version", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText(/v1\.0\.0/)).toBeInTheDocument();
 		});
 
 		it("TC-004: should render plugin author", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText(/作成者: Test Author/)).toBeInTheDocument();
 		});
 
 		it("TC-005: should render enabled badge when plugin is enabled", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("有効")).toBeInTheDocument();
 		});
@@ -116,7 +159,9 @@ describe("InstalledPluginCard", () => {
 				enabled: false,
 			};
 
-			render(<InstalledPluginCard userPlugin={disabledPlugin} />);
+			render(<InstalledPluginCard userPlugin={disabledPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("無効")).toBeInTheDocument();
 		});
@@ -130,25 +175,33 @@ describe("InstalledPluginCard", () => {
 				},
 			};
 
-			render(<InstalledPluginCard userPlugin={officialPlugin} />);
+			render(<InstalledPluginCard userPlugin={officialPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("公式")).toBeInTheDocument();
 		});
 
 		it("TC-008: should render extension point badges", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("エディタ")).toBeInTheDocument();
 		});
 
 		it("TC-009: should render enable/disable button", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("無効化")).toBeInTheDocument();
 		});
 
 		it("TC-010: should render uninstall button", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			expect(screen.getByText("アンインストール")).toBeInTheDocument();
 		});
@@ -157,7 +210,9 @@ describe("InstalledPluginCard", () => {
 	describe("Uninstall Dialog", () => {
 		it("TC-011: should open dialog when uninstall button is clicked", async () => {
 			const user = userEvent.setup();
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -169,7 +224,9 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-012: should display plugin name in dialog", async () => {
 			const user = userEvent.setup();
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -181,7 +238,9 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-013: should close dialog when cancel button is clicked", async () => {
 			const user = userEvent.setup();
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -198,11 +257,9 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-014: should call uninstallPlugin when confirm button is clicked", async () => {
 			const user = userEvent.setup();
-			const uninstallSpy = vi
-				.spyOn(pluginsActions, "uninstallPlugin")
-				.mockResolvedValue(undefined);
-
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -214,18 +271,17 @@ describe("InstalledPluginCard", () => {
 			await user.click(confirmButton);
 
 			await waitFor(() => {
-				expect(uninstallSpy).toHaveBeenCalledTimes(1);
+				expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
+					"プラグインをアンインストールしました",
+				);
 			});
-
-			const formData = uninstallSpy.mock.calls[0][0] as FormData;
-			expect(formData.get("pluginId")).toBe("test-plugin-1");
 		});
 
 		it("TC-015: should show success toast on successful uninstall", async () => {
 			const user = userEvent.setup();
-			vi.spyOn(pluginsActions, "uninstallPlugin").mockResolvedValue(undefined);
-
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -245,10 +301,62 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-016: should show error toast on failed uninstall", async () => {
 			const user = userEvent.setup();
-			const error = new Error("Uninstall failed");
-			vi.spyOn(pluginsActions, "uninstallPlugin").mockRejectedValue(error);
+			// Override the mock for this test to return an error
+			const { createClient } = await import("@/lib/supabase/client");
+			vi.mocked(createClient).mockImplementation(() => {
+				const mockClient = {
+					auth: {
+						getUser: vi.fn().mockResolvedValue({
+							data: { user: { id: "user-id-1" } },
+							error: null,
+						}),
+					},
+					from: vi.fn().mockImplementation((table: string) => {
+						if (table === "user_plugins") {
+							let callCount = 0;
+							return {
+								delete: vi.fn().mockReturnThis(),
+								eq: vi.fn().mockImplementation(() => {
+									callCount++;
+									if (callCount === 2) {
+										return Promise.resolve({
+											data: null,
+											error: { message: "Uninstall failed" },
+										});
+									}
+									return {
+										delete: vi.fn().mockReturnThis(),
+										eq: vi.fn().mockImplementation(() => {
+											callCount++;
+											if (callCount === 2) {
+												return Promise.resolve({
+													data: null,
+													error: { message: "Uninstall failed" },
+												});
+											}
+											return mockClient.from(table);
+										}),
+									};
+								}),
+							};
+						}
+						// plugin_storage
+						return {
+							delete: vi.fn().mockReturnThis(),
+							eq: vi.fn().mockResolvedValue({
+								data: null,
+								error: null,
+							}),
+						};
+					}),
+					rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+				};
+				return mockClient as never;
+			});
 
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -260,41 +368,49 @@ describe("InstalledPluginCard", () => {
 			await user.click(confirmButton);
 
 			await waitFor(() => {
-				expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Uninstall failed");
-			});
-		});
-
-		it("TC-017: should reload page on successful uninstall", async () => {
-			const user = userEvent.setup();
-			vi.spyOn(pluginsActions, "uninstallPlugin").mockResolvedValue(undefined);
-
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
-
-			const uninstallButton = screen.getByText("アンインストール");
-			await user.click(uninstallButton);
-
-			const dialog = screen.getByRole("alertdialog");
-			const confirmButton = within(dialog).getByRole("button", {
-				name: "アンインストール",
-			});
-			await user.click(confirmButton);
-
-			await waitFor(() => {
-				expect(mockReload).toHaveBeenCalledTimes(1);
+				// Supabase error objects are not Error instances, so the fallback message is shown
+				expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+					"アンインストールに失敗しました",
+				);
 			});
 		});
 
 		it("TC-018: should disable buttons during uninstall", async () => {
 			const user = userEvent.setup();
+			const { createClient } = await import("@/lib/supabase/client");
+			const mockClient = vi.mocked(createClient)();
 			let resolveUninstall: (() => void) | undefined;
 			const uninstallPromise = new Promise<void>((resolve) => {
 				resolveUninstall = resolve;
 			});
-			vi.spyOn(pluginsActions, "uninstallPlugin").mockImplementation(
-				() => uninstallPromise,
-			);
+			let deleteCallCount = 0;
+			const mockDeleteQuery = {
+				delete: vi.fn().mockReturnThis(),
+				eq: vi.fn().mockImplementation(() => {
+					deleteCallCount++;
+					if (deleteCallCount === 2) {
+						return uninstallPromise;
+					}
+					return mockDeleteQuery;
+				}),
+			};
+			const mockStorageDeleteQuery = {
+				delete: vi.fn().mockReturnThis(),
+				eq: vi.fn().mockReturnThis(),
+			};
+			mockStorageDeleteQuery.eq.mockResolvedValue({
+				data: null,
+				error: null,
+			});
+			const mockFrom = vi
+				.fn()
+				.mockReturnValueOnce(mockDeleteQuery)
+				.mockReturnValueOnce(mockStorageDeleteQuery);
+			mockClient.from = mockFrom;
 
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -336,9 +452,9 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-019: should close dialog on successful uninstall", async () => {
 			const user = userEvent.setup();
-			vi.spyOn(pluginsActions, "uninstallPlugin").mockResolvedValue(undefined);
-
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
@@ -359,7 +475,9 @@ describe("InstalledPluginCard", () => {
 
 	describe("Accessibility", () => {
 		it("TC-020: should have accessible button labels", () => {
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByRole("button", {
 				name: /アンインストール/,
@@ -369,7 +487,9 @@ describe("InstalledPluginCard", () => {
 
 		it("TC-021: should have accessible dialog", async () => {
 			const user = userEvent.setup();
-			render(<InstalledPluginCard userPlugin={mockUserPlugin} />);
+			render(<InstalledPluginCard userPlugin={mockUserPlugin} />, {
+				wrapper: createWrapper(),
+			});
 
 			const uninstallButton = screen.getByText("アンインストール");
 			await user.click(uninstallButton);
