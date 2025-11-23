@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun run scripts/build-sandbox-worker.ts && next dev --turbopack",
+		"dev:webpack": "bun run scripts/build-sandbox-worker.ts && next dev --webpack",
 		"build": "bun run scripts/build-sandbox-worker.ts && next build --webpack",
 		"start": "next start",
 		"lint": "biome check --write ./app ./components ./lib ./hooks ./types ./stores ./scripts ./templates ./middleware.ts",
@@ -13,6 +14,7 @@
 		"test:ui": "vitest --ui",
 		"test:coverage": "vitest --coverage",
 		"test:watch": "vitest --watch",
+		"build:static": "ENABLE_STATIC_EXPORT=true bun build",
 		"tauri:dev": "bunx tauri dev",
 		"tauri:build": "bunx tauri build",
 		"plugins:create": "bun run scripts/plugins/cli.ts create",

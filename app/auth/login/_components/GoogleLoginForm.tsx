@@ -51,6 +51,7 @@ export function GoogleLoginForm({
 					}
 				}}
 				className="grid gap-6"
+				suppressHydrationWarning
 			>
 				<Button type="submit" variant="outline" disabled={isSubmitting}>
 					<Image

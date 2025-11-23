@@ -43,6 +43,13 @@ async function getUserDecks(
 	return decks || [];
 }
 
+// Generate static params for dynamic routes
+// Returns empty array to enable dynamic rendering for all routes
+// Phase 6: Next.js静的化とTauri統合 (Issue #157)
+export async function generateStaticParams() {
+	return [];
+}
+
 export default async function GenerateCardsPage({
 	params: paramsPromise,
 }: {

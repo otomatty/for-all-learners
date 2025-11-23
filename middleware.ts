@@ -94,7 +94,9 @@ export async function middleware(req: NextRequest) {
 	// Uses nonce-based approach for inline scripts/styles
 	// Generates a new nonce per request for security
 	const nonce = generateNonce();
-	const cspHeader = buildCSPHeader(nonce);
+	// Pass request host header to detect Tauri dev mode
+	const requestHost = req.headers.get("host");
+	const cspHeader = buildCSPHeader(nonce, requestHost);
 
 	res.headers.set("Content-Security-Policy", cspHeader);
 

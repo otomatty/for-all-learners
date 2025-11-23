@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { isTauri } from "@/lib/utils/environment";
 import { GoogleLoginForm } from "./GoogleLoginForm";
 import { MagicLinkForm } from "./MagicLinkForm";
@@ -18,8 +18,14 @@ export function LoginForm({
 	errorDescription,
 }: LoginFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	// Tauri環境判定をメモ化（パフォーマンス最適化）
-	const tauriEnv = useMemo(() => isTauri(), []);
+	// Tauri環境判定をクライアント側でのみ実行（ハイドレーション不一致を防ぐ）
+	// サーバー側では false を返し、クライアント側で実際の値を設定
+	const [tauriEnv, setTauriEnv] = useState(false);
+
+	useEffect(() => {
+		// クライアント側でのみ実行
+		setTauriEnv(isTauri());
+	}, []);
 
 	return (
 		<div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">

@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { Toaster } from "sonner";
 import { TauriAuthHandler } from "@/components/auth/TauriAuthHandler";
+import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LLMProviderProvider } from "@/lib/contexts/LLMProviderContext";
 
@@ -25,6 +26,7 @@ export function Providers({ children, theme, mode }: ProvidersProps) {
 				disableTransitionOnChange
 			>
 				<LLMProviderProvider>
+					<ServiceWorkerProvider />
 					<TauriAuthHandler />
 					{children}
 					<Toaster />

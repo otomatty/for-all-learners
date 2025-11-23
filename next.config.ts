@@ -3,25 +3,30 @@ import withPWA from "next-pwa";
 import webpack from "webpack";
 
 // Detect if running in Tauri environment
-const internalHost = process.env.TAURI_DEV_HOST || "localhost";
+const _internalHost = process.env.TAURI_DEV_HOST || "localhost";
+const isTauriEnv = Boolean(process.env.TAURI_ENV);
+const enableStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
 
 // PWA plugin options
+// Tauri環境ではService Workerを登録しない（ServiceWorkerProviderで制御）
 const pwaOptions = {
 	dest: "public",
-	register: true,
+	register: false, // ServiceWorkerProviderで制御するため無効化
 	skipWaiting: true,
-	disable: process.env.NODE_ENV === "development",
+	disable: process.env.NODE_ENV === "development" || isTauriEnv,
 };
 
 /** @type {NextConfig} */
 const nextConfig: NextConfig = {
-	// NOTE: Static export (output: "export") is NOT used for now
-	// Current app structure uses Server Actions, middleware, and server-side auth
-	// Will gradually migrate to client-side in Phase 1-6 of Tauri migration
-	// For now, Tauri runs Next.js dev server internally
+	// Static export configuration
+	// ENABLE_STATIC_EXPORT環境変数が設定されている場合のみ有効化
+	// Phase 6: Next.js静的化とTauri統合 (Issue #157)
+	...(enableStaticExport && {
+		output: "export" as const,
+	}),
 	images: {
-		// Keep image optimization enabled for better performance
-		unoptimized: false,
+		// Tauri環境では画像最適化を無効化（静的エクスポート時は必須）
+		unoptimized: isTauriEnv || enableStaticExport,
 		domains: [
 			"scrapbox.io",
 			"gyazo.com",
@@ -31,10 +36,11 @@ const nextConfig: NextConfig = {
 			"storage.googleapis.com",
 		],
 	},
-	// Set assetPrefix for proper asset resolution in Tauri dev environment
-	assetPrefix: process.env.TAURI_ENV
-		? `http://${internalHost}:3000`
-		: undefined,
+	// Set assetPrefix for proper asset resolution in Tauri production build
+	// Note: In development mode, Tauri uses devUrl directly, so assetPrefix is not needed
+	// assetPrefix should only be set for static exports (production builds)
+	// In dev mode, Next.js dev server handles assets correctly without assetPrefix
+	assetPrefix: undefined, // Tauri dev mode uses devUrl, production uses static export
 	experimental: {
 		serverActions: {
 			bodySizeLimit: "25mb", // PDF処理用に25MBまで拡張
