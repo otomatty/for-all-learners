@@ -19,31 +19,6 @@ export type {
 	UseDualPdfBatchOcrOptions,
 } from "./useDualPdfBatchOcr";
 export { useDualPdfBatchOcr } from "./useDualPdfBatchOcr";
-
-// PDF OCR
-export type {
-	PdfBatchOcrResult,
-	PdfOcrImagePage,
-	UsePdfBatchOcrOptions,
-} from "./usePdfBatchOcr";
-export { usePdfBatchOcr } from "./usePdfBatchOcr";
-
-// Image OCR
-export type {
-	BatchOcrPage,
-	BatchOcrResult,
-	UseTranscribeImagesBatchOptions,
-} from "./useTranscribeImagesBatch";
-export { useTranscribeImagesBatch } from "./useTranscribeImagesBatch";
-
-// Unified Batch Processing
-export type {
-	UnifiedBatchInput,
-	UnifiedBatchResult,
-	UseUnifiedBatchOptions,
-} from "./useUnifiedBatch";
-export { useUnifiedBatch } from "./useUnifiedBatch";
-
 // Multi-File Batch Processing
 export type {
 	MultiFileInput,
@@ -51,3 +26,24 @@ export type {
 	UseMultiFileBatchOptions,
 } from "./useMultiFileBatch";
 export { useMultiFileBatch } from "./useMultiFileBatch";
+// PDF OCR
+export type {
+	PdfBatchOcrResult,
+	PdfOcrImagePage,
+	UsePdfBatchOcrOptions,
+} from "./usePdfBatchOcr";
+export { usePdfBatchOcr } from "./usePdfBatchOcr";
+// Image OCR
+export type {
+	BatchOcrPage,
+	BatchOcrResult,
+	UseTranscribeImagesBatchOptions,
+} from "./useTranscribeImagesBatch";
+export { useTranscribeImagesBatch } from "./useTranscribeImagesBatch";
+// Unified Batch Processing
+export type {
+	UnifiedBatchInput,
+	UnifiedBatchResult,
+	UseUnifiedBatchOptions,
+} from "./useUnifiedBatch";
+export { useUnifiedBatch } from "./useUnifiedBatch";

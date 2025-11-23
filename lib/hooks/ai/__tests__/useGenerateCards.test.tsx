@@ -116,4 +116,3 @@ describe("useGenerateCards", () => {
 		).rejects.toThrow("Network error");
 	});
 });
-

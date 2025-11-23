@@ -106,4 +106,3 @@ describe("useGenerateTitle", () => {
 		).rejects.toThrow("Network error");
 	});
 });
-

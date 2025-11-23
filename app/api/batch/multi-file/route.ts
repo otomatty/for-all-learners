@@ -19,15 +19,12 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import {
-	base64ToBlob,
-	getMimeTypeForFileType,
-} from "@/lib/utils/blobUtils";
 import {
 	type MultiFileInput,
 	processMultiFilesBatch,
 } from "@/app/_actions/multiFileBatchProcessing";
+import { createClient } from "@/lib/supabase/server";
+import { base64ToBlob, getMimeTypeForFileType } from "@/lib/utils/blobUtils";
 
 /**
  * POST /api/batch/multi-file - Multi-file batch processing
@@ -93,8 +90,8 @@ export async function POST(request: NextRequest) {
 		if (contentType.includes("multipart/form-data")) {
 			// FormData handling
 			const formData = await request.formData();
-			const fileEntries = Array.from(formData.entries()).filter(
-				([key]) => key.startsWith("file"),
+			const fileEntries = Array.from(formData.entries()).filter(([key]) =>
+				key.startsWith("file"),
 			);
 
 			if (fileEntries.length === 0) {
@@ -110,11 +107,13 @@ export async function POST(request: NextRequest) {
 			files = await Promise.all(
 				fileEntries.map(async ([key, value], index) => {
 					if (value instanceof File) {
-						const fileId = formData.get(`${key}_id`)?.toString() || `file-${index}`;
+						const fileId =
+							formData.get(`${key}_id`)?.toString() || `file-${index}`;
 						const fileName = value.name;
-						const fileType = formData
-							.get(`${key}_type`)
-							?.toString() as "pdf" | "image" | "audio";
+						const fileType = formData.get(`${key}_type`)?.toString() as
+							| "pdf"
+							| "image"
+							| "audio";
 						const metadataStr = formData.get(`${key}_metadata`)?.toString();
 
 						let metadata:
@@ -133,13 +132,13 @@ export async function POST(request: NextRequest) {
 							}
 						}
 
-					return {
-						fileId,
-						fileName,
-						fileType: fileType || "pdf",
-						fileBlob: new Blob([value], { type: value.type }),
-						metadata,
-					};
+						return {
+							fileId,
+							fileName,
+							fileType: fileType || "pdf",
+							fileBlob: new Blob([value], { type: value.type }),
+							metadata,
+						};
 					}
 
 					throw new Error(`Invalid file entry: ${key}`);
@@ -297,4 +296,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-

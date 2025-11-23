@@ -46,4 +46,3 @@ export async function handleApiError(
 	}
 	throw new Error(errorMessage);
 }
-

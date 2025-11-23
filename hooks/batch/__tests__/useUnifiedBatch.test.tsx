@@ -264,4 +264,3 @@ describe("useUnifiedBatch", () => {
 		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 });
-

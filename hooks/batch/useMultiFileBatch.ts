@@ -131,4 +131,3 @@ export function useMultiFileBatch(options?: UseMultiFileBatchOptions) {
 		onError: options?.onError,
 	});
 }
-

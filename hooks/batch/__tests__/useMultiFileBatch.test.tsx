@@ -167,7 +167,9 @@ describe("useMultiFileBatch", () => {
 		await waitFor(() => expect(result.current.isError).toBe(true));
 
 		expect(result.current.error).toBeInstanceOf(Error);
-		expect((result.current.error as Error).message).toContain("files or formData");
+		expect((result.current.error as Error).message).toContain(
+			"files or formData",
+		);
 	});
 
 	it("should call onSuccess callback", async () => {
@@ -206,4 +208,3 @@ describe("useMultiFileBatch", () => {
 		expect(onSuccess.mock.calls[0][0]).toEqual(mockResponse);
 	});
 });
-

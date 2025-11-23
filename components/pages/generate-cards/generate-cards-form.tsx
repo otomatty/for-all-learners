@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import { useGenerateCardsFromPage } from "@/lib/hooks/ai";
-import { useSaveCards } from "@/lib/hooks/cards/useSaveCards";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,6 +12,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useGenerateCardsFromPage } from "@/lib/hooks/ai";
+import { useSaveCards } from "@/lib/hooks/cards/useSaveCards";
 import type { Database } from "@/types/database.types";
 import {
 	GeneratedCardsList,
@@ -118,15 +118,15 @@ export function GenerateCardsForm({
 			if (response.error) {
 				toast.error(`カード保存エラー: ${response.error}`);
 			} else {
-				toast.success(`${response.savedCardsCount}枚のカードが保存されました！`);
+				toast.success(
+					`${response.savedCardsCount}枚のカードが保存されました！`,
+				);
 				setRawGeneratedCards(null); // 保存後はリストをクリア
 				router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移
 			}
 		} catch (e: unknown) {
 			if (e instanceof Error) {
-				toast.error(
-					`カード保存中に予期せぬエラーが発生しました: ${e.message}`,
-				);
+				toast.error(`カード保存中に予期せぬエラーが発生しました: ${e.message}`);
 			} else {
 				toast.error("カード保存中に予期せぬエラーが発生しました。");
 			}

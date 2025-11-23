@@ -106,4 +106,3 @@ describe("useGeneratePageInfo", () => {
 		).rejects.toThrow("Network error");
 	});
 });
-

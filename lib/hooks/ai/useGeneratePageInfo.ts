@@ -42,8 +42,7 @@ export function useGeneratePageInfo() {
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					errorData.error ||
-						`ページ情報生成に失敗しました: ${response.status}`,
+					errorData.error || `ページ情報生成に失敗しました: ${response.status}`,
 				);
 			}
 
@@ -51,4 +50,3 @@ export function useGeneratePageInfo() {
 		},
 	});
 }
-

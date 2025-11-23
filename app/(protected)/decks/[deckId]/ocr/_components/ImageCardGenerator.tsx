@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { GeneratedCard } from "@/app/_actions/generateCards";
-import { useGenerateCards } from "@/lib/hooks/ai";
 import { createRawInput } from "@/app/_actions/rawInputs";
 import { transcribeImage } from "@/app/_actions/transcribeImage";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateCards } from "@/hooks/cards";
+import { useGenerateCards } from "@/lib/hooks/ai";
 import { createClient } from "@/lib/supabase/client";
 
 interface ImageCardGeneratorProps {

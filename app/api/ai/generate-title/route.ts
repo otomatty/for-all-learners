@@ -36,10 +36,7 @@ export async function POST(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
@@ -70,10 +67,7 @@ export async function POST(request: NextRequest) {
 		// タイトル生成
 		const title = await generateTitleFromTranscript(body.transcript);
 
-		logger.info(
-			{ userId: user.id, title },
-			"Title generation completed",
-		);
+		logger.info({ userId: user.id, title }, "Title generation completed");
 
 		return NextResponse.json({ title });
 	} catch (error: unknown) {
@@ -88,7 +82,10 @@ export async function POST(request: NextRequest) {
 			// APIキー未設定エラーの場合
 			if (error.message.includes("API key")) {
 				return NextResponse.json(
-					{ error: "APIキーが設定されていません。設定画面でAPIキーを設定してください。" },
+					{
+						error:
+							"APIキーが設定されていません。設定画面でAPIキーを設定してください。",
+					},
 					{ status: 400 },
 				);
 			}
@@ -102,4 +99,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-

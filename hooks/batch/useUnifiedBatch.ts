@@ -177,7 +177,8 @@ export function useUnifiedBatch(options?: UseUnifiedBatchOptions) {
 				body: JSON.stringify({
 					batchType: input.type,
 					files: input.type === "multi-file" ? input.files : undefined,
-					audioFiles: input.type === "audio-batch" ? input.audioFiles : undefined,
+					audioFiles:
+						input.type === "audio-batch" ? input.audioFiles : undefined,
 					pages: input.type === "image-batch" ? input.pages : undefined,
 				}),
 			});
@@ -192,4 +193,3 @@ export function useUnifiedBatch(options?: UseUnifiedBatchOptions) {
 		onError: options?.onError,
 	});
 }
-

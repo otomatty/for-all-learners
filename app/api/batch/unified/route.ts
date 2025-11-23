@@ -22,12 +22,6 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getGeminiQuotaManager } from "@/lib/utils/geminiQuotaManager";
-import {
-	base64ToBlob,
-	getMimeTypeForFileType,
-} from "@/lib/utils/blobUtils";
 import {
 	type AudioBatchInput,
 	processAudioFilesBatch,
@@ -40,6 +34,9 @@ import {
 	type BatchOcrPage,
 	transcribeImagesBatch,
 } from "@/app/_actions/transcribeImageBatch";
+import { createClient } from "@/lib/supabase/server";
+import { base64ToBlob, getMimeTypeForFileType } from "@/lib/utils/blobUtils";
+import { getGeminiQuotaManager } from "@/lib/utils/geminiQuotaManager";
 
 /**
  * POST /api/batch/unified - Unified batch processing for multiple file types
@@ -106,11 +103,15 @@ export async function POST(request: NextRequest) {
 		const { batchType, files, audioFiles, pages } = body;
 
 		// 3. Input validation
-		if (!batchType || !["multi-file", "audio-batch", "image-batch"].includes(batchType)) {
+		if (
+			!batchType ||
+			!["multi-file", "audio-batch", "image-batch"].includes(batchType)
+		) {
 			return NextResponse.json(
 				{
 					error: "Bad request",
-					message: "batchTypeは 'multi-file', 'audio-batch', 'image-batch' のいずれかである必要があります",
+					message:
+						"batchTypeは 'multi-file', 'audio-batch', 'image-batch' のいずれかである必要があります",
 				},
 				{ status: 400 },
 			);
@@ -192,7 +193,11 @@ export async function POST(request: NextRequest) {
 				}
 
 				case "audio-batch": {
-					if (!audioFiles || !Array.isArray(audioFiles) || audioFiles.length === 0) {
+					if (
+						!audioFiles ||
+						!Array.isArray(audioFiles) ||
+						audioFiles.length === 0
+					) {
 						return NextResponse.json(
 							{
 								error: "Bad request",
@@ -225,7 +230,10 @@ export async function POST(request: NextRequest) {
 						},
 					);
 
-					const result = await processAudioFilesBatch(user.id, audioBatchInputs);
+					const result = await processAudioFilesBatch(
+						user.id,
+						audioBatchInputs,
+					);
 
 					return NextResponse.json({
 						success: result.success,
@@ -265,10 +273,12 @@ export async function POST(request: NextRequest) {
 						}
 					}
 
-					const batchPages: BatchOcrPage[] = pages.map((page: BatchOcrPage) => ({
-						pageNumber: page.pageNumber,
-						imageUrl: page.imageUrl,
-					}));
+					const batchPages: BatchOcrPage[] = pages.map(
+						(page: BatchOcrPage) => ({
+							pageNumber: page.pageNumber,
+							imageUrl: page.imageUrl,
+						}),
+					);
 
 					const result = await transcribeImagesBatch(batchPages);
 					const apiRequestsUsed = Math.ceil(batchPages.length / 4);
@@ -311,4 +321,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-
