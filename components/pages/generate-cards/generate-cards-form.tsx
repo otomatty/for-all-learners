@@ -1,13 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
-import {
-	generateRawCardsFromPageContent,
-	saveGeneratedCards,
-	wrapTextInTiptapJson, // サーバーアクションからインポート
-} from "@/app/_actions/generateCardsFromPage";
+import { useGenerateCardsFromPage } from "@/lib/hooks/ai";
+import { useSaveCards } from "@/lib/hooks/cards/useSaveCards";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,14 +35,16 @@ export function GenerateCardsForm({
 	userId,
 }: GenerateCardsFormProps) {
 	const router = useRouter();
+	const generateCardsMutation = useGenerateCardsFromPage();
+	const saveCardsMutation = useSaveCards();
 	const [selectedDeckId, setSelectedDeckId] = useState<string>(
 		decks[0]?.id || "",
 	);
 	const [rawGeneratedCards, setRawGeneratedCards] = useState<
 		RawGeneratedCard[] | null
 	>(null);
-	const [isGenerating, startGenerating] = useTransition();
-	const [isSaving, startSaving] = useTransition();
+	const isGenerating = generateCardsMutation.isPending;
+	const isSaving = saveCardsMutation.isPending;
 
 	const deckSelectId = useId();
 
@@ -68,33 +67,34 @@ export function GenerateCardsForm({
 
 		setRawGeneratedCards(null); // 以前の生成結果をクリア
 
-		startGenerating(async () => {
-			try {
-				const result = await generateRawCardsFromPageContent(
-					page.content_tiptap, // content_tiptap (JSONB) を渡す
-				);
+		try {
+			const response = await generateCardsMutation.mutateAsync({
+				pageContentTiptap: page.content_tiptap,
+				pageId: page.id,
+				deckId: selectedDeckId,
+				saveToDatabase: false,
+			});
 
-				if (result.error) {
-					toast.error(`カード生成エラー: ${result.error}`);
-					setRawGeneratedCards(null);
-				} else if (result.generatedRawCards.length === 0) {
-					toast.info(
-						"テキストからカードを抽出できませんでした。文章量を増やすか、内容を調整してみてください。",
-					);
-					setRawGeneratedCards(null);
-				} else {
-					toast.success("カードが生成されました。内容を確認してください。");
-					setRawGeneratedCards(result.generatedRawCards);
-				}
-			} catch (e: unknown) {
-				if (e instanceof Error) {
-					toast.error(`予期せぬエラーが発生しました: ${e.message}`);
-				} else {
-					toast.error("予期せぬエラーが発生しました。");
-				}
+			if (response.error) {
+				toast.error(`カード生成エラー: ${response.error}`);
 				setRawGeneratedCards(null);
+			} else if (response.cards.length === 0) {
+				toast.info(
+					"テキストからカードを抽出できませんでした。文章量を増やすか、内容を調整してみてください。",
+				);
+				setRawGeneratedCards(null);
+			} else {
+				toast.success("カードが生成されました。内容を確認してください。");
+				setRawGeneratedCards(response.cards);
 			}
-		});
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				toast.error(`予期せぬエラーが発生しました: ${e.message}`);
+			} else {
+				toast.error("予期せぬエラーが発生しました。");
+			}
+			setRawGeneratedCards(null);
+		}
 	};
 
 	const handleSaveCards = async () => {
@@ -107,40 +107,30 @@ export function GenerateCardsForm({
 			return;
 		}
 
-		const cardsToSavePromises = rawGeneratedCards.map(async (rawCard) => ({
-			deck_id: selectedDeckId,
-			user_id: userId,
-			page_id: page.id,
-			front_content: await wrapTextInTiptapJson(rawCard.front_content),
-			back_content: await wrapTextInTiptapJson(rawCard.back_content),
-		}));
+		try {
+			// 編集済みカードを保存
+			const response = await saveCardsMutation.mutateAsync({
+				cards: rawGeneratedCards,
+				pageId: page.id,
+				deckId: selectedDeckId,
+			});
 
-		const cardsToSave = await Promise.all(cardsToSavePromises);
-
-		startSaving(async () => {
-			try {
-				const result = await saveGeneratedCards(cardsToSave, userId);
-				if (result.error) {
-					toast.error(`カード保存エラー: ${result.error}`);
-				} else {
-					toast.success(
-						`${result.savedCardsCount}枚のカードが保存されました！`,
-					);
-					setRawGeneratedCards(null); // 保存後はリストをクリア
-					// router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移など
-					router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移
-					// router.refresh(); // デッキページへ遷移するため、現在のページのリフレッシュは不要になる可能性が高い
-				}
-			} catch (e: unknown) {
-				if (e instanceof Error) {
-					toast.error(
-						`カード保存中に予期せぬエラーが発生しました: ${e.message}`,
-					);
-				} else {
-					toast.error("カード保存中に予期せぬエラーが発生しました。");
-				}
+			if (response.error) {
+				toast.error(`カード保存エラー: ${response.error}`);
+			} else {
+				toast.success(`${response.savedCardsCount}枚のカードが保存されました！`);
+				setRawGeneratedCards(null); // 保存後はリストをクリア
+				router.push(`/decks/${selectedDeckId}`); // デッキページへ遷移
 			}
-		});
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				toast.error(
+					`カード保存中に予期せぬエラーが発生しました: ${e.message}`,
+				);
+			} else {
+				toast.error("カード保存中に予期せぬエラーが発生しました。");
+			}
+		}
 	};
 
 	const handleCancelAndRegenerate = () => {

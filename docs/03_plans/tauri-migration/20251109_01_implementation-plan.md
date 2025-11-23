@@ -943,6 +943,8 @@ export function useUploadImage() {
 - [x] 音声ファイル一覧取得の移行（完了、useAudioRecordings.ts作成、テスト実装済み）
 - [x] 音声ファイルアップロードの移行（完了、useUploadAudio.ts作成、テスト実装済み）
 - [x] 既存コードの置き換え（完了、主要箇所を置き換え）
+- [ ] 進捗表示の実装（未実装、優先度: 中、Issue #168）
+- [ ] `useGetSignedUrl()`フックの作成（未実装、優先度: 低、Issue #168）
 
 ### Phase 4: バッチ処理・AI処理
 - [ ] バッチ処理の移行完了
@@ -991,7 +993,7 @@ export function useUploadImage() {
 ---
 
 **作成日**: 2025-11-09  
-**最終更新**: 2025-11-17（Phase 3実装開始を反映）  
+**最終更新**: 2025-11-22（GitHub Issues確認とクローズ作業を反映）  
 **担当**: 開発チーム
 
 ## 更新履歴
@@ -1005,4 +1007,5 @@ export function useUploadImage() {
 - 2025-11-17: Phase 2のテスト実装を完了。5つのテストファイル（`lib/auth/__tests__/tauri-login.test.ts`, `lib/auth/__tests__/tauri-magic-link.test.ts`, `lib/auth/__tests__/tauri-auth-handler.test.ts`, `lib/hooks/__tests__/use-auth.test.ts`, `lib/supabase/__tests__/tauri-client.test.ts`）を作成し、合計21テストすべてが成功。テストヘルパー（`lib/auth/__tests__/helpers.ts`）も作成。
 - 2025-11-17: Phase 3（ファイルアップロード・ストレージの移行）の実装を開始。Tauriファイルダイアログの統合を完了（`lib/utils/tauri-file-dialog.ts`作成、Tauri環境とWeb環境の両方に対応）。ストレージフックの作成を開始し、3つのフック（`useUploadImage.ts`, `useUploadPdf.ts`, `useAudioRecordings.ts`）を作成。各フックにテストファイルを作成（`lib/hooks/storage/__tests__/`）。ファイルサイズ制限のクライアント側チェックを各フック内で実装済み。`lib/hooks/storage/index.ts`でエクスポートを整理。
 - 2025-11-17: Phase 3の続き。`useUploadAudio.ts`フックを作成し、音声ファイルアップロード機能を実装。テストファイル（`useUploadAudio.test.tsx`）を作成し、8テストすべてが成功。既存コードの置き換えを実施：`components/tiptap-editor.tsx`でServer Action `uploadImageToCardImages`を`useUploadImage`フックに置き換え、`app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx`で直接Supabase Storage呼び出しを`useUploadAudio`フックに置き換え。
+- 2025-11-22: GitHub Issues確認とクローズ作業を実施。Issue #118（Plugin system errors with Supabase unconfigured）をクローズ。実装確認により、Supabase未設定時のエラーハンドリングと`handleAPIResponse`の`payload`検証強化が完了していることを確認。Phase 3の残タスク（進捗表示、`useGetSignedUrl()`フック）をIssue #168に記載。作業ログ: `docs/05_logs/2025_11/20251122/01_github-issues-review-and-closure.md`
 

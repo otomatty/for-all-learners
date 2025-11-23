@@ -7,8 +7,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { createActionLog } from "@/app/_actions/actionLogs";
 import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
-import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import { useGenerateCards, useGenerateTitle } from "@/lib/hooks/ai";
 import { transcribeAudio } from "@/app/_actions/transcribe";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +35,8 @@ export function AudioCardGenerator({
 	const router = useRouter();
 	const createCardsMutation = useCreateCards();
 	const uploadAudioMutation = useUploadAudio();
+	const generateCardsMutation = useGenerateCards();
+	const generateTitleMutation = useGenerateTitle();
 	const [isRecording, setIsRecording] = useState(false);
 	const recordingStartRef = useRef<number>(0);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -126,7 +127,10 @@ export function AudioCardGenerator({
 			// 1. サーバーアクションで文字起こしを実行 (URLを渡す)
 			const transcript = await transcribeAudio(audioFileUrl);
 			// タイトルを自動生成
-			const title = await generateTitleFromTranscript(transcript);
+			const titleResponse = await generateTitleMutation.mutateAsync({
+				transcript,
+			});
+			const title = titleResponse.title;
 			// 1.1. 音声文字起こしレコードをDBに保存
 			await createAudioTranscription({
 				user_id: userId,
@@ -144,8 +148,12 @@ export function AudioCardGenerator({
 				description: `${transcript.substring(0, 50)}...`,
 			});
 
-			// 2. サーバーアクションでカードを生成
-			const cards = await generateCardsFromTranscript(transcript, audioFileUrl);
+			// 2. API Routeでカードを生成
+			const cardsResponse = await generateCardsMutation.mutateAsync({
+				transcript,
+				sourceAudioUrl: audioFileUrl,
+			});
+			const cards = cardsResponse.cards;
 			setGeneratedCards(cards);
 			// 初期状態ですべてのカードを選択
 			const initialSelection: Record<number, boolean> = {};
