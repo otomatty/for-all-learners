@@ -18,11 +18,7 @@ import {
 	useGetUserRating,
 	useSubmitRating,
 } from "../usePluginRatings";
-import {
-	createMockSupabaseClient,
-	createWrapper,
-	mockUser,
-} from "./helpers";
+import { createMockSupabaseClient, createWrapper, mockUser } from "./helpers";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
@@ -130,25 +126,16 @@ describe("usePluginRatings", () => {
 				updated_at: "2025-01-01T00:00:00Z",
 			};
 
-			const mockSelect = vi.fn().mockReturnThis();
-			const mockEq = vi.fn().mockReturnThis();
-			const mockSingle = vi.fn().mockResolvedValue({
-				data: mockRating,
-				error: null,
-			});
+			const mockQuery = {
+				select: vi.fn().mockReturnThis(),
+				eq: vi.fn().mockReturnThis(),
+				single: vi.fn().mockResolvedValue({
+					data: mockRating,
+					error: null,
+				}),
+			};
 
-			mockSupabaseClient.from = vi.fn().mockReturnValue({
-				select: mockSelect,
-			});
-			mockSelect.mockReturnValue({
-				eq: mockEq,
-			});
-			mockEq.mockReturnValue({
-				eq: mockEq,
-			});
-			mockEq.mockReturnValue({
-				single: mockSingle,
-			});
+			mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
 
 			const { result } = renderHook(() => useGetUserRating("test-plugin"), {
 				wrapper: createWrapper(),
@@ -175,25 +162,16 @@ describe("usePluginRatings", () => {
 				error: null,
 			});
 
-			const mockSelect = vi.fn().mockReturnThis();
-			const mockEq = vi.fn().mockReturnThis();
-			const mockSingle = vi.fn().mockResolvedValue({
-				data: null,
-				error: { code: "PGRST116" }, // No rows found
-			});
+			const mockQuery = {
+				select: vi.fn().mockReturnThis(),
+				eq: vi.fn().mockReturnThis(),
+				single: vi.fn().mockResolvedValue({
+					data: null,
+					error: { code: "PGRST116" }, // No rows found
+				}),
+			};
 
-			mockSupabaseClient.from = vi.fn().mockReturnValue({
-				select: mockSelect,
-			});
-			mockSelect.mockReturnValue({
-				eq: mockEq,
-			});
-			mockEq.mockReturnValue({
-				eq: mockEq,
-			});
-			mockEq.mockReturnValue({
-				single: mockSingle,
-			});
+			mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
 
 			const { result } = renderHook(() => useGetUserRating("test-plugin"), {
 				wrapper: createWrapper(),
@@ -241,4 +219,3 @@ describe("usePluginRatings", () => {
 		});
 	});
 });
-

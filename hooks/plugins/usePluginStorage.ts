@@ -14,7 +14,7 @@ export function useGetPluginStorage(pluginId: string, key: string) {
 
 	return useQuery({
 		queryKey: ["plugins", "storage", pluginId, key],
-		queryFn: async (): Promise<unknown | undefined> => {
+		queryFn: async (): Promise<unknown | null> => {
 			const {
 				data: { user },
 				error: userError,
@@ -35,12 +35,12 @@ export function useGetPluginStorage(pluginId: string, key: string) {
 			if (error) {
 				if (error.code === "PGRST116") {
 					// No rows found
-					return undefined;
+					return null;
 				}
 				throw error;
 			}
 
-			return data?.value;
+			return data?.value ?? null;
 		},
 		enabled: !!pluginId && !!key,
 	});
