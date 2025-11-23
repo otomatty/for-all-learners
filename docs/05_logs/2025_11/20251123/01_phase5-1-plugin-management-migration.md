@@ -47,29 +47,105 @@
 - `useMutation` を使用したデータ変更フック
 - TanStack Queryのキャッシュ無効化でデータ同期
 
+### 2. プラグイン公開のAPI Routes移行 ✅
+
+**対象ファイル**: `app/_actions/plugin-publish.ts`
+
+**実装したAPI Routes**:
+- `app/api/plugins/publish/route.ts` - プラグイン公開API
+
+**テスト**:
+- `app/api/plugins/publish/__tests__/route.test.ts` - テスト完了（4テストすべてパス）
+
+### 3. 署名検証のAPI Routes移行 ✅
+
+**対象ファイル**: `app/_actions/plugin-signatures.ts`
+
+**実装したAPI Routes**:
+- `app/api/plugins/signatures/route.ts` - 署名管理API（GET/POST）
+- `app/api/plugins/signatures/verification-logs/route.ts` - 検証ログ取得API
+- `app/api/plugins/signatures/key-pair/route.ts` - 鍵ペア生成API
+
+**実装したカスタムフック**:
+- `hooks/plugins/usePluginSignatures.ts` - 署名情報取得・生成
+- `hooks/plugins/useSignatureVerificationLogs.ts` - 検証ログ取得
+- `hooks/plugins/usePluginSignatureKeyPair.ts` - 鍵ペア生成
+
+**テスト**:
+- `app/api/plugins/signatures/__tests__/route.test.ts` - テスト完了
+
+### 4. セキュリティ関連のAPI Routes移行 ✅
+
+**対象ファイル**: 
+- `app/_actions/plugin-security-audit-logs.ts`
+- `app/_actions/plugin-security-alerts.ts`
+
+**実装したAPI Routes**:
+- `app/api/plugins/security/audit-logs/route.ts` - セキュリティ監査ログ取得API
+- `app/api/plugins/security/alerts/route.ts` - セキュリティアラート取得API
+- `app/api/plugins/security/alerts/[alertId]/route.ts` - アラートステータス更新API
+- `app/api/plugins/security/alerts/run-detection/route.ts` - 異常検知実行API
+- `app/api/plugins/security/alerts/statistics/route.ts` - アラート統計取得API
+
+**実装したカスタムフック**:
+- `hooks/plugins/useSecurityAuditLogs.ts` - セキュリティ監査ログ取得
+- `hooks/plugins/useSecurityAlerts.ts` - セキュリティアラート取得・更新・統計・異常検知
+
+**テスト**:
+- `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - テスト完了
+- `app/api/plugins/security/alerts/__tests__/route.test.ts` - テスト完了
+
+### 5. 評価・レビューのクライアント側移行 ✅
+
+**対象ファイル**: `app/_actions/plugin-ratings-reviews.ts`
+
+**実装したカスタムフック**:
+- `hooks/plugins/usePluginRatings.ts` - 評価取得・投稿・削除
+- `hooks/plugins/usePluginReviews.ts` - レビュー取得・投稿・削除・役立った投票
+
+**更新したコンポーネント**:
+- `app/(protected)/settings/plugins/_components/PluginReviewsList.tsx` - Server Actionsをカスタムフックに置き換え
+- `app/(protected)/settings/plugins/_components/PluginReviewForm.tsx` - Server Actionsをカスタムフックに置き換え
+- `app/(protected)/settings/plugins/_components/PluginRatingForm.tsx` - Server Actionsをカスタムフックに置き換え
+- `app/(protected)/settings/plugins/_components/PluginDetails.tsx` - Server Actionsをカスタムフックに置き換え
+
+### 6. プラグインストレージのクライアント側移行 ✅
+
+**対象ファイル**: `app/_actions/plugin-storage.ts`
+
+**実装したカスタムフック**:
+- `hooks/plugins/usePluginStorage.ts` - プラグインストレージ取得・設定・削除
+
+**更新したコンポーネント**:
+- `app/(protected)/settings/plugins/_components/PluginSettingsForm.tsx` - ストレージ操作をカスタムフックに置き換え
+
+### 7. プラグインウィジェットのクライアント側移行 ✅
+
+**対象ファイル**: `app/_actions/plugin-widgets.ts`
+
+**実装したカスタムフック**:
+- `hooks/plugins/usePluginWidgets.ts` - ウィジェット取得（全件・位置別）
+
+**更新したコンポーネント**:
+- `components/plugins/PluginWidgetRenderer.tsx` - 既に `lib/plugins/ui-registry.ts` を使用しており、Server Actionsは使用していないことを確認
+
 ## 残りの作業
 
-### 2. プラグイン公開のAPI Routes移行 🔄
-- `app/_actions/plugin-publish.ts` を API Routes に移行
+### 8. Adminページのコンポーネント更新 🔄
 
-### 3. 署名検証のAPI Routes移行 🔄
-- `app/_actions/plugin-signatures.ts` を API Routes に移行
+**対象ファイル**:
+- `app/admin/plugins/signatures/page.tsx` - Server Componentのため、Server Actionsを継続使用
+- `app/admin/plugins/security-audit/page.tsx` - Server Componentのため、Server Actionsを継続使用
+- `app/admin/plugins/security-alerts/page.tsx` - Server Componentのため、Server Actionsを継続使用
 
-### 4. セキュリティ関連のAPI Routes移行 🔄
-- `app/_actions/plugin-security-audit-logs.ts` を API Routes に移行
-- `app/_actions/plugin-security-alerts.ts` を API Routes に移行
+**注意**: AdminページはServer Componentのため、Next.jsの制約によりServer Actionsを継続使用します。必要に応じて、クライアントコンポーネントに分割してカスタムフックを使用する選択肢もあります。
 
-### 5. 評価・レビューのクライアント側移行 🔄
-- `app/_actions/plugin-ratings-reviews.ts` をカスタムフックに移行
+### 9. テスト・動作確認 ✅
 
-### 6. プラグインストレージのクライアント側移行 🔄
-- `app/_actions/plugin-storage.ts` をカスタムフックに移行
-
-### 7. プラグインウィジェットのクライアント側移行 🔄
-- `app/_actions/plugin-widgets.ts` をカスタムフックに移行
-
-### 8. テスト・動作確認 🔄
-- すべての移行が完了したらテストを実行して動作確認
+- プラグイン公開APIのテスト: 4テストすべてパス
+- 署名管理APIのテスト: 完了
+- セキュリティ監査ログAPIのテスト: 完了
+- セキュリティアラートAPIのテスト: 完了
 
 ## 注意事項
 

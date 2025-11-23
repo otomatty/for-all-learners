@@ -18,8 +18,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import logger from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * Uninstall a plugin for the current user

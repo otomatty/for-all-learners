@@ -11,7 +11,7 @@
  *   └─ app/(protected)/settings/plugins/page.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugin-ratings-reviews.ts
+ *   ├─ hooks/plugins/usePluginReviews.ts
  *   ├─ ./PluginRatingForm.tsx
  *   ├─ ./PluginReviewForm.tsx
  *   ├─ ./PluginReviewsList.tsx
@@ -22,8 +22,6 @@
  *   └─ Plan: docs/03_plans/plugin-system/implementation-status.md
  */
 
-import { useEffect, useState } from "react";
-import { getPluginReviews } from "@/app/_actions/plugin-ratings-reviews";
 import {
 	Card,
 	CardContent,
@@ -32,6 +30,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePluginReviews } from "@/hooks/plugins/usePluginReviews";
 import type { PluginMetadata } from "@/types/plugin";
 import { PluginRatingForm } from "./PluginRatingForm";
 import { PluginReviewForm } from "./PluginReviewForm";
@@ -45,46 +44,23 @@ interface PluginDetailsProps {
 }
 
 export function PluginDetails({ plugin }: PluginDetailsProps) {
-	const [reviews, setReviews] = useState<Awaited<
-		ReturnType<typeof getPluginReviews>
-	> | null>(null);
-	const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-
-	// Load initial reviews
-	useEffect(() => {
-		async function loadReviews() {
-			try {
-				const result = await getPluginReviews(plugin.pluginId, 10, 0);
-				setReviews(result);
-			} catch (error) {
-				// Error handling is done silently
-				void error;
-			} finally {
-				setIsLoadingReviews(false);
-			}
-		}
-
-		loadReviews();
-	}, [plugin.pluginId]);
+	// Load initial reviews for display count
+	const { data: reviewsData, isLoading: isLoadingReviews } = usePluginReviews(
+		plugin.pluginId,
+		{
+			limit: 10,
+			offset: 0,
+		},
+	);
 
 	const handleRatingSubmitted = () => {
-		// Refresh reviews if needed
-		// The rating will be updated via trigger in the database
+		// Rating mutations will automatically invalidate queries
+		// No manual refresh needed
 	};
 
 	const handleReviewSubmitted = () => {
-		// Refresh reviews list
-		async function refreshReviews() {
-			try {
-				const result = await getPluginReviews(plugin.pluginId, 10, 0);
-				setReviews(result);
-			} catch (error) {
-				// Error handling is done silently
-				void error;
-			}
-		}
-
-		refreshReviews();
+		// Review mutations will automatically invalidate queries
+		// No manual refresh needed
 	};
 
 	return (
@@ -123,7 +99,7 @@ export function PluginDetails({ plugin }: PluginDetailsProps) {
 				<TabsList>
 					<TabsTrigger value="rating">評価</TabsTrigger>
 					<TabsTrigger value="reviews">
-						レビュー ({reviews?.total || 0})
+						レビュー ({reviewsData?.total || 0})
 					</TabsTrigger>
 				</TabsList>
 
@@ -160,17 +136,11 @@ export function PluginDetails({ plugin }: PluginDetailsProps) {
 						</CardContent>
 					</Card>
 
-					{isLoadingReviews ? (
-						<div className="text-center text-sm text-muted-foreground py-8">
-							読み込み中...
-						</div>
-					) : (
-						<PluginReviewsList
-							pluginId={plugin.pluginId}
-							initialReviews={reviews?.reviews}
-							initialTotal={reviews?.total}
-						/>
-					)}
+					<PluginReviewsList
+						pluginId={plugin.pluginId}
+						initialReviews={reviewsData?.reviews}
+						initialTotal={reviewsData?.total}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>
