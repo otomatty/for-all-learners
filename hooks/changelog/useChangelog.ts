@@ -58,45 +58,45 @@ export function useChangelogData() {
 				.select("id, version, title, published_at")
 				.order("published_at", { ascending: false });
 
-			if (entriesError) {
+			if (entriesError || !entries) {
 				return [];
 			}
 
-			if (!entries) {
-				return [];
-			}
+			// Extract entry IDs for batch fetching
+			const entryIds = entries.map((entry) => entry.id);
 
-			const changelogData: ChangeLogEntry[] = [];
+			// Fetch all changelog items in a single query
+			const { data: allItems, error: itemsError } = await supabase
+				.from("changelog_items")
+				.select("entry_id, type, description")
+				.in("entry_id", entryIds)
+				.order("display_order", { ascending: true });
 
-			for (const entry of entries as DbChangelogEntry[]) {
-				const { data: items, error: itemsError } = await supabase
-					.from("changelog_items")
-					.select("type, description")
-					.eq("entry_id", entry.id)
-					.order("display_order", { ascending: true });
-
-				let changesForEntry: Change[] = [];
-				if (itemsError) {
-					// アイテム取得に失敗した場合、エントリ自体は表示し、変更点を空にする
-				} else if (items) {
-					changesForEntry = items.map((item) => ({
+			// Group items by entry_id
+			const itemsByEntryId = (allItems || []).reduce<Record<string, Change[]>>(
+				(acc, item) => {
+					if (!acc[item.entry_id]) {
+						acc[item.entry_id] = [];
+					}
+					acc[item.entry_id].push({
 						type: item.type as ChangeTypeEnum,
 						description: item.description,
-					}));
-				}
+					});
+					return acc;
+				},
+				{},
+			);
 
-				changelogData.push({
-					id: entry.id,
-					date: format(new Date(entry.published_at), "yyyy年MM月dd日", {
-						locale: ja,
-					}),
-					version: entry.version,
-					title: entry.title,
-					changes: changesForEntry,
-				});
-			}
-
-			return changelogData;
+			// Map entries to ChangeLogEntry format
+			return entries.map((entry) => ({
+				id: entry.id,
+				date: format(new Date(entry.published_at), "yyyy年MM月dd日", {
+					locale: ja,
+				}),
+				version: entry.version,
+				title: entry.title,
+				changes: itemsByEntryId[entry.id] || [],
+			}));
 		},
 	});
 }

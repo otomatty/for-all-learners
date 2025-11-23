@@ -32,6 +32,7 @@ describe("useChangelog", () => {
 
 			const mockItems = [
 				{
+					entry_id: "entry-1",
 					type: "new" as const,
 					description: "New feature",
 				},
@@ -45,7 +46,7 @@ describe("useChangelog", () => {
 			});
 
 			const selectItemsMock = vi.fn().mockReturnValue({
-				eq: vi.fn().mockReturnValue({
+				in: vi.fn().mockReturnValue({
 					order: vi.fn().mockResolvedValue({
 						data: mockItems,
 						error: null,
@@ -86,8 +87,27 @@ describe("useChangelog", () => {
 				}),
 			});
 
-			mockSupabaseClient.from = vi.fn().mockReturnValue({
-				select: selectEntriesMock,
+			const selectItemsMock = vi.fn().mockReturnValue({
+				in: vi.fn().mockReturnValue({
+					order: vi.fn().mockResolvedValue({
+						data: [],
+						error: null,
+					}),
+				}),
+			});
+
+			mockSupabaseClient.from = vi.fn().mockImplementation((table) => {
+				if (table === "changelog_entries") {
+					return {
+						select: selectEntriesMock,
+					};
+				}
+				if (table === "changelog_items") {
+					return {
+						select: selectItemsMock,
+					};
+				}
+				return {};
 			});
 
 			const { result } = renderHookWithProvider(() => useChangelogData());

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { toast } from "sonner";
 import type { Change, ChangeLogEntry } from "@/app/_actions/changelog";
 import {
 	type CreateChangelogEntryInput,
@@ -75,10 +76,9 @@ export function ChangelogForm({
 			}
 			onSuccess?.(); // 親コンポーネントに成功を通知
 		} else if (mutation.isError || (mutation.data && !mutation.data.success)) {
-			// エラーメッセージはフォーム下部に表示されるので、alertは不要かもしれません
 			const errorMessage =
 				mutation.error?.message || mutation.data?.error || "不明なエラー";
-			alert(`エラー: ${errorMessage}`);
+			toast.error(`エラー: ${errorMessage}`);
 		}
 	}, [
 		mutation.isSuccess,

@@ -1,11 +1,7 @@
 import { waitFor } from "@testing-library/react";
 import type { JSONContent } from "@tiptap/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	deleteLinkOccurrencesByPage,
-	upsertLinkGroup,
-	upsertLinkOccurrence,
-} from "@/lib/services/linkGroupService";
+import { deleteLinkOccurrencesByPage } from "@/lib/services/linkGroupService";
 import { createClient } from "@/lib/supabase/client";
 import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
 import {
@@ -46,26 +42,44 @@ describe("useSyncLinkGroups", () => {
 				},
 			];
 
-			const mockLinkGroup = {
-				id: "link-group-123",
-				key: "test-link",
-				raw_text: "Test Link",
-				page_id: null,
-				link_count: 1,
-			};
-
-			const mockLinkOccurrence = {
-				id: "occurrence-123",
-				link_group_id: "link-group-123",
-				source_page_id: pageId,
-				mark_id: "mark-1",
-				position: 0,
-			};
+			const mockUpsertedGroups = [
+				{
+					id: "link-group-123",
+					key: "test-link",
+					raw_text: "Test Link",
+					page_id: null,
+					link_count: 1,
+				},
+			];
 
 			vi.mocked(extractLinksFromContent).mockReturnValue(mockLinks);
 			vi.mocked(deleteLinkOccurrencesByPage).mockResolvedValue(undefined);
-			vi.mocked(upsertLinkGroup).mockResolvedValue(mockLinkGroup);
-			vi.mocked(upsertLinkOccurrence).mockResolvedValue(mockLinkOccurrence);
+
+			const upsertGroupsMock = vi.fn().mockReturnValue({
+				select: vi.fn().mockResolvedValue({
+					data: mockUpsertedGroups,
+					error: null,
+				}),
+			});
+
+			const upsertOccurrencesMock = vi.fn().mockResolvedValue({
+				data: null,
+				error: null,
+			});
+
+			mockSupabaseClient.from = vi.fn().mockImplementation((table) => {
+				if (table === "link_groups") {
+					return {
+						upsert: upsertGroupsMock,
+					};
+				}
+				if (table === "link_occurrences") {
+					return {
+						upsert: upsertOccurrencesMock,
+					};
+				}
+				return {};
+			});
 
 			const { result } = renderHookWithProvider(() =>
 				useSyncLinkGroupsForPage(),
@@ -86,17 +100,27 @@ describe("useSyncLinkGroups", () => {
 				mockSupabaseClient,
 				pageId,
 			);
-			expect(upsertLinkGroup).toHaveBeenCalledWith(mockSupabaseClient, {
-				key: "test-link",
-				rawText: "Test Link",
-				pageId: null,
-			});
-			expect(upsertLinkOccurrence).toHaveBeenCalledWith(mockSupabaseClient, {
-				linkGroupId: "link-group-123",
-				sourcePageId: pageId,
-				markId: "mark-1",
-				position: 0,
-			});
+			expect(upsertGroupsMock).toHaveBeenCalledWith(
+				[
+					{
+						key: "test-link",
+						raw_text: "Test Link",
+						page_id: null,
+					},
+				],
+				{ onConflict: "key" },
+			);
+			expect(upsertOccurrencesMock).toHaveBeenCalledWith(
+				[
+					{
+						link_group_id: "link-group-123",
+						source_page_id: pageId,
+						mark_id: "mark-1",
+						position: 0,
+					},
+				],
+				{ onConflict: "source_page_id,mark_id" },
+			);
 			expect(result.current.data).toEqual({ success: true });
 		});
 

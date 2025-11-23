@@ -3,11 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
-import {
-	deleteLinkOccurrencesByPage,
-	upsertLinkGroup,
-	upsertLinkOccurrence,
-} from "@/lib/services/linkGroupService";
+import { deleteLinkOccurrencesByPage } from "@/lib/services/linkGroupService";
 import { createClient } from "@/lib/supabase/client";
 import { extractLinksFromContent } from "@/lib/utils/extractLinksFromContent";
 
@@ -38,36 +34,75 @@ export function useSyncLinkGroupsForPage() {
 				// Delete existing occurrences for this page
 				await deleteLinkOccurrencesByPage(supabase, pageId);
 
-				// Process each link
-				for (const link of links) {
+				if (links.length === 0) {
+					logger.debug({ pageId }, "[SYNC] No links to sync");
+					return { success: true };
+				}
+
+				// Batch upsert link groups
+				const linkGroupsToUpsert = links.map((link) => ({
+					key: link.key,
+					raw_text: link.text,
+					page_id: link.pageId || null,
+				}));
+
+				const { data: upsertedGroups, error: upsertError } = await supabase
+					.from("link_groups")
+					.upsert(linkGroupsToUpsert, { onConflict: "key" })
+					.select("id, key");
+
+				if (upsertError) {
+					throw upsertError;
+				}
+
+				// Create a map of key -> id for quick lookup
+				const groupIdMap = new Map(
+					(upsertedGroups || []).map((g) => [g.key, g.id]),
+				);
+
+				logger.debug(
+					{
+						pageId,
+						linkCount: links.length,
+						groupCount: upsertedGroups?.length,
+					},
+					"[SYNC] Link groups upserted",
+				);
+
+				// Batch upsert link occurrences
+				const occurrencesToUpsert = links
+					.map((link) => {
+						const linkGroupId = groupIdMap.get(link.key);
+						if (!linkGroupId) {
+							logger.warn(
+								{ pageId, linkKey: link.key },
+								"[SYNC] Link group ID not found for key",
+							);
+							return null;
+						}
+						return {
+							link_group_id: linkGroupId,
+							source_page_id: pageId,
+							mark_id: link.markId,
+							position: link.position ?? null,
+						};
+					})
+					.filter((o): o is NonNullable<typeof o> => o !== null);
+
+				if (occurrencesToUpsert.length > 0) {
+					const { error: occurrenceError } = await supabase
+						.from("link_occurrences")
+						.upsert(occurrencesToUpsert, {
+							onConflict: "source_page_id,mark_id",
+						});
+
+					if (occurrenceError) {
+						throw occurrenceError;
+					}
+
 					logger.debug(
-						{ pageId, linkKey: link.key, linkText: link.text },
-						"[SYNC] Processing link",
-					);
-
-					// 1. Upsert link group
-					const linkGroup = await upsertLinkGroup(supabase, {
-						key: link.key,
-						rawText: link.text,
-						pageId: link.pageId,
-					});
-
-					logger.debug(
-						{ linkGroupId: linkGroup.id, linkKey: link.key },
-						"[SYNC] Link group upserted",
-					);
-
-					// 2. Create link occurrence
-					await upsertLinkOccurrence(supabase, {
-						linkGroupId: linkGroup.id,
-						sourcePageId: pageId,
-						markId: link.markId,
-						position: link.position,
-					});
-
-					logger.debug(
-						{ linkGroupId: linkGroup.id, sourcePageId: pageId },
-						"[SYNC] Link occurrence created",
+						{ pageId, occurrenceCount: occurrencesToUpsert.length },
+						"[SYNC] Link occurrences upserted",
 					);
 				}
 

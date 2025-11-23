@@ -464,8 +464,8 @@ export function useAllInquiries(options: GetAllInquiriesOptions = {}) {
 					email: inq.email,
 					name: inq.name,
 					category_name_ja:
-						(inq.inquiry_categories as unknown as InquiryCategory)?.name_ja ||
-						null,
+						(inq.inquiry_categories as { name_ja: string | null } | null)
+							?.name_ja || null,
 				})) || [];
 
 			return {
