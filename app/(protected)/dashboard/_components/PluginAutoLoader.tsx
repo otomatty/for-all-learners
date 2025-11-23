@@ -9,13 +9,14 @@
  * Parents (Files that import this):
  *   └─ app/(protected)/dashboard/page.tsx
  *
- * Dependencies:
+ * Dependencies (External files that this imports):
+ *   ├─ hooks/plugins/useInstalledPlugins
  *   ├─ lib/hooks/use-load-plugin.ts
- *   ├─ app/_actions/plugins.ts
  *   └─ lib/plugins/plugin-registry.ts
  *
  * Related Documentation:
- *   └─ Issue: docs/01_issues/open/2025_11/20251106_02_plugin-loading-issues.md
+ *   ├─ Issue: docs/01_issues/open/2025_11/20251106_02_plugin-loading-issues.md
+ *   └─ PR #179: Plugin CRUD Migration
  */
 
 "use client";

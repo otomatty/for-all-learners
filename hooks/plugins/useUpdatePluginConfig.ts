@@ -1,3 +1,20 @@
+/**
+ * useUpdatePluginConfig Hook
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this):
+ *   └─ hooks/plugins/index.ts (exported for external use)
+ *
+ * Dependencies (External files that this imports):
+ *   ├─ @tanstack/react-query
+ *   ├─ @/lib/supabase/client
+ *   └─ @/types/database.types
+ *
+ * Related Documentation:
+ *   └─ PR #179: Plugin CRUD Migration
+ */
+
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -5,10 +22,17 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
 /**
- * Update plugin configuration
+ * Returns a mutation object for updating a plugin's configuration.
  *
- * @param pluginId Plugin ID
- * @param config New configuration
+ * The returned mutation's `mutate` function expects an object with the following properties:
+ *   - `pluginId` (string): The ID of the plugin to update.
+ *   - `config` (Record<string, unknown>): The new configuration for the plugin.
+ *
+ * Example usage:
+ * ```ts
+ * const updatePluginConfig = useUpdatePluginConfig();
+ * updatePluginConfig.mutate({ pluginId: "my-plugin", config: { ... } });
+ * ```
  */
 export function useUpdatePluginConfig() {
 	const supabase = createClient();

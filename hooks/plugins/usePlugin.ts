@@ -1,3 +1,22 @@
+/**
+ * usePlugin Hook
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this):
+ *   ├─ hooks/plugins/index.ts (exported for external use)
+ *   └─ app/(protected)/settings/plugins/_components/PluginSettingsForm.tsx
+ *
+ * Dependencies (External files that this imports):
+ *   ├─ @tanstack/react-query
+ *   ├─ @/lib/supabase/client
+ *   ├─ @/types/database.types
+ *   └─ @/types/plugin
+ *
+ * Related Documentation:
+ *   └─ PR #179: Plugin CRUD Migration
+ */
+
 "use client";
 
 import { useQuery } from "@tanstack/react-query";

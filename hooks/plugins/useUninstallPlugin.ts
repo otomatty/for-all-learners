@@ -1,7 +1,25 @@
+/**
+ * useUninstallPlugin Hook
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this):
+ *   ├─ hooks/plugins/index.ts (exported for external use)
+ *   └─ app/(protected)/settings/plugins/_components/InstalledPluginCard.tsx
+ *
+ * Dependencies (External files that this imports):
+ *   ├─ @tanstack/react-query
+ *   └─ @/lib/supabase/client
+ *
+ * Related Documentation:
+ *   └─ PR #179: Plugin CRUD Migration
+ */
+
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import logger from "@/lib/logger";
 
 /**
  * Uninstall a plugin for the current user
@@ -39,6 +57,12 @@ export function useUninstallPlugin() {
 				.eq("plugin_id", pluginId);
 
 			if (storageError) {
+				// Intentionally ignore storage cleanup errors to allow uninstall to succeed (see TC-004).
+				// Log the error for debugging purposes.
+				logger.warn(
+					{ pluginId, error: storageError },
+					"Failed to clear plugin storage during uninstall. This does not block uninstall.",
+				);
 			}
 		},
 		onSuccess: () => {
