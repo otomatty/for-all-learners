@@ -8,7 +8,7 @@
  * - Original Server Action: app/_actions/unifiedBatchProcessor.ts
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, type NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@/lib/supabase/server";
@@ -89,7 +89,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(401);
@@ -111,7 +111,7 @@ describe("POST /api/batch/unified", () => {
 				body: JSON.stringify({}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(400);
@@ -126,7 +126,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(400);
@@ -141,7 +141,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(400);
@@ -157,7 +157,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(400);
@@ -173,7 +173,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(400);
@@ -222,7 +222,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(429);
@@ -282,7 +282,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
@@ -318,7 +318,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
@@ -350,7 +350,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
@@ -391,7 +391,7 @@ describe("POST /api/batch/unified", () => {
 				}),
 			});
 
-			const response = await POST(request);
+			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
 			expect(response.status).toBe(500);
