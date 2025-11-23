@@ -49,6 +49,11 @@ export function PluginAutoLoader() {
 
 		async function loadInstalledPlugins() {
 			try {
+				// Guard: ensure installedPlugins is available
+				if (!installedPlugins) {
+					return;
+				}
+
 				// Filter only enabled plugins
 				const enabledPlugins = installedPlugins.filter((p) => p.enabled);
 
