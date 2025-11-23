@@ -58,8 +58,7 @@ export function useGenerateCardsFromPage() {
 			if (!response.ok) {
 				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					errorData.error ||
-						`カード生成に失敗しました: ${response.status}`,
+					errorData.error || `カード生成に失敗しました: ${response.status}`,
 				);
 			}
 
@@ -67,4 +66,3 @@ export function useGenerateCardsFromPage() {
 		},
 	});
 }
-

@@ -23,9 +23,9 @@ import {
 	saveAPIKey,
 	testAPIKey,
 } from "@/app/_actions/ai/apiKey";
+import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-import type { LLMProvider } from "@/lib/llm/client";
 import {
 	getProviderValidationErrorMessage,
 	isValidProvider,
@@ -42,10 +42,7 @@ export async function GET(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		logger.info({ userId: user.id }, "Getting API key status");
@@ -53,10 +50,7 @@ export async function GET(request: NextRequest) {
 		const result = await getAPIKeyStatus();
 
 		if (!result.success) {
-			return NextResponse.json(
-				{ error: result.error },
-				{ status: 500 },
-			);
+			return NextResponse.json({ error: result.error }, { status: 500 });
 		}
 
 		return NextResponse.json({ data: result.data });
@@ -86,10 +80,7 @@ export async function POST(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
@@ -116,10 +107,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		if (!body.apiKey || typeof body.apiKey !== "string") {
-			return NextResponse.json(
-				{ error: "apiKeyは必須です" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "apiKeyは必須です" }, { status: 400 });
 		}
 
 		// テストオプションがある場合は先にテスト
@@ -132,25 +120,16 @@ export async function POST(request: NextRequest) {
 			const testResult = await testAPIKey(body.provider, body.apiKey);
 
 			if (!testResult.success) {
-				return NextResponse.json(
-					{ error: testResult.error },
-					{ status: 400 },
-				);
+				return NextResponse.json({ error: testResult.error }, { status: 400 });
 			}
 		}
 
-		logger.info(
-			{ userId: user.id, provider: body.provider },
-			"Saving API key",
-		);
+		logger.info({ userId: user.id, provider: body.provider }, "Saving API key");
 
 		const result = await saveAPIKey(body.provider, body.apiKey);
 
 		if (!result.success) {
-			return NextResponse.json(
-				{ error: result.error },
-				{ status: 500 },
-			);
+			return NextResponse.json({ error: result.error }, { status: 500 });
 		}
 
 		return NextResponse.json({ message: result.message });
@@ -180,10 +159,7 @@ export async function DELETE(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
@@ -213,10 +189,7 @@ export async function DELETE(request: NextRequest) {
 		const result = await deleteAPIKey(body.provider);
 
 		if (!result.success) {
-			return NextResponse.json(
-				{ error: result.error },
-				{ status: 500 },
-			);
+			return NextResponse.json({ error: result.error }, { status: 500 });
 		}
 
 		return NextResponse.json({ message: result.message });
@@ -234,4 +207,3 @@ export async function DELETE(request: NextRequest) {
 		);
 	}
 }
-

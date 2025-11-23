@@ -19,7 +19,13 @@ export type {
 	UseDualPdfBatchOcrOptions,
 } from "./useDualPdfBatchOcr";
 export { useDualPdfBatchOcr } from "./useDualPdfBatchOcr";
-
+// Multi-File Batch Processing
+export type {
+	MultiFileInput,
+	MultiFileProcessingResult,
+	UseMultiFileBatchOptions,
+} from "./useMultiFileBatch";
+export { useMultiFileBatch } from "./useMultiFileBatch";
 // PDF OCR
 export type {
 	PdfBatchOcrResult,
@@ -27,7 +33,6 @@ export type {
 	UsePdfBatchOcrOptions,
 } from "./usePdfBatchOcr";
 export { usePdfBatchOcr } from "./usePdfBatchOcr";
-
 // Image OCR
 export type {
 	BatchOcrPage,
@@ -35,3 +40,10 @@ export type {
 	UseTranscribeImagesBatchOptions,
 } from "./useTranscribeImagesBatch";
 export { useTranscribeImagesBatch } from "./useTranscribeImagesBatch";
+// Unified Batch Processing
+export type {
+	UnifiedBatchInput,
+	UnifiedBatchResult,
+	UseUnifiedBatchOptions,
+} from "./useUnifiedBatch";
+export { useUnifiedBatch } from "./useUnifiedBatch";

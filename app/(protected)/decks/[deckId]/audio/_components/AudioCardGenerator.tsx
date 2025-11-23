@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { createActionLog } from "@/app/_actions/actionLogs";
 import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
-import { useGenerateCards, useGenerateTitle } from "@/lib/hooks/ai";
 import { transcribeAudio } from "@/app/_actions/transcribe";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateCards } from "@/hooks/cards";
+import { useGenerateCards, useGenerateTitle } from "@/lib/hooks/ai";
 import { useUploadAudio } from "@/lib/hooks/storage";
 
 interface AudioCardGeneratorProps {

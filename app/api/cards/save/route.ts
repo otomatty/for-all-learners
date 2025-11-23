@@ -46,10 +46,7 @@ export async function POST(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
@@ -70,17 +67,11 @@ export async function POST(request: NextRequest) {
 		}
 
 		if (!body.pageId || typeof body.pageId !== "string") {
-			return NextResponse.json(
-				{ error: "pageIdは必須です" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "pageIdは必須です" }, { status: 400 });
 		}
 
 		if (!body.deckId || typeof body.deckId !== "string") {
-			return NextResponse.json(
-				{ error: "deckIdは必須です" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "deckIdは必須です" }, { status: 400 });
 		}
 
 		logger.info(
@@ -143,4 +134,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-

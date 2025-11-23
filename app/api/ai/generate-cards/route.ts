@@ -19,9 +19,9 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-import type { LLMProvider } from "@/lib/llm/client";
 import {
 	getProviderValidationErrorMessage,
 	isValidProvider,
@@ -44,10 +44,7 @@ export async function POST(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
@@ -122,7 +119,10 @@ export async function POST(request: NextRequest) {
 			// APIキー未設定エラーの場合
 			if (error.message.includes("API key")) {
 				return NextResponse.json(
-					{ error: "APIキーが設定されていません。設定画面でAPIキーを設定してください。" },
+					{
+						error:
+							"APIキーが設定されていません。設定画面でAPIキーを設定してください。",
+					},
 					{ status: 400 },
 				);
 			}
@@ -136,4 +136,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-

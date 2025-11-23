@@ -11,11 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-	useAPIKeyStatus,
-	useSaveAPIKey,
-	useDeleteAPIKey,
-} from "../useAPIKey";
+import { useAPIKeyStatus, useDeleteAPIKey, useSaveAPIKey } from "../useAPIKey";
 
 // Helper to create test wrapper
 function createWrapper() {
@@ -257,4 +253,3 @@ describe("useDeleteAPIKey", () => {
 		).rejects.toThrow("Network error");
 	});
 });
-

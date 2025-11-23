@@ -27,7 +27,7 @@ import {
 	testAPIKey,
 } from "@/app/_actions/ai/apiKey";
 import { createClient } from "@/lib/supabase/server";
-import { GET, POST, DELETE } from "../route";
+import { DELETE, GET, POST } from "../route";
 
 // Helper: Create mock NextRequest
 function createMockRequest(body?: unknown): NextRequest {
@@ -443,4 +443,3 @@ describe("DELETE /api/ai/api-key", () => {
 		});
 	});
 });
-

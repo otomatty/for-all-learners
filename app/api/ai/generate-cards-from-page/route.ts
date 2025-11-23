@@ -23,14 +23,14 @@ import {
 	saveGeneratedCards,
 	wrapTextInTiptapJson,
 } from "@/app/_actions/generateCardsFromPage";
+import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-import type { LLMProvider } from "@/lib/llm/client";
-import type { Json } from "@/types/database.types";
 import {
 	getProviderValidationErrorMessage,
 	isValidProvider,
 } from "@/lib/validators/ai";
+import type { Json } from "@/types/database.types";
 
 interface GenerateCardsFromPageRequest {
 	pageContentTiptap: Json | null;
@@ -51,27 +51,18 @@ export async function POST(request: NextRequest) {
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		// リクエストボディの取得とバリデーション
 		const body = (await request.json()) as GenerateCardsFromPageRequest;
 
 		if (!body.pageId || typeof body.pageId !== "string") {
-			return NextResponse.json(
-				{ error: "pageIdは必須です" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "pageIdは必須です" }, { status: 400 });
 		}
 
 		if (!body.deckId || typeof body.deckId !== "string") {
-			return NextResponse.json(
-				{ error: "deckIdは必須です" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "deckIdは必須です" }, { status: 400 });
 		}
 
 		// providerのバリデーション
@@ -116,12 +107,8 @@ export async function POST(request: NextRequest) {
 		if (body.saveToDatabase) {
 			const cardsToSave = await Promise.all(
 				result.generatedRawCards.map(async (card) => {
-					const frontContent = await wrapTextInTiptapJson(
-						card.front_content,
-					);
-					const backContent = await wrapTextInTiptapJson(
-						card.back_content,
-					);
+					const frontContent = await wrapTextInTiptapJson(card.front_content);
+					const backContent = await wrapTextInTiptapJson(card.back_content);
 
 					return {
 						deck_id: body.deckId,
@@ -184,7 +171,10 @@ export async function POST(request: NextRequest) {
 			// APIキー未設定エラーの場合
 			if (error.message.includes("API key")) {
 				return NextResponse.json(
-					{ error: "APIキーが設定されていません。設定画面でAPIキーを設定してください。" },
+					{
+						error:
+							"APIキーが設定されていません。設定画面でAPIキーを設定してください。",
+					},
 					{ status: 400 },
 				);
 			}
@@ -198,4 +188,3 @@ export async function POST(request: NextRequest) {
 		);
 	}
 }
-
