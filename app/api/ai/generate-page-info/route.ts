@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
 		// リクエストボディの取得とバリデーション
 		const body = (await request.json()) as GeneratePageInfoRequest;
 
-		if (!body.title || typeof body.title !== "string") {
+		if (typeof body.title !== "string") {
 			return NextResponse.json(
 				{ error: "titleは必須です" },
 				{ status: 400 },
 			);
 		}
 
-		if (!body.title.trim()) {
+		if (!body.title || body.title.trim() === "") {
 			return NextResponse.json(
 				{ error: "titleが空です" },
 				{ status: 400 },

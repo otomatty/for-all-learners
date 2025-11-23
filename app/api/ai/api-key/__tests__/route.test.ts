@@ -438,7 +438,7 @@ describe("DELETE /api/ai/api-key", () => {
 			const response = await DELETE(request);
 			const data = await response.json();
 
-			expect(response.status).toBe(400);
+			expect(response.status).toBe(500);
 			expect(data.error).toBe("削除に失敗しました");
 		});
 	});

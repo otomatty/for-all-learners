@@ -45,14 +45,14 @@ export async function POST(request: NextRequest) {
 		// リクエストボディの取得とバリデーション
 		const body = (await request.json()) as GenerateTitleRequest;
 
-		if (!body.transcript || typeof body.transcript !== "string") {
+		if (typeof body.transcript !== "string") {
 			return NextResponse.json(
 				{ error: "transcriptは必須です" },
 				{ status: 400 },
 			);
 		}
 
-		if (!body.transcript.trim()) {
+		if (!body.transcript || body.transcript.trim() === "") {
 			return NextResponse.json(
 				{ error: "transcriptが空です" },
 				{ status: 400 },
