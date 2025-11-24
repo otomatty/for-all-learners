@@ -11,7 +11,7 @@
  *   bun run scripts/prepare-static-export.ts restore   # After build
  */
 
-import { existsSync, renameSync, readdirSync, statSync } from "fs";
+import { existsSync, renameSync, readdirSync, statSync, readFileSync } from "fs";
 import { join } from "path";
 
 const ROUTE_HANDLERS_TO_DISABLE = [
