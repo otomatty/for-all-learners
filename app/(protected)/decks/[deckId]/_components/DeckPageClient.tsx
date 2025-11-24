@@ -1,14 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import {
-	getAvailableNotesForDeck,
-	getNotesLinkedToDeck,
-} from "@/app/_actions/note-deck-links";
+import { Suspense } from "react";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { useDeckPermissions, useDecks } from "@/hooks/decks";
-import type { Database } from "@/types/database.types";
+import {
+	useAvailableNotesForDeck,
+	useNotesLinkedToDeck,
+} from "@/hooks/decks/useNoteDeckLinks";
 import ActionMenu from "./ActionMenu";
 import { CardsList } from "./CardList/CardsList";
 import { CardsListSkeleton } from "./CardList/CardsListSkeleton";
@@ -28,27 +27,17 @@ export function DeckPageClient({ deckId, userId }: DeckPageClientProps) {
 	} = useDeckPermissions(deckId, userId);
 	const isLoadingDeck = isLoadingPermissions;
 	const { data: userDecks, isLoading: isLoadingDecks } = useDecks();
-	const [linkedNotes, setLinkedNotes] = useState<
-		Database["public"]["Tables"]["notes"]["Row"][]
-	>([]);
-	const [availableNotes, setAvailableNotes] = useState<
-		Database["public"]["Tables"]["notes"]["Row"][]
-	>([]);
+	const { data: linkedNotes = [], isLoading: isLoadingLinkedNotes } =
+		useNotesLinkedToDeck(deckId);
+	const { data: availableNotes = [], isLoading: isLoadingAvailableNotes } =
+		useAvailableNotesForDeck(deckId);
 
-	useEffect(() => {
-		if (!canEdit) return;
-
-		// Note-Deck Links データ取得（管理権限がある場合のみ）
-		Promise.all([
-			getNotesLinkedToDeck(deckId).catch(() => []),
-			getAvailableNotesForDeck(deckId).catch(() => []),
-		]).then(([linked, available]) => {
-			setLinkedNotes(linked);
-			setAvailableNotes(available);
-		});
-	}, [canEdit, deckId]);
-
-	if (isLoadingDeck || isLoadingDecks || isLoadingPermissions) {
+	if (
+		isLoadingDeck ||
+		isLoadingDecks ||
+		isLoadingPermissions ||
+		(canEdit && (isLoadingLinkedNotes || isLoadingAvailableNotes))
+	) {
 		return (
 			<Container>
 				<div className="flex items-center justify-center h-40">

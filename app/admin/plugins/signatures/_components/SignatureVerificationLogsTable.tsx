@@ -1,6 +1,5 @@
 "use client";
 
-import type { SignatureVerificationLog } from "@/app/_actions/plugin-signatures";
 import { Badge } from "@/components/ui/badge";
 import {
 	Table,
@@ -10,6 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { SignatureVerificationLog } from "@/lib/plugins/plugin-signature/types";
 
 interface SignatureVerificationLogsTableProps {
 	logs: SignatureVerificationLog[];

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
-import NotePageWrapper from "./_components/note-page-wrapper";
+import NotePageWrapper from "./_components/NotePageWrapper";
 
 interface NoteDetailPageProps {
 	params: Promise<{ slug: string }>;

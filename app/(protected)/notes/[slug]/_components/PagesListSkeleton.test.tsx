@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import { PagesListSkeleton } from "./pages-list-skeleton";
+import { PagesListSkeleton } from "./PagesListSkeleton";
 
 describe("PagesListSkeleton", () => {
 	test("renders default skeleton count (24)", () => {

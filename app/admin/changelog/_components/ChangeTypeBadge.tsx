@@ -1,4 +1,4 @@
-import type { Change } from "@/app/_actions/changelog";
+import type { Change } from "@/hooks/changelog";
 
 // 変更点の種類に応じたバッジのスタイルとテキスト
 const changeTypeDetails: Record<

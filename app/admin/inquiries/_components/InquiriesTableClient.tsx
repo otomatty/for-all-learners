@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import type { GetAllInquiriesOptions } from "@/app/_actions/inquiries";
+import type { GetAllInquiriesOptions } from "@/hooks/inquiries";
 import { useAllInquiries, useInquiryCategories } from "@/hooks/inquiries";
 import {
 	type ParsedAdminInquiriesSearchParams,

@@ -1,4 +1,4 @@
-import { getAccountById } from "@/app/_actions/accounts";
+import { createClient } from "@/lib/supabase/server";
 
 interface ProfileProps {
 	userId: string;
@@ -9,9 +9,14 @@ interface ProfileProps {
  * @param userId - UUID of the user to fetch
  */
 export default async function Profile({ userId }: ProfileProps) {
-	// サーバーアクションを使ってアカウント情報を取得
-	const account = await getAccountById(userId);
-	if (!account) {
+	const supabase = await createClient();
+	const { data: account, error } = await supabase
+		.from("accounts")
+		.select("*")
+		.eq("id", userId)
+		.single();
+
+	if (error || !account) {
 		return <div>ユーザー情報が見つかりません。</div>;
 	}
 	return (

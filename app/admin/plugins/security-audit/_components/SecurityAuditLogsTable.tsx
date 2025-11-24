@@ -2,7 +2,6 @@
 
 import { ArrowUpDown } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { SecurityAuditLogEntry } from "@/app/_actions/plugin-security-audit-logs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { SecurityAuditLogEntry } from "@/lib/plugins/plugin-security/types";
 
 interface SecurityAuditLogsTableProps {
 	logs: SecurityAuditLogEntry[];

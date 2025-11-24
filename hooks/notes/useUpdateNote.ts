@@ -1,8 +1,16 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UpdateNotePayload } from "@/app/_actions/notes/types";
 import { createClient } from "@/lib/supabase/client";
+
+/**
+ * ノート更新用のペイロード型
+ */
+export type UpdateNotePayload = {
+	title?: string;
+	description?: string | null;
+	visibility?: "public" | "unlisted" | "invite" | "private";
+};
 
 /**
  * ノートを更新します。

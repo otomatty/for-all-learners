@@ -13,8 +13,8 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { UpdateNotePayload } from "@/app/_actions/notes/types";
 import { createClient } from "@/lib/supabase/client";
+import type { UpdateNotePayload } from "../useUpdateNote";
 import { useUpdateNote } from "../useUpdateNote";
 import {
 	createMockSupabaseClient,

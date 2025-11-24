@@ -7,29 +7,21 @@
  *   └─ app/api/cards/save/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generateCardsFromPage.ts (saveGeneratedCards, wrapTextInTiptapJson - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
+ *   ├─ lib/utils/pdfUtils.ts (convertTextToTiptapJSON - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-// Mock non-existent Server Actions module
-vi.mock("@/app/_actions/generateCardsFromPage", () => ({
-	saveGeneratedCards: vi.fn(),
-	wrapTextInTiptapJson: vi.fn(),
-}));
-
 vi.mock("@/lib/supabase/server");
+vi.mock("@/lib/utils/pdfUtils");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import {
-	saveGeneratedCards,
-	wrapTextInTiptapJson,
-} from "@/app/_actions/generateCardsFromPage";
 import { createClient } from "@/lib/supabase/server";
+import { convertTextToTiptapJSON } from "@/lib/utils/pdfUtils";
 import { POST } from "../route";
 
 // Helper: Create mock NextRequest
@@ -41,6 +33,31 @@ function createMockRequest(body: unknown): NextRequest {
 
 // Helper: Create mock Supabase client with authenticated user
 function createMockSupabaseClient(authenticated = true) {
+	const mockFrom = vi.fn().mockReturnValue({
+		insert: vi.fn().mockReturnThis(),
+		select: vi.fn().mockResolvedValue({
+			data: [
+				{
+					id: "card-1",
+					deck_id: "deck-123",
+					user_id: "user-123",
+					page_id: "page-123",
+					front_content: { type: "doc", content: [] },
+					back_content: { type: "doc", content: [] },
+				},
+				{
+					id: "card-2",
+					deck_id: "deck-123",
+					user_id: "user-123",
+					page_id: "page-123",
+					front_content: { type: "doc", content: [] },
+					back_content: { type: "doc", content: [] },
+				},
+			],
+			error: null,
+		}),
+	});
+
 	return {
 		auth: {
 			getUser: () =>
@@ -51,6 +68,7 @@ function createMockSupabaseClient(authenticated = true) {
 					error: authenticated ? null : new Error("Not authenticated"),
 				}),
 		},
+		from: mockFrom,
 	};
 }
 
@@ -64,17 +82,12 @@ describe("POST /api/cards/save", () => {
 	// ========================================
 	describe("TC-001: Basic card save", () => {
 		it("should save cards successfully", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(wrapTextInTiptapJson).mockResolvedValue({
+			vi.mocked(convertTextToTiptapJSON).mockReturnValue({
 				type: "doc",
 				content: [],
-			} as never);
-
-			vi.mocked(saveGeneratedCards).mockResolvedValue({
-				savedCardsCount: 2,
 			});
 
 			const request = createMockRequest({
@@ -97,7 +110,7 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.savedCardsCount).toBe(2);
-			expect(saveGeneratedCards).toHaveBeenCalled();
+			expect(mockClient.from).toHaveBeenCalledWith("cards");
 		});
 	});
 
@@ -126,7 +139,6 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -149,7 +161,6 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("cardsは配列である必要があります");
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -173,7 +184,6 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("保存するカードがありません");
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -201,7 +211,6 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("pageIdは必須です");
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -229,7 +238,6 @@ describe("POST /api/cards/save", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("deckIdは必須です");
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -238,19 +246,23 @@ describe("POST /api/cards/save", () => {
 	// ========================================
 	describe("TC-007: Card save error", () => {
 		it("should return 500 when save fails", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(wrapTextInTiptapJson).mockResolvedValue({
+			vi.mocked(convertTextToTiptapJSON).mockReturnValue({
 				type: "doc",
 				content: [],
-			} as never);
-
-			vi.mocked(saveGeneratedCards).mockResolvedValue({
-				savedCardsCount: 0,
-				error: "データベースエラー",
 			});
+
+			// Mock Supabase insert error
+			const mockFrom = vi.fn().mockReturnValue({
+				insert: vi.fn().mockReturnThis(),
+				select: vi.fn().mockResolvedValue({
+					data: null,
+					error: { message: "データベースエラー" },
+				}),
+			});
+			mockClient.from = mockFrom;
 
 			const request = createMockRequest({
 				cards: [

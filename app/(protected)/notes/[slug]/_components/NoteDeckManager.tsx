@@ -2,12 +2,8 @@
 
 import { ExternalLink, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-	createNoteDeckLink,
-	removeNoteDeckLink,
-} from "@/app/_actions/note-deck-links";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -29,6 +25,10 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+	useCreateNoteDeckLink,
+	useRemoveNoteDeckLink,
+} from "@/hooks/decks/useNoteDeckLinks";
 import type { Database } from "@/types/database.types";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
@@ -44,11 +44,15 @@ export function NoteDeckManager({
 	linkedDecks,
 	availableDecks,
 }: NoteDeckManagerProps) {
-	const [isPending, startTransition] = useTransition();
+	const createLinkMutation = useCreateNoteDeckLink();
+	const removeLinkMutation = useRemoveNoteDeckLink();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const [deckToDelete, setDeckToDelete] = useState<string | null>(null);
+
+	const isPending =
+		createLinkMutation.isPending || removeLinkMutation.isPending;
 
 	const filteredAvailableDecks = availableDecks.filter(
 		(deck) =>
@@ -56,19 +60,20 @@ export function NoteDeckManager({
 			deck.description?.toLowerCase().includes(searchTerm.toLowerCase()),
 	);
 
-	const handleLinkDeck = (deckId: string) => {
-		startTransition(async () => {
-			try {
-				await createNoteDeckLink({ note_id: noteId, deck_id: deckId });
-				toast.success("デッキをリンクしました");
-				setIsDialogOpen(false);
-				setSearchTerm("");
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "リンクに失敗しました";
-				toast.error(errorMessage);
-			}
-		});
+	const handleLinkDeck = async (deckId: string) => {
+		try {
+			await createLinkMutation.mutateAsync({
+				note_id: noteId,
+				deck_id: deckId,
+			});
+			toast.success("デッキをリンクしました");
+			setIsDialogOpen(false);
+			setSearchTerm("");
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "リンクに失敗しました";
+			toast.error(errorMessage);
+		}
 	};
 
 	const handleUnlinkDeck = (deckId: string) => {
@@ -76,21 +81,22 @@ export function NoteDeckManager({
 		setDeleteConfirmOpen(true);
 	};
 
-	const confirmUnlinkDeck = () => {
+	const confirmUnlinkDeck = async () => {
 		if (!deckToDelete) return;
 
-		startTransition(async () => {
-			try {
-				await removeNoteDeckLink(noteId, deckToDelete);
-				toast.success("デッキのリンクを解除しました");
-				setDeleteConfirmOpen(false);
-				setDeckToDelete(null);
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "リンク解除に失敗しました";
-				toast.error(errorMessage);
-			}
-		});
+		try {
+			await removeLinkMutation.mutateAsync({
+				noteId,
+				deckId: deckToDelete,
+			});
+			toast.success("デッキのリンクを解除しました");
+			setDeleteConfirmOpen(false);
+			setDeckToDelete(null);
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "リンク解除に失敗しました";
+			toast.error(errorMessage);
+		}
 	};
 
 	return (

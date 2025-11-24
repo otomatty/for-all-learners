@@ -1,7 +1,6 @@
 "use client"; // ダイアログの状態管理のためクライアントコンポーネントに
 
 import { useState } from "react";
-import type { ChangeLogEntry } from "@/app/_actions/changelog";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog"; // ResponsiveDialog をインポート
 import {
 	AlertDialog,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button"; // Button をインポート
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ChangeLogEntry } from "@/hooks/changelog";
 import { useChangelogData, useDeleteChangelogEntry } from "@/hooks/changelog";
 import { ChangelogEntryItem } from "./_components/ChangelogEntryItem";
 import { ChangelogForm } from "./_components/ChangelogForm";

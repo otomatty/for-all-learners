@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Database } from "@/types/database.types";
 import NotePagesClient from "../page-client";
-import NoteHeader from "./note-header";
+import NoteHeader from "./NoteHeader";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"];
 

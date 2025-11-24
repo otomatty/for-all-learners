@@ -17,9 +17,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { NoteDeckManager } from "./_components/note-deck-manager";
-import { PagesList } from "./_components/pages-list";
-import { PagesListSkeleton } from "./_components/pages-list-skeleton";
+import { NoteDeckManager } from "./_components/NoteDeckManager";
+import { PagesList } from "./_components/PagesList";
+import { PagesListSkeleton } from "./_components/PagesListSkeleton";
 
 interface NotePagesClientProps {
 	slug: string;

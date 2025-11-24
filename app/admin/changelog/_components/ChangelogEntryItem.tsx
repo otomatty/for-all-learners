@@ -1,5 +1,4 @@
 import { MoreHorizontal } from "lucide-react";
-import type { Change, ChangeLogEntry } from "@/app/_actions/changelog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -7,6 +6,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Change, ChangeLogEntry } from "@/hooks/changelog";
 import { ChangeTypeBadge } from "./ChangeTypeBadge";
 
 interface ChangelogEntryItemProps {

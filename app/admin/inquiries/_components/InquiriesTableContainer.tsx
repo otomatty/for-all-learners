@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import type { GetAllInquiriesOptions } from "@/app/_actions/inquiries";
+import type { GetAllInquiriesOptions } from "@/hooks/inquiries";
 import {
-	getAllInquiries,
-	getInquiryCategories,
-} from "@/app/_actions/inquiries";
+	getAllInquiriesServer,
+	getInquiryCategoriesServer,
+} from "@/lib/services/inquiriesService";
 import {
 	type ParsedAdminInquiriesSearchParams,
 	parseAdminInquiriesSearchParams,
@@ -39,8 +39,8 @@ export async function InquiriesTableContainer({
 
 	// データ取得を並行して行う
 	const [inquiriesResult, categoriesResult] = await Promise.all([
-		getAllInquiries(options),
-		getInquiryCategories(),
+		getAllInquiriesServer(options),
+		getInquiryCategoriesServer(),
 	]);
 
 	if (!inquiriesResult.success || !categoriesResult.success) {

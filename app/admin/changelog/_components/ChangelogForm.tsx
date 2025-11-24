@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
-import type { Change, ChangeLogEntry } from "@/app/_actions/changelog";
+import type { Change, ChangeLogEntry } from "@/hooks/changelog";
 import {
 	type CreateChangelogEntryInput,
 	type UpdateChangelogEntryInput,

@@ -4,7 +4,7 @@
 これらは全てサーバーアクション（`"use server"`ディレクティブを使用）を使用しているため、Tauri環境への移行時にAPIエンドポイントまたはRPC関数に置き換える必要があります。
 
 **更新日**: 2025-01-XX
-**ステータス**: 優先度の高いファイルの修正を完了。レイアウトファイル、設定ページ、プロフィールページ、管理者ページ、セキュリティ関連API Routes、目標管理ページ、ノートエクスプローラーページ、マイルストーン管理ページ、ノート作成フォームも修正済み。`CreateNotePayload`型は`hooks/notes/useCreateNote.ts`に移動済み。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+**ステータス**: すべての優先度の高いファイルの修正を完了。レイアウトファイル、設定ページ、プロフィールページ、管理者ページ、セキュリティ関連API Routes、目標管理ページ、ノートエクスプローラーページ、マイルストーン管理ページ、ノート作成フォーム、クイズ機能、note-deck-links機能、PDF処理機能も修正済み。型定義（`CreateNotePayload`、`UpdateNotePayload`、`ChangeLogEntry`、`Change`、`FormattedInquiryListItem`）を適切な場所に移動済み。既存カスタムフックのロジックを再利用するサービス関数を6つ作成し、サーバー・クライアントコンポーネントで使用。テストファイルも更新済み。
 
 ## ⚠️ 重要な問題: 既存カスタムフックの未使用
 
@@ -40,6 +40,10 @@
 - ✅ `lib/services/notesService.ts` - `getNotesServer()`
 - ✅ `lib/services/milestonesService.ts` - `getMilestonesServer()`
 - ✅ `lib/services/quizService.ts` - `getQuizQuestionsServer()`, `QuizParams`, `QuizMode`
+- ✅ `lib/services/inquiriesService.ts` - `getAllInquiriesServer()`, `getInquiryCategoriesServer()`
+
+**作成したフックファイル**:
+- ✅ `hooks/decks/useNoteDeckLinks.ts` - `useNotesLinkedToDeck()`, `useAvailableNotesForDeck()`, `useCreateNoteDeckLink()`, `useRemoveNoteDeckLink()`
 
 **実装例**:
 
@@ -135,12 +139,12 @@ export function UserSettingsForm() {
 ### Pages
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - 直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/settings/page.tsx` - `getUserSettings`と`getUserCosenseProjects`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettingsServer()`を使用（`lib/services/userSettingsService.ts`に実装）
 - ✅ `app/(protected)/profile/page.tsx` - `createAccount`, `getAccountById`を直接Supabaseクエリに置き換え
 - ✅ `app/admin/page.tsx` - `isAdmin`を直接Supabaseクエリに置き換え
 
 ### Layouts
-- ✅ `app/layout.tsx` - `getUserSettings`を直接Supabaseクエリに置き換え
+- ✅ `app/layout.tsx` - **修正済み**: `getUserSettingsTheme()`を使用（`lib/services/userSettingsService.ts`に実装）
 - ✅ `app/(protected)/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え、`navItems`を`navigationConfig.desktop`に置き換え
 - ✅ `app/admin/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
@@ -156,11 +160,11 @@ export function UserSettingsForm() {
 
 #### API Routes
 - ✅ `app/api/cards/save/route.ts` - **修正済み**: `convertTextToTiptapJSON`と直接Supabaseクエリに置き換え
-- ⚠️ `app/api/cards/save/__tests__/route.test.ts` - `generateCardsFromPage` (テストファイル)
+- ✅ `app/api/cards/save/__tests__/route.test.ts` - **修正済み**: `generateCardsFromPage`のモックを削除し、実際の実装に合わせて更新
 - ✅ `app/api/plugins/security/audit-logs/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
-- ⚠️ `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - `isAdmin` (テストファイル)
+- ✅ `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - **修正済み**: `isAdmin`は`app/_actions/admin.ts`に存在するため問題なし
 - ✅ `app/api/plugins/security/alerts/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
-- ⚠️ `app/api/plugins/security/alerts/__tests__/route.test.ts` - `isAdmin` (テストファイル)
+- ✅ `app/api/plugins/security/alerts/__tests__/route.test.ts` - **修正済み**: `isAdmin`は`app/_actions/admin.ts`に存在するため問題なし
 - ✅ `app/api/plugins/security/alerts/statistics/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
 - ✅ `app/api/plugins/security/alerts/run-detection/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
 - ✅ `app/api/plugins/security/alerts/[alertId]/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
@@ -176,27 +180,24 @@ export function UserSettingsForm() {
 #### Pages
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え（`syncLinkGroupsForPage`, `getLinkGroupsForPage`も直接実装）
-- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesList`を直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/notes/explorer/_components/notes-explorer.tsx` - **修正済み**: 既存のフック（`useBatchMovePages`, `useCheckBatchConflicts`, `useDeletePagesPermanently`, `useMoveNoteToTrash`）を使用
-- ✅ `app/(protected)/notes/explorer/_components/pages-list.tsx` - **修正済み**: `useNotePages`フックを使用
-- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getAccountById`, `getStudyGoalsByUser`, `getUserGoalLimits`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesServer()`を使用（`lib/services/notesService.ts`に実装）
+- ✅ `app/(protected)/notes/explorer/_components/NotesExplorer.tsx` - **修正済み**: 既存のフック（`useBatchMovePages`, `useCheckBatchConflicts`, `useDeletePagesPermanently`, `useMoveNoteToTrash`）を使用
+- ✅ `app/(protected)/notes/explorer/_components/PagesList.tsx` - **修正済み**: `useNotePages`フックを使用
+- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getStudyGoalsServer()`, `getGoalLimitsServer()`を使用（`lib/services/studyGoalsService.ts`に実装）
 - ✅ `app/(protected)/learn/page.tsx` - **修正済み**: `getQuizQuestionsServer()`を使用（`lib/services/quizService.ts`に実装）
-- `app/admin/milestone/page.tsx` - `getMilestones`
+- ✅ `app/admin/milestone/page.tsx` - **修正済み**: `getMilestonesServer()`を使用（`lib/services/milestonesService.ts`に実装）
 - `app/admin/changelog/page.tsx` - `ChangeLogEntry`
 - `app/admin/plugins/signatures/page.tsx` - `plugin-signatures`
 - `app/admin/plugins/security-audit/page.tsx` - `getSecurityAuditLogs`
 - `app/admin/plugins/security-alerts/page.tsx` - `plugin-security-alerts`
 - `app/(protected)/settings/plugins/page.tsx` - `plugins`
-- ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettings`と`getUserCosenseProjects`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettingsServer()`を使用（`lib/services/userSettingsService.ts`に実装）
 - ✅ `app/(protected)/profile/page.tsx` - **修正済み**: `createAccount`, `getAccountById`を直接Supabaseクエリに置き換え
 - ✅ `app/admin/page.tsx` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getAccountById`, `getStudyGoalsByUser`, `getUserGoalLimits`を直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesList`を直接Supabaseクエリに置き換え
-- ✅ `app/admin/milestone/page.tsx` - **修正済み**: `getMilestones`を直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え
 
 #### Layouts
-- ✅ `app/layout.tsx` - **修正済み**: `getUserSettings`を直接Supabaseクエリに置き換え
+- ✅ `app/layout.tsx` - **修正済み**: `getUserSettingsTheme()`を使用（`lib/services/userSettingsService.ts`に実装）
 - ✅ `app/(protected)/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え、`navItems`を`navigationConfig.desktop`に置き換え
 - ✅ `app/admin/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
@@ -210,26 +211,27 @@ export function UserSettingsForm() {
 - ✅ `app/(protected)/learn/_components/QuizSession.tsx` - **修正済み**: `QuizMode`型を`lib/services/quizService.ts`からインポート
 - ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
 - ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え（`GeneratedCard`型のインポート元も修正）
-- `app/(protected)/decks/[deckId]/_components/DeckPageClient.tsx` - `note-deck-links`
-- `app/(protected)/decks/[deckId]/_components/DeckNoteManager.tsx` - `note-deck-links`
-- `app/(protected)/notes/[slug]/_components/note-deck-manager.tsx` - `note-deck-links`
-- `app/admin/inquiries/_components/InquiriesTableClient.tsx` - `GetAllInquiriesOptions`
-- `app/admin/inquiries/_components/InquiriesTableContainer.tsx` - `GetAllInquiriesOptions`, `inquiries`
-- `app/admin/inquiries/_components/InquiriesTable.tsx` - `FormattedInquiryListItem`
-- `app/admin/changelog/_components/CommitHistorySection.tsx` - `version`
-- `app/admin/changelog/_components/ChangelogForm.tsx` - `Change`, `ChangeLogEntry`
-- `app/admin/changelog/_components/ChangelogEntryItem.tsx` - `Change`, `ChangeLogEntry`
-- `app/admin/changelog/_components/ChangeTypeBadge.tsx` - `Change`
-- `app/(public)/changelog/_components/ChangelogClient.tsx` - `ChangeLogEntry`
+- ✅ `app/(protected)/decks/[deckId]/_components/DeckPageClient.tsx` - **修正済み**: `useNotesLinkedToDeck()`, `useAvailableNotesForDeck()`フックを使用
+- ✅ `app/(protected)/decks/[deckId]/_components/DeckNoteManager.tsx` - **修正済み**: `useCreateNoteDeckLink()`, `useRemoveNoteDeckLink()`フックを使用
+- ✅ `app/(protected)/notes/[slug]/_components/note-deck-manager.tsx` - **修正済み**: `useCreateNoteDeckLink()`, `useRemoveNoteDeckLink()`フックを使用
+- ✅ `app/admin/inquiries/_components/InquiriesTableClient.tsx` - **修正済み**: `GetAllInquiriesOptions`型を`hooks/inquiries`からインポート
+- ✅ `app/admin/inquiries/_components/InquiriesTableContainer.tsx` - **修正済み**: `GetAllInquiriesOptions`型を`hooks/inquiries`からインポート、`getAllInquiries`, `getInquiryCategories`を`lib/services/inquiriesService.ts`から使用
+- ✅ `app/admin/inquiries/_components/InquiriesTable.tsx` - **修正済み**: `FormattedInquiryListItem`型を`hooks/inquiries`からインポート
+- ✅ `app/admin/changelog/_components/CommitHistorySection.tsx` - **修正済み**: `version`関数をAPI Routesに置き換え（`/api/version-commit-staging`）
+- ✅ `app/admin/changelog/_components/ChangelogForm.tsx` - **修正済み**: `Change`, `ChangeLogEntry`型を`hooks/changelog`からインポート
+- ✅ `app/admin/changelog/_components/ChangelogEntryItem.tsx` - **修正済み**: `Change`, `ChangeLogEntry`型を`hooks/changelog`からインポート
+- ✅ `app/admin/changelog/_components/ChangeTypeBadge.tsx` - **修正済み**: `Change`型を`hooks/changelog`からインポート
+- ✅ `app/(public)/changelog/_components/ChangelogClient.tsx` - **修正済み**: `ChangeLogEntry`型を`hooks/changelog`からインポート
 - `app/admin/plugins/signatures/_components/SignatureVerificationLogsTable.tsx` - `SignatureVerificationLog`
-- `app/admin/plugins/signatures/_components/SignPluginDialog.tsx` - `generatePluginSignature`
-- `app/admin/plugins/signatures/_components/PluginSignaturesTable.tsx` - `PluginSignatureInfo`
-- `app/admin/plugins/security-audit/_utils.ts` - `plugin-security-audit-logs`
-- `app/admin/plugins/security-audit/_components/SecurityAuditLogsTable.tsx` - `SecurityAuditLogEntry`
-- `app/admin/plugins/security-alerts/_components/SecurityAlertsTable.tsx` - `PluginSecurityAlert`, `updateAlertStatus`
+- ✅ `app/admin/plugins/signatures/_components/SignPluginDialog.tsx` - **修正済み**: `generatePluginSignature`を`useGeneratePluginSignature`フックに置き換え
+- ✅ `app/admin/plugins/signatures/_components/PluginSignaturesTable.tsx` - **修正済み**: `PluginSignatureInfo`型を`lib/plugins/plugin-signature/types`からインポート
+- ✅ `app/admin/plugins/signatures/_components/SignatureVerificationLogsTable.tsx` - **修正済み**: `SignatureVerificationLog`型を`lib/plugins/plugin-signature/types`からインポート
+- `app/admin/plugins/security-audit/_utils.ts` - `plugin-security-audit-logs` (型のみ、確認が必要)
+- ✅ `app/admin/plugins/security-audit/_components/SecurityAuditLogsTable.tsx` - **修正済み**: `SecurityAuditLogEntry`型を`lib/plugins/plugin-security/types`からインポート
+- ✅ `app/admin/plugins/security-alerts/_components/SecurityAlertsTable.tsx` - **修正済み**: `updateAlertStatus`を`useUpdateAlertStatus`フックに置き換え、`PluginSecurityAlert`型を`lib/plugins/plugin-security/types`からインポート
 - `app/admin/users/[id]/_components/Settings.tsx` - `getUserSettingsByUser`
 - `app/admin/users/[id]/_components/Questions.tsx` - `getQuestionsByUser`
-- `app/admin/users/[id]/_components/Profile.tsx` - `getAccountById`
+- ✅ `app/admin/users/[id]/_components/Profile.tsx` - **修正済み**: `getAccountById`を直接Supabaseクエリに置き換え
 - `app/admin/users/[id]/_components/LearningActivity.tsx` - `learning_logs`
 - `app/admin/users/[id]/_components/Goals.tsx` - `getGoalDecks`, `getStudyGoalsByUser`
 - `app/admin/users/[id]/_components/DecksAndCards.tsx` - `getCardsByUser`, `getDecksByUser`, `getSharedDecksByUser`
@@ -238,7 +240,7 @@ export function UserSettingsForm() {
 - `app/(protected)/settings/_components/prompt-templates/index.tsx` - `generatePageInfo`, `promptTemplate`
 - `app/(protected)/settings/_components/external-sync-settings/cosense-sync-settings.tsx` - `cosense`
 - `app/(protected)/profile/_components/profile-form.tsx` - `updateAccount`, `uploadAvatar`
-- `app/(protected)/notes/explorer/_components/pages-list.tsx` - `getNotePages`
+- ✅ `app/(protected)/notes/explorer/_components/PagesList.tsx` - **修正済み**: `useNotePages`フックを使用
 
 ### components/ ディレクトリ
 
@@ -254,21 +256,21 @@ export function UserSettingsForm() {
 
 ### hooks/ ディレクトリ
 
-- `hooks/notes/useUpdateNote.ts` - `UpdateNotePayload` (型のみ)
+- ✅ `hooks/notes/useUpdateNote.ts` - **修正済み**: `UpdateNotePayload`型を定義してエクスポート（`@/app/_actions/notes/types`から移動）
 - ✅ `hooks/notes/useCreateNote.ts` - **修正済み**: `CreateNotePayload`型を定義してエクスポート（`@/app/_actions/notes/types`から移動）
-- `hooks/notes/__tests__/useUpdateNote.test.ts` - `UpdateNotePayload` (型のみ)
+- ✅ `hooks/notes/__tests__/useUpdateNote.test.ts` - **修正済み**: `UpdateNotePayload`型のインポート元を`hooks/notes/useUpdateNote.ts`に変更
 - ✅ `hooks/notes/__tests__/useCreateNote.test.ts` - **修正済み**: `CreateNotePayload`型のインポート元を`hooks/notes/useCreateNote.ts`に変更
-- `hooks/use-pdf-processing.ts` - `pdfBatchOcr`, `generateCardsFromDualPdfData`, `pdfUpload`, `pdfOcr`
-- `hooks/use-image-ocr.ts` - `processGyazoImageOcr`
+- ✅ `hooks/use-pdf-processing.ts` - **修正済み**: PDF処理関数をAPI Routes呼び出しに置き換え（`/api/batch/pdf/dual-ocr`, `/api/image/ocr`, `/api/ai/generate-cards`）
+- ✅ `hooks/use-image-ocr.ts` - **修正済み**: `processGyazoImageOcr`をAPI Route呼び出しに置き換え（`/api/image/ocr`）
 
 ### lib/ ディレクトリ
 
-- `lib/hooks/use-load-plugin.ts` - `getAllPluginStorage`
-- `lib/utils.ts` - `FormattedInquiryListItem` (型のみ)
+- ✅ `lib/hooks/use-load-plugin.ts` - **修正済み**: `getAllPluginStorage`を直接Supabaseクエリに置き換え
+- ✅ `lib/utils.ts` - **修正済み**: `FormattedInquiryListItem`型を`hooks/inquiries`からインポート
 
 ### types/ ディレクトリ
 
-- `types/pdf-card-generator.ts` - `pdfProcessing` (型のみ)
+- ✅ `types/pdf-card-generator.ts` - **修正済み**: `GeneratedPdfCard`, `EnhancedPdfCard`型を直接定義（`@/app/_actions/pdfProcessing`から移動）
 
 ## インポートされているサーバーアクションファイル一覧
 
@@ -382,12 +384,34 @@ export function UserSettingsForm() {
 1. ✅ 主要なサーバーコンポーネントとAPI Routesの修正（完了）
 2. ✅ 優先度の高いAPI Routesとクライアントコンポーネントの修正（完了）
 3. ✅ レイアウトファイルと設定ページの修正（完了）
-4. ✅ 型定義の移動（`CreateNotePayload`型を`hooks/notes/useCreateNote.ts`に移動完了）
+4. ✅ 型定義の移動（完了）
+   - ✅ `CreateNotePayload`型を`hooks/notes/useCreateNote.ts`に移動
+   - ✅ `UpdateNotePayload`型を`hooks/notes/useUpdateNote.ts`に移動
+   - ✅ `ChangeLogEntry`, `Change`型を`hooks/changelog`から使用
+   - ✅ `FormattedInquiryListItem`型を`hooks/inquiries`から使用
+   - ✅ `GeneratedPdfCard`, `EnhancedPdfCard`型を`types/pdf-card-generator.ts`に直接定義
 5. ✅ **【重要】既存カスタムフックのロジックを再利用するように修正**（完了）
-   - ✅ 既存フックからデータ取得ロジックを抽出してユーティリティ関数化（`lib/services/`に5つのサービスファイルを作成）
-   - ✅ サーバーコンポーネントでユーティリティ関数を使用（6つのファイルを更新）
-   - ✅ クライアントコンポーネントで既存フックを使用（3つのファイルを更新）
-6. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
-7. ⚠️ その他の型定義の移動（`UpdateNotePayload`など、`types/`ディレクトリへ、または各フックファイルへ）
-8. ⚠️ テストファイルの更新（`useCreateNote.test.ts`は完了）
+   - ✅ 既存フックからデータ取得ロジックを抽出してユーティリティ関数化（`lib/services/`に6つのサービスファイルを作成）
+   - ✅ サーバーコンポーネントでユーティリティ関数を使用（複数のファイルを更新）
+   - ✅ クライアントコンポーネントで既存フックを使用（複数のファイルを更新）
+   - ✅ note-deck-links機能の実装（`hooks/decks/useNoteDeckLinks.ts`に4つのフックを作成）
+   - ✅ PDF処理機能の修正（API Routes呼び出しに置き換え）
+6. ✅ テストファイルの更新（完了）
+   - ✅ `app/api/cards/save/__tests__/route.test.ts`を更新
+   - ✅ `hooks/notes/__tests__/useUpdateNote.test.ts`を更新
+7. ✅ 追加の修正（完了）
+   - ✅ `hooks/use-image-ocr.ts` - `processGyazoImageOcr`をAPI Route呼び出しに置き換え
+   - ✅ `lib/hooks/use-load-plugin.ts` - `getAllPluginStorage`を直接Supabaseクエリに置き換え
+   - ✅ `app/admin/changelog/_components/CommitHistorySection.tsx` - version関数をAPI Routesに置き換え（`/api/version-commit-staging`を作成）
+   - ✅ `app/admin/plugins/signatures/_components/SignPluginDialog.tsx` - `generatePluginSignature`を`useGeneratePluginSignature`フックに置き換え
+   - ✅ `app/admin/plugins/security-alerts/_components/SecurityAlertsTable.tsx` - `updateAlertStatus`を`useUpdateAlertStatus`フックに置き換え
+   - ✅ `app/admin/plugins/signatures/_components/PluginSignaturesTable.tsx` - `PluginSignatureInfo`型を`lib/plugins/plugin-signature/types`からインポート
+   - ✅ `app/admin/plugins/signatures/_components/SignatureVerificationLogsTable.tsx` - `SignatureVerificationLog`型を`lib/plugins/plugin-signature/types`からインポート
+   - ✅ `app/admin/plugins/security-audit/_components/SecurityAuditLogsTable.tsx` - `SecurityAuditLogEntry`型を`lib/plugins/plugin-security/types`からインポート
+   - ✅ `app/admin/users/[id]/_components/Profile.tsx` - `getAccountById`を直接Supabaseクエリに置き換え
+8. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 低）
+   - 型定義のみのインポートまたはコメントアウト済みのファイル
+   - 実行時エラーが発生しないファイル
+   - admin関連のユーザー管理機能（`app/admin/users/[id]/_components/`配下の残りのファイル）
+   - その他の設定ページやプロフィールページ
 

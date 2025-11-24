@@ -21,7 +21,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { getAllPluginStorage } from "@/app/_actions/plugin-storage";
 import logger from "@/lib/logger";
 import { PluginLoader } from "@/lib/plugins/plugin-loader/plugin-loader";
 import { createClient } from "@/lib/supabase/client";
@@ -110,7 +109,31 @@ export function useLoadPlugin(): UseLoadPluginResult {
 				// Merge default config with saved config (saved config takes priority)
 				let config: Record<string, unknown> = {};
 				try {
-					const savedConfig = await getAllPluginStorage(plugin.pluginId);
+					const {
+						data: { user },
+						error: userError,
+					} = await supabase.auth.getUser();
+
+					if (userError || !user) {
+						throw new Error("ユーザーが認証されていません");
+					}
+
+					const { data, error } = await supabase
+						.from("plugin_storage")
+						.select("key, value")
+						.eq("user_id", user.id)
+						.eq("plugin_id", plugin.pluginId);
+
+					if (error) {
+						throw error;
+					}
+
+					// Convert to object
+					const savedConfig: Record<string, unknown> = {};
+					for (const row of data || []) {
+						savedConfig[row.key] = row.value;
+					}
+
 					const defaultConfig =
 						(plugin.manifest.defaultConfig as Record<string, unknown>) || {};
 					// Merge: default config first, then saved config (saved overrides default)

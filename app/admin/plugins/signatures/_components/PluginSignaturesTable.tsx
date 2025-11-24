@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import type { PluginSignatureInfo } from "@/app/_actions/plugin-signatures";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +19,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { PluginSignatureInfo } from "@/lib/plugins/plugin-signature/types";
 import { SignPluginDialog } from "./SignPluginDialog";
 
 interface PluginSignaturesTableProps {
