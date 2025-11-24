@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { isAdmin } from "@/app/_actions/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 import { createClient } from "@/lib/supabase/server";
 

@@ -1,4 +1,17 @@
-"use server";
+/**
+ * Admin Authentication Utilities
+ *
+ * Server-side utilities for checking admin access
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import these functions):
+ *   ├─ app/api/version-commit-staging/route.ts
+ *   └─ app/api/version-commit-staging/[id]/route.ts
+ *
+ * Dependencies (External files that this file uses):
+ *   └─ lib/supabase/server.ts (createClient)
+ */
 
 import { createClient } from "@/lib/supabase/server";
 
