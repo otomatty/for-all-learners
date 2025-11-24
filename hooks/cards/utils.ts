@@ -52,7 +52,9 @@ export async function triggerQuestionGeneration(
 			.maybeSingle();
 
 		const isPaid =
-			subscription !== null && !subscription.plan_id.includes("_free");
+			subscription !== null &&
+			subscription.plan_id !== "free" &&
+			!subscription.plan_id.includes("_free");
 		if (!isPaid) return;
 
 		// Get user plan features

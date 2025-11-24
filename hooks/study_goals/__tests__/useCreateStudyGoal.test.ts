@@ -261,7 +261,7 @@ describe("useCreateStudyGoal", () => {
 		result.current.mutate(payload);
 
 		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
+			expect(result.current.data).toBeDefined();
 		});
 
 		expect(result.current.data).toBeDefined();

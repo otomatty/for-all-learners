@@ -59,7 +59,9 @@ export function useCreateStudyGoal() {
 				.maybeSingle();
 
 			const isPaid =
-				subscription !== null && !subscription.plan_id.includes("_free");
+				subscription !== null &&
+				subscription.plan_id !== "free" &&
+				!subscription.plan_id.includes("_free");
 
 			// 制限チェック
 			const maxGoals = isPaid ? 10 : 3;
