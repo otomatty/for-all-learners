@@ -14,7 +14,6 @@
  *   └─ app/(protected)/pages/[id]/_hooks/usePageEditorLogic.ts
  *
  * Dependencies (このファイルが使用している外部ファイル):
- *   ├─ app/_actions/linkGroups.ts (getLinkGroupInfo)
  *   ├─ lib/utils/extractLinksFromContent.ts (getUniqueLinkKeys)
  *   └─ lib/utils/determineLinkState.ts (determineLinkState)
  */

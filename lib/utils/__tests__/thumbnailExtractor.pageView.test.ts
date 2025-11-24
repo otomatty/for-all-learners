@@ -8,12 +8,8 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-import { describe, expect, it, vi } from "vitest";
-
-// Mock non-existent Server Actions module
-vi.mock("@/app/_actions/autoSetThumbnail", () => ({
-	shouldAutoSetThumbnail: vi.fn(),
-}));
+import { describe, expect, it } from "vitest";
+import { decideThumbnailUpdate } from "@/lib/utils/smartThumbnailUpdater";
 
 // テスト用のサンプルコンテンツ
 const pageWithGyazoImage: JSONContent = {
@@ -65,57 +61,50 @@ describe("Page View Auto Thumbnail Setting", () => {
 	/**
 	 * サムネイル設定条件の判定テスト
 	 */
-	describe("shouldAutoSetThumbnail", () => {
-		it("サムネイル未設定で画像ありの場合true", async () => {
-			const { shouldAutoSetThumbnail } = await import(
-				"@/app/_actions/autoSetThumbnail"
-			);
-
-			const result = await shouldAutoSetThumbnail({
-				thumbnail_url: null,
-				content_tiptap: pageWithGyazoImage,
+	describe("decideThumbnailUpdate", () => {
+		it("サムネイル未設定で画像ありの場合true", () => {
+			const result = decideThumbnailUpdate({
+				pageId: "test-page-id",
+				currentContent: pageWithGyazoImage,
+				currentThumbnailUrl: null,
 			});
 
-			expect(result).toBe(true);
+			expect(result.shouldUpdate).toBe(true);
+			expect(result.newThumbnailUrl).toBe("https://i.gyazo.com/test123.png");
+			expect(result.reason).toBe("first-time-set");
 		});
 
-		it("サムネイル設定済みの場合false", async () => {
-			const { shouldAutoSetThumbnail } = await import(
-				"@/app/_actions/autoSetThumbnail"
-			);
-
-			const result = await shouldAutoSetThumbnail({
-				thumbnail_url: "https://i.gyazo.com/existing.png",
-				content_tiptap: pageWithGyazoImage,
+		it("サムネイル設定済みの場合false", () => {
+			const result = decideThumbnailUpdate({
+				pageId: "test-page-id",
+				currentContent: pageWithGyazoImage,
+				currentThumbnailUrl: "https://i.gyazo.com/test123.png",
 			});
 
-			expect(result).toBe(false);
+			expect(result.shouldUpdate).toBe(false);
+			expect(result.reason).toBe("no-change");
 		});
 
-		it("画像がない場合false", async () => {
-			const { shouldAutoSetThumbnail } = await import(
-				"@/app/_actions/autoSetThumbnail"
-			);
-
-			const result = await shouldAutoSetThumbnail({
-				thumbnail_url: null,
-				content_tiptap: pageWithoutImage,
+		it("画像がない場合false", () => {
+			const result = decideThumbnailUpdate({
+				pageId: "test-page-id",
+				currentContent: pageWithoutImage,
+				currentThumbnailUrl: null,
 			});
 
-			expect(result).toBe(false);
+			expect(result.shouldUpdate).toBe(false);
+			expect(result.reason).toBe("no-image-found");
 		});
 
-		it("許可されていない画像のみの場合false", async () => {
-			const { shouldAutoSetThumbnail } = await import(
-				"@/app/_actions/autoSetThumbnail"
-			);
-
-			const result = await shouldAutoSetThumbnail({
-				thumbnail_url: null,
-				content_tiptap: pageWithDisallowedImage,
+		it("許可されていない画像のみの場合false", () => {
+			const result = decideThumbnailUpdate({
+				pageId: "test-page-id",
+				currentContent: pageWithDisallowedImage,
+				currentThumbnailUrl: null,
 			});
 
-			expect(result).toBe(false);
+			expect(result.shouldUpdate).toBe(false);
+			expect(result.reason).toBe("no-image-found");
 		});
 	});
 

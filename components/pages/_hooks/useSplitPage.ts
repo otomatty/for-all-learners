@@ -3,7 +3,6 @@ import type { Editor } from "@tiptap/react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 // TODO: API Route `/api/pages/split` を作成して置き換え
-// import { splitPageSelection } from "@/app/_actions/splitPageSelection";
 
 /**
  * Hook to split selected content into a new page and replace with link.

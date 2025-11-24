@@ -10,7 +10,6 @@
  *   └─ lib/supabase/server.ts (createClient)
  *
  * Related Documentation:
- *   ├─ Original Server Action: app/_actions/plugin-security-audit-logs.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { getMilestones } from "../../_actions/milestone"; // 作成したサーバーアクションをインポート
-import MilestoneTimeline from "./_components/milestone-timeline"; // クライアントコンポーネントをインポート
+import { getMilestonesServer } from "@/lib/services/milestonesService";
+import MilestoneTimeline from "./_components/milestone-timeline";
 
 export const metadata: Metadata = {
 	title: "マイルストーン - For All Learners",
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function MilestonesPage() {
-	// サーバーアクションを呼び出してデータを取得
-	const milestoneData = await getMilestones();
+	// サーバーサイドでマイルストーンデータを取得
+	const milestoneData = await getMilestonesServer();
 
 	return (
 		<div className="flex flex-col min-h-screen">

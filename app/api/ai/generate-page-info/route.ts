@@ -7,7 +7,6 @@
  *   └─ lib/hooks/ai/useGeneratePageInfo.ts (Phase 4.2)
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/generatePageInfo.ts (移行元)
  *   ├─ lib/llm/factory.ts (createClientWithUserKey)
  *   ├─ lib/supabase/server.ts (createClient)
  *   └─ lib/logger.ts

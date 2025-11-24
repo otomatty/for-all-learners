@@ -14,8 +14,7 @@
  *   ├─ lib/plugins/types.ts
  *   ├─ lib/plugins/editor-registry.ts
  *   ├─ lib/plugins/editor-manager.ts
- *   ├─ types/plugin.ts
- *   └─ app/_actions/plugin-storage.ts (via dynamic import)
+ *   └─ types/plugin.ts
  *
  * Related Documentation:
  *   ├─ Plan: docs/03_plans/plugin-system/phase1-core-system.md
@@ -26,6 +25,7 @@ import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
 // Import package.json for version information
 import pkg from "../../package.json";
+import type { Database } from "@/types/database.types";
 import * as aiRegistry from "./ai-registry";
 import * as calendarRegistry from "./calendar-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
@@ -522,6 +522,8 @@ function createStorageAPI(pluginId: string): StorageAPI {
 	const rateLimiter = getPluginRateLimiter();
 	const auditLogger = getPluginSecurityAuditLogger();
 
+	type Json = Database["public"]["Tables"]["plugin_storage"]["Row"]["value"];
+
 	return {
 		async get<T = unknown>(key: string): Promise<T | undefined> {
 			try {
@@ -593,10 +595,34 @@ function createStorageAPI(pluginId: string): StorageAPI {
 					throw new Error(quotaCheck.reason || "Storage quota exceeded");
 				}
 
-				const { setPluginStorage } = await import(
-					"@/app/_actions/plugin-storage"
+				// Use Supabase client directly
+				const { createClient } = await import("@/lib/supabase/client");
+				const supabase = createClient();
+				const {
+					data: { user },
+					error: userError,
+				} = await supabase.auth.getUser();
+
+				if (userError || !user) {
+					throw new Error("User not authenticated");
+				}
+
+				// Upsert storage value
+				const { error } = await supabase.from("plugin_storage").upsert(
+					{
+						user_id: user.id,
+						plugin_id: pluginId,
+						key,
+						value: value as unknown as Json,
+					},
+					{
+						onConflict: "user_id,plugin_id,key",
+					},
 				);
-				await setPluginStorage(pluginId, key, value);
+
+				if (error) {
+					throw error;
+				}
 
 				// Log storage access
 				auditLogger.logStorageAccess(
@@ -624,10 +650,28 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				// Log storage access
 				auditLogger.logStorageAccess(pluginId, "delete", undefined, key);
 
-				const { deletePluginStorage } = await import(
-					"@/app/_actions/plugin-storage"
-				);
-				await deletePluginStorage(pluginId, key);
+				// Use Supabase client directly
+				const { createClient } = await import("@/lib/supabase/client");
+				const supabase = createClient();
+				const {
+					data: { user },
+					error: userError,
+				} = await supabase.auth.getUser();
+
+				if (userError || !user) {
+					throw new Error("User not authenticated");
+				}
+
+				const { error } = await supabase
+					.from("plugin_storage")
+					.delete()
+					.eq("user_id", user.id)
+					.eq("plugin_id", pluginId)
+					.eq("key", key);
+
+				if (error) {
+					throw error;
+				}
 
 				// Note: Storage usage tracking would need to be updated here
 				// For accurate tracking, query database after deletion
@@ -646,10 +690,29 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				// Log storage access
 				auditLogger.logStorageAccess(pluginId, "keys");
 
-				const { getPluginStorageKeys } = await import(
-					"@/app/_actions/plugin-storage"
-				);
-				return await getPluginStorageKeys(pluginId);
+				// Use Supabase client directly
+				const { createClient } = await import("@/lib/supabase/client");
+				const supabase = createClient();
+				const {
+					data: { user },
+					error: userError,
+				} = await supabase.auth.getUser();
+
+				if (userError || !user) {
+					throw new Error("User not authenticated");
+				}
+
+				const { data, error } = await supabase
+					.from("plugin_storage")
+					.select("key")
+					.eq("user_id", user.id)
+					.eq("plugin_id", pluginId);
+
+				if (error) {
+					throw error;
+				}
+
+				return data?.map((row) => row.key) || [];
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, operation: "keys" },
@@ -664,10 +727,27 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				// Log storage access
 				auditLogger.logStorageAccess(pluginId, "clear");
 
-				const { clearPluginStorage } = await import(
-					"@/app/_actions/plugin-storage"
-				);
-				await clearPluginStorage(pluginId);
+				// Use Supabase client directly
+				const { createClient } = await import("@/lib/supabase/client");
+				const supabase = createClient();
+				const {
+					data: { user },
+					error: userError,
+				} = await supabase.auth.getUser();
+
+				if (userError || !user) {
+					throw new Error("User not authenticated");
+				}
+
+				const { error } = await supabase
+					.from("plugin_storage")
+					.delete()
+					.eq("user_id", user.id)
+					.eq("plugin_id", pluginId);
+
+				if (error) {
+					throw error;
+				}
 
 				// Reset storage usage tracking
 				rateLimiter.recordStorageUsage(pluginId, undefined, 0);

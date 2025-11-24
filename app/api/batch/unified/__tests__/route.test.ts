@@ -5,7 +5,6 @@
  *
  * Related Files:
  * - Implementation: app/api/batch/unified/route.ts
- * - Original Server Action: app/_actions/unifiedBatchProcessor.ts
  */
 
 import { NextRequest, type NextResponse } from "next/server";
@@ -17,18 +16,40 @@ import { POST } from "../route";
 // Mock Supabase
 vi.mock("@/lib/supabase/server");
 
-// Mock Server Actions
-vi.mock("@/app/_actions/audioBatchProcessing", () => ({
-	processAudioFilesBatch: vi.fn(),
+// Mock fetch
+global.fetch = vi.fn();
+
+// Mock LLM factory
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn().mockResolvedValue({
+		uploadFile: vi.fn().mockResolvedValue({
+			uri: "test-uri",
+			mimeType: "image/png",
+		}),
+		generateWithFiles: vi.fn().mockResolvedValue(
+			JSON.stringify([
+				{
+					audioIndex: 1,
+					transcript: "test transcript",
+					language: "ja",
+					confidence: 0.9,
+				},
+			]),
+		),
+	}),
 }));
 
-vi.mock("@/app/_actions/multiFileBatchProcessing", () => ({
-	processMultiFilesBatch: vi.fn(),
-}));
-
-vi.mock("@/app/_actions/transcribeImageBatch", () => ({
-	transcribeImagesBatch: vi.fn(),
-}));
+// Mock Supabase storage
+const _mockSupabaseStorage = {
+	from: vi.fn(() => ({
+		upload: vi.fn().mockResolvedValue({ error: null }),
+		createSignedUrl: vi.fn().mockResolvedValue({
+			data: { signedUrl: "https://example.com/signed-url" },
+			error: null,
+		}),
+		remove: vi.fn().mockResolvedValue({ error: null }),
+	})),
+};
 
 // Mock Gemini Quota Manager
 vi.mock("@/lib/utils/geminiQuotaManager", () => ({
@@ -42,7 +63,10 @@ vi.mock("@/lib/utils/geminiQuotaManager", () => ({
 			canProceed: true,
 			reason: "",
 		})),
+		recordRequest: vi.fn(),
+		waitForRateLimit: vi.fn().mockResolvedValue(undefined),
 	})),
+	executeWithQuotaCheck: vi.fn((fn) => fn()),
 }));
 
 // Mock Blob Utils
@@ -63,15 +87,37 @@ vi.mock("@/lib/utils/blobUtils", () => ({
 }));
 
 describe("POST /api/batch/unified", () => {
+	const mockSupabaseStorage = {
+		from: vi.fn(() => ({
+			upload: vi.fn().mockResolvedValue({ error: null }),
+			createSignedUrl: vi.fn().mockResolvedValue({
+				data: { signedUrl: "https://example.com/signed-url" },
+				error: null,
+			}),
+			remove: vi.fn().mockResolvedValue({ error: null }),
+		})),
+	};
+
 	const mockSupabase = {
 		auth: {
 			getUser: vi.fn(),
 		},
+		storage: mockSupabaseStorage,
 	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		(createClient as Mock).mockResolvedValue(mockSupabase);
+		vi.mocked(global.fetch).mockResolvedValue({
+			ok: true,
+			blob: vi
+				.fn()
+				.mockResolvedValue(new Blob(["test"], { type: "image/png" })),
+			arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+			headers: {
+				get: vi.fn().mockReturnValue("image/png"),
+			},
+		} as unknown as Response);
 	});
 
 	describe("Authentication", () => {
@@ -255,17 +301,25 @@ describe("POST /api/batch/unified", () => {
 		});
 
 		it("should process multi-file batch", async () => {
-			const { processMultiFilesBatch } = await import(
-				"@/app/_actions/multiFileBatchProcessing"
-			);
-			(processMultiFilesBatch as Mock).mockResolvedValue({
-				success: true,
-				message: "Processed successfully",
-				processedFiles: [],
-				totalCards: 0,
-				totalProcessingTimeMs: 1000,
-				apiRequestsUsed: 1,
-			});
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			vi.mocked(createClientWithUserKey).mockResolvedValue({
+				generate: vi.fn().mockResolvedValue("test"),
+				generateStream: async function* () {
+					yield "test";
+				},
+				uploadFile: vi.fn().mockResolvedValue({
+					uri: "test-uri",
+					mimeType: "image/png",
+				}),
+				generateWithFiles: vi.fn().mockResolvedValue(
+					JSON.stringify([
+						{
+							pageNumber: 1,
+							extractedText: "test extracted text",
+						},
+					]),
+				),
+			} as never);
 
 			const request = new NextRequest("http://localhost/api/batch/unified", {
 				method: "POST",
@@ -274,9 +328,10 @@ describe("POST /api/batch/unified", () => {
 					files: [
 						{
 							fileId: "file-1",
-							fileName: "test.pdf",
-							fileType: "pdf",
-							fileBlob: "data:application/pdf;base64,dGVzdA==",
+							fileName: "test.png",
+							fileType: "image",
+							fileBlob:
+								"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 						},
 					],
 				}),
@@ -288,21 +343,42 @@ describe("POST /api/batch/unified", () => {
 			expect(response.status).toBe(200);
 			expect(data.success).toBe(true);
 			expect(data.batchType).toBe("multi-file");
-			expect(processMultiFilesBatch).toHaveBeenCalled();
 		});
 
 		it("should process audio-batch", async () => {
-			const { processAudioFilesBatch } = await import(
-				"@/app/_actions/audioBatchProcessing"
-			);
-			(processAudioFilesBatch as Mock).mockResolvedValue({
-				success: true,
-				message: "Processed successfully",
-				transcriptions: [],
-				totalCards: 0,
-				totalProcessingTimeMs: 1000,
-				apiRequestsUsed: 1,
-			});
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			vi.mocked(createClientWithUserKey).mockResolvedValue({
+				generate: vi.fn().mockResolvedValue("test"),
+				generateStream: async function* () {
+					yield "test";
+				},
+				uploadFile: vi.fn().mockResolvedValue({
+					uri: "test-uri",
+					mimeType: "audio/mp3",
+				}),
+				generateWithFiles: vi.fn().mockResolvedValue(
+					JSON.stringify([
+						{
+							audioIndex: 1,
+							transcript: "test transcript",
+							language: "ja",
+							confidence: 0.9,
+						},
+					]),
+				),
+			} as never);
+
+			// Mock fetch for audio file download in processBatchAudioTranscription
+			vi.mocked(global.fetch).mockResolvedValue({
+				ok: true,
+				blob: vi
+					.fn()
+					.mockResolvedValue(new Blob(["test"], { type: "audio/mp3" })),
+				arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+				headers: {
+					get: vi.fn().mockReturnValue("audio/mp3"),
+				},
+			} as unknown as Response);
 
 			const request = new NextRequest("http://localhost/api/batch/unified", {
 				method: "POST",
@@ -324,18 +400,28 @@ describe("POST /api/batch/unified", () => {
 			expect(response.status).toBe(200);
 			expect(data.success).toBe(true);
 			expect(data.batchType).toBe("audio-batch");
-			expect(processAudioFilesBatch).toHaveBeenCalled();
 		});
 
 		it("should process image-batch", async () => {
-			const { transcribeImagesBatch } = await import(
-				"@/app/_actions/transcribeImageBatch"
-			);
-			(transcribeImagesBatch as Mock).mockResolvedValue({
-				success: true,
-				message: "Processed successfully",
-				extractedPages: [],
-			});
+			const { createClientWithUserKey } = await import("@/lib/llm/factory");
+			vi.mocked(createClientWithUserKey).mockResolvedValue({
+				generate: vi.fn().mockResolvedValue("test"),
+				generateStream: async function* () {
+					yield "test";
+				},
+				uploadFile: vi.fn().mockResolvedValue({
+					uri: "test-uri",
+					mimeType: "image/png",
+				}),
+				generateWithFiles: vi.fn().mockResolvedValue(
+					JSON.stringify([
+						{
+							pageNumber: 1,
+							extractedText: "test extracted text",
+						},
+					]),
+				),
+			} as never);
 
 			const request = new NextRequest("http://localhost/api/batch/unified", {
 				method: "POST",
@@ -356,7 +442,6 @@ describe("POST /api/batch/unified", () => {
 			expect(response.status).toBe(200);
 			expect(data.success).toBe(true);
 			expect(data.batchType).toBe("image-batch");
-			expect(transcribeImagesBatch).toHaveBeenCalled();
 		});
 	});
 
@@ -369,12 +454,14 @@ describe("POST /api/batch/unified", () => {
 		});
 
 		it("should handle processing errors gracefully", async () => {
-			const { processMultiFilesBatch } = await import(
-				"@/app/_actions/multiFileBatchProcessing"
-			);
-			(processMultiFilesBatch as Mock).mockRejectedValue(
-				new Error("Processing failed"),
-			);
+			// Mock storage upload to fail
+			mockSupabaseStorage.from = vi.fn(() => ({
+				upload: vi.fn().mockResolvedValue({
+					error: new Error("Upload failed"),
+				}),
+				createSignedUrl: vi.fn(),
+				remove: vi.fn(),
+			}));
 
 			const request = new NextRequest("http://localhost/api/batch/unified", {
 				method: "POST",
@@ -383,9 +470,10 @@ describe("POST /api/batch/unified", () => {
 					files: [
 						{
 							fileId: "file-1",
-							fileName: "test.pdf",
-							fileType: "pdf",
-							fileBlob: "data:application/pdf;base64,dGVzdA==",
+							fileName: "test.png",
+							fileType: "image",
+							fileBlob:
+								"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 						},
 					],
 				}),
@@ -394,9 +482,11 @@ describe("POST /api/batch/unified", () => {
 			const response = (await POST(request)) as NextResponse;
 			const data = await response.json();
 
-			expect(response.status).toBe(500);
-			expect(data.success).toBe(false);
-			expect(data.message).toContain("エラー");
+			// Should return 200 with success: false in result
+			expect(response.status).toBe(200);
+			expect(data.multiFileResult).toBeDefined();
+			expect(data.multiFileResult.processedFiles).toHaveLength(1);
+			expect(data.multiFileResult.processedFiles[0].success).toBe(false);
 		});
 	});
 });

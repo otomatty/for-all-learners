@@ -16,7 +16,6 @@
  * Related Documentation:
  *   ├─ Hook: hooks/batch/useUnifiedBatch.ts
  *   ├─ Tests: app/api/batch/unified/__tests__/route.test.ts
- *   ├─ Original Server Action: app/_actions/unifiedBatchProcessor.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 
@@ -139,7 +138,6 @@ interface BatchOcrResult {
  * }
  *
  * Related Documentation:
- * - Original Server Action: app/_actions/unifiedBatchProcessor.ts
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export async function POST(request: NextRequest) {

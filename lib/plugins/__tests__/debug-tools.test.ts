@@ -49,9 +49,25 @@ vi.mock("../plugin-execution-monitor", () => ({
 	})),
 }));
 
-// Mock getAllPluginStorage
-vi.mock("@/app/_actions/plugin-storage", () => ({
-	getAllPluginStorage: vi.fn().mockResolvedValue({}),
+// Mock Supabase client
+const mockFrom = vi.fn(() => ({
+	select: vi.fn().mockReturnThis(),
+	eq: vi.fn().mockResolvedValue({
+		data: [],
+		error: null,
+	}),
+}));
+
+vi.mock("@/lib/supabase/client", () => ({
+	createClient: vi.fn(() => ({
+		auth: {
+			getUser: vi.fn().mockResolvedValue({
+				data: { user: { id: "test-user-id" } },
+				error: null,
+			}),
+		},
+		from: mockFrom,
+	})),
 }));
 
 describe("Debug Tools", () => {

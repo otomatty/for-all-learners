@@ -7,7 +7,6 @@
  *   └─ app/api/ai/generate-cards/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generateCards.ts (generateCardsFromTranscript - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */

@@ -18,7 +18,6 @@
  *   ├─ components/ui/select.tsx
  *   ├─ components/ui/switch.tsx
  *   ├─ components/ui/textarea.tsx
- *   ├─ app/_actions/plugin-storage.ts
  *   └─ types/plugin.ts
  *
  * Related Documentation:

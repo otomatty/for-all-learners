@@ -12,7 +12,6 @@
  * Dependencies:
  *   ├─ components/ui/input.tsx
  *   ├─ components/ui/button.tsx
- *   └─ app/_actions/plugin-storage.ts (for storing GitHub token)
  *
  * Related Documentation:
  *   └─ Issue: docs/01_issues/open/2025_11/20251106_01_github-commit-stats-plugin-enhancement.md

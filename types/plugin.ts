@@ -10,8 +10,7 @@
  * Parents (Files that import this):
  *   ├─ lib/plugins/types.ts
  *   ├─ lib/plugins/plugin-loader.ts
- *   ├─ lib/plugins/plugin-registry.ts
- *   └─ app/_actions/plugins.ts
+ *   └─ lib/plugins/plugin-registry.ts
  *
  * Dependencies: None (base type definitions)
  *

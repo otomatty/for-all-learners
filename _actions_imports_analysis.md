@@ -270,6 +270,7 @@ export function UserSettingsForm() {
 
 - ✅ `lib/hooks/use-load-plugin.ts` - **修正済み**: `getAllPluginStorage`を直接Supabaseクエリに置き換え
 - ✅ `lib/utils.ts` - **修正済み**: `FormattedInquiryListItem`型を`hooks/inquiries`からインポート
+- ✅ `lib/plugins/plugin-api.ts` - **修正済み**: `setPluginStorage`, `deletePluginStorage`, `getPluginStorageKeys`, `clearPluginStorage`を直接Supabaseクエリに置き換え（既存の`hooks/plugins/usePluginStorage.ts`のロジックを参考に実装）
 
 ### types/ ディレクトリ
 

@@ -11,7 +11,6 @@
  *   └─ app/(protected)/settings/plugins/page.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugins.ts
  *   ├─ components/ui/* (Button, Card, Dialog, etc.)
  *   ├─ types/plugin.ts
  *   └─ ./PluginDetails.tsx

@@ -5,7 +5,6 @@
  *
  * Related Files:
  * - Implementation: app/api/batch/image/ocr/route.ts
- * - Original Server Action: app/_actions/transcribeImageBatch.ts
  */
 
 import { NextRequest } from "next/server";

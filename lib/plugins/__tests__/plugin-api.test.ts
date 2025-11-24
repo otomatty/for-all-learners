@@ -6,22 +6,6 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock plugin-storage Server Actions (dynamic import) - must be before imports
-vi.mock("@/app/_actions/plugin-storage", () => ({
-	setPluginStorage: vi
-		.fn()
-		.mockRejectedValue(new Error("Storage not available")),
-	deletePluginStorage: vi
-		.fn()
-		.mockRejectedValue(new Error("Storage not available")),
-	getPluginStorageKeys: vi
-		.fn()
-		.mockRejectedValue(new Error("Storage not available")),
-	clearPluginStorage: vi
-		.fn()
-		.mockRejectedValue(new Error("Storage not available")),
-}));
-
 // Mock Supabase client - must be before imports
 vi.mock("@/lib/supabase/client", () => ({
 	createClient: vi.fn(() => ({

@@ -4,7 +4,6 @@ import { Grid, List, Type } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 // TODO: API Route `/api/quiz/start` を作成して置き換え
-// import { startQuizAction } from "@/app/_actions/startQuiz";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

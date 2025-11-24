@@ -15,7 +15,6 @@
  * Related Documentation:
  *   ├─ API Route: app/api/batch/unified/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useUnifiedBatch.test.tsx
- *   ├─ Original Server Action: app/_actions/unifiedBatchProcessor.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

@@ -5,7 +5,6 @@
  *
  * Related Files:
  * - Implementation: app/api/batch/multi-file/route.ts
- * - Original Server Action: app/_actions/multiFileBatchProcessing.ts
  */
 
 import { NextRequest } from "next/server";
@@ -17,21 +16,53 @@ import { POST } from "../route";
 // Mock Supabase
 vi.mock("@/lib/supabase/server");
 
-// Mock Server Actions
-vi.mock("@/app/_actions/multiFileBatchProcessing", () => ({
-	processMultiFilesBatch: vi.fn(),
+// Mock fetch
+global.fetch = vi.fn();
+
+// Mock LLM factory
+vi.mock("@/lib/llm/factory", () => ({
+	createClientWithUserKey: vi.fn().mockResolvedValue({
+		uploadFile: vi.fn().mockResolvedValue({
+			uri: "test-uri",
+			mimeType: "image/png",
+		}),
+		generateWithFiles: vi.fn().mockResolvedValue("test result"),
+	}),
 }));
+
+// Mock Supabase storage
+const mockSupabaseStorage = {
+	from: vi.fn(() => ({
+		upload: vi.fn().mockResolvedValue({ error: null }),
+		createSignedUrl: vi.fn().mockResolvedValue({
+			data: { signedUrl: "https://example.com/signed-url" },
+			error: null,
+		}),
+		remove: vi.fn().mockResolvedValue({ error: null }),
+	})),
+};
 
 describe("POST /api/batch/multi-file", () => {
 	const mockSupabase = {
 		auth: {
 			getUser: vi.fn(),
 		},
+		storage: mockSupabaseStorage,
 	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		(createClient as Mock).mockResolvedValue(mockSupabase);
+		vi.mocked(global.fetch).mockResolvedValue({
+			ok: true,
+			arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+			blob: vi
+				.fn()
+				.mockResolvedValue(new Blob(["test"], { type: "image/png" })),
+			headers: {
+				get: vi.fn().mockReturnValue("image/png"),
+			},
+		} as unknown as Response);
 	});
 
 	describe("Authentication", () => {
@@ -144,37 +175,17 @@ describe("POST /api/batch/multi-file", () => {
 			});
 		});
 
-		it("should process files successfully", async () => {
-			const { processMultiFilesBatch } = await import(
-				"@/app/_actions/multiFileBatchProcessing"
-			);
-			(processMultiFilesBatch as Mock).mockResolvedValue({
-				success: true,
-				message: "Processed successfully",
-				processedFiles: [
-					{
-						fileId: "file-1",
-						fileName: "test.pdf",
-						success: true,
-						cards: [],
-						extractedText: [],
-						processingTimeMs: 1000,
-					},
-				],
-				totalCards: 0,
-				totalProcessingTimeMs: 1000,
-				apiRequestsUsed: 1,
-			});
-
+		it("should process image files successfully", async () => {
 			const request = new NextRequest("http://localhost/api/batch/multi-file", {
 				method: "POST",
 				body: JSON.stringify({
 					files: [
 						{
 							fileId: "file-1",
-							fileName: "test.pdf",
-							fileType: "pdf",
-							fileBlob: "data:application/pdf;base64,dGVzdA==",
+							fileName: "test.png",
+							fileType: "image",
+							fileBlob:
+								"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 						},
 					],
 				}),
@@ -186,7 +197,6 @@ describe("POST /api/batch/multi-file", () => {
 			expect(response.status).toBe(200);
 			expect(data.success).toBe(true);
 			expect(data.processedFiles).toHaveLength(1);
-			expect(processMultiFilesBatch).toHaveBeenCalled();
 		});
 	});
 
@@ -199,12 +209,14 @@ describe("POST /api/batch/multi-file", () => {
 		});
 
 		it("should handle processing errors gracefully", async () => {
-			const { processMultiFilesBatch } = await import(
-				"@/app/_actions/multiFileBatchProcessing"
-			);
-			(processMultiFilesBatch as Mock).mockRejectedValue(
-				new Error("Processing failed"),
-			);
+			// Mock storage upload to fail
+			mockSupabase.storage.from = vi.fn(() => ({
+				upload: vi.fn().mockResolvedValue({
+					error: new Error("Upload failed"),
+				}),
+				createSignedUrl: vi.fn(),
+				remove: vi.fn(),
+			}));
 
 			const request = new NextRequest("http://localhost/api/batch/multi-file", {
 				method: "POST",
@@ -212,9 +224,10 @@ describe("POST /api/batch/multi-file", () => {
 					files: [
 						{
 							fileId: "file-1",
-							fileName: "test.pdf",
-							fileType: "pdf",
-							fileBlob: "data:application/pdf;base64,dGVzdA==",
+							fileName: "test.png",
+							fileType: "image",
+							fileBlob:
+								"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 						},
 					],
 				}),
@@ -223,8 +236,10 @@ describe("POST /api/batch/multi-file", () => {
 			const response = await POST(request);
 			const data = await response.json();
 
-			expect(response.status).toBe(500);
-			expect(data.error).toBe("Internal server error");
+			// Should return 200 with success: false in processedFiles
+			expect(response.status).toBe(200);
+			expect(data.processedFiles).toHaveLength(1);
+			expect(data.processedFiles[0].success).toBe(false);
 		});
 	});
 });

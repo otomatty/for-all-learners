@@ -10,8 +10,7 @@
  * Dependencies (依存先):
  *   ├─ lib/gemini.ts (generateQuestions)
  *   ├─ lib/supabase/server.ts (createClient)
- *   ├─ lib/logger.ts (logger)
- *   └─ app/_actions/ai/getUserAPIKey.ts (LLMProvider型)
+ *   └─ lib/logger.ts (logger)
  *
  * Related Files:
  *   ├─ Spec: ./route.spec.md

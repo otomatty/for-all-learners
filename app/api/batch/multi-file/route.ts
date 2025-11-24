@@ -15,7 +15,6 @@
  * Related Documentation:
  *   ├─ Hook: hooks/batch/useMultiFileBatch.ts
  *   ├─ Tests: app/api/batch/multi-file/__tests__/route.test.ts
- *   ├─ Original Server Action: app/_actions/multiFileBatchProcessing.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 
@@ -90,7 +89,6 @@ interface MultiFileProcessingResult {
  * }
  *
  * Related Documentation:
- * - Original Server Action: app/_actions/multiFileBatchProcessing.ts
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export async function POST(request: NextRequest) {

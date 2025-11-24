@@ -14,7 +14,6 @@ import { extractTextFromTiptap } from "./extract-text-from-tiptap";
  *   └─ app/(protected)/pages/[id]/_components/page-tabs.tsx
  *
  * Dependencies (依存先):
- *   ├─ @/app/_actions/pages/get-backlinks
  *   ├─ @/components/notes/PageCard
  *   ├─ ./extract-text-from-tiptap
  *   └─ sonner

@@ -9,7 +9,6 @@
  *   └─ app/(protected)/dashboard/_components/ActivityCalendar/index.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/activity_calendar.ts
  *   └─ app/(protected)/dashboard/_components/ActivityCalendar/types.ts
  *
  * Related Documentation:

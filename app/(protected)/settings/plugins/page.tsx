@@ -8,7 +8,6 @@
  * Parents: app/(protected)/settings/layout.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugins.ts
  *   ├─ components/ui/* (Button, Card, Switch, etc.)
  *   ├─ types/plugin.ts
  *   └─ ./_components/PluginFiltersClient.tsx

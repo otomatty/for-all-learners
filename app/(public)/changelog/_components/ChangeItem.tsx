@@ -5,7 +5,7 @@ import {
 	TrendingUpIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { Change } from "../../../_actions/changelog";
+import type { Change } from "@/hooks/changelog";
 
 const getTypeAttributes = (type: Change["type"]) => {
 	switch (type) {

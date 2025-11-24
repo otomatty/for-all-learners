@@ -7,7 +7,6 @@
  *   └─ app/api/ai/generate-page-info/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generatePageInfo.ts (generatePageInfo - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */

@@ -25,7 +25,6 @@ import {
  * }
  *
  * Related Documentation:
- * - Original Server Action: app/_actions/transcribeImageBatch.ts
  * - Tests: app/api/batch/image/ocr/__tests__/route.test.ts
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
