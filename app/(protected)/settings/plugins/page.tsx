@@ -18,12 +18,12 @@
  */
 
 import { Package } from "lucide-react";
-import {
-	getAvailablePlugins,
-	getInstalledPluginsWithUpdates,
-} from "@/app/_actions/plugins";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	getAvailablePluginsServer,
+	getInstalledPluginsWithUpdatesServer,
+} from "@/lib/services/pluginsService";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
 import { MarketplacePluginCard } from "./_components/MarketplacePluginCard";
 import { PluginFiltersClient } from "./_components/PluginFiltersClient";
@@ -55,8 +55,8 @@ export default async function PluginsPage({
 
 	// Fetch data
 	const [installedPlugins, availablePlugins] = await Promise.all([
-		getInstalledPluginsWithUpdates().catch(() => []),
-		getAvailablePlugins({
+		getInstalledPluginsWithUpdatesServer().catch(() => []),
+		getAvailablePluginsServer({
 			search: search || undefined,
 			isOfficial: isOfficial ?? undefined,
 			isReviewed: isReviewed ?? undefined,

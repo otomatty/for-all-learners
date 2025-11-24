@@ -1,4 +1,4 @@
-import { getUserSettingsByUser } from "@/app/_actions/user_settings";
+import { getUserSettingsByUserServer } from "@/lib/services/userSettingsService";
 
 interface SettingsProps {
 	userId: string;
@@ -8,8 +8,8 @@ interface SettingsProps {
  * Settings component displays user-specific configuration.
  */
 export default async function Settings({ userId }: SettingsProps) {
-	// サーバーアクションを使ってユーザー設定を取得
-	const settings = await getUserSettingsByUser(userId);
+	// サーバーサービス関数を使ってユーザー設定を取得
+	const settings = await getUserSettingsByUserServer(userId);
 	return (
 		<section className="space-y-2">
 			<h2 className="text-lg font-semibold">設定</h2>

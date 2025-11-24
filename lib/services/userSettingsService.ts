@@ -85,3 +85,29 @@ export async function getUserSettingsTheme(
 		mode: (data.mode as "light" | "dark" | "system") || "system",
 	};
 }
+
+/**
+ * Get user settings by user ID (for admin users page)
+ * Similar to getUserSettingsServer but doesn't initialize if missing
+ */
+export async function getUserSettingsByUserServer(
+	userId: string,
+): Promise<UserSettings> {
+	const supabase = await createClient();
+
+	const { data, error } = await supabase
+		.from("user_settings")
+		.select("*")
+		.eq("user_id", userId)
+		.single();
+
+	if (error) {
+		throw new Error(error.message);
+	}
+
+	if (!data) {
+		throw new Error("User settings not found");
+	}
+
+	return data;
+}

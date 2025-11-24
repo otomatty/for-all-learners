@@ -77,3 +77,23 @@ export async function getGoalLimitsServer(userId: string): Promise<GoalLimits> {
 		remainingGoals: maxGoals - currentCount,
 	};
 }
+
+/**
+ * Get study goals by user ID (for admin users page)
+ * Similar to getStudyGoalsServer but accepts any user ID
+ */
+export async function getStudyGoalsByUserServer(
+	userId: string,
+): Promise<StudyGoal[]> {
+	const supabase = await createClient();
+
+	const { data, error } = await supabase
+		.from("study_goals")
+		.select("*")
+		.eq("user_id", userId)
+		.order("priority_order", { ascending: true })
+		.order("created_at", { ascending: false });
+
+	if (error) throw error;
+	return data ?? [];
+}

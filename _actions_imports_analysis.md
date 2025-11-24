@@ -35,12 +35,15 @@
 3. ✅ 共通のデータ取得ロジックを`lib/services/`に配置し、サーバー・クライアント両方から使用できるようにする（完了）
 
 **作成したサービスファイル**:
-- ✅ `lib/services/userSettingsService.ts` - `getUserSettingsServer()`, `getUserSettingsTheme()`
-- ✅ `lib/services/studyGoalsService.ts` - `getStudyGoalsServer()`, `getGoalLimitsServer()`
+- ✅ `lib/services/userSettingsService.ts` - `getUserSettingsServer()`, `getUserSettingsTheme()`, `getUserSettingsByUserServer()`
+- ✅ `lib/services/studyGoalsService.ts` - `getStudyGoalsServer()`, `getGoalLimitsServer()`, `getStudyGoalsByUserServer()`
 - ✅ `lib/services/notesService.ts` - `getNotesServer()`
 - ✅ `lib/services/milestonesService.ts` - `getMilestonesServer()`
 - ✅ `lib/services/quizService.ts` - `getQuizQuestionsServer()`, `QuizParams`, `QuizMode`
 - ✅ `lib/services/inquiriesService.ts` - `getAllInquiriesServer()`, `getInquiryCategoriesServer()`
+- ✅ `lib/services/pluginSignaturesService.ts` - `getPluginSignaturesServer()`, `getSignatureVerificationLogsServer()`
+- ✅ `lib/services/pluginSecurityService.ts` - `getSecurityAuditLogsServer()`, `getSecurityAuditStatsServer()`, `getPluginSecurityAlertsServer()`, `getAlertStatisticsServer()`
+- ✅ `lib/services/pluginsService.ts` - `getAvailablePluginsServer()`, `getInstalledPluginsWithUpdatesServer()`
 
 **作成したフックファイル**:
 - ✅ `hooks/decks/useNoteDeckLinks.ts` - `useNotesLinkedToDeck()`, `useAvailableNotesForDeck()`, `useCreateNoteDeckLink()`, `useRemoveNoteDeckLink()`
@@ -187,10 +190,10 @@ export function UserSettingsForm() {
 - ✅ `app/(protected)/learn/page.tsx` - **修正済み**: `getQuizQuestionsServer()`を使用（`lib/services/quizService.ts`に実装）
 - ✅ `app/admin/milestone/page.tsx` - **修正済み**: `getMilestonesServer()`を使用（`lib/services/milestonesService.ts`に実装）
 - `app/admin/changelog/page.tsx` - `ChangeLogEntry`
-- `app/admin/plugins/signatures/page.tsx` - `plugin-signatures`
-- `app/admin/plugins/security-audit/page.tsx` - `getSecurityAuditLogs`
-- `app/admin/plugins/security-alerts/page.tsx` - `plugin-security-alerts`
-- `app/(protected)/settings/plugins/page.tsx` - `plugins`
+- ✅ `app/admin/plugins/signatures/page.tsx` - **修正済み**: `getPluginSignaturesServer()`, `getSignatureVerificationLogsServer()`を使用（`lib/services/pluginSignaturesService.ts`に実装）
+- ✅ `app/admin/plugins/security-audit/page.tsx` - **修正済み**: `getSecurityAuditLogsServer()`, `getSecurityAuditStatsServer()`を使用（`lib/services/pluginSecurityService.ts`に実装）
+- ✅ `app/admin/plugins/security-alerts/page.tsx` - **修正済み**: `getPluginSecurityAlertsServer()`, `getAlertStatisticsServer()`を使用（`lib/services/pluginSecurityService.ts`に実装）、`runAnomalyDetection`をAPI Route呼び出しに置き換え
+- ✅ `app/(protected)/settings/plugins/page.tsx` - **修正済み**: `getAvailablePluginsServer()`, `getInstalledPluginsWithUpdatesServer()`を使用（`lib/services/pluginsService.ts`に実装）
 - ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettingsServer()`を使用（`lib/services/userSettingsService.ts`に実装）
 - ✅ `app/(protected)/profile/page.tsx` - **修正済み**: `createAccount`, `getAccountById`を直接Supabaseクエリに置き換え
 - ✅ `app/admin/page.tsx` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
@@ -226,20 +229,20 @@ export function UserSettingsForm() {
 - ✅ `app/admin/plugins/signatures/_components/SignPluginDialog.tsx` - **修正済み**: `generatePluginSignature`を`useGeneratePluginSignature`フックに置き換え
 - ✅ `app/admin/plugins/signatures/_components/PluginSignaturesTable.tsx` - **修正済み**: `PluginSignatureInfo`型を`lib/plugins/plugin-signature/types`からインポート
 - ✅ `app/admin/plugins/signatures/_components/SignatureVerificationLogsTable.tsx` - **修正済み**: `SignatureVerificationLog`型を`lib/plugins/plugin-signature/types`からインポート
-- `app/admin/plugins/security-audit/_utils.ts` - `plugin-security-audit-logs` (型のみ、確認が必要)
+- ✅ `app/admin/plugins/security-audit/_utils.ts` - **修正済み**: `getSecurityAuditLogs`を`lib/services/pluginSecurityService.ts`から再エクスポート、型定義を移動
 - ✅ `app/admin/plugins/security-audit/_components/SecurityAuditLogsTable.tsx` - **修正済み**: `SecurityAuditLogEntry`型を`lib/plugins/plugin-security/types`からインポート
 - ✅ `app/admin/plugins/security-alerts/_components/SecurityAlertsTable.tsx` - **修正済み**: `updateAlertStatus`を`useUpdateAlertStatus`フックに置き換え、`PluginSecurityAlert`型を`lib/plugins/plugin-security/types`からインポート
-- `app/admin/users/[id]/_components/Settings.tsx` - `getUserSettingsByUser`
-- `app/admin/users/[id]/_components/Questions.tsx` - `getQuestionsByUser`
+- ✅ `app/admin/users/[id]/_components/Settings.tsx` - **修正済み**: `getUserSettingsByUserServer()`を使用（`lib/services/userSettingsService.ts`に実装）
+- ✅ `app/admin/users/[id]/_components/Questions.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
 - ✅ `app/admin/users/[id]/_components/Profile.tsx` - **修正済み**: `getAccountById`を直接Supabaseクエリに置き換え
-- `app/admin/users/[id]/_components/LearningActivity.tsx` - `learning_logs`
-- `app/admin/users/[id]/_components/Goals.tsx` - `getGoalDecks`, `getStudyGoalsByUser`
-- `app/admin/users/[id]/_components/DecksAndCards.tsx` - `getCardsByUser`, `getDecksByUser`, `getSharedDecksByUser`
-- `app/admin/users/[id]/_components/AudioRecordings.tsx` - `AudioRecording`, `getAudioRecordingsByUser`
-- `app/admin/_components/ThumbnailBatchUpdate.tsx` - `batchUpdateThumbnails`
-- `app/(protected)/settings/_components/prompt-templates/index.tsx` - `generatePageInfo`, `promptTemplate`
-- `app/(protected)/settings/_components/external-sync-settings/cosense-sync-settings.tsx` - `cosense`
-- `app/(protected)/profile/_components/profile-form.tsx` - `updateAccount`, `uploadAvatar`
+- ✅ `app/admin/users/[id]/_components/LearningActivity.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
+- ✅ `app/admin/users/[id]/_components/Goals.tsx` - **修正済み**: `getStudyGoalsByUserServer()`を使用（`lib/services/studyGoalsService.ts`に実装）、`getGoalDecks`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/users/[id]/_components/DecksAndCards.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
+- ✅ `app/admin/users/[id]/_components/AudioRecordings.tsx` - **修正済み**: `AudioRecording`型を`lib/hooks/storage/useAudioRecordings.ts`からインポート、直接Supabaseクエリに置き換え
+- ✅ `app/admin/_components/ThumbnailBatchUpdate.tsx` - **修正済み**: API Routes (`/api/admin/batch-update-thumbnails`, `/api/admin/batch-update-thumbnails/stats`) を使用
+- ✅ `app/(protected)/settings/_components/prompt-templates/index.tsx` - **修正済み**: API Routes (`/api/prompt-templates`, `/api/generate-page-info`) を使用
+- ✅ `app/(protected)/settings/_components/external-sync-settings/cosense-sync-settings.tsx` - **修正済み**: API Routes (`/api/cosense/projects`) を使用
+- ✅ `app/(protected)/profile/_components/profile-form.tsx` - **修正済み**: API Routes (`/api/profile/account`, `/api/profile/avatar`) を使用
 - ✅ `app/(protected)/notes/explorer/_components/PagesList.tsx` - **修正済み**: `useNotePages`フックを使用
 
 ### components/ ディレクトリ
@@ -409,9 +412,17 @@ export function UserSettingsForm() {
    - ✅ `app/admin/plugins/signatures/_components/SignatureVerificationLogsTable.tsx` - `SignatureVerificationLog`型を`lib/plugins/plugin-signature/types`からインポート
    - ✅ `app/admin/plugins/security-audit/_components/SecurityAuditLogsTable.tsx` - `SecurityAuditLogEntry`型を`lib/plugins/plugin-security/types`からインポート
    - ✅ `app/admin/users/[id]/_components/Profile.tsx` - `getAccountById`を直接Supabaseクエリに置き換え
-8. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 低）
-   - 型定義のみのインポートまたはコメントアウト済みのファイル
-   - 実行時エラーが発生しないファイル
-   - admin関連のユーザー管理機能（`app/admin/users/[id]/_components/`配下の残りのファイル）
-   - その他の設定ページやプロフィールページ
+8. ✅ 残りのAPI Routesとクライアントコンポーネントの修正（完了）
+   - ✅ 型定義のみのインポートまたはコメントアウト済みのファイル - **確認済み**
+   - ✅ 実行時エラーが発生しないファイル - **確認済み**
+   - ✅ admin関連のユーザー管理機能（`app/admin/users/[id]/_components/`配下の残りのファイル） - **修正済み**
+   - ✅ その他の設定ページやプロフィールページ - **修正済み**
+     - ✅ `app/admin/plugins/signatures/page.tsx` - **修正済み**
+     - ✅ `app/admin/plugins/security-audit/page.tsx` - **修正済み**
+     - ✅ `app/admin/plugins/security-alerts/page.tsx` - **修正済み**
+     - ✅ `app/(protected)/settings/plugins/page.tsx` - **修正済み**
+     - ✅ `app/admin/_components/ThumbnailBatchUpdate.tsx` - **修正済み**
+     - ✅ `app/(protected)/settings/_components/prompt-templates/index.tsx` - **修正済み**
+     - ✅ `app/(protected)/settings/_components/external-sync-settings/cosense-sync-settings.tsx` - **修正済み**
+     - ✅ `app/(protected)/profile/_components/profile-form.tsx` - **修正済み**
 

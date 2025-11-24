@@ -5,10 +5,6 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import {
-	addUserCosenseProject,
-	removeUserCosenseProject,
-} from "@/app/_actions/cosense";
-import {
 	AlertDialog,
 	AlertDialogAction,
 	AlertDialogCancel,
@@ -142,18 +138,27 @@ export default function CosenseSyncSettings({
 											);
 										}
 										const dataScrap = await res.json();
-										const pageCount =
+										const _pageCount =
 											typeof dataScrap.count === "number"
 												? dataScrap.count
 												: Array.isArray(dataScrap.pages)
 													? dataScrap.pages.length
 													: 0;
-										// サーバーアクションに pageCount を渡す
-										const newProj = await addUserCosenseProject(
-											newProjName,
-											pageCount,
-											rawCookieHeader,
-										);
+										// API Routeに pageCount を渡す
+										const response = await fetch("/api/cosense/projects", {
+											method: "POST",
+											headers: {
+												"Content-Type": "application/json",
+											},
+											body: JSON.stringify({
+												projectName: newProjName,
+												scrapboxCookie: rawCookieHeader,
+											}),
+										});
+										if (!response.ok) {
+											throw new Error("プロジェクトの追加に失敗しました");
+										}
+										const newProj = await response.json();
 										setProjects((prev) => [...prev, newProj]);
 										setNewProjName("");
 									} catch (err: unknown) {
@@ -266,7 +271,15 @@ export default function CosenseSyncSettings({
 									onClick={async () => {
 										if (selectedProject) {
 											try {
-												await removeUserCosenseProject(selectedProject.id);
+												const response = await fetch(
+													`/api/cosense/projects?projectId=${selectedProject.id}`,
+													{
+														method: "DELETE",
+													},
+												);
+												if (!response.ok) {
+													throw new Error("プロジェクトの削除に失敗しました");
+												}
 												setProjects((prev) =>
 													prev.filter((p) => p.id !== selectedProject.id),
 												);

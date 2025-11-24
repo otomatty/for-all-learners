@@ -1,5 +1,5 @@
-import { getGoalDecks } from "@/app/_actions/goal-decks";
-import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
+import { getStudyGoalsByUserServer } from "@/lib/services/studyGoalsService";
+import { createClient } from "@/lib/supabase/server";
 
 interface GoalsProps {
 	userId: string;
@@ -10,13 +10,29 @@ interface GoalsProps {
  */
 export default async function Goals({ userId }: GoalsProps) {
 	// ユーザーの目標を取得
-	const goals = await getStudyGoalsByUser(userId);
+	const goals = await getStudyGoalsByUserServer(userId);
 	// それぞれの目標に紐づくデッキを取得
+	const supabase = await createClient();
 	const goalsWithDecks = await Promise.all(
-		goals.map(async (goal) => ({
-			...goal,
-			decks: await getGoalDecks(goal.id),
-		})),
+		goals.map(async (goal) => {
+			const { data: decks, error } = await supabase
+				.from("goal_decks")
+				.select("*, decks(*)")
+				.eq("goal_id", goal.id);
+
+			if (error) {
+				throw new Error(`デッキの取得に失敗しました: ${error.message}`);
+			}
+
+			return {
+				...goal,
+				decks: (decks || []).map((gd) => ({
+					id: gd.decks.id,
+					title: gd.decks.title,
+					card_count: gd.decks.card_count ?? 0,
+				})),
+			};
+		}),
 	);
 	// 日付フォーマットヘルパー
 	const formatDate = (s: string | null): string =>
