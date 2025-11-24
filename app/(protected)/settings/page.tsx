@@ -1,10 +1,9 @@
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
+import { getUserSettingsServer } from "@/lib/services/userSettingsService";
 import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import UserSettingsForm from "./_components/user-settings-form";
 
-type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
 type CosenseProject = {
 	id: string;
 	project_name: string;
@@ -26,21 +25,8 @@ export default async function SettingsPage() {
 		throw new Error("Not authenticated");
 	}
 
-	// サーバーサイドでユーザー設定を取得
-	const { data: settingsData } = await supabase
-		.from("user_settings")
-		.select("*")
-		.eq("user_id", user.id)
-		.maybeSingle();
-
-	const initialSettings: UserSettings = settingsData || {
-		user_id: user.id,
-		theme: "light",
-		mode: "system",
-		play_help_video_audio: false,
-		created_at: new Date().toISOString(),
-		updated_at: new Date().toISOString(),
-	};
+	// サーバーサイドでユーザー設定を取得（既存フックのロジックを再利用）
+	const initialSettings = await getUserSettingsServer(user.id);
 
 	// Cosenseプロジェクトを取得
 	const { data: cosenseProjectsData } = await supabase

@@ -4,7 +4,110 @@
 これらは全てサーバーアクション（`"use server"`ディレクティブを使用）を使用しているため、Tauri環境への移行時にAPIエンドポイントまたはRPC関数に置き換える必要があります。
 
 **更新日**: 2025-01-XX
-**ステータス**: 優先度の高いファイルの修正を完了。レイアウトファイル、設定ページ、プロフィールページ、管理者ページ、セキュリティ関連API Routes、目標管理ページ、ノートエクスプローラーページも修正済み。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+**ステータス**: 優先度の高いファイルの修正を完了。レイアウトファイル、設定ページ、プロフィールページ、管理者ページ、セキュリティ関連API Routes、目標管理ページ、ノートエクスプローラーページ、マイルストーン管理ページ、ノート作成フォームも修正済み。`CreateNotePayload`型は`hooks/notes/useCreateNote.ts`に移動済み。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+
+## ⚠️ 重要な問題: 既存カスタムフックの未使用
+
+**問題**: サーバーアクションを置き換える際に、既存のTanStack Queryカスタムフック（`hooks/`ディレクトリ）のロジックを再利用せず、直接Supabaseクエリに置き換えてしまっている箇所があります。
+
+**影響**:
+- ロジックの重複（DRY原則違反）
+- メンテナンス性の低下（変更時に複数箇所を修正する必要がある）
+- 既存のキャッシュ・エラーハンドリングロジックが活用されていない
+
+**既存のカスタムフック**:
+- `hooks/user_settings/useUserSettings.ts` - `useUserSettings()`
+- `hooks/study_goals/useStudyGoals.ts` - `useStudyGoals()`
+- `hooks/study_goals/useGoalLimits.ts` - `useGoalLimits()`
+- `hooks/notes/useNotes.ts` - `useNotes()`
+- `hooks/milestones/useMilestones.ts` - `useMilestones()`
+
+**修正が必要なファイル**:
+- ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettingsServer()`を使用
+- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getStudyGoalsServer()`, `getGoalLimitsServer()`を使用
+- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesServer()`を使用
+- ✅ `app/admin/milestone/page.tsx` - **修正済み**: `getMilestonesServer()`を使用
+- ✅ `app/layout.tsx` - **修正済み**: `getUserSettingsTheme()`を使用
+
+**修正方針**:
+1. ✅ **サーバーコンポーネントの場合**: 既存フックのロジックを抽出して、サーバーサイドでも使用できるユーティリティ関数を作成する（完了）
+2. ✅ **クライアントコンポーネントの場合**: 既存のカスタムフックを直接使用する（既存のまま）
+3. ✅ 共通のデータ取得ロジックを`lib/services/`に配置し、サーバー・クライアント両方から使用できるようにする（完了）
+
+**作成したサービスファイル**:
+- ✅ `lib/services/userSettingsService.ts` - `getUserSettingsServer()`, `getUserSettingsTheme()`
+- ✅ `lib/services/studyGoalsService.ts` - `getStudyGoalsServer()`, `getGoalLimitsServer()`
+- ✅ `lib/services/notesService.ts` - `getNotesServer()`
+- ✅ `lib/services/milestonesService.ts` - `getMilestonesServer()`
+
+**実装例**:
+
+既存のフック（例: `hooks/user_settings/useUserSettings.ts`）からロジックを抽出：
+
+```typescript
+// lib/services/userSettingsService.ts (新規作成)
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
+
+type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
+
+/**
+ * サーバーサイドでユーザー設定を取得する
+ * 既存のuseUserSettings()フックと同じロジックを使用
+ */
+export async function getUserSettingsServer(userId: string): Promise<UserSettings> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    // Initialize settings if they don't exist (useUserSettingsと同じロジック)
+    return await initializeUserSettingsServer(supabase, userId);
+  }
+
+  return data;
+}
+```
+
+サーバーコンポーネントで使用：
+
+```typescript
+// app/(protected)/settings/page.tsx
+import { getUserSettingsServer } from "@/lib/services/userSettingsService";
+
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) throw new Error("Not authenticated");
+  
+  // 既存フックのロジックを再利用
+  const initialSettings = await getUserSettingsServer(user.id);
+  
+  // ...
+}
+```
+
+クライアントコンポーネントでは既存フックを使用：
+
+```typescript
+// app/(protected)/settings/_components/user-settings-form.tsx
+"use client";
+import { useUserSettings } from "@/hooks/user_settings/useUserSettings";
+
+export function UserSettingsForm() {
+  const { data: settings, isLoading } = useUserSettings();
+  // ...
+}
+```
 
 ## 修正済みファイル（✅）
 
@@ -37,7 +140,7 @@
 
 ### Layouts
 - ✅ `app/layout.tsx` - `getUserSettings`を直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え、`navItems`を`navigationConfig.desktop`に置き換え
 - ✅ `app/admin/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
 ### Components
@@ -92,13 +195,13 @@
 
 #### Layouts
 - ✅ `app/layout.tsx` - **修正済み**: `getUserSettings`を直接Supabaseクエリに置き換え
-- ✅ `app/(protected)/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え、`navItems`を`navigationConfig.desktop`に置き換え
 - ✅ `app/admin/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
 #### Components
 - ✅ `app/auth/login/_components/MagicLinkForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
 - ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
-- ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え（`CreateNotePayload`は型定義のみ）
+- ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え、`CreateNotePayload`型のインポート元を`hooks/notes/useCreateNote.ts`に変更
 - `app/(protected)/goals/_components/GoalItem/GoalItem.tsx` - `completeStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - `updateStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/DeleteGoalDialog.tsx` - `deleteStudyGoal`
@@ -150,9 +253,9 @@
 ### hooks/ ディレクトリ
 
 - `hooks/notes/useUpdateNote.ts` - `UpdateNotePayload` (型のみ)
-- `hooks/notes/useCreateNote.ts` - `CreateNotePayload` (型のみ)
+- ✅ `hooks/notes/useCreateNote.ts` - **修正済み**: `CreateNotePayload`型を定義してエクスポート（`@/app/_actions/notes/types`から移動）
 - `hooks/notes/__tests__/useUpdateNote.test.ts` - `UpdateNotePayload` (型のみ)
-- `hooks/notes/__tests__/useCreateNote.test.ts` - `CreateNotePayload` (型のみ)
+- ✅ `hooks/notes/__tests__/useCreateNote.test.ts` - **修正済み**: `CreateNotePayload`型のインポート元を`hooks/notes/useCreateNote.ts`に変更
 - `hooks/use-pdf-processing.ts` - `pdfBatchOcr`, `generateCardsFromDualPdfData`, `pdfUpload`, `pdfOcr`
 - `hooks/use-image-ocr.ts` - `processGyazoImageOcr`
 
@@ -261,6 +364,9 @@
 - ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**
 - ✅ `app/admin/milestone/page.tsx` - **修正済み**
 - ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**
+- ✅ `app/(protected)/layout.tsx` - **修正済み**: `navItems`を`navigationConfig.desktop`に置き換え
+- ✅ `hooks/notes/useCreateNote.ts` - **修正済み**: `CreateNotePayload`型を定義してエクスポート
+- ✅ `hooks/notes/__tests__/useCreateNote.test.ts` - **修正済み**: インポート元を更新、すべてのテストケースに`visibility`を追加
 
 #### 優先度: 中（型定義のみ、またはコメントアウト済み）
 - 型定義のみのインポート（`import type`）は実行時エラーにはならないが、型定義ファイルの移動が必要
@@ -274,7 +380,12 @@
 1. ✅ 主要なサーバーコンポーネントとAPI Routesの修正（完了）
 2. ✅ 優先度の高いAPI Routesとクライアントコンポーネントの修正（完了）
 3. ✅ レイアウトファイルと設定ページの修正（完了）
-4. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
-5. ⚠️ 型定義の移動（`types/`ディレクトリへ）
-6. ⚠️ テストファイルの更新
+4. ✅ 型定義の移動（`CreateNotePayload`型を`hooks/notes/useCreateNote.ts`に移動完了）
+5. ✅ **【重要】既存カスタムフックのロジックを再利用するように修正**（完了）
+   - ✅ 既存フックからデータ取得ロジックを抽出してユーティリティ関数化（`lib/services/`に4つのサービスファイルを作成）
+   - ✅ サーバーコンポーネントでユーティリティ関数を使用（5つのファイルを更新）
+   - ✅ クライアントコンポーネントで既存フックを使用（既存のまま）
+6. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
+7. ⚠️ その他の型定義の移動（`UpdateNotePayload`など、`types/`ディレクトリへ、または各フックファイルへ）
+8. ⚠️ テストファイルの更新（`useCreateNote.test.ts`は完了）
 

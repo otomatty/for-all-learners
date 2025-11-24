@@ -14,12 +14,10 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-	batchMovePages,
-	checkBatchConflicts,
-	deletePagesPermanently,
-	moveToTrash,
-} from "@/app/_actions/notes";
+import { useBatchMovePages } from "@/hooks/notes/useBatchMovePages";
+import { useCheckBatchConflicts } from "@/hooks/notes/useCheckBatchConflicts";
+import { useDeletePagesPermanently } from "@/hooks/notes/useDeletePagesPermanently";
+import { useMoveNoteToTrash } from "@/hooks/notes/useMoveNoteToTrash";
 import { Button } from "@/components/ui/button";
 import {
 	ResizableHandle,
@@ -27,7 +25,10 @@ import {
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import type { NoteSummary } from "../../_components/NotesList";
-import type { ConflictInfo, ConflictResolution } from "../types";
+import type {
+	ConflictInfo,
+	ConflictResolution,
+} from "@/hooks/notes/useCheckBatchConflicts";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import DraggedPagePreview from "./dragged-page-preview";
@@ -49,6 +50,12 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	const [draggedPages, setDraggedPages] = useState<
 		{ id: string; title: string }[]
 	>([]);
+
+	// 既存のフックを使用
+	const batchMovePages = useBatchMovePages();
+	const checkBatchConflicts = useCheckBatchConflicts();
+	const deletePagesPermanently = useDeletePagesPermanently();
+	const moveToTrash = useMoveNoteToTrash();
 
 	// 競合解決ダイアログの状態
 	const [pendingOperation, setPendingOperation] = useState<{
@@ -142,7 +149,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 			toast.loading(`${isCopy ? "コピー" : "移動"}の準備中...`);
 
 			// まず競合をチェック
-			const conflicts = await checkBatchConflicts({
+			const conflicts = await checkBatchConflicts.mutateAsync({
 				pageIds,
 				targetNoteId,
 				isCopy,
@@ -181,7 +188,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 		try {
 			toast.loading(`${isCopy ? "コピー" : "移動"}中...`);
 
-			const result = await batchMovePages({
+			const result = await batchMovePages.mutateAsync({
 				pageIds,
 				sourceNoteId: selectedNoteId,
 				targetNoteId,
@@ -260,7 +267,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 		try {
 			if (deleteType === "trash") {
 				toast.loading("ゴミ箱に移動中...");
-				const result = await moveToTrash({ pageIds, noteId });
+				const result = await moveToTrash.mutateAsync({ pageIds, noteId });
 				toast.dismiss();
 
 				if (result.success) {
@@ -272,7 +279,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 				}
 			} else {
 				toast.loading("完全削除中...");
-				const result = await deletePagesPermanently({ pageIds });
+				const result = await deletePagesPermanently.mutateAsync({ pageIds });
 				toast.dismiss();
 
 				if (result.success) {

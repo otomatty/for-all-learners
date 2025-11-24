@@ -1,23 +1,9 @@
-import type { MilestoneEntry } from "@/app/(public)/milestones/_components/milestone-timeline";
-import { mapRowToEntry } from "@/hooks/milestones/utils";
-import { createClient } from "@/lib/supabase/server";
+import { getMilestonesServer } from "@/lib/services/milestonesService";
 import MilestoneAdminView from "./_components/MilestoneAdminView";
 
 export default async function MilestonesAdminPage() {
-	const supabase = await createClient();
-
-	// マイルストーン一覧を取得
-	const { data, error } = await supabase
-		.from("milestones")
-		.select("*")
-		.order("sort_order", { ascending: true })
-		.order("created_at", { ascending: false });
-
-	if (error) {
-		throw new Error(`Failed to fetch milestones: ${error.message}`);
-	}
-
-	const initialMilestones: MilestoneEntry[] = (data || []).map(mapRowToEntry);
+	// マイルストーン一覧を取得（既存フックのロジックを再利用）
+	const initialMilestones = await getMilestonesServer();
 
 	return (
 		<div style={{ padding: "20px" }}>

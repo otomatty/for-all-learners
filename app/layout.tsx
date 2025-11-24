@@ -5,6 +5,7 @@ import type React from "react";
 import "./globals.css";
 import type { Viewport } from "next";
 import { Providers } from "@/components/providers";
+import { getUserSettingsTheme } from "@/lib/services/userSettingsService";
 import { createClient } from "@/lib/supabase/server";
 import "tiptap-extension-code-block-shiki";
 
@@ -26,7 +27,7 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	// サーバーサイドでユーザー設定を取得
+	// サーバーサイドでユーザー設定を取得（既存フックのロジックを再利用）
 	const supabase = await createClient();
 	let theme = "light";
 	let mode: "light" | "dark" | "system" = "system";
@@ -37,16 +38,9 @@ export default async function RootLayout({
 		} = await supabase.auth.getUser();
 
 		if (user) {
-			const { data: settings } = await supabase
-				.from("user_settings")
-				.select("theme, mode")
-				.eq("user_id", user.id)
-				.maybeSingle();
-
-			if (settings) {
-				theme = settings.theme || "light";
-				mode = (settings.mode as "light" | "dark" | "system") || "system";
-			}
+			const settings = await getUserSettingsTheme(user.id);
+			theme = settings.theme;
+			mode = settings.mode;
 		}
 	} catch (_error) {
 		// エラー時はデフォルト値を使用
