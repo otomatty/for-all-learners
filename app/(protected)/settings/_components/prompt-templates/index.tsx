@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import type { PromptRow } from "@/app/api/prompt-templates/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { PromptRow } from "@/types/prompt-templates";
 
 export default function PromptTemplates() {
 	const [prompts, setPrompts] = useState<PromptRow[]>([]);

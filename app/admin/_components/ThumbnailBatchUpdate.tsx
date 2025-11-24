@@ -11,8 +11,6 @@
 
 import { useCallback, useId, useState } from "react";
 import { toast } from "sonner";
-import type { BatchUpdateResult } from "@/app/api/admin/batch-update-thumbnails/route";
-import type { ThumbnailStats } from "@/app/api/admin/batch-update-thumbnails/stats/route";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -26,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import type { BatchUpdateResult, ThumbnailStats } from "@/types/admin";
 
 /**
  * サムネイル一括更新管理コンポーネント

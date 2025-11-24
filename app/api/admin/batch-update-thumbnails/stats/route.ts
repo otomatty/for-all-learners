@@ -8,6 +8,9 @@
  * Parents (Files that import this route):
  *   └─ app/admin/_components/ThumbnailBatchUpdate.tsx
  *
+ * Types:
+ *   └─ types/admin.ts (ThumbnailStats)
+ *
  * Dependencies (External files that this route uses):
  *   ├─ lib/supabase/server.ts (createClient)
  *   ├─ lib/utils/thumbnailExtractor.ts (extractFirstImageUrl)
@@ -22,13 +25,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { extractFirstImageUrl } from "@/lib/utils/thumbnailExtractor";
-
-export interface ThumbnailStats {
-	totalPages: number;
-	withThumbnail: number;
-	withoutThumbnail: number;
-	withImages: number;
-}
+import type { ThumbnailStats } from "@/types/admin";
 
 /**
  * Check if user is admin

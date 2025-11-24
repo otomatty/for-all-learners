@@ -8,6 +8,9 @@
  * Parents (Files that import this route):
  *   └─ app/(protected)/settings/_components/prompt-templates/index.tsx
  *
+ * Types:
+ *   └─ types/prompt-templates.ts (PromptRow)
+ *
  * Dependencies (External files that this route uses):
  *   ├─ lib/supabase/server.ts (createClient)
  *   └─ types/database.types.ts
@@ -19,11 +22,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-
-export interface PromptRow {
-	prompt_key: string;
-	template: string;
-}
 
 /**
  * GET /api/prompt-templates - Get all user prompt templates
