@@ -8,7 +8,7 @@
 
 import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getDayActivityDetail } from "@/app/_actions/activity_calendar";
+import { useDayActivityDetail } from "@/hooks/activity_calendar";
 import { Button } from "@/components/ui/button";
 import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
@@ -25,38 +25,40 @@ interface DayDetailPanelProps {
 }
 
 export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
-	const [detail, setDetail] = useState<DayActivityDetail | null>(null);
-	const [loading, setLoading] = useState(true);
+	const { data: detail, isLoading, error } = useDayActivityDetail(userId, new Date(date));
+	const [enrichedDetail, setEnrichedDetail] = useState<DayActivityDetail | null>(null);
 
 	useEffect(() => {
-		async function fetchDetail() {
-			setLoading(true);
-			try {
-				const data = await getDayActivityDetail(userId, new Date(date));
-
-				// Enrich with plugin extension data (client-side only)
-				try {
-					const pluginExtensions = await getDailyExtensionData(date);
+		if (detail) {
+			// Enrich with plugin extension data (client-side only)
+			getDailyExtensionData(date)
+				.then((pluginExtensions) => {
 					if (pluginExtensions.length > 0) {
-						data.summary.pluginExtensions = pluginExtensions;
+						setEnrichedDetail({
+							...detail,
+							summary: {
+								...detail.summary,
+								pluginExtensions,
+							},
+						});
+					} else {
+						setEnrichedDetail(detail);
 					}
-				} catch (error) {
+				})
+				.catch((error) => {
 					logger.error(
 						{ error },
 						"Failed to enrich with plugin extension data",
 					);
-				}
-
-				setDetail(data);
-			} catch (_error) {
-				// Error is handled by showing empty state when detail is null
-				setDetail(null);
-			} finally {
-				setLoading(false);
-			}
+					setEnrichedDetail(detail);
+				});
+		} else {
+			setEnrichedDetail(null);
 		}
-		fetchDetail();
-	}, [date, userId]);
+	}, [detail, date]);
+
+	const loading = isLoading;
+	const displayDetail = enrichedDetail || detail;
 
 	useEffect(() => {
 		// ESCキーで閉じる
@@ -80,7 +82,7 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 		);
 	}
 
-	if (!detail) {
+	if (!displayDetail) {
 		return (
 			<div className="w-96 border-l bg-background p-6">
 				<div className="flex items-center justify-between mb-4">
@@ -94,10 +96,12 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 		);
 	}
 
+	if (!displayDetail) return null;
+
 	const totalMinutes =
-		detail.summary.learning.totalMinutes +
-		detail.summary.notes.totalEditMinutes;
-	const activityColor = ACTIVITY_COLORS[detail.summary.activityLevel];
+		displayDetail.summary.learning.totalMinutes +
+		displayDetail.summary.notes.totalEditMinutes;
+	const activityColor = ACTIVITY_COLORS[displayDetail.summary.activityLevel];
 
 	return (
 		<div className="w-96 border-l bg-background overflow-y-auto animate-slide-in-right">
@@ -147,25 +151,25 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 				</div>
 			</div>
 
-			{/* コンテンツ */}
+				{/* コンテンツ */}
 			<div className="p-4 space-y-6">
 				{/* 学習活動 */}
-				<LearningActivitySection activities={detail.learningActivities} />
+				<LearningActivitySection activities={displayDetail.learningActivities} />
 
 				{/* ノート活動 */}
-				<NoteActivitySection activities={detail.noteActivities} />
+				<NoteActivitySection activities={displayDetail.noteActivities} />
 
 				{/* 目標達成 */}
-				<GoalAchievementSection achievements={detail.goalAchievements} />
+				<GoalAchievementSection achievements={displayDetail.goalAchievements} />
 
 				{/* プラグイン拡張セクション */}
-				{detail.summary.pluginExtensions &&
-					detail.summary.pluginExtensions.length > 0 && (
+				{displayDetail.summary.pluginExtensions &&
+					displayDetail.summary.pluginExtensions.length > 0 && (
 						<div className="space-y-4">
 							<h4 className="text-sm font-semibold text-muted-foreground">
 								プラグイン拡張
 							</h4>
-							{detail.summary.pluginExtensions.map((ext, index) => {
+							{displayDetail.summary.pluginExtensions.map((ext, index) => {
 								if (!ext.detailSections || ext.detailSections.length === 0) {
 									return null;
 								}

@@ -5,6 +5,7 @@ export { useDeckPermissions } from "./useDeckPermissions";
 export type { Deck } from "./useDecks";
 export { useDecks } from "./useDecks";
 export { useDeleteDeck } from "./useDeleteDeck";
+export { useDuplicateDeck } from "./useDuplicateDeck";
 export type { DeckShareWithDeck } from "./useSharedDecks";
 export { useSharedDecks } from "./useSharedDecks";
 export { useSyncDeckLinks } from "./useSyncDeckLinks";

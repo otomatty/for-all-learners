@@ -1,24 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
-// actions
-import type { Deck as ServerDeck } from "@/app/_actions/goal-decks";
-import { removeGoalDeckLink } from "@/app/_actions/goal-decks";
+import { useCallback, useState } from "react";
+import { useRemoveGoalDeckLink, type Deck } from "@/hooks/goal_decks";
 import { AddDeckLinkDialog } from "./AddDeckLinkDialog";
 import { AddStudySessionDialog } from "./AddStudySessionDialog";
 // components
 import { DecksTable } from "./decks-table";
 import { MobileDecksList } from "./MobileDecksList";
 
-// Deck type extends server-side Deck and adds today's review count
-export interface Deck extends ServerDeck {
+// Deck type extends base Deck and adds today's review count
+export interface DeckWithReviewCount extends Deck {
 	todayReviewCount: number;
 }
 
 interface ClientGoalDecksSectionProps {
 	goalId: string;
-	initialDecks: Deck[];
+	initialDecks: DeckWithReviewCount[];
 }
 
 /**
@@ -29,8 +27,8 @@ export default function ClientGoalDecksSection({
 	initialDecks,
 }: ClientGoalDecksSectionProps) {
 	const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-	const [_isPending, startTransition] = useTransition();
 	const router = useRouter();
+	const removeGoalDeckLinkMutation = useRemoveGoalDeckLink();
 
 	const handleSuccess = useCallback(() => {
 		setSelectedDeckId(null);
@@ -39,13 +37,11 @@ export default function ClientGoalDecksSection({
 
 	// Handle deck removal
 	const handleRemove = useCallback(
-		(deckId: string) => {
-			startTransition(async () => {
-				await removeGoalDeckLink(goalId, deckId);
-				router.refresh();
-			});
+		async (deckId: string) => {
+			await removeGoalDeckLinkMutation.mutateAsync({ goalId, deckId });
+			router.refresh();
 		},
-		[goalId, router],
+		[goalId, router, removeGoalDeckLinkMutation],
 	);
 
 	// Handle deck addition success
