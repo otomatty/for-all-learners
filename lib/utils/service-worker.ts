@@ -65,4 +65,3 @@ export async function registerServiceWorker(
 		console.warn("Service Worker registration failed:", error);
 	}
 }
-

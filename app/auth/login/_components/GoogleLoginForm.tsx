@@ -44,9 +44,13 @@ export function GoogleLoginForm({
 						await loginWithGoogleTauri();
 						toast.success("認証ページを開きました");
 					} catch (err) {
-						toast.error(
-							err instanceof Error ? err.message : "エラーが発生しました",
-						);
+						const errorMessage =
+							err instanceof Error
+								? err.message
+								: typeof err === "string"
+									? err
+									: "エラーが発生しました";
+						toast.error(errorMessage);
 						onSubmittingChange(false);
 					}
 				}}

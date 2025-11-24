@@ -27,3 +27,12 @@ export function isTauri(): boolean {
 	}
 	return "__TAURI__" in window && window.__TAURI__ !== undefined;
 }
+
+/**
+ * 開発モードかどうかを判定
+ *
+ * @returns 開発モードの場合 true、それ以外 false
+ */
+export function isDevelopment(): boolean {
+	return process.env.NODE_ENV === "development";
+}

@@ -74,7 +74,8 @@ export function buildCSPHeader(
 		`worker-src 'self' blob:${httpLocalhost}`,
 		// Connect sources: self, Supabase, and GitHub REST API for commit activity
 		// In Tauri dev mode, allow HTTP localhost for development server
-		`connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.github.com${httpLocalhost}`,
+		// In Tauri environment, allow ipc://localhost for IPC communication (Tauri 2.0)
+		`connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.github.com${httpLocalhost}${isTauriDev ? " ipc://localhost" : ""}`,
 		// Style sources: self, unsafe-inline for Next.js auto-generated styles, and external CDNs
 		// Note: Next.js injects styles dynamically without nonces
 		// Also allows style attributes (inline styles) which are commonly used by React/Radix UI

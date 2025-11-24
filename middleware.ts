@@ -19,15 +19,31 @@ const PUBLIC_PATHS = [
 ];
 
 export async function middleware(req: NextRequest) {
-	const { pathname } = req.nextUrl;
+	const { pathname, searchParams } = req.nextUrl;
 
-	// Skip assets and Next.js internals
+	// Skip assets, Next.js internals, and API routes
 	if (
 		pathname.startsWith("/_next") ||
 		pathname.startsWith("/favicon.ico") ||
+		pathname.startsWith("/api") ||
 		pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|json)$/)
 	) {
 		return NextResponse.next();
+	}
+
+	// ルートパス（/）でcodeパラメータが存在する場合、/auth/callbackにリダイレクト
+	// これは、SupabaseがredirectToを無視して本番URLにリダイレクトした場合のフォールバック
+	if (pathname === "/" && searchParams.has("code")) {
+		const callbackUrl = new URL("/auth/callback", req.url);
+		// すべてのクエリパラメータを保持
+		searchParams.forEach((value, key) => {
+			callbackUrl.searchParams.set(key, value);
+		});
+		// Tauriコールバックの場合、tauri=trueパラメータを追加
+		if (!callbackUrl.searchParams.has("tauri")) {
+			callbackUrl.searchParams.set("tauri", "true");
+		}
+		return NextResponse.redirect(callbackUrl);
 	}
 
 	// Redirect /settings/api-keys to /settings (LLM settings tab)

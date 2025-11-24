@@ -2,7 +2,6 @@
 
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
-import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境でのOAuth認証コールバックを処理
@@ -10,60 +9,21 @@ import { isTauri } from "@/lib/utils/environment";
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ components/auth/TauriAuthHandler.tsx
+ *   └─ lib/auth/tauri-login.ts
  *
  * Dependencies (External files that this file imports):
  *   ├─ @/lib/supabase/client
- *   ├─ @/lib/utils/environment
  *   └─ @/lib/logger
  *
  * Related Documentation:
- *   ├─ Spec: docs/02_research/2025_11/20251109_02_supabase-tauri-integration.md
- *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
+ *   ├─ Spec: docs/guides/tauri-oauth-loopback-guide.md
+ *   └─ Log: docs/05_logs/2025_11/20251123/10_tauri-auth-migration-to-loopback.md
  */
-export async function handleTauriAuthCallback() {
-	if (!isTauri()) {
-		return; // Web環境では不要
-	}
-
-	// URLパラメータから認証情報を取得（Tauri環境ではURLが直接渡される）
-	const urlParams = new URLSearchParams(window.location.search);
-	const code = urlParams.get("code");
-	const accessToken = urlParams.get("access_token");
-	const refreshToken = urlParams.get("refresh_token");
-	const error = urlParams.get("error");
-
-	// リダイレクトURLの検証（セキュリティ）
-	// Tauri環境では、tauri://スキームのみ許可
-	const redirectUrl = urlParams.get("redirect_to");
-	if (redirectUrl && !redirectUrl.startsWith("tauri://")) {
-		logger.error(
-			{ redirectUrl },
-			"Invalid redirect URL: Only tauri:// scheme is allowed",
-		);
-		window.location.href = "/auth/login?error=invalid_redirect";
-		return;
-	}
-
-	if (error) {
-		// エラーパラメータの検証（セキュリティ）
-		const sanitizedError = encodeURIComponent(
-			error.length > 100 ? error.substring(0, 100) : error,
-		);
-		// エラーページにリダイレクト
-		window.location.href = `/auth/login?error=${sanitizedError}`;
-		return;
-	}
-
-	if (code || (accessToken && refreshToken)) {
-		await handleAuthCallback({ code, accessToken, refreshToken });
-	}
-}
 
 /**
  * 認証コールバックを処理
  */
-async function handleAuthCallback({
+export async function handleAuthCallback({
 	code,
 	accessToken,
 	refreshToken,
@@ -72,16 +32,28 @@ async function handleAuthCallback({
 	accessToken: string | null;
 	refreshToken: string | null;
 }) {
+	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+	console.log("[handleAuthCallback] Called with:", {
+		hasCode: !!code,
+		hasAccessToken: !!accessToken,
+		hasRefreshToken: !!refreshToken,
+	});
+
 	const supabase = createClient();
 
 	// セッションを設定
 	if (accessToken && refreshToken) {
-		const { error: sessionError } = await supabase.auth.setSession({
-			access_token: accessToken,
-			refresh_token: refreshToken,
-		});
+		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+		console.log("[handleAuthCallback] Setting session with tokens");
+		const { error: sessionError, data: sessionData } =
+			await supabase.auth.setSession({
+				access_token: accessToken,
+				refresh_token: refreshToken,
+			});
 
 		if (sessionError) {
+			// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+			console.error("[handleAuthCallback] Session error:", sessionError);
 			logger.error(
 				{ error: sessionError },
 				"Session error: Failed to set session",
@@ -89,11 +61,20 @@ async function handleAuthCallback({
 			window.location.href = "/auth/login?error=session_failed";
 			return;
 		}
+		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+		console.log("[handleAuthCallback] Session set successfully:", {
+			hasSession: !!sessionData.session,
+			hasUser: !!sessionData.user,
+		});
 	} else if (code) {
-		const { error: exchangeError } =
+		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+		console.log("[handleAuthCallback] Exchanging code for session");
+		const { error: exchangeError, data: exchangeData } =
 			await supabase.auth.exchangeCodeForSession(code);
 
 		if (exchangeError) {
+			// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+			console.error("[handleAuthCallback] Exchange error:", exchangeError);
 			logger.error(
 				{ error: exchangeError },
 				"Exchange error: Failed to exchange code for session",
@@ -101,12 +82,21 @@ async function handleAuthCallback({
 			window.location.href = "/auth/login?error=exchange_failed";
 			return;
 		}
+		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+		console.log("[handleAuthCallback] Code exchanged successfully:", {
+			hasSession: !!exchangeData.session,
+			hasUser: !!exchangeData.user,
+		});
 	}
 
 	// ユーザー情報を取得（認証が成功したことを確認）
-	const { error: getUserError } = await supabase.auth.getUser();
+	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+	console.log("[handleAuthCallback] Getting user...");
+	const { data: userData, error: getUserError } = await supabase.auth.getUser();
 
 	if (getUserError) {
+		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+		console.error("[handleAuthCallback] Get user error:", getUserError);
 		logger.error(
 			{ error: getUserError },
 			"Get user error: Failed to get user after authentication",
@@ -114,6 +104,12 @@ async function handleAuthCallback({
 		window.location.href = "/auth/login?error=get_user_failed";
 		return;
 	}
+
+	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+	console.log("[handleAuthCallback] User retrieved successfully:", {
+		userId: userData.user?.id,
+		email: userData.user?.email,
+	});
 
 	// アカウント初期化処理（createAccount, createDefaultNote等）は
 	// 既存のServer Actionsを使用するため、認証コールバック後は
@@ -123,5 +119,12 @@ async function handleAuthCallback({
 	// 必要に応じて実行されます。
 
 	// ダッシュボードにリダイレクト
-	window.location.href = "/dashboard";
+	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
+	console.log("[handleAuthCallback] Redirecting to /dashboard");
+
+	// Tauri環境では、ページをリロードしてセッションを確実に反映させる
+	// 少し遅延を入れて、セッション設定が完了するのを待つ
+	setTimeout(() => {
+		window.location.href = "/dashboard";
+	}, 100);
 }

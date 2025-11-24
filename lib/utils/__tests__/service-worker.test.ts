@@ -10,7 +10,10 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { cleanupTauriMock, setupTauriMock } from "../../auth/__tests__/helpers";
-import { shouldRegisterServiceWorker, registerServiceWorker } from "../service-worker";
+import {
+	registerServiceWorker,
+	shouldRegisterServiceWorker,
+} from "../service-worker";
 
 describe("shouldRegisterServiceWorker", () => {
 	beforeEach(() => {
@@ -111,4 +114,3 @@ describe("registerServiceWorker", () => {
 		await expect(registerServiceWorker()).resolves.not.toThrow();
 	});
 });
-
