@@ -1,7 +1,7 @@
 import { Container } from "@/components/layouts/container";
 import { getNotesServer } from "@/lib/services/notesService";
 import { createClient } from "@/lib/supabase/server";
-import NotesExplorer from "./_components/notes-explorer";
+import NotesExplorer from "./_components/NotesExplorer";
 
 export default async function NotesExplorerPage() {
 	const supabase = await createClient();

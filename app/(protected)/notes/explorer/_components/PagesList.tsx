@@ -1,17 +1,14 @@
 "use client";
 
 import { Calendar, FileText, Grid3X3, List, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getNotePages } from "@/app/_actions/notes";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNotePages } from "@/hooks/notes/useNotePages";
 import { cn } from "@/lib/utils";
-import type { Database } from "@/types/database.types";
-import DraggablePageItem from "./draggable-page-item";
-
-type PageRow = Database["public"]["Tables"]["pages"]["Row"];
+import DraggablePageItem from "./DraggablePageItem";
 
 interface PagesListProps {
 	noteId: string;
@@ -25,33 +22,19 @@ export default function PagesList({
 	selectedPageIds,
 	onSelectPages,
 }: PagesListProps) {
-	const [pages, setPages] = useState<PageRow[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortBy, setSortBy] = useState<"updated" | "created">("updated");
 	const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-	// ページデータを取得
-	useEffect(() => {
-		const fetchPages = async () => {
-			setLoading(true);
-			try {
-				const result = await getNotePages({
-					slug: noteSlug,
-					limit: 100, // TODO: ページネーション実装
-					offset: 0,
-					sortBy,
-				});
-				setPages(result.pages);
-			} catch (_error) {
-				setPages([]);
-			} finally {
-				setLoading(false);
-			}
-		};
+	// ページデータを取得（既存のフックを使用）
+	const { data, isLoading: loading } = useNotePages({
+		slug: noteSlug,
+		limit: 100, // TODO: ページネーション実装
+		offset: 0,
+		sortBy,
+	});
 
-		fetchPages();
-	}, [noteSlug, sortBy]);
+	const pages = data?.pages || [];
 
 	// 検索フィルタリング
 	const filteredPages = pages.filter((page) =>

@@ -67,7 +67,7 @@ export default function DraggablePageItem({
 				{/* ページ情報 */}
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2 mb-1">
-						<FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+						<FileText className="h-4 w-4 text-muted-foreground" />
 						<Link
 							href={`/notes/default/${page.id}`}
 							className="font-medium hover:underline truncate"

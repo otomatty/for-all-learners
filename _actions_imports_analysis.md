@@ -39,6 +39,7 @@
 - ✅ `lib/services/studyGoalsService.ts` - `getStudyGoalsServer()`, `getGoalLimitsServer()`
 - ✅ `lib/services/notesService.ts` - `getNotesServer()`
 - ✅ `lib/services/milestonesService.ts` - `getMilestonesServer()`
+- ✅ `lib/services/quizService.ts` - `getQuizQuestionsServer()`, `QuizParams`, `QuizMode`
 
 **実装例**:
 
@@ -176,9 +177,10 @@ export function UserSettingsForm() {
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え（`syncLinkGroupsForPage`, `getLinkGroupsForPage`も直接実装）
 - ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesList`を直接Supabaseクエリに置き換え
-- `app/(protected)/notes/explorer/_components/notes-explorer.tsx` - `notes`
+- ✅ `app/(protected)/notes/explorer/_components/notes-explorer.tsx` - **修正済み**: 既存のフック（`useBatchMovePages`, `useCheckBatchConflicts`, `useDeletePagesPermanently`, `useMoveNoteToTrash`）を使用
+- ✅ `app/(protected)/notes/explorer/_components/pages-list.tsx` - **修正済み**: `useNotePages`フックを使用
 - ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getAccountById`, `getStudyGoalsByUser`, `getUserGoalLimits`を直接Supabaseクエリに置き換え
-- `app/(protected)/learn/page.tsx` - `getQuizQuestions`, `QuizParams`
+- ✅ `app/(protected)/learn/page.tsx` - **修正済み**: `getQuizQuestionsServer()`を使用（`lib/services/quizService.ts`に実装）
 - `app/admin/milestone/page.tsx` - `getMilestones`
 - `app/admin/changelog/page.tsx` - `ChangeLogEntry`
 - `app/admin/plugins/signatures/page.tsx` - `plugin-signatures`
@@ -202,10 +204,10 @@ export function UserSettingsForm() {
 - ✅ `app/auth/login/_components/MagicLinkForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
 - ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
 - ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え、`CreateNotePayload`型のインポート元を`hooks/notes/useCreateNote.ts`に変更
-- `app/(protected)/goals/_components/GoalItem/GoalItem.tsx` - `completeStudyGoal`
-- `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - `updateStudyGoal`
-- `app/(protected)/goals/_components/GoalItem/DeleteGoalDialog.tsx` - `deleteStudyGoal`
-- `app/(protected)/learn/_components/QuizSession.tsx` - `QuizMode`
+- ✅ `app/(protected)/goals/_components/GoalItem/GoalItem.tsx` - **既に修正済み**: `useCompleteStudyGoal`フックを使用
+- ✅ `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - **既に修正済み**: `useUpdateStudyGoal`フックを使用
+- ✅ `app/(protected)/goals/_components/GoalItem/DeleteGoalDialog.tsx` - **既に修正済み**: `useDeleteStudyGoal`フックを使用
+- ✅ `app/(protected)/learn/_components/QuizSession.tsx` - **修正済み**: `QuizMode`型を`lib/services/quizService.ts`からインポート
 - ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
 - ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え（`GeneratedCard`型のインポート元も修正）
 - `app/(protected)/decks/[deckId]/_components/DeckPageClient.tsx` - `note-deck-links`
@@ -382,9 +384,9 @@ export function UserSettingsForm() {
 3. ✅ レイアウトファイルと設定ページの修正（完了）
 4. ✅ 型定義の移動（`CreateNotePayload`型を`hooks/notes/useCreateNote.ts`に移動完了）
 5. ✅ **【重要】既存カスタムフックのロジックを再利用するように修正**（完了）
-   - ✅ 既存フックからデータ取得ロジックを抽出してユーティリティ関数化（`lib/services/`に4つのサービスファイルを作成）
-   - ✅ サーバーコンポーネントでユーティリティ関数を使用（5つのファイルを更新）
-   - ✅ クライアントコンポーネントで既存フックを使用（既存のまま）
+   - ✅ 既存フックからデータ取得ロジックを抽出してユーティリティ関数化（`lib/services/`に5つのサービスファイルを作成）
+   - ✅ サーバーコンポーネントでユーティリティ関数を使用（6つのファイルを更新）
+   - ✅ クライアントコンポーネントで既存フックを使用（3つのファイルを更新）
 6. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
 7. ⚠️ その他の型定義の移動（`UpdateNotePayload`など、`types/`ディレクトリへ、または各フックファイルへ）
 8. ⚠️ テストファイルの更新（`useCreateNote.test.ts`は完了）

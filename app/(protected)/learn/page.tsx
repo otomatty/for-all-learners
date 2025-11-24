@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
 import { Container } from "@/components/layouts/container";
+import {
+	getQuizQuestionsServer,
+	type QuizParams,
+} from "@/lib/services/quizService";
 import QuizSession from "./_components/QuizSession";
 
 export default async function SessionPage() {
@@ -22,7 +25,7 @@ export default async function SessionPage() {
 	const timeLimit = defaultTimeLimit;
 
 	// Fetch questions enriched with questionId and cardId
-	const rawQuestions = await getQuizQuestions(params);
+	const rawQuestions = await getQuizQuestionsServer(params);
 
 	return (
 		<Container>

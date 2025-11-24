@@ -3,8 +3,8 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { NoteSummary } from "../../_components/NotesList";
-import DroppableNoteItem from "./droppable-note-item";
+import type { NoteSummary } from "../../../_components/NotesList";
+import DroppableNoteItem from "./DroppableNoteItem";
 
 interface NotesTreeProps {
 	notes: NoteSummary[];

@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { ConflictInfo, ConflictResolution } from "../types";
-import { ConflictPreview } from "./conflict-preview";
+import type { ConflictResolution } from "@/hooks/notes/useBatchMovePages";
+import type { ConflictInfo } from "@/hooks/notes/useCheckBatchConflicts";
+import { ConflictPreview } from "../ConflictPreview";
 
 interface ConflictItemProps {
 	conflict: ConflictInfo;

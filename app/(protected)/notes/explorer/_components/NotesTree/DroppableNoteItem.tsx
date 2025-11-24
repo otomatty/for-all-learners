@@ -4,7 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { Folder, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { NoteSummary } from "../../_components/NotesList";
+import type { NoteSummary } from "../../../_components/NotesList";
 
 interface DroppableNoteItemProps {
 	note: NoteSummary;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ConflictResolutionDialog } from "@/app/(protected)/notes/explorer/_components/conflict-resolution-dialog";
+import { ConflictResolutionDialog } from "@/app/(protected)/notes/explorer/_components/ConflictResolutionDialog/ConflictResolutionDialog";
 import type {
 	ConflictInfo,
 	ConflictResolution,

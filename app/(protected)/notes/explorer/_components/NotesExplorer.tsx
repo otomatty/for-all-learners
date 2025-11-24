@@ -14,28 +14,26 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useBatchMovePages } from "@/hooks/notes/useBatchMovePages";
-import { useCheckBatchConflicts } from "@/hooks/notes/useCheckBatchConflicts";
-import { useDeletePagesPermanently } from "@/hooks/notes/useDeletePagesPermanently";
-import { useMoveNoteToTrash } from "@/hooks/notes/useMoveNoteToTrash";
 import { Button } from "@/components/ui/button";
 import {
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import type { ConflictResolution } from "@/hooks/notes/useBatchMovePages";
+import { useBatchMovePages } from "@/hooks/notes/useBatchMovePages";
+import type { ConflictInfo } from "@/hooks/notes/useCheckBatchConflicts";
+import { useCheckBatchConflicts } from "@/hooks/notes/useCheckBatchConflicts";
+import { useDeletePagesPermanently } from "@/hooks/notes/useDeletePagesPermanently";
+import { useMoveNoteToTrash } from "@/hooks/notes/useMoveNoteToTrash";
 import type { NoteSummary } from "../../_components/NotesList";
-import type {
-	ConflictInfo,
-	ConflictResolution,
-} from "@/hooks/notes/useCheckBatchConflicts";
-import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import DraggedPagePreview from "./dragged-page-preview";
-import NotesTree from "./notes-tree";
-import OperationPanel from "./operation-panel";
-import PagesList from "./pages-list";
-import { TrashPanel } from "./trash-panel";
+import { ConflictResolutionDialog } from "./ConflictResolutionDialog/ConflictResolutionDialog";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import DraggedPagePreview from "./DraggedPagePreview";
+import NotesTree from "./NotesTree/NotesTree";
+import OperationPanel from "./OperationPanel";
+import PagesList from "./PagesList";
+import { TrashPanel } from "./TrashPanel";
 
 interface NotesExplorerProps {
 	notes: NoteSummary[];

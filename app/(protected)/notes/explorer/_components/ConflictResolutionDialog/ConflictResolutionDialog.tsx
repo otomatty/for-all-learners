@@ -11,8 +11,9 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import type { ConflictInfo, ConflictResolution } from "../types";
-import { ConflictItem } from "./conflict-item";
+import type { ConflictResolution } from "@/hooks/notes/useBatchMovePages";
+import type { ConflictInfo } from "@/hooks/notes/useCheckBatchConflicts";
+import { ConflictItem } from "./ConflictItem";
 
 interface ConflictResolutionDialogProps {
 	open: boolean;
