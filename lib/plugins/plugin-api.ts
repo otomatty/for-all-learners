@@ -23,9 +23,9 @@
 
 import type { JSONContent } from "@tiptap/core";
 import logger from "@/lib/logger";
+import type { Database } from "@/types/database.types";
 // Import package.json for version information
 import pkg from "../../package.json";
-import type { Database } from "@/types/database.types";
 import * as aiRegistry from "./ai-registry";
 import * as calendarRegistry from "./calendar-registry";
 import * as dataProcessorRegistry from "./data-processor-registry";
