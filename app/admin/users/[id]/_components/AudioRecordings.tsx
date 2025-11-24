@@ -98,7 +98,11 @@ export default async function AudioRecordings({
 				<TableBody>
 					{sortedRecordings.map((rec) => (
 						<TableRow key={rec.name}>
-							<TableCell>{new Date(rec.created_at).toLocaleString()}</TableCell>
+							<TableCell>
+								{rec.created_at
+									? new Date(rec.created_at).toLocaleString()
+									: "-"}
+							</TableCell>
 							<TableCell>{rec.title ?? "-"}</TableCell>
 							<TableCell>
 								{rec.duration_sec != null ? `${rec.duration_sec}秒` : "-"}

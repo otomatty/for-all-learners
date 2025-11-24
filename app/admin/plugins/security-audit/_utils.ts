@@ -59,21 +59,6 @@ export function parseSecurityAuditLogsSearchParams(searchParams?: {
 	};
 }
 
-/**
- * Security audit statistics
- */
-export interface SecurityAuditStats {
-	totalEvents: number;
-	eventsBySeverity: {
-		low: number;
-		medium: number;
-		high: number;
-		critical: number;
-	};
-	eventsByType: Record<string, number>;
-	recentCriticalEvents: number;
-}
-
 // Re-export types from service
 export type {
 	GetSecurityAuditLogsOptions,

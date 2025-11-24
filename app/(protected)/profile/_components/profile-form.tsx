@@ -2,7 +2,6 @@
 
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { updateAccount, uploadAvatar } from "@/app/_actions/accounts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,7 +76,22 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 			// ① アバター画像アップロード
 			if (selectedFile) {
 				const webp = await convertToWebp(selectedFile);
-				const afterAvatar = await uploadAvatar(webp);
+				const formData = new FormData();
+				formData.append("file", webp);
+
+				const avatarResponse = await fetch("/api/profile/avatar", {
+					method: "POST",
+					body: formData,
+				});
+
+				if (!avatarResponse.ok) {
+					const errorData = await avatarResponse.json();
+					throw new Error(
+						errorData.message ?? "アバターのアップロードに失敗しました",
+					);
+				}
+
+				const afterAvatar = await avatarResponse.json();
 				setAccount(afterAvatar);
 				setSelectedFile(null);
 				setPreviewUrl(null);
@@ -89,7 +103,23 @@ export default function ProfileForm({ initialAccount }: ProfileFormProps) {
 				birthdate: account.birthdate,
 			};
 			// 既にuploadAvatarでavatar_url更新済の場合はaccount.avatar_urlが新URLなのでinclude不要
-			const updated = await updateAccount(account.id, updates);
+			const accountResponse = await fetch("/api/profile/account", {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					accountId: account.id,
+					updates,
+				}),
+			});
+
+			if (!accountResponse.ok) {
+				const errorData = await accountResponse.json();
+				throw new Error(errorData.message ?? "アカウントの更新に失敗しました");
+			}
+
+			const updated = await accountResponse.json();
 			setAccount(updated);
 			toast.success("プロフィールを保存しました");
 		} catch (error: unknown) {
