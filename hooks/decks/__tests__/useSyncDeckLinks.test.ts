@@ -10,17 +10,17 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { syncCardLinks } from "@/app/_actions/syncCardLinks";
 import { createClient } from "@/lib/supabase/client";
+import { extractLinkData } from "@/lib/utils/linkUtils";
 import { useSyncDeckLinks } from "../useSyncDeckLinks";
 import { createMockSupabaseClient, createWrapper, mockUser } from "./helpers";
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
 
-// Mock syncCardLinks Server Action
-vi.mock("@/app/_actions/syncCardLinks", () => ({
-	syncCardLinks: vi.fn(),
+// Mock linkUtils
+vi.mock("@/lib/utils/linkUtils", () => ({
+	extractLinkData: vi.fn(),
 }));
 
 describe("useSyncDeckLinks", () => {
@@ -32,10 +32,6 @@ describe("useSyncDeckLinks", () => {
 		vi.mocked(createClient).mockReturnValue(
 			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 		);
-		vi.mocked(syncCardLinks).mockResolvedValue({
-			type: "doc",
-			content: [],
-		});
 	});
 
 	// TC-001: 正常系 - リンク同期成功
@@ -62,6 +58,12 @@ describe("useSyncDeckLinks", () => {
 			},
 		];
 
+		// Mock extractLinkData to return outgoingIds
+		vi.mocked(extractLinkData).mockReturnValue({
+			outgoingIds: ["page-1", "page-2"],
+			missingNames: [],
+		});
+
 		const mockCardsQuery = {
 			select: vi.fn().mockReturnThis(),
 			eq: vi.fn().mockResolvedValue({
@@ -70,7 +72,34 @@ describe("useSyncDeckLinks", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockCardsQuery);
+		// Track calls to from() to return appropriate query builders
+		// Each card requires: delete (1 call) + insert (1 call if outgoingIds.length > 0)
+		// For 2 cards with outgoingIds: 2 deletes + 2 inserts = 4 calls
+		let fromCallCount = 0;
+		mockSupabaseClient.from = vi.fn((table: string) => {
+			if (table === "cards") {
+				return mockCardsQuery;
+			}
+			if (table === "card_page_links") {
+				fromCallCount++;
+				// Odd calls are delete, even calls are insert
+				if (fromCallCount % 2 === 1) {
+					// Delete query - return a chainable mock
+					const deleteChain = {
+						delete: vi.fn().mockReturnThis(),
+						eq: vi.fn().mockResolvedValue({ error: null }),
+					} as unknown;
+					return deleteChain;
+				} else {
+					// Insert query - return a chainable mock
+					const insertChain = {
+						insert: vi.fn().mockResolvedValue({ error: null }),
+					} as unknown;
+					return insertChain;
+				}
+			}
+			return mockCardsQuery;
+		}) as typeof mockSupabaseClient.from;
 
 		const { result } = renderHook(() => useSyncDeckLinks(), {
 			wrapper: createWrapper(),
@@ -82,16 +111,10 @@ describe("useSyncDeckLinks", () => {
 			expect(result.current.isSuccess).toBe(true);
 		});
 
-		// Verify syncCardLinks was called for each card
-		expect(syncCardLinks).toHaveBeenCalledTimes(2);
-		expect(syncCardLinks).toHaveBeenCalledWith(
-			"card-1",
-			mockCards[0].front_content,
-		);
-		expect(syncCardLinks).toHaveBeenCalledWith(
-			"card-2",
-			mockCards[1].front_content,
-		);
+		// Verify extractLinkData was called for each card
+		expect(extractLinkData).toHaveBeenCalledTimes(2);
+		// Verify card_page_links operations were called
+		expect(mockSupabaseClient.from).toHaveBeenCalledWith("card_page_links");
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -143,7 +166,7 @@ describe("useSyncDeckLinks", () => {
 		});
 
 		expect(result.current.error).toBeDefined();
-		expect(syncCardLinks).not.toHaveBeenCalled();
+		expect(extractLinkData).not.toHaveBeenCalled();
 	});
 
 	// TC-004: 正常系 - キャッシュの無効化
@@ -159,9 +182,15 @@ describe("useSyncDeckLinks", () => {
 				front_content: {
 					type: "doc",
 					content: [],
+					outgoingIds: [],
 				},
 			},
 		];
+
+		vi.mocked(extractLinkData).mockReturnValue({
+			outgoingIds: [],
+			missingNames: [],
+		});
 
 		const mockCardsQuery = {
 			select: vi.fn().mockReturnThis(),
@@ -171,7 +200,20 @@ describe("useSyncDeckLinks", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockCardsQuery);
+		mockSupabaseClient.from = vi.fn((table: string) => {
+			if (table === "cards") {
+				return mockCardsQuery;
+			}
+			if (table === "card_page_links") {
+				// Delete query - return a chainable mock
+				const deleteChain = {
+					delete: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockResolvedValue({ error: null }),
+				} as unknown;
+				return deleteChain;
+			}
+			return mockCardsQuery;
+		}) as typeof mockSupabaseClient.from;
 
 		const { result } = renderHook(() => useSyncDeckLinks(), {
 			wrapper: createWrapper(),
