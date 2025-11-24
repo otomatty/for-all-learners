@@ -9,7 +9,6 @@
  * Dependencies (External files that this route uses):
  *   ├─ lib/supabase/server.ts (createClient)
  *   ├─ lib/supabase/adminClient.ts (createAdminClient)
- *   ├─ app/_actions/admin.ts (isAdmin)
  *   └─ lib/plugins/plugin-security-anomaly-detector.ts (getAnomalyDetector)
  *
  * Related Documentation:
@@ -18,10 +17,10 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
 import type { PluginSecurityAlert } from "@/lib/plugins/plugin-security/types";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
 type AlertRow = Database["public"]["Tables"]["plugin_security_alerts"]["Row"];
@@ -53,8 +52,36 @@ export type { PluginSecurityAlert };
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
+
 		// Check admin access
-		if (!(await isAdmin())) {
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json(
+				{
+					error: "Unauthorized",
+					message: "認証が必要です",
+					success: false,
+				},
+				{ status: 401 },
+			);
+		}
+
+		const { data: adminData } = await supabase
+			.from("admin_users")
+			.select("role, is_active")
+			.eq("user_id", user.id)
+			.maybeSingle();
+
+		const admin = Boolean(
+			adminData?.is_active &&
+				(adminData.role === "superadmin" || adminData.role === "admin"),
+		);
+
+		if (!admin) {
 			return NextResponse.json(
 				{
 					error: "Unauthorized",

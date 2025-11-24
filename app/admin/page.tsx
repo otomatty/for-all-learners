@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { isAdmin } from "@/app/_actions/admin";
 import { createClient } from "@/lib/supabase/server";
 import { ActiveUsersCard } from "./_components/ActiveUsersCard";
 import { NewUsersCard } from "./_components/NewUsersCard";
@@ -21,7 +20,17 @@ export default async function AdminPage() {
 	}
 
 	// 管理者判定
-	const admin = await isAdmin();
+	const { data: adminData } = await supabase
+		.from("admin_users")
+		.select("role, is_active")
+		.eq("user_id", user.id)
+		.maybeSingle();
+
+	const admin = Boolean(
+		adminData?.is_active &&
+			(adminData.role === "superadmin" || adminData.role === "admin"),
+	);
+
 	if (!admin) {
 		redirect("/");
 	}

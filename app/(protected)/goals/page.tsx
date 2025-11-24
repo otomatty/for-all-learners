@@ -1,9 +1,4 @@
 import { redirect } from "next/navigation";
-import { getAccountById } from "@/app/_actions/accounts";
-import {
-	getStudyGoalsByUser,
-	getUserGoalLimits,
-} from "@/app/_actions/study_goals";
 import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import { Container } from "@/components/layouts/container";
 import { createClient } from "@/lib/supabase/server";
@@ -22,12 +17,44 @@ export default async function GoalsPage() {
 		redirect("/auth/login");
 	}
 
-	// アカウント情報と目標データを取得
-	await getAccountById(user.id);
-	const [studyGoals, goalLimits] = await Promise.all([
-		getStudyGoalsByUser(user.id),
-		getUserGoalLimits(user.id),
+	// 目標データを取得
+	const [studyGoalsResult, subscriptionsResult] = await Promise.all([
+		supabase
+			.from("study_goals")
+			.select("*")
+			.eq("user_id", user.id)
+			.order("priority_order", { ascending: true })
+			.order("created_at", { ascending: false }),
+		supabase
+			.from("subscriptions")
+			.select("plan_id")
+			.eq("user_id", user.id)
+			.maybeSingle(),
 	]);
+
+	if (studyGoalsResult.error) {
+		throw studyGoalsResult.error;
+	}
+
+	const studyGoals = studyGoalsResult.data || [];
+
+	// 目標制限情報を計算
+	const subscription = subscriptionsResult.data;
+	const isPaid =
+		subscription !== null &&
+		subscription.plan_id !== "free" &&
+		!subscription.plan_id.includes("_free");
+	const maxGoals = isPaid ? 10 : 3;
+	const currentCount = studyGoals.length;
+	const canAddMore = currentCount < maxGoals;
+
+	const goalLimits = {
+		currentCount,
+		maxGoals,
+		canAddMore,
+		isPaid,
+		remainingGoals: maxGoals - currentCount,
+	};
 
 	// 各目標に紐付いたデッキ情報を取得
 	const goalsWithDeckCount = await Promise.all(

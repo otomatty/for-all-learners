@@ -13,7 +13,7 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { CreateNotePayload } from "@/app/_actions/notes/types";
+import type { CreateNotePayload } from "@/hooks/notes/useCreateNote";
 import { createClient } from "@/lib/supabase/client";
 import { useCreateNote } from "../useCreateNote";
 import {
@@ -95,6 +95,7 @@ describe("useCreateNote", () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
+			visibility: "private",
 		};
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
@@ -121,6 +122,7 @@ describe("useCreateNote", () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
+			visibility: "private",
 		};
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
@@ -157,6 +159,7 @@ describe("useCreateNote", () => {
 		const payload: CreateNotePayload = {
 			slug: "existing-note",
 			title: "New Note",
+			visibility: "private",
 		};
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
@@ -190,7 +193,7 @@ describe("useCreateNote", () => {
 		});
 
 		expect(result.current.error).toBeDefined();
-		expect(result.current.error?.code).toBe("23505");
+		expect(result.current.error?.message).toContain("duplicate");
 	});
 
 	// TC-005: 正常系 - キャッシュ無効化の確認
@@ -198,6 +201,7 @@ describe("useCreateNote", () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
+			visibility: "private",
 		};
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
@@ -247,6 +251,7 @@ describe("useCreateNote", () => {
 		const payload: CreateNotePayload = {
 			slug: "test",
 			title: "Test",
+			visibility: "private",
 		};
 
 		const mockQuery = {
@@ -275,11 +280,11 @@ describe("useCreateNote", () => {
 	});
 
 	// TC-007: デフォルト値の確認
-	test("TC-007: Should use default visibility when not provided", async () => {
+	test("TC-007: Should handle visibility field", async () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
-			// visibility not provided
+			visibility: "private",
 		};
 
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({

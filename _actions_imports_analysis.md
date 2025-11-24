@@ -4,7 +4,7 @@
 これらは全てサーバーアクション（`"use server"`ディレクティブを使用）を使用しているため、Tauri環境への移行時にAPIエンドポイントまたはRPC関数に置き換える必要があります。
 
 **更新日**: 2025-01-XX
-**ステータス**: 優先度の高いファイルの修正を完了。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+**ステータス**: 優先度の高いファイルの修正を完了。レイアウトファイル、設定ページ、プロフィールページ、管理者ページ、セキュリティ関連API Routes、目標管理ページ、ノートエクスプローラーページも修正済み。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
 
 ## 修正済みファイル（✅）
 
@@ -18,6 +18,11 @@
 - ✅ `app/api/gyazo/callback/route.ts` - OAuthコールバック処理を直接実装
 - ✅ `app/api/audio/transcribe/route.ts` - 新規作成: 単一音声文字起こし用API Route
 - ✅ `app/api/image/ocr/route.ts` - 新規作成: 単一画像OCR用API Route
+- ✅ `app/api/plugins/security/audit-logs/route.ts` - `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/route.ts` - `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/statistics/route.ts` - `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/run-detection/route.ts` - `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/[alertId]/route.ts` - `isAdmin`を直接Supabaseクエリに置き換え
 
 ### Route Handlers
 - ✅ `app/(protected)/notes/default/new/route.ts` - 直接Supabaseクエリに置き換え
@@ -26,6 +31,14 @@
 ### Pages
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - 直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/settings/page.tsx` - `getUserSettings`と`getUserCosenseProjects`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/profile/page.tsx` - `createAccount`, `getAccountById`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/page.tsx` - `isAdmin`を直接Supabaseクエリに置き換え
+
+### Layouts
+- ✅ `app/layout.tsx` - `getUserSettings`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
 ### Components
 - ✅ `app/auth/login/_components/MagicLinkForm.tsx` - クライアント側Supabaseクライアントに置き換え
@@ -40,13 +53,13 @@
 #### API Routes
 - ✅ `app/api/cards/save/route.ts` - **修正済み**: `convertTextToTiptapJSON`と直接Supabaseクエリに置き換え
 - ⚠️ `app/api/cards/save/__tests__/route.test.ts` - `generateCardsFromPage` (テストファイル)
-- `app/api/plugins/security/audit-logs/route.ts` - `isAdmin`
-- `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - `isAdmin`
-- `app/api/plugins/security/alerts/route.ts` - `isAdmin`
-- `app/api/plugins/security/alerts/__tests__/route.test.ts` - `isAdmin`
-- `app/api/plugins/security/alerts/statistics/route.ts` - `isAdmin`
-- `app/api/plugins/security/alerts/run-detection/route.ts` - `isAdmin`
-- `app/api/plugins/security/alerts/[alertId]/route.ts` - `isAdmin`
+- ✅ `app/api/plugins/security/audit-logs/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
+- ⚠️ `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - `isAdmin` (テストファイル)
+- ✅ `app/api/plugins/security/alerts/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
+- ⚠️ `app/api/plugins/security/alerts/__tests__/route.test.ts` - `isAdmin` (テストファイル)
+- ✅ `app/api/plugins/security/alerts/statistics/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/run-detection/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/api/plugins/security/alerts/[alertId]/route.ts` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
 - ✅ `app/api/batch/unified/route.ts` - **修正済み**: バッチ処理関数を直接実装
 - ✅ `app/api/batch/multi-file/route.ts` - **修正済み**: マルチファイル処理を直接実装
 - ✅ `app/api/notes/[slug]/pages/route.ts` - **修正済み**: RPC関数を直接呼び出し
@@ -59,9 +72,9 @@
 #### Pages
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え（`syncLinkGroupsForPage`, `getLinkGroupsForPage`も直接実装）
-- `app/(protected)/notes/explorer/page.tsx` - `getNotesList`
+- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesList`を直接Supabaseクエリに置き換え
 - `app/(protected)/notes/explorer/_components/notes-explorer.tsx` - `notes`
-- `app/(protected)/goals/page.tsx` - `getAccountById`, `study_goals`
+- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getAccountById`, `getStudyGoalsByUser`, `getUserGoalLimits`を直接Supabaseクエリに置き換え
 - `app/(protected)/learn/page.tsx` - `getQuizQuestions`, `QuizParams`
 - `app/admin/milestone/page.tsx` - `getMilestones`
 - `app/admin/changelog/page.tsx` - `ChangeLogEntry`
@@ -69,25 +82,29 @@
 - `app/admin/plugins/security-audit/page.tsx` - `getSecurityAuditLogs`
 - `app/admin/plugins/security-alerts/page.tsx` - `plugin-security-alerts`
 - `app/(protected)/settings/plugins/page.tsx` - `plugins`
-- `app/(protected)/settings/page.tsx` - `getUserCosenseProjects`, `getUserSettings`
-- `app/(protected)/profile/page.tsx` - `createAccount`, `getAccountById`
-- `app/admin/page.tsx` - `isAdmin`
+- ✅ `app/(protected)/settings/page.tsx` - **修正済み**: `getUserSettings`と`getUserCosenseProjects`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/profile/page.tsx` - **修正済み**: `createAccount`, `getAccountById`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/page.tsx` - **修正済み**: `isAdmin`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/goals/page.tsx` - **修正済み**: `getAccountById`, `getStudyGoalsByUser`, `getUserGoalLimits`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**: `getNotesList`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/milestone/page.tsx` - **修正済み**: `getMilestones`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え
 
 #### Layouts
-- `app/layout.tsx` - `getUserSettings`
-- `app/(protected)/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`
-- `app/admin/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`
+- ✅ `app/layout.tsx` - **修正済み**: `getUserSettings`を直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`, `getHelpVideoAudioSetting`を直接Supabaseクエリに置き換え
+- ✅ `app/admin/layout.tsx` - **修正済み**: `isAdmin`, `getCurrentUser`, `getUserPlan`を直接Supabaseクエリに置き換え
 
 #### Components
 - ✅ `app/auth/login/_components/MagicLinkForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
 - ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
-- `app/(protected)/notes/_components/CreateNoteForm.tsx` - `CreateNotePayload`, `validateSlug`
+- ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**: `validateSlug`を直接Supabaseクエリに置き換え（`CreateNotePayload`は型定義のみ）
 - `app/(protected)/goals/_components/GoalItem/GoalItem.tsx` - `completeStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - `updateStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/DeleteGoalDialog.tsx` - `deleteStudyGoal`
 - `app/(protected)/learn/_components/QuizSession.tsx` - `QuizMode`
 - ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
-- ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
+- ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え（`GeneratedCard`型のインポート元も修正）
 - `app/(protected)/decks/[deckId]/_components/DeckPageClient.tsx` - `note-deck-links`
 - `app/(protected)/decks/[deckId]/_components/DeckNoteManager.tsx` - `note-deck-links`
 - `app/(protected)/notes/[slug]/_components/note-deck-manager.tsx` - `note-deck-links`
@@ -215,6 +232,10 @@
 - 認証関連のコンポーネント
 - カード保存API Route
 - ノート関連のページコンポーネント
+- レイアウトファイル（`app/layout.tsx`, `app/(protected)/layout.tsx`, `app/admin/layout.tsx`）
+- 設定ページ（`app/(protected)/settings/page.tsx`）
+- バッチ処理API Routes
+- 音声・画像処理コンポーネント
 
 ### 残りの作業（⚠️）
 
@@ -223,8 +244,23 @@
 - ✅ `app/api/batch/multi-file/route.ts` - **修正済み**
 - ✅ `app/api/notes/[slug]/pages/route.ts` - **修正済み**
 - ✅ `app/api/gyazo/callback/route.ts` - **修正済み**
+- ✅ `app/api/plugins/security/audit-logs/route.ts` - **修正済み**
+- ✅ `app/api/plugins/security/alerts/route.ts` - **修正済み**
+- ✅ `app/api/plugins/security/alerts/statistics/route.ts` - **修正済み**
+- ✅ `app/api/plugins/security/alerts/run-detection/route.ts` - **修正済み**
+- ✅ `app/api/plugins/security/alerts/[alertId]/route.ts` - **修正済み**
 - ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**
 - ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**
+- ✅ `app/layout.tsx` - **修正済み**
+- ✅ `app/(protected)/layout.tsx` - **修正済み**
+- ✅ `app/admin/layout.tsx` - **修正済み**
+- ✅ `app/(protected)/settings/page.tsx` - **修正済み**
+- ✅ `app/(protected)/profile/page.tsx` - **修正済み**
+- ✅ `app/admin/page.tsx` - **修正済み**
+- ✅ `app/(protected)/goals/page.tsx` - **修正済み**
+- ✅ `app/(protected)/notes/explorer/page.tsx` - **修正済み**
+- ✅ `app/admin/milestone/page.tsx` - **修正済み**
+- ✅ `app/(protected)/notes/_components/CreateNoteForm.tsx` - **修正済み**
 
 #### 優先度: 中（型定義のみ、またはコメントアウト済み）
 - 型定義のみのインポート（`import type`）は実行時エラーにはならないが、型定義ファイルの移動が必要
@@ -237,7 +273,8 @@
 
 1. ✅ 主要なサーバーコンポーネントとAPI Routesの修正（完了）
 2. ✅ 優先度の高いAPI Routesとクライアントコンポーネントの修正（完了）
-3. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
-4. ⚠️ 型定義の移動（`types/`ディレクトリへ）
-5. ⚠️ テストファイルの更新
+3. ✅ レイアウトファイルと設定ページの修正（完了）
+4. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
+5. ⚠️ 型定義の移動（`types/`ディレクトリへ）
+6. ⚠️ テストファイルの更新
 

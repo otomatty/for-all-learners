@@ -3,8 +3,6 @@
 import { Check, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { CreateNotePayload } from "@/app/_actions/notes/types";
-import { validateSlug } from "@/app/_actions/slug";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -34,6 +32,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import type { CreateNotePayload } from "@/hooks/notes/useCreateNote";
 import { useCreateNote } from "@/hooks/notes/useCreateNote";
 import { useShareNote } from "@/hooks/notes/useShareNote";
 import { createClient } from "@/lib/supabase/client";
@@ -73,14 +72,23 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 		}
 		let isCurrent = true;
 		setSlugStatus("validating");
-		validateSlug(slugValue)
-			.then(({ available }) => {
+		const client = createClient();
+		(async () => {
+			try {
+				const { count, error } = await client
+					.from("notes")
+					.select("id", { count: "exact", head: true })
+					.eq("slug", slugValue);
 				if (!isCurrent) return;
-				setSlugStatus(available ? "available" : "unavailable");
-			})
-			.catch(() => {
+				if (error) {
+					setSlugStatus("unavailable");
+					return;
+				}
+				setSlugStatus(count === 0 ? "available" : "unavailable");
+			} catch {
 				if (isCurrent) setSlugStatus("unavailable");
-			});
+			}
+		})();
 		return () => {
 			isCurrent = false;
 		};

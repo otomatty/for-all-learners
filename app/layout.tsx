@@ -4,8 +4,8 @@ import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 import type { Viewport } from "next";
-import { getUserSettings } from "@/app/_actions/user_settings";
 import { Providers } from "@/components/providers";
+import { createClient } from "@/lib/supabase/server";
 import "tiptap-extension-code-block-shiki";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,7 +27,31 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }) {
 	// サーバーサイドでユーザー設定を取得
-	const { theme, mode } = await getUserSettings();
+	const supabase = await createClient();
+	let theme = "light";
+	let mode: "light" | "dark" | "system" = "system";
+
+	try {
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (user) {
+			const { data: settings } = await supabase
+				.from("user_settings")
+				.select("theme, mode")
+				.eq("user_id", user.id)
+				.maybeSingle();
+
+			if (settings) {
+				theme = settings.theme || "light";
+				mode = (settings.mode as "light" | "dark" | "system") || "system";
+			}
+		}
+	} catch (_error) {
+		// エラー時はデフォルト値を使用
+	}
+
 	const themeClass = `theme-${theme}`;
 	const darkClass = mode === "dark" ? "dark" : "";
 

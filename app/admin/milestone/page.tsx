@@ -1,13 +1,23 @@
-// "use client"; // クライアントコンポーネント指定を削除
-
-import { getMilestones } from "@/app/_actions/milestone";
-import MilestoneAdminView from "./_components/MilestoneAdminView"; // 新しいクライアントコンポーネントをインポート
+import type { MilestoneEntry } from "@/app/(public)/milestones/_components/milestone-timeline";
+import { mapRowToEntry } from "@/hooks/milestones/utils";
+import { createClient } from "@/lib/supabase/server";
+import MilestoneAdminView from "./_components/MilestoneAdminView";
 
 export default async function MilestonesAdminPage() {
-	// サーバーコンポーネント内でデータを取得
-	const initialMilestones = await getMilestones();
-	// エラーハンドリングが必要な場合はここで行う
-	// 例: try-catchで囲み、エラーページを表示するなど
+	const supabase = await createClient();
+
+	// マイルストーン一覧を取得
+	const { data, error } = await supabase
+		.from("milestones")
+		.select("*")
+		.order("sort_order", { ascending: true })
+		.order("created_at", { ascending: false });
+
+	if (error) {
+		throw new Error(`Failed to fetch milestones: ${error.message}`);
+	}
+
+	const initialMilestones: MilestoneEntry[] = (data || []).map(mapRowToEntry);
 
 	return (
 		<div style={{ padding: "20px" }}>

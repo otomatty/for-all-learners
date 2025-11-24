@@ -1,13 +1,64 @@
-import { getUserCosenseProjects } from "@/app/_actions/cosense";
-import { getUserSettings } from "@/app/_actions/user_settings";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import UserSettingsForm from "./_components/user-settings-form";
 
+type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
+type CosenseProject = {
+	id: string;
+	project_name: string;
+	lastSyncedAt: string;
+	page_count: number;
+	accessible: boolean;
+};
+
 export default async function SettingsPage() {
+	const supabase = await createClient();
+
+	// 認証チェック
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
+
+	if (userError || !user) {
+		throw new Error("Not authenticated");
+	}
+
 	// サーバーサイドでユーザー設定を取得
-	const initialSettings = await getUserSettings();
-	const initialProjects = await getUserCosenseProjects();
+	const { data: settingsData } = await supabase
+		.from("user_settings")
+		.select("*")
+		.eq("user_id", user.id)
+		.maybeSingle();
+
+	const initialSettings: UserSettings = settingsData || {
+		user_id: user.id,
+		theme: "light",
+		mode: "system",
+		play_help_video_audio: false,
+		created_at: new Date().toISOString(),
+		updated_at: new Date().toISOString(),
+	};
+
+	// Cosenseプロジェクトを取得
+	const { data: cosenseProjectsData } = await supabase
+		.from("user_cosense_projects")
+		.select(
+			"id, cosense_projects(project_name), page_count, accessible, updated_at",
+		)
+		.eq("user_id", user.id);
+
+	const initialProjects: CosenseProject[] =
+		cosenseProjectsData?.map((item) => ({
+			id: item.id,
+			project_name:
+				(item.cosense_projects as { project_name: string })?.project_name || "",
+			lastSyncedAt: item.updated_at || new Date().toISOString(),
+			page_count: item.page_count || 0,
+			accessible: item.accessible ?? true,
+		})) || [];
 
 	return (
 		<>
