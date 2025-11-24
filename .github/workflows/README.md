@@ -21,6 +21,7 @@
 | **Code Quality Check** | Biomeによるlint/format | PR作成、main/develop push | 1 |
 | **Test** | Vitestによる自動テスト実行 | PR作成、main/develop push | 1 |
 | **Build Check** | Next.js本番ビルド確認 | PR作成 | 1 |
+| **Tauri Build** | Tauriバイナリの自動ビルド | PR作成、main/develop push、タグ作成 | 6 |
 | **Security Check** | 依存関係の脆弱性スキャン | 毎週月曜、package.json変更時 | 2 |
 | **Dependabot** | 依存関係の自動更新 | 毎週月曜 | 2 |
 
