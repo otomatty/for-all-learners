@@ -52,13 +52,12 @@ function prepare() {
 
 	const allRouteFiles = findRouteFiles("app");
 	const filesToDisable = allRouteFiles.filter((file) => {
-		// Disable all API routes and route handlers except auth/callback
-		// Auth callback is needed for Tauri OAuth flow
+		// Disable all API routes and route handlers
+		// Tauri environment uses Loopback Server for OAuth, so auth/callback route handler is not needed
 		const isAPIRoute = file.includes("/api/");
 		const isRouteHandler = file.includes("/route.ts") || file.includes("/route.js");
-		const isAuthCallback = file.includes("/auth/callback/route");
 		
-		return (isAPIRoute || isRouteHandler) && !isAuthCallback;
+		return isAPIRoute || isRouteHandler;
 	});
 
 	let disabledCount = 0;
