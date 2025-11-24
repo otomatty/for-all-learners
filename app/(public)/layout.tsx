@@ -13,14 +13,24 @@ export default async function PublicLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	// Supabase クライアントのインスタンスを作成します。
-	// createClient 関数の実装によっては cookieStore が不要な場合もあります。
-	// プロジェクトの Supabase 設定に合わせてください。
-	const supabase = await createClient();
+	// 静的エクスポート時はcookies()を使用できないため、認証情報を取得しない
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	let user = null;
 
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	if (!isStaticExport) {
+		try {
+			// Supabase クライアントのインスタンスを作成します。
+			// createClient 関数の実装によっては cookieStore が不要な場合もあります。
+			// プロジェクトの Supabase 設定に合わせてください。
+			const supabase = await createClient();
+			const {
+				data: { user: authUser },
+			} = await supabase.auth.getUser();
+			user = authUser;
+		} catch (_error) {
+			// エラー時は認証されていないとみなす
+		}
+	}
 
 	return (
 		<div className="min-h-screen flex flex-col">

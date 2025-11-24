@@ -27,23 +27,27 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	// サーバーサイドでユーザー設定を取得（既存フックのロジックを再利用）
-	const supabase = await createClient();
+	// 静的エクスポート時はcookies()を使用できないため、デフォルト値を使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
 	let theme = "light";
 	let mode: "light" | "dark" | "system" = "system";
 
-	try {
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
+	if (!isStaticExport) {
+		try {
+			// サーバーサイドでユーザー設定を取得（既存フックのロジックを再利用）
+			const supabase = await createClient();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
 
-		if (user) {
-			const settings = await getUserSettingsTheme(user.id);
-			theme = settings.theme;
-			mode = settings.mode;
+			if (user) {
+				const settings = await getUserSettingsTheme(user.id);
+				theme = settings.theme;
+				mode = settings.mode;
+			}
+		} catch (_error) {
+			// エラー時はデフォルト値を使用
 		}
-	} catch (_error) {
-		// エラー時はデフォルト値を使用
 	}
 
 	const themeClass = `theme-${theme}`;

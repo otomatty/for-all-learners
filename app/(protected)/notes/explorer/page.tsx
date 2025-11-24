@@ -1,23 +1,29 @@
 import { Container } from "@/components/layouts/container";
-import { getNotesServer } from "@/lib/services/notesService";
+import { getNotesServer, type NoteSummary } from "@/lib/services/notesService";
 import { createClient } from "@/lib/supabase/server";
 import NotesExplorer from "./_components/NotesExplorer";
 
 export default async function NotesExplorerPage() {
-	const supabase = await createClient();
+	// 静的エクスポート時はcookies()を使用できないため、認証情報を取得しない
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	let notes: NoteSummary[] = [];
 
-	// 認証チェック
-	const {
-		data: { user },
-		error: userError,
-	} = await supabase.auth.getUser();
+	if (!isStaticExport) {
+		const supabase = await createClient();
 
-	if (userError || !user) {
-		throw new Error("Not authenticated");
+		// 認証チェック
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
+
+		if (userError || !user) {
+			throw new Error("Not authenticated");
+		}
+
+		// ノート一覧を取得（既存フックのロジックを再利用）
+		notes = await getNotesServer(user.id);
 	}
-
-	// ノート一覧を取得（既存フックのロジックを再利用）
-	const notes = await getNotesServer(user.id);
 
 	return (
 		<Container className="h-full">
