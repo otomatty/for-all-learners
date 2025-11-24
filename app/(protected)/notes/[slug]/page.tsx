@@ -1,9 +1,4 @@
 import { redirect } from "next/navigation";
-import {
-	getAvailableDecksForNote,
-	getDecksLinkedToNote,
-} from "@/app/_actions/note-deck-links";
-import { getDefaultNote, getNoteDetail } from "@/app/_actions/notes";
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
@@ -32,21 +27,125 @@ export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
 	}
 
 	// Handle special "default" slug
-	let note: Awaited<ReturnType<typeof getDefaultNote>>;
+	type NoteData = {
+		id: string;
+		slug: string;
+		title: string;
+		description: string | null;
+		visibility: string;
+		created_at: string;
+		updated_at: string;
+		page_count: number;
+		participant_count: number;
+		owner_id: string;
+		is_default_note: boolean | null;
+	};
+
+	let note: NoteData;
 	if (slug === "default") {
 		// Get user's default note (with is_default_note flag)
-		note = await getDefaultNote();
+		const { data: defaultNote, error: noteError } = await supabase
+			.from("notes")
+			.select(
+				"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id, is_default_note",
+			)
+			.eq("owner_id", user.id)
+			.eq("is_default_note", true)
+			.single();
+
+		if (noteError || !defaultNote) {
+			throw new Error("Default note not found");
+		}
+
+		note = defaultNote;
 	} else {
 		// Get note by slug
-		const result = await getNoteDetail(slug);
-		note = result.note;
+		const { data: noteData, error: noteError } = await supabase
+			.from("notes")
+			.select(
+				"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id, is_default_note",
+			)
+			.eq("slug", slug)
+			.single();
+
+		if (noteError || !noteData) {
+			throw new Error("Note not found");
+		}
+
+		note = noteData;
 	}
 
 	// Note-Deck Links データ取得
-	const [linkedDecks, availableDecks] = await Promise.all([
-		getDecksLinkedToNote(note.id).catch(() => []),
-		getAvailableDecksForNote(note.id).catch(() => []),
+	const [linkedDecksResult, availableDecksResult] = await Promise.allSettled([
+		supabase
+			.from("note_deck_links")
+			.select(
+				`
+				deck:decks (
+					id,
+					title,
+					description,
+					is_public,
+					created_at,
+					updated_at,
+					user_id
+				)
+			`,
+			)
+			.eq("note_id", note.id),
+		supabase
+			.from("decks")
+			.select(
+				"id, title, description, is_public, created_at, updated_at, user_id",
+			)
+			.eq("user_id", user.id),
 	]);
+
+	const linkedDecksData =
+		linkedDecksResult.status === "fulfilled"
+			? linkedDecksResult.value.data || []
+			: [];
+	const availableDecksData =
+		availableDecksResult.status === "fulfilled"
+			? availableDecksResult.value.data || []
+			: [];
+
+	const linkedDeckIds = new Set(
+		linkedDecksData
+			.map((link: { deck: unknown }) => {
+				if (link.deck && typeof link.deck === "object" && "id" in link.deck) {
+					return link.deck.id as string;
+				}
+				return null;
+			})
+			.filter(Boolean),
+	);
+
+	type DeckData = {
+		id: string;
+		title: string;
+		description: string | null;
+		is_public: boolean | null;
+		created_at: string;
+		updated_at: string;
+		user_id: string;
+	};
+
+	const linkedDecks: DeckData[] =
+		linkedDecksData
+			.map((link: { deck: unknown }) => link.deck)
+			.filter((deck): deck is DeckData => {
+				return (
+					typeof deck === "object" &&
+					deck !== null &&
+					"id" in deck &&
+					"title" in deck
+				);
+			}) || [];
+	const availableDecks: DeckData[] =
+		(availableDecksData as DeckData[]).filter(
+			(deck) => !linkedDeckIds.has(deck.id),
+		) || [];
 
 	return (
 		<Container className="max-w-7xl">

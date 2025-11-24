@@ -3,11 +3,11 @@
 import { Mail } from "lucide-react";
 import { useId } from "react";
 import { toast } from "sonner";
-import { loginWithMagicLink } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginWithMagicLinkTauri } from "@/lib/auth/tauri-magic-link";
+import { createClient } from "@/lib/supabase/client";
 
 interface MagicLinkFormProps {
 	isTauri: boolean;
@@ -24,8 +24,8 @@ interface MagicLinkFormProps {
  *   └─ app/auth/login/_components/LoginForm.tsx
  *
  * Dependencies (External files that this file imports):
- *   ├─ @/app/_actions/auth
  *   ├─ @/lib/auth/tauri-magic-link
+ *   ├─ @/lib/supabase/client
  *   ├─ @/components/ui/button
  *   ├─ @/components/ui/input
  *   ├─ @/components/ui/label
@@ -90,7 +90,33 @@ export function MagicLinkForm({
 	}
 
 	return (
-		<form action={loginWithMagicLink} className="grid gap-4 mb-6">
+		<form
+			onSubmit={async (e) => {
+				e.preventDefault();
+				const formData = new FormData(e.currentTarget);
+				const email = formData.get("email") as string;
+				try {
+					const supabase = createClient();
+					const { error } = await supabase.auth.signInWithOtp({
+						email,
+						options: {
+							emailRedirectTo: `${window.location.origin}/auth/callback`,
+						},
+					});
+					if (error) {
+						toast.error(`認証メールの送信に失敗しました: ${error.message}`);
+					} else {
+						toast.success("認証メールを送信しました");
+						e.currentTarget.reset();
+					}
+				} catch (err) {
+					toast.error(
+						err instanceof Error ? err.message : "エラーが発生しました",
+					);
+				}
+			}}
+			className="grid gap-4 mb-6"
+		>
 			<div>
 				<Label htmlFor={emailId} className="sr-only">
 					メールアドレス

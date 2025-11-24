@@ -7,7 +7,7 @@
  *   └─ lib/hooks/cards/useSaveCards.ts (Phase 4.2)
  *
  * Dependencies (依存先):
- *   ├─ app/_actions/generateCardsFromPage.ts (saveGeneratedCards, wrapTextInTiptapJson)
+ *   ├─ lib/utils/pdfUtils.ts (convertTextToTiptapJSON)
  *   ├─ lib/supabase/server.ts (createClient)
  *   └─ lib/logger.ts
  *
@@ -17,12 +17,9 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import {
-	saveGeneratedCards,
-	wrapTextInTiptapJson,
-} from "@/app/_actions/generateCardsFromPage";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
+import { convertTextToTiptapJSON } from "@/lib/utils/pdfUtils";
 
 interface CardToSavePayload {
 	front_content: string;
@@ -84,26 +81,30 @@ export async function POST(request: NextRequest) {
 		);
 
 		// カードをTiptap JSON形式に変換
-		const cardsToSavePromises = body.cards.map(async (rawCard) => ({
+		const cardsToSave = body.cards.map((rawCard) => ({
 			deck_id: body.deckId,
 			user_id: user.id,
 			page_id: body.pageId,
-			front_content: await wrapTextInTiptapJson(rawCard.front_content),
-			back_content: await wrapTextInTiptapJson(rawCard.back_content),
+			front_content: convertTextToTiptapJSON(rawCard.front_content),
+			back_content: convertTextToTiptapJSON(rawCard.back_content),
 		}));
 
-		const cardsToSave = await Promise.all(cardsToSavePromises);
-
 		// カードを保存
-		const result = await saveGeneratedCards(cardsToSave, user.id);
+		const { data: savedCards, error: saveError } = await supabase
+			.from("cards")
+			.insert(cardsToSave)
+			.select();
 
-		if (result.error) {
+		if (saveError) {
 			logger.error(
-				{ error: result.error, userId: user.id },
+				{ error: saveError, userId: user.id },
 				"Failed to save cards",
 			);
 			return NextResponse.json(
-				{ error: result.error, savedCardsCount: result.savedCardsCount },
+				{
+					error: saveError.message,
+					savedCardsCount: 0,
+				},
 				{ status: 500 },
 			);
 		}
@@ -111,13 +112,13 @@ export async function POST(request: NextRequest) {
 		logger.info(
 			{
 				userId: user.id,
-				savedCardsCount: result.savedCardsCount,
+				savedCardsCount: savedCards?.length || 0,
 			},
 			"Cards saved successfully",
 		);
 
 		return NextResponse.json({
-			savedCardsCount: result.savedCardsCount,
+			savedCardsCount: savedCards?.length || 0,
 		});
 	} catch (error: unknown) {
 		logger.error(

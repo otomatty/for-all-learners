@@ -21,8 +21,9 @@
 
 import type { Editor } from "@tiptap/core";
 import { useCallback, useEffect, useRef } from "react";
-import { getLinkGroupInfo } from "@/app/_actions/linkGroups";
 import logger from "@/lib/logger";
+import { getLinkGroupInfoByKeys } from "@/lib/services/linkGroupService";
+import { createClient } from "@/lib/supabase/client";
 import { determineLinkState } from "@/lib/utils/determineLinkState";
 import { getUniqueLinkKeys } from "@/lib/utils/extractLinksFromContent";
 
@@ -35,6 +36,7 @@ import { getUniqueLinkKeys } from "@/lib/utils/extractLinksFromContent";
  */
 export function useLinkGroupState(editor: Editor | null, pageId: string) {
 	const isUpdatingRef = useRef(false);
+	const supabase = createClient();
 
 	const updateLinkGroupState = useCallback(async () => {
 		if (!editor || isUpdatingRef.current) return;
@@ -56,15 +58,7 @@ export function useLinkGroupState(editor: Editor | null, pageId: string) {
 			);
 
 			// 2. Fetch link group information for all keys
-			const { data: linkGroupInfo, error } = await getLinkGroupInfo(linkKeys);
-
-			if (error || !linkGroupInfo) {
-				logger.error(
-					{ pageId, error },
-					"[useLinkGroupState] Failed to fetch link group info",
-				);
-				return;
-			}
+			const linkGroupInfoMap = await getLinkGroupInfoByKeys(supabase, linkKeys);
 
 			// 3. Update all UnifiedLinkMark nodes with link group information
 			const { state, dispatch } = editor.view;
@@ -86,7 +80,7 @@ export function useLinkGroupState(editor: Editor | null, pageId: string) {
 				if (!unilinkMark) return;
 
 				const { key } = unilinkMark.attrs;
-				const groupInfo = linkGroupInfo[key];
+				const groupInfo = linkGroupInfoMap.get(key);
 
 				if (!groupInfo) return;
 
@@ -131,7 +125,7 @@ export function useLinkGroupState(editor: Editor | null, pageId: string) {
 		} finally {
 			isUpdatingRef.current = false;
 		}
-	}, [editor, pageId]);
+	}, [editor, pageId, supabase]);
 
 	// Update link group state on editor content changes
 	useEffect(() => {

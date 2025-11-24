@@ -3,13 +3,28 @@
 このドキュメントは、`@/app/_actions`からインポートしている全てのファイルをリストアップしています。
 これらは全てサーバーアクション（`"use server"`ディレクティブを使用）を使用しているため、Tauri環境への移行時にAPIエンドポイントまたはRPC関数に置き換える必要があります。
 
+**更新日**: 2025-01-XX
+**ステータス**: 主要なファイルの修正を完了。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+
+## 修正済みファイル（✅）
+
+以下のファイルは既に修正済みで、直接SupabaseクライアントまたはAPIエンドポイントを使用するように変更されています：
+
+- ✅ `app/api/cards/save/route.ts` - `convertTextToTiptapJSON`と直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/default/new/route.ts` - 直接Supabaseクエリに置き換え
+- ✅ `app/auth/callback/route.ts` - 直接Supabaseクエリに置き換え
+- ✅ `app/auth/login/_components/MagicLinkForm.tsx` - クライアント側Supabaseクライアントに置き換え
+- ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - クライアント側Supabaseクライアントに置き換え
+- ✅ `app/(protected)/notes/[slug]/page.tsx` - 直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - 直接Supabaseクエリに置き換え
+
 ## インポート元ファイル一覧
 
 ### app/ ディレクトリ
 
 #### API Routes
-- `app/api/cards/save/route.ts` - `generateCardsFromPage`
-- `app/api/cards/save/__tests__/route.test.ts` - `generateCardsFromPage`
+- ✅ `app/api/cards/save/route.ts` - **修正済み**: `convertTextToTiptapJSON`と直接Supabaseクエリに置き換え
+- ⚠️ `app/api/cards/save/__tests__/route.test.ts` - `generateCardsFromPage` (テストファイル)
 - `app/api/plugins/security/audit-logs/route.ts` - `isAdmin`
 - `app/api/plugins/security/audit-logs/__tests__/route.test.ts` - `isAdmin`
 - `app/api/plugins/security/alerts/route.ts` - `isAdmin`
@@ -23,12 +38,12 @@
 - `app/api/gyazo/callback/route.ts` - `handleGyazoCallback`
 
 #### Route Handlers
-- `app/(protected)/notes/default/new/route.ts` - `getDefaultNote`
-- `app/auth/callback/route.ts` - `createAccount`, `getAccountById`, `createDefaultNote`, `initializeUserPromptTemplates`, `getUserSettings`
+- ✅ `app/(protected)/notes/default/new/route.ts` - **修正済み**: 直接Supabaseクエリに置き換え
+- ✅ `app/auth/callback/route.ts` - **修正済み**: 直接Supabaseクエリに置き換え
 
 #### Pages
-- `app/(protected)/notes/[slug]/page.tsx` - `note-deck-links`, `getDefaultNote`, `getNoteDetail`
-- `app/(protected)/notes/[slug]/[id]/page.tsx` - `getAllUserPages`, `getLastPageVisit`, `recordPageVisit`, `linkGroups`
+- ✅ `app/(protected)/notes/[slug]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え
+- ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - **修正済み**: 直接Supabaseクエリに置き換え（`syncLinkGroupsForPage`, `getLinkGroupsForPage`も直接実装）
 - `app/(protected)/notes/explorer/page.tsx` - `getNotesList`
 - `app/(protected)/notes/explorer/_components/notes-explorer.tsx` - `notes`
 - `app/(protected)/goals/page.tsx` - `getAccountById`, `study_goals`
@@ -49,8 +64,8 @@
 - `app/admin/layout.tsx` - `isAdmin`, `getCurrentUser`, `getUserPlan`
 
 #### Components
-- `app/auth/login/_components/MagicLinkForm.tsx` - `loginWithMagicLink`
-- `app/auth/login/_components/GoogleLoginForm.tsx` - `loginWithGoogle`
+- ✅ `app/auth/login/_components/MagicLinkForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
+- ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - **修正済み**: クライアント側Supabaseクライアントに置き換え
 - `app/(protected)/notes/_components/CreateNoteForm.tsx` - `CreateNotePayload`, `validateSlug`
 - `app/(protected)/goals/_components/GoalItem/GoalItem.tsx` - `completeStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - `updateStudyGoal`
@@ -91,11 +106,11 @@
 ### components/ ディレクトリ
 
 - `components/pages/EditPageForm.tsx` - `autoSetThumbnailOnPageView`, `duplicatePage`, `uploadAndSaveGyazoImage`, `deletePage`
-- `components/pages/_hooks/useLinkGroupState.ts` - `getLinkGroupInfo`
-- `components/pages/_hooks/useSplitPage.ts` - `splitPageSelection`
+- ✅ `components/pages/_hooks/useLinkGroupState.ts` - **既に修正済み**: `getLinkGroupInfoByKeys`を使用（`lib/services/linkGroupService.ts`）
+- ⚠️ `components/pages/_hooks/useSplitPage.ts` - **コメントアウト済み**: `splitPageSelection`のインポートはコメントアウト済み
 - `components/pages/_hooks/useSmartThumbnailSync.ts` - `updatePage`
 - `components/pages/BacklinksGrid.tsx` - `getPageBacklinks`
-- `components/quiz-settings-dialog.tsx` - `startQuizAction`
+- ⚠️ `components/quiz-settings-dialog.tsx` - **コメントアウト済み**: `startQuizAction`のインポートはコメントアウト済み
 - `components/layouts/UserNav.tsx` - `logout`, `getUserGoalLimits`
 - `components/ShareSettingsModal.tsx` - `notes`
 - `components/layouts/PageHelpButton.tsx` - `toggleHelpVideoAudioSetting`
@@ -178,9 +193,35 @@
 - `subscriptions`
 - `slug`
 
+## 修正状況サマリー
+
+### 修正済み（✅）
+- 主要なサーバーコンポーネント（Pages、Route Handlers）
+- 認証関連のコンポーネント
+- カード保存API Route
+- ノート関連のページコンポーネント
+
+### 残りの作業（⚠️）
+
+#### 優先度: 高（実行時エラーが発生する可能性）
+- `app/api/batch/unified/route.ts` - `audioBatchProcessing`, `multiFileBatchProcessing`, `transcribeImageBatch`
+- `app/api/batch/multi-file/route.ts` - `multiFileBatchProcessing`
+- `app/api/notes/[slug]/pages/route.ts` - `getNotePages`
+- `app/api/gyazo/callback/route.ts` - `handleGyazoCallback`
+- `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - `createAudioTranscription`, `transcribeAudio`
+- `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - `createRawInput`, `transcribeImage`
+
+#### 優先度: 中（型定義のみ、またはコメントアウト済み）
+- 型定義のみのインポート（`import type`）は実行時エラーにはならないが、型定義ファイルの移動が必要
+- コメントアウト済みのインポートは既に対応済み
+
+#### 優先度: 低（存在するサーバーアクション）
+- `isAdmin` - `app/_actions/admin.ts`に存在するため問題なし
+
 ## 次のステップ
 
-1. 各サーバーアクションをAPIエンドポイントまたはRPC関数に置き換える
-2. クライアント側のコードを更新して、新しいエンドポイント/RPC関数を使用するように変更
-3. 型定義は別の場所（例: `types/`ディレクトリ）に移動する
+1. ✅ 主要なサーバーコンポーネントとAPI Routesの修正（完了）
+2. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正
+3. ⚠️ 型定義の移動（`types/`ディレクトリへ）
+4. ⚠️ テストファイルの更新
 

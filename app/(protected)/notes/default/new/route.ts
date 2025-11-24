@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDefaultNote } from "@/app/_actions/notes";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
@@ -21,7 +20,45 @@ export async function GET(req: NextRequest) {
 	}
 
 	// Get or create default note for the user
-	const defaultNote = await getDefaultNote();
+	const { data: defaultNote, error: noteError } = await supabase
+		.from("notes")
+		.select("id")
+		.eq("owner_id", user.id)
+		.eq("is_default_note", true)
+		.maybeSingle();
+
+	if (noteError) {
+		throw noteError;
+	}
+
+	let defaultNoteId: string;
+
+	if (!defaultNote) {
+		// Create default note if it doesn't exist
+		const defaultSlug = "all-pages";
+		const { data: newNote, error: createError } = await supabase
+			.from("notes")
+			.insert([
+				{
+					owner_id: user.id,
+					slug: defaultSlug,
+					title: "すべてのページ",
+					description: "ユーザーが作成したすべてのページを含むデフォルトノート",
+					visibility: "private",
+					is_default_note: true,
+				},
+			])
+			.select("id")
+			.single();
+
+		if (createError) {
+			throw createError;
+		}
+
+		defaultNoteId = newNote.id;
+	} else {
+		defaultNoteId = defaultNote.id;
+	}
 
 	// Insert a blank page with default Tiptap doc
 	const defaultContent = {
@@ -44,8 +81,9 @@ export async function GET(req: NextRequest) {
 	}
 
 	// Link the page to the default note
+
 	const { error: linkError } = await supabase.from("note_page_links").insert({
-		note_id: defaultNote.id,
+		note_id: defaultNoteId,
 		page_id: page.id,
 	});
 
