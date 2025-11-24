@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { SignatureVerificationLog } from "@/app/api/plugins/signatures/route";
+import type { SignatureVerificationLog } from "@/lib/plugins/plugin-signature/types";
 
 /**
  * Get signature verification logs

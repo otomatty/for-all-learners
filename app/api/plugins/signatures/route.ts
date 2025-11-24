@@ -28,29 +28,13 @@ import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/server";
 import type { PluginManifest } from "@/types/plugin";
+import type {
+	PluginSignatureInfo,
+	SignatureVerificationLog,
+} from "@/lib/plugins/plugin-signature/types";
 
-export interface PluginSignatureInfo {
-	pluginId: string;
-	name: string;
-	version: string;
-	author: string;
-	hasSignature: boolean;
-	signature: string | null;
-	publicKey: string | null;
-	signatureAlgorithm: "ed25519" | "rsa" | null;
-	signedAt: Date | null;
-	isOfficial: boolean;
-	isReviewed: boolean;
-}
-
-export interface SignatureVerificationLog {
-	id: string;
-	pluginId: string;
-	userId: string | null;
-	verificationResult: "valid" | "invalid" | "missing" | "error";
-	errorMessage: string | null;
-	verifiedAt: Date;
-}
+// Re-export types for backward compatibility
+export type { PluginSignatureInfo, SignatureVerificationLog };
 
 /**
  * Check if user is admin

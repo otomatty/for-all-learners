@@ -1,8 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PluginSignatureInfo } from "@/app/api/plugins/signatures/route";
-import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
+import type {
+	PluginSignatureInfo,
+	SignatureAlgorithm,
+} from "@/lib/plugins/plugin-signature/types";
 
 /**
  * Get plugin signatures
