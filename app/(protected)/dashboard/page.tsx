@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/layouts/container";
 import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import { ActivityCalendar } from "./_components/ActivityCalendar";
 import type { MonthData } from "./_components/ActivityCalendar/types";
 import { GoalSummary } from "./_components/GoalSummary";
@@ -14,6 +15,18 @@ async function getMonthlyActivitySummary(
 	year: number,
 	month: number,
 ): Promise<MonthData> {
+	// 静的エクスポート時はcookies()を使用できないため、空のデータを返す
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return {
+			year,
+			month,
+			days: [],
+			totalActiveDays: 0,
+			streakCount: 0,
+		};
+	}
+
 	const supabase = await createClient();
 	const startDate = new Date(year, month - 1, 1);
 	const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -113,6 +126,12 @@ async function getMonthlyActivitySummary(
 async function getAllDueCountsByUser(
 	userId: string,
 ): Promise<Record<string, number>> {
+	// 静的エクスポート時はcookies()を使用できないため、空のデータを返す
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return {};
+	}
+
 	const supabase = await createClient();
 	const now = new Date().toISOString();
 	const { data, error } = await supabase
@@ -135,43 +154,73 @@ export default async function DashboardPage({
 }: {
 	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-		error: userError,
-	} = await supabase.auth.getUser();
-	if (userError || !user) {
-		redirect("/auth/login");
-	}
+	// 静的エクスポート時はcookies()を使用できないため、デフォルト値を使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	let user: { id: string; email?: string } | null = null;
+	let _account = null;
+	let studyGoals: unknown[] = [];
+	let logs: unknown[] = [];
+	let decksResult: {
+		data: Database["public"]["Tables"]["decks"]["Row"][] | null;
+		error: unknown;
+	} = {
+		data: [],
+		error: null,
+	};
+	let dueMap: Record<string, number> = {};
+	let monthData: MonthData = {
+		year: new Date().getFullYear(),
+		month: new Date().getMonth() + 1,
+		days: [],
+		totalActiveDays: 0,
+		streakCount: 0,
+	};
 
-	const searchParams = searchParamsPromise
-		? await searchParamsPromise
-		: undefined;
-	const currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
+	if (!isStaticExport) {
+		const supabase = await createClient();
+		const {
+			data: { user: authUser },
+			error: userError,
+		} = await supabase.auth.getUser();
+		if (userError || !authUser) {
+			redirect("/auth/login");
+		}
+		user = authUser;
 
-	const today = new Date();
-	const currentYear = today.getFullYear();
-	const currentMonth = today.getMonth() + 1;
+		const searchParams = searchParamsPromise
+			? await searchParamsPromise
+			: undefined;
+		const _currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
 
-	// Fetch account info (ensure account exists)
-	const { data: account } = await supabase
-		.from("accounts")
-		.select("*")
-		.eq("id", user.id)
-		.single();
+		const today = new Date();
+		const currentYear = today.getFullYear();
+		const currentMonth = today.getMonth() + 1;
 
-	if (!account) {
-		// Create account if it doesn't exist
-		await supabase.from("accounts").insert({
-			id: user.id,
-			email: user.email,
-			user_slug: user.id,
-		});
-	}
+		// Fetch account info (ensure account exists)
+		const { data: accountData } = await supabase
+			.from("accounts")
+			.select("*")
+			.eq("id", user.id)
+			.single();
 
-	// Fetch all required data in parallel
-	const [studyGoalsResult, logsResult, decksResult, dueMap, monthData] =
-		await Promise.all([
+		if (!accountData) {
+			// Create account if it doesn't exist
+			await supabase.from("accounts").insert({
+				id: user.id,
+				email: user.email,
+				user_slug: user.id,
+			});
+		}
+		_account = accountData;
+
+		// Fetch all required data in parallel
+		const [
+			studyGoalsResult,
+			logsResult,
+			decksResultData,
+			dueMapData,
+			monthDataResult,
+		] = await Promise.all([
 			supabase
 				.from("study_goals")
 				.select("*")
@@ -184,25 +233,34 @@ export default async function DashboardPage({
 			getMonthlyActivitySummary(user.id, currentYear, currentMonth),
 		]);
 
-	if (studyGoalsResult.error) throw studyGoalsResult.error;
-	if (logsResult.error) throw logsResult.error;
-	if (decksResult.error || !decksResult.data) {
-		return (
-			<Container>
-				<p>デッキの取得に失敗しました。</p>
-			</Container>
-		);
+		if (studyGoalsResult.error) throw studyGoalsResult.error;
+		if (logsResult.error) throw logsResult.error;
+		if (decksResultData.error || !decksResultData.data) {
+			return (
+				<Container>
+					<p>デッキの取得に失敗しました。</p>
+				</Container>
+			);
+		}
+
+		studyGoals = studyGoalsResult.data || [];
+		logs = logsResult.data || [];
+		decksResult = decksResultData;
+		dueMap = dueMapData;
+		monthData = monthDataResult;
 	}
 
-	const studyGoals = studyGoalsResult.data || [];
-	const logs = logsResult.data || [];
+	const searchParams = searchParamsPromise
+		? await searchParamsPromise
+		: undefined;
+	const currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
 
 	// シリアライズしてプロトタイプを剥がす
 	const safeStudyGoals = JSON.parse(JSON.stringify(studyGoals));
 	const safeLogs = JSON.parse(JSON.stringify(logs));
 
 	// デッキに復習数をマージ
-	const decksWithDueCount = decksResult.data.map((d) => ({
+	const decksWithDueCount = (decksResult.data || []).map((d) => ({
 		...d,
 		todayReviewCount: dueMap[d.id] ?? 0,
 	}));
@@ -210,7 +268,7 @@ export default async function DashboardPage({
 	return (
 		<Container>
 			{/* Set the current user ID for downstream components */}
-			<UserIdSetter userId={user.id} />
+			{user && <UserIdSetter userId={user.id} />}
 			{/* Auto-load installed plugins on app startup */}
 			<PluginAutoLoader />
 			<div className="space-y-6">
@@ -223,7 +281,9 @@ export default async function DashboardPage({
 				/>
 
 				{/* カレンダーUI */}
-				<ActivityCalendar initialMonthData={monthData} userId={user.id} />
+				{user && (
+					<ActivityCalendar initialMonthData={monthData} userId={user.id} />
+				)}
 
 				{/* クイックアクション */}
 				<QuickActionTiles decks={decksWithDueCount} />
