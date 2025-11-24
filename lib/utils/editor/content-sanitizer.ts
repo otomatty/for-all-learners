@@ -17,9 +17,6 @@ interface JSONTextNode extends JSONContent {
  * @returns A new JSONContent document with legacy marks converted
  */
 export function sanitizeContent(doc: JSONContent): JSONContent {
-	let legacyMarksFound = 0;
-	let legacyMarksConverted = 0;
-
 	const clone = structuredClone(doc) as JSONContent;
 
 	const recurse = (node: JSONContent): JSONContent => {
@@ -37,8 +34,6 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 					}) => {
 						// Convert legacy pageLink mark to unilink
 						if (mark.type === "pageLink") {
-							legacyMarksFound++;
-
 							const title = String(mark.attrs?.title || textNode.text || "");
 							const pageId = String(mark.attrs?.pageId || "");
 
@@ -59,11 +54,9 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 								},
 							};
 
-							legacyMarksConverted++;
 							return unilinkMark;
 						} // Convert legacy link mark to unilink (if it's an internal link)
 						if (mark.type === "link") {
-							legacyMarksFound++;
 							const href = String(mark.attrs?.href || "");
 
 							// Check if it's an internal page link (legacy /pages/ path)
@@ -88,7 +81,6 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 									},
 								};
 
-								legacyMarksConverted++;
 								return unilinkMark;
 							}
 
@@ -131,14 +123,6 @@ export function sanitizeContent(doc: JSONContent): JSONContent {
 	};
 
 	clone.content = (clone.content ?? []).map(recurse);
-
-	if (legacyMarksFound > 0) {
-		// Log legacy mark conversion for debugging
-		// biome-ignore lint/suspicious/noConsole: Debug logging for legacy mark conversion
-		console.log(
-			`[content-sanitizer] Found ${legacyMarksFound} legacy marks, converted ${legacyMarksConverted} to unilink`,
-		);
-	}
 
 	return clone;
 }

@@ -6,34 +6,9 @@ import { getUserSettings } from "@/app/_actions/user_settings";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-	// 最初に必ずログを出力（リクエストが到達しているか確認）
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log("========================================");
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log(
-		"[auth/callback/route] GET request received at:",
-		new Date().toISOString(),
-	);
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log("[auth/callback/route] Request URL:", request.url);
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log("========================================");
-
 	const requestUrl = new URL(request.url);
 	const code = requestUrl.searchParams.get("code");
 	const errorParam = requestUrl.searchParams.get("error");
-	const isTauriCallback = requestUrl.searchParams.get("tauri") === "true";
-
-	// Debug logging
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log("[auth/callback/route] Parsed URL:", requestUrl.toString());
-	// biome-ignore lint/suspicious/noConsole: Debug logging
-	console.log("[auth/callback/route] Params:", {
-		code: code ? `${code.substring(0, 20)}...` : null,
-		errorParam,
-		isTauriCallback,
-		sessionId: requestUrl.searchParams.get("sessionId"),
-	});
 
 	// Handle OAuth errors
 	if (errorParam) {

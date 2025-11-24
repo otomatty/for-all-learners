@@ -81,28 +81,16 @@ export async function handleAuthCallback({
 	accessToken: string | null;
 	refreshToken: string | null;
 }) {
-	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-	console.log("[handleAuthCallback] Called with:", {
-		hasCode: !!code,
-		hasAccessToken: !!accessToken,
-		hasRefreshToken: !!refreshToken,
-	});
-
 	const supabase = createClient();
 
 	// セッションを設定
 	if (accessToken && refreshToken) {
-		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-		console.log("[handleAuthCallback] Setting session with tokens");
-		const { error: sessionError, data: sessionData } =
-			await supabase.auth.setSession({
-				access_token: accessToken,
-				refresh_token: refreshToken,
-			});
+		const { error: sessionError } = await supabase.auth.setSession({
+			access_token: accessToken,
+			refresh_token: refreshToken,
+		});
 
 		if (sessionError) {
-			// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-			console.error("[handleAuthCallback] Session error:", sessionError);
 			logger.error(
 				{ error: sessionError },
 				"Session error: Failed to set session",
@@ -110,20 +98,11 @@ export async function handleAuthCallback({
 			window.location.href = "/auth/login?error=session_failed";
 			return;
 		}
-		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-		console.log("[handleAuthCallback] Session set successfully:", {
-			hasSession: !!sessionData.session,
-			hasUser: !!sessionData.user,
-		});
 	} else if (code) {
-		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-		console.log("[handleAuthCallback] Exchanging code for session");
-		const { error: exchangeError, data: exchangeData } =
+		const { error: exchangeError } =
 			await supabase.auth.exchangeCodeForSession(code);
 
 		if (exchangeError) {
-			// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-			console.error("[handleAuthCallback] Exchange error:", exchangeError);
 			logger.error(
 				{ error: exchangeError },
 				"Exchange error: Failed to exchange code for session",
@@ -131,21 +110,12 @@ export async function handleAuthCallback({
 			window.location.href = "/auth/login?error=exchange_failed";
 			return;
 		}
-		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-		console.log("[handleAuthCallback] Code exchanged successfully:", {
-			hasSession: !!exchangeData.session,
-			hasUser: !!exchangeData.user,
-		});
 	}
 
 	// ユーザー情報を取得（認証が成功したことを確認）
-	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-	console.log("[handleAuthCallback] Getting user...");
-	const { data: userData, error: getUserError } = await supabase.auth.getUser();
+	const { error: getUserError } = await supabase.auth.getUser();
 
 	if (getUserError) {
-		// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-		console.error("[handleAuthCallback] Get user error:", getUserError);
 		logger.error(
 			{ error: getUserError },
 			"Get user error: Failed to get user after authentication",
@@ -153,12 +123,6 @@ export async function handleAuthCallback({
 		window.location.href = "/auth/login?error=get_user_failed";
 		return;
 	}
-
-	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-	console.log("[handleAuthCallback] User retrieved successfully:", {
-		userId: userData.user?.id,
-		email: userData.user?.email,
-	});
 
 	// アカウント初期化処理（createAccount, createDefaultNote等）は
 	// 既存のServer Actionsを使用するため、認証コールバック後は
@@ -168,9 +132,6 @@ export async function handleAuthCallback({
 	// 必要に応じて実行されます。
 
 	// ダッシュボードにリダイレクト
-	// biome-ignore lint/suspicious/noConsole: Debug logging for auth callback
-	console.log("[handleAuthCallback] Redirecting to /dashboard");
-
 	// Tauri環境では、ページをリロードしてセッションを確実に反映させる
 	// 少し遅延を入れて、セッション設定が完了するのを待つ
 	setTimeout(() => {

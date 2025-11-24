@@ -34,19 +34,12 @@ export async function loginWithGoogleTauri() {
 		const supabase = createClient();
 
 		logger.info("Starting Google OAuth login in Tauri environment (Loopback)");
-		// biome-ignore lint/suspicious/noConsole: Debug logging
-		console.log("[loginWithGoogleTauri] Starting OAuth login");
 
 		// 1. Start Loopback Server in Rust
 		const port = await invoke<number>("start_oauth_server");
-		// biome-ignore lint/suspicious/noConsole: Debug logging
-		console.log("[loginWithGoogleTauri] OAuth server started on port:", port);
 
 		// 2. Setup listener for callback
 		const unlisten = await listen<string>("oauth_callback", async (event) => {
-			// biome-ignore lint/suspicious/noConsole: Debug logging
-			console.log("[loginWithGoogleTauri] Callback received:", event.payload);
-
 			// Stop listening immediately to avoid duplicate processing
 			unlisten();
 
@@ -61,10 +54,6 @@ export async function loginWithGoogleTauri() {
 				}
 
 				if (code) {
-					// biome-ignore lint/suspicious/noConsole: Debug logging
-					console.log(
-						"[loginWithGoogleTauri] Code received, exchanging for session",
-					);
 					await handleAuthCallback({
 						code,
 						accessToken: null,
@@ -82,8 +71,6 @@ export async function loginWithGoogleTauri() {
 		// 3. Construct Redirect URL
 		// Note: You must add http://localhost:* to your Supabase Redirect URLs
 		const redirectTo = `http://localhost:${port}`;
-		// biome-ignore lint/suspicious/noConsole: Debug logging
-		console.log("[loginWithGoogleTauri] redirectTo:", redirectTo);
 
 		// 4. Start OAuth flow
 		const { data, error } = await supabase.auth.signInWithOAuth({

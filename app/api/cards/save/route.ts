@@ -23,7 +23,6 @@ import {
 } from "@/app/_actions/generateCardsFromPage";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-import type { Json } from "@/types/database.types";
 
 interface CardToSavePayload {
 	front_content: string;

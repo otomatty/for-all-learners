@@ -62,6 +62,7 @@ export async function registerServiceWorker(
 		await navigator.serviceWorker.register(swPath, { scope });
 	} catch (error) {
 		// Service Worker登録エラーは無視（PWAが必須ではないため）
+		// biome-ignore lint/suspicious/noConsole: Service Worker登録エラーのログ出力
 		console.warn("Service Worker registration failed:", error);
 	}
 }
