@@ -15,13 +15,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generateTitle");
+vi.mock("@/lib/llm/factory");
+vi.mock("@/lib/llm/prompt-builder");
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
+import type { LLMClient } from "@/lib/llm/client";
 import { POST } from "../route";
 
 // Helper: Create mock NextRequest
@@ -47,8 +50,17 @@ function createMockSupabaseClient(authenticated = true) {
 }
 
 describe("POST /api/ai/generate-title", () => {
+	const mockLLMClient: LLMClient = {
+		generate: vi.fn(),
+		generateStream: vi.fn(),
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(buildPrompt).mockImplementation((parts) =>
+			Array.isArray(parts) ? parts.join("\n\n") : "",
+		);
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockLLMClient);
 	});
 
 	// ========================================
@@ -62,7 +74,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockResolvedValue(mockTitle);
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(mockTitle);
 
 			const request = createMockRequest({
 				transcript: "React Hooksについて説明します...",
@@ -73,9 +85,9 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.title).toBe(mockTitle);
-			expect(generateTitleFromTranscript).toHaveBeenCalledWith(
-				"React Hooksについて説明します...",
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+			});
 		});
 	});
 
@@ -97,7 +109,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -117,7 +129,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptは必須です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -139,7 +151,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptが空です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 

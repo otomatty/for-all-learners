@@ -18,7 +18,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 
@@ -64,8 +65,34 @@ export async function POST(request: NextRequest) {
 			"Starting title generation",
 		);
 
-		// タイトル生成
-		const title = await generateTitleFromTranscript(body.transcript);
+		// LLMクライアントを作成（デフォルトはgoogle）
+		const client = await createClientWithUserKey({
+			provider: "google",
+		});
+
+		// プロンプトを構築
+		const promptTemplate = `以下のトランスクリプトから、適切なタイトルを生成してください。
+
+要件:
+- トランスクリプトの内容を簡潔に表すタイトル
+- 10文字以上30文字以内
+- タイトルのみを返す（説明文は不要）`;
+
+		const prompt = buildPrompt([promptTemplate, body.transcript]);
+
+		// LLM APIを呼び出し
+		const response = await client.generate(prompt);
+
+		if (!response || response.trim() === "") {
+			throw new Error("タイトル生成に失敗しました: 内容が空です");
+		}
+
+		// タイトルを抽出（クォートや改行を削除）
+		const title = response
+			.trim()
+			.replace(/^["']|["']$/g, "")
+			.split("\n")[0]
+			.trim();
 
 		logger.info({ userId: user.id, title }, "Title generation completed");
 

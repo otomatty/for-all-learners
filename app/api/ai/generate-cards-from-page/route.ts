@@ -18,11 +18,10 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import {
-	generateRawCardsFromPageContent,
-	saveGeneratedCards,
-	wrapTextInTiptapJson,
-} from "@/app/_actions/generateCardsFromPage";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+import { extractTextFromTiptap } from "@/components/pages/extract-text-from-tiptap";
+import { convertTextToTiptapJSON } from "@/lib/utils/pdfUtils";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
@@ -31,6 +30,7 @@ import {
 	isValidProvider,
 } from "@/lib/validators/ai";
 import type { Json } from "@/types/database.types";
+import type { JSONContent } from "@tiptap/core";
 
 interface GenerateCardsFromPageRequest {
 	pageContentTiptap: Json | null;
@@ -75,90 +75,224 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		const provider = (body.provider || "google") as LLMProvider;
+
 		logger.info(
 			{
 				userId: user.id,
 				pageId: body.pageId,
 				deckId: body.deckId,
-				provider: body.provider || "google",
+				provider,
 				model: body.model,
 				saveToDatabase: body.saveToDatabase ?? false,
 			},
 			"Starting card generation from page",
 		);
 
-		// カード生成
-		const result = await generateRawCardsFromPageContent(
-			body.pageContentTiptap,
-			{
-				provider: body.provider,
-				model: body.model,
-			},
-		);
-
-		if (result.error) {
+		// Tiptap JSONからテキストを抽出
+		if (!body.pageContentTiptap) {
 			return NextResponse.json(
-				{ error: result.error, cards: result.generatedRawCards },
+				{
+					error: "ページに抽出可能なテキストコンテンツがありません。",
+					cards: [],
+				},
 				{ status: 400 },
 			);
 		}
 
-		// データベースに保存する場合
-		if (body.saveToDatabase) {
-			const cardsToSave = await Promise.all(
-				result.generatedRawCards.map(async (card) => {
-					const frontContent = await wrapTextInTiptapJson(card.front_content);
-					const backContent = await wrapTextInTiptapJson(card.back_content);
+		const pageText = extractTextFromTiptap(
+			body.pageContentTiptap as JSONContent,
+			10000, // 最大長を大きく設定
+		);
 
-					return {
-						deck_id: body.deckId,
-						user_id: user.id,
-						front_content: frontContent,
-						back_content: backContent,
-						page_id: body.pageId,
-					};
-				}),
+		if (!pageText || pageText.trim() === "") {
+			return NextResponse.json(
+				{
+					error: "ページに抽出可能なテキストコンテンツがありません。",
+					cards: [],
+				},
+				{ status: 400 },
 			);
+		}
 
-			const saveResult = await saveGeneratedCards(cardsToSave, user.id);
+		try {
+			// LLMクライアントを作成
+			const client = await createClientWithUserKey({
+				provider,
+				model: body.model,
+			});
 
-			if (saveResult.error) {
-				logger.error(
-					{ error: saveResult.error },
-					"Failed to save cards to database",
-				);
+			// プロンプトを構築
+			const systemPrompt = `以下のページコンテンツから、学習用のフラッシュカードを生成してください。
+
+出力形式（JSON配列）:
+[
+  {
+    "front_content": "問題文",
+    "back_content": "回答"
+  }
+]
+
+要件:
+- 重要な概念やキーワードを問題として抽出
+- 回答は簡潔で明確に
+- 最低3つ以上のカードを生成
+- JSON配列のみを返す（マークダウンのコードフェンスは不要）`;
+
+			const prompt = buildPrompt([systemPrompt, pageText]);
+
+			// LLM APIを呼び出し
+			const response = await client.generate(prompt);
+
+			if (!response || response.trim() === "") {
 				return NextResponse.json(
 					{
-						cards: result.generatedRawCards,
-						savedCardsCount: saveResult.savedCardsCount,
-						error: saveResult.error,
+						error: "AIによるカード生成に失敗しました: AIからの応答が空です。",
+						cards: [],
 					},
-					{ status: 500 },
+					{ status: 400 },
 				);
 			}
 
+			// JSONを抽出（コードフェンスから、またはフォールバック）
+			let jsonStr: string;
+			const fenceMatch =
+				response.match(/```json\s*([\s\S]*?)```/i) ||
+				response.match(/```\s*([\s\S]*?)```/);
+			if (fenceMatch?.[1]) {
+				jsonStr = fenceMatch[1].trim();
+			} else {
+				// フォールバック: 最初の [ から最後の ] までを抽出
+				const match = response.match(/\[[\s\S]*\]/);
+				if (!match) {
+					return NextResponse.json(
+						{
+							error:
+								"AIによるカード生成に失敗しました: JSONの解析に失敗しました。",
+							cards: [],
+						},
+						{ status: 400 },
+					);
+				}
+				jsonStr = match[0].trim();
+			}
+
+			// JSONをパース
+			let generatedRawCards: Array<{
+				front_content: string;
+				back_content: string;
+			}>;
+			try {
+				generatedRawCards = JSON.parse(jsonStr);
+			} catch (error) {
+				logger.error(
+					{
+						error: error instanceof Error ? error.message : String(error),
+						jsonStr: jsonStr.substring(0, 200),
+					},
+					"Failed to parse cards JSON",
+				);
+				return NextResponse.json(
+					{
+						error:
+							"AIによるカード生成に失敗しました: JSONの解析に失敗しました。",
+						cards: [],
+					},
+					{ status: 400 },
+				);
+			}
+
+			if (!Array.isArray(generatedRawCards) || generatedRawCards.length === 0) {
+				return NextResponse.json(
+					{
+						error: "AIによってカードが生成されませんでした。",
+						cards: [],
+					},
+					{ status: 400 },
+				);
+			}
+
+			// データベースに保存する場合
+			if (body.saveToDatabase) {
+				const cardsToSave = generatedRawCards.map((card) => ({
+					deck_id: body.deckId,
+					user_id: user.id,
+					page_id: body.pageId,
+					front_content: convertTextToTiptapJSON(card.front_content),
+					back_content: convertTextToTiptapJSON(card.back_content),
+				}));
+
+				// カードを保存
+				const { data: savedCards, error: saveError } = await supabase
+					.from("cards")
+					.insert(cardsToSave)
+					.select();
+
+				if (saveError) {
+					logger.error(
+						{ error: saveError },
+						"Failed to save cards to database",
+					);
+					return NextResponse.json(
+						{
+							cards: generatedRawCards,
+							savedCardsCount: 0,
+							error: saveError.message,
+						},
+						{ status: 500 },
+					);
+				}
+
+				logger.info(
+					{
+						userId: user.id,
+						savedCardsCount: savedCards?.length || 0,
+					},
+					"Cards saved to database",
+				);
+
+				return NextResponse.json({
+					cards: generatedRawCards,
+					savedCardsCount: savedCards?.length || 0,
+				});
+			}
+
 			logger.info(
-				{
-					userId: user.id,
-					savedCardsCount: saveResult.savedCardsCount,
-				},
-				"Cards saved to database",
+				{ userId: user.id, cardCount: generatedRawCards.length },
+				"Card generation completed",
 			);
 
 			return NextResponse.json({
-				cards: result.generatedRawCards,
-				savedCardsCount: saveResult.savedCardsCount,
+				cards: generatedRawCards,
 			});
+		} catch (error: unknown) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			logger.error(
+				{ error: errorMessage },
+				"Failed to generate cards from page",
+			);
+
+			// APIキー未設定エラーの場合
+			if (errorMessage.includes("API key")) {
+				return NextResponse.json(
+					{
+						error:
+							"AIによるカード生成に失敗しました: APIキーが設定されていません。設定画面でAPIキーを設定してください。",
+						cards: [],
+					},
+					{ status: 400 },
+				);
+			}
+
+			return NextResponse.json(
+				{
+					error: `AIによるカード生成に失敗しました: ${errorMessage}`,
+					cards: [],
+				},
+				{ status: 500 },
+			);
 		}
-
-		logger.info(
-			{ userId: user.id, cardCount: result.generatedRawCards.length },
-			"Card generation completed",
-		);
-
-		return NextResponse.json({
-			cards: result.generatedRawCards,
-		});
 	} catch (error: unknown) {
 		logger.error(
 			{

@@ -18,7 +18,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
@@ -67,21 +68,54 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		const provider = (body.provider || "google") as LLMProvider;
+
 		logger.info(
 			{
 				userId: user.id,
-				provider: body.provider || "google",
+				provider,
 				model: body.model,
 				title: body.title,
 			},
 			"Starting page info generation",
 		);
 
-		// ページ情報生成
-		const markdown = await generatePageInfo(body.title, {
-			provider: body.provider,
+		// LLMクライアントを作成
+		const client = await createClientWithUserKey({
+			provider,
 			model: body.model,
 		});
+
+		// プロンプトを構築
+		const promptTemplate = `以下のタイトルについて、Markdown形式で解説ドキュメントを生成してください。
+
+要件:
+- タイトルに関する基本的な説明を含める
+- 重要な概念やキーワードを説明
+- 実用例やコード例を含める（該当する場合）
+- 見出し（## 以降）を使用して構造化
+- 最初の行はH1ヘッディング（# タイトル）を含めない`;
+
+		const prompt = buildPrompt([promptTemplate, body.title]);
+
+		// LLM APIを呼び出し
+		const response = await client.generate(prompt);
+
+		if (!response || response.trim() === "") {
+			throw new Error("ページ情報生成に失敗しました: 内容が空です");
+		}
+
+		// コードフェンスから抽出（ある場合）
+		let markdown = response.trim();
+		const fenceMatch =
+			response.match(/```markdown\s*([\s\S]*?)```/i) ||
+			response.match(/```md\s*([\s\S]*?)```/i);
+		if (fenceMatch?.[1]) {
+			markdown = fenceMatch[1].trim();
+		}
+
+		// 先頭のH1ヘッディングを削除
+		markdown = markdown.replace(/^#\s+.*$/m, "").trim();
 
 		logger.info(
 			{ userId: user.id, markdownLength: markdown.length },

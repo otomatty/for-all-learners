@@ -18,7 +18,8 @@
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
@@ -81,32 +82,97 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		const provider = (body.provider || "google") as LLMProvider;
+
 		logger.info(
 			{
 				userId: user.id,
-				provider: body.provider || "google",
+				provider,
 				model: body.model,
 				transcriptLength: body.transcript.length,
 			},
 			"Starting card generation from transcript",
 		);
 
-		// カード生成
-		const cards = await generateCardsFromTranscript(
-			body.transcript,
-			body.sourceAudioUrl,
-			{
-				provider: body.provider,
-				model: body.model,
-			},
-		);
+		// LLMクライアントを作成
+		const client = await createClientWithUserKey({
+			provider,
+			model: body.model,
+		});
+
+		// プロンプトを構築
+		const systemPrompt = `以下のトランスクリプトから、学習用のフラッシュカードを生成してください。
+
+出力形式（JSON配列）:
+[
+  {
+    "front_content": "問題文",
+    "back_content": "回答"
+  }
+]
+
+要件:
+- 重要な概念やキーワードを問題として抽出
+- 回答は簡潔で明確に
+- 最低3つ以上のカードを生成
+- JSON配列のみを返す（マークダウンのコードフェンスは不要）`;
+
+		const prompt = buildPrompt([systemPrompt, body.transcript]);
+
+		// LLM APIを呼び出し
+		const response = await client.generate(prompt);
+
+		if (!response || response.trim() === "") {
+			throw new Error("カード生成に失敗しました: 内容が空です");
+		}
+
+		// JSONを抽出（コードフェンスから、またはフォールバック）
+		let jsonStr: string;
+		const fenceMatch =
+			response.match(/```json\s*([\s\S]*?)```/i) ||
+			response.match(/```\s*([\s\S]*?)```/);
+		if (fenceMatch?.[1]) {
+			jsonStr = fenceMatch[1].trim();
+		} else {
+			// フォールバック: 最初の [ から最後の ] までを抽出
+			const match = response.match(/\[[\s\S]*\]/);
+			if (!match) {
+				throw new Error("カード生成結果の解析に失敗しました");
+			}
+			jsonStr = match[0].trim();
+		}
+
+		// JSONをパース
+		let cards: Array<{ front_content: string; back_content: string }>;
+		try {
+			cards = JSON.parse(jsonStr);
+		} catch (error) {
+			logger.error(
+				{
+					error: error instanceof Error ? error.message : String(error),
+					jsonStr: jsonStr.substring(0, 200),
+				},
+				"Failed to parse cards JSON",
+			);
+			throw new Error("カード生成結果の解析に失敗しました");
+		}
+
+		if (!Array.isArray(cards) || cards.length === 0) {
+			throw new Error("カード生成に失敗しました: 内容が空です");
+		}
+
+		// source_audio_urlを追加
+		const cardsWithAudioUrl = cards.map((card) => ({
+			...card,
+			source_audio_url: body.sourceAudioUrl,
+		}));
 
 		logger.info(
-			{ userId: user.id, cardCount: cards.length },
+			{ userId: user.id, cardCount: cardsWithAudioUrl.length },
 			"Card generation completed",
 		);
 
-		return NextResponse.json({ cards });
+		return NextResponse.json({ cards: cardsWithAudioUrl });
 	} catch (error: unknown) {
 		logger.error(
 			{

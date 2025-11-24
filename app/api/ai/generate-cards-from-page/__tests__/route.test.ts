@@ -15,22 +15,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generateCardsFromPage");
+vi.mock("@/lib/llm/factory");
+vi.mock("@/lib/llm/prompt-builder");
+vi.mock("@/components/pages/extract-text-from-tiptap");
+vi.mock("@/lib/utils/pdfUtils");
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import {
-	generateRawCardsFromPageContent,
-	saveGeneratedCards,
-	wrapTextInTiptapJson,
-} from "@/app/_actions/generateCardsFromPage";
-import { createClient } from "@/lib/supabase/server";
-import { POST } from "../route";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
+es / extract - text - from - tiptap;
+";
+import { convertTextToTiptapJSON } from
+"@/lib/utils/pd
+import type { LLMClient } from "@/lib/llm/client";
 
-// Helper: Create mock NextRequest
-function createMockRequest(body: unknown): NextRequest {
-	return {
+// Helper: Create mock NextRequestuest {
+return {
 		json: async () => body,
 	} as NextRequest;
 }
@@ -51,8 +52,22 @@ function createMockSupabaseClient(authenticated = true) {
 }
 
 describe("POST /api/ai/generate-cards-from-page", () => {
+	const mockLLMClient: LLMClient = {
+		generate: vi.fn(),
+		generateStream: vi.fn(),
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(buildPrompt).mockImplementation((parts) =>
+			Array.isArray(parts) ? parts.join("\n\n") : "",
+		);
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockLLMClient);
+		vi.mocked(extractTextFromTiptap).mockReturnValue("Test page content");
+		vi.mocked(convertTextToTiptapJSON).mockReturnValue({
+			type: "doc",
+			content: [],
+		} as never);
 	});
 
 	// ========================================
@@ -71,9 +86,9 @@ describe("POST /api/ai/generate-cards-from-page", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateRawCardsFromPageContent).mockResolvedValue({
-				generatedRawCards: mockCards,
-			});
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(
+				JSON.stringify(mockCards),
+			);
 
 			const request = createMockRequest({
 				pageContentTiptap: { type: "doc", content: [] },
@@ -88,7 +103,6 @@ describe("POST /api/ai/generate-cards-from-page", () => {
 			expect(response.status).toBe(200);
 			expect(data.cards).toEqual(mockCards);
 			expect(data.savedCardsCount).toBeUndefined();
-			expect(saveGeneratedCards).not.toHaveBeenCalled();
 		});
 	});
 
@@ -104,22 +118,28 @@ describe("POST /api/ai/generate-cards-from-page", () => {
 				},
 			];
 
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
+			const mockSupabase = {
+				auth: {
+					getUser: () =>
+						Promise.resolve({
+							data: { user: { id: "user-123" } },
+							error: null,
+						}),
+				},
+				from: vi.fn().mockReturnValue({
+					insert: vi.fn().mockReturnThis(),
+					select: vi.fn().mockResolvedValue({
+						data: [{ id: "card-1" }],
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockResolvedValue(mockSupabase as never);
+
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
-
-			vi.mocked(generateRawCardsFromPageContent).mockResolvedValue({
-				generatedRawCards: mockCards,
-			});
-
-			vi.mocked(wrapTextInTiptapJson).mockResolvedValue({
-				type: "doc",
-				content: [],
-			} as never);
-
-			vi.mocked(saveGeneratedCards).mockResolvedValue({
-				savedCardsCount: 1,
-			});
 
 			const request = createMockRequest({
 				pageContentTiptap: { type: "doc", content: [] },
@@ -134,7 +154,6 @@ describe("POST /api/ai/generate-cards-from-page", () => {
 			expect(response.status).toBe(200);
 			expect(data.cards).toEqual(mockCards);
 			expect(data.savedCardsCount).toBe(1);
-			expect(saveGeneratedCards).toHaveBeenCalled();
 		});
 	});
 
