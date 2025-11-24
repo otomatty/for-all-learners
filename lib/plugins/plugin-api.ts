@@ -528,12 +528,35 @@ function createStorageAPI(pluginId: string): StorageAPI {
 				// Log storage access
 				auditLogger.logStorageAccess(pluginId, "get", undefined, key);
 
-				// Dynamic import to avoid circular dependencies
-				const { getPluginStorage } = await import(
-					"@/app/_actions/plugin-storage"
-				);
-				const result = await getPluginStorage(pluginId, key);
-				return result as T | undefined;
+				// Use Supabase client directly
+				const { createClient } = await import("@/lib/supabase/client");
+				const supabase = createClient();
+				const {
+					data: { user },
+					error: userError,
+				} = await supabase.auth.getUser();
+
+				if (userError || !user) {
+					throw new Error("User not authenticated");
+				}
+
+				const { data, error } = await supabase
+					.from("plugin_storage")
+					.select("value")
+					.eq("user_id", user.id)
+					.eq("plugin_id", pluginId)
+					.eq("key", key)
+					.single();
+
+				if (error) {
+					if (error.code === "PGRST116") {
+						// No rows found
+						return undefined;
+					}
+					throw error;
+				}
+
+				return (data?.value ?? undefined) as T | undefined;
 			} catch (error) {
 				logger.error(
 					{ error, pluginId, key, operation: "get" },

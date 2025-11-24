@@ -47,4 +47,3 @@ export interface SecurityAuditLogEntry {
 	context: Record<string, unknown>;
 	createdAt: string;
 }
-

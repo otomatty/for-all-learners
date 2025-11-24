@@ -13,19 +13,45 @@
  * testing the hook's interface and basic behavior.
  */
 
-import { renderHook } from "@testing-library/react";
+import { QueryClient, type QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import type { Editor } from "@tiptap/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePageSaver } from "../usePageSaver";
 
+// Mock useUpdatePage hook
+vi.mock("@/hooks/pages/useUpdatePage", () => ({
+	useUpdatePage: () => ({
+		mutateAsync: vi.fn().mockResolvedValue({ id: "test-id" }),
+		isPending: false,
+	}),
+}));
+
 describe("usePageSaver", () => {
+	let queryClient: QueryClient;
+
+	beforeEach(() => {
+		queryClient = new QueryClient({
+			defaultOptions: {
+				queries: { retry: false },
+				mutations: { retry: false },
+			},
+		});
+	});
+
+	const wrapper = ({ children }: { children: React.ReactNode }) =>
+		(<QueryClientProvider client =
+			{ queryClient } > { children } < />CPQdeeeiilnorrrtuvy);
+
 	const mockEditor = {
 		getJSON: () => ({ type: "doc", content: [] }),
 	} as unknown as Editor;
 
 	describe("Hook API", () => {
 		it("should return savePage function and isSaving state", () => {
-			const { result } = renderHook(() => usePageSaver(null, "id", "title"));
+			const { result } = renderHook(() => usePageSaver(null, "id", "title"), {
+				wrapper,
+			});
 
 			expect(result.current).toHaveProperty("savePage");
 			expect(result.current).toHaveProperty("isSaving");
@@ -34,7 +60,10 @@ describe("usePageSaver", () => {
 		});
 
 		it("should initialize with isSaving as false", () => {
-			const { result } = renderHook(() => usePageSaver(null, "id", "title"));
+			const { result } = renderHook(
+				() => usePageSaver(null, "id", "title"),
+				{ wrapper },
+			);
 
 			expect(result.current.isSaving).toBe(false);
 		});
@@ -42,7 +71,10 @@ describe("usePageSaver", () => {
 
 	describe("Null Editor Handling", () => {
 		it("should handle null editor gracefully", async () => {
-			const { result } = renderHook(() => usePageSaver(null, "id", "title"));
+			const { result } = renderHook(
+				() => usePageSaver(null, "id", "title"),
+				{ wrapper },
+			);
 
 			// Should not throw when editor is null
 			await expect(result.current.savePage()).resolves.toBeUndefined();
@@ -56,21 +88,24 @@ describe("usePageSaver", () => {
 			const setIsLoading = () => {};
 			const setIsDirty = () => {};
 
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "title", {
-					onSaveSuccess,
-					onSaveError,
-					setIsLoading,
-					setIsDirty,
-				}),
+			const { result } = renderHook(
+				() =>
+					usePageSaver(mockEditor, "id", "title", {
+						onSaveSuccess,
+						onSaveError,
+						setIsLoading,
+						setIsDirty,
+					}),
+				{ wrapper },
 			);
 
 			expect(result.current).toBeDefined();
 		});
 
 		it("should work without any options", () => {
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "title"),
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", "title"),
+				{ wrapper },
 			);
 
 			expect(result.current).toBeDefined();
@@ -79,8 +114,9 @@ describe("usePageSaver", () => {
 
 	describe("State Management", () => {
 		it("should provide isSaving state", () => {
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "title"),
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", "title"),
+				{ wrapper },
 			);
 
 			expect(result.current.isSaving).toBe(false);
@@ -89,22 +125,27 @@ describe("usePageSaver", () => {
 
 	describe("Edge Cases", () => {
 		it("should handle empty title", () => {
-			const { result } = renderHook(() => usePageSaver(mockEditor, "id", ""));
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", ""),
+				{ wrapper },
+			);
 
 			expect(result.current).toBeDefined();
 		});
 
 		it("should handle whitespace-only title", () => {
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "   "),
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", "   "),
+				{ wrapper },
 			);
 
 			expect(result.current).toBeDefined();
 		});
 
 		it("should handle empty pageId", () => {
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "", "title"),
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "", "title"),
+				{ wrapper },
 			);
 
 			expect(result.current).toBeDefined();
@@ -115,10 +156,12 @@ describe("usePageSaver", () => {
 		it("should call onDeleteEmptyTitlePage when title is empty string", async () => {
 			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
 
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "", {
-					onDeleteEmptyTitlePage,
-				}),
+			const { result } = renderHook(
+				() =>
+					usePageSaver(mockEditor, "id", "", {
+						onDeleteEmptyTitlePage,
+					}),
+				{ wrapper },
 			);
 
 			await result.current.savePage();
@@ -129,10 +172,12 @@ describe("usePageSaver", () => {
 		it("should call onDeleteEmptyTitlePage when title is whitespace only", async () => {
 			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
 
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "   ", {
-					onDeleteEmptyTitlePage,
-				}),
+			const { result } = renderHook(
+				() =>
+					usePageSaver(mockEditor, "id", "   ", {
+						onDeleteEmptyTitlePage,
+					}),
+				{ wrapper },
 			);
 
 			await result.current.savePage();
@@ -143,10 +188,12 @@ describe("usePageSaver", () => {
 		it("should not call onDeleteEmptyTitlePage when title has content", async () => {
 			const onDeleteEmptyTitlePage = vi.fn().mockResolvedValue(undefined);
 
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "Valid Title", {
-					onDeleteEmptyTitlePage,
-				}),
+			const { result } = renderHook(
+				() =>
+					usePageSaver(mockEditor, "id", "Valid Title", {
+						onDeleteEmptyTitlePage,
+					}),
+				{ wrapper },
 			);
 
 			// Note: We can't easily test the full save flow without mocking updatePage,
@@ -162,7 +209,10 @@ describe("usePageSaver", () => {
 		});
 
 		it("should handle missing onDeleteEmptyTitlePage callback gracefully", async () => {
-			const { result } = renderHook(() => usePageSaver(mockEditor, "id", ""));
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", ""),
+				{ wrapper },
+			);
 
 			// Should not throw when callback is not provided
 			await expect(result.current.savePage()).resolves.toBeUndefined();
@@ -171,8 +221,9 @@ describe("usePageSaver", () => {
 
 	describe("Cleanup", () => {
 		it("should not throw errors on unmount", () => {
-			const { unmount } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "title"),
+			const { unmount } = renderHook(
+				() => usePageSaver(mockEditor, "id", "title"),
+				{ wrapper },
 			);
 
 			// Should not throw when unmounting
@@ -182,15 +233,19 @@ describe("usePageSaver", () => {
 
 	describe("Type Safety", () => {
 		it("should accept valid Editor type", () => {
-			const { result } = renderHook(() =>
-				usePageSaver(mockEditor, "id", "title"),
+			const { result } = renderHook(
+				() => usePageSaver(mockEditor, "id", "title"),
+				{ wrapper },
 			);
 
 			expect(result.current.savePage).toBeDefined();
 		});
 
 		it("should accept null as editor", () => {
-			const { result } = renderHook(() => usePageSaver(null, "id", "title"));
+			const { result } = renderHook(
+				() => usePageSaver(null, "id", "title"),
+				{ wrapper },
+			);
 
 			expect(result.current.savePage).toBeDefined();
 		});
@@ -202,6 +257,7 @@ describe("usePageSaver", () => {
 				({ pageId, title }) => usePageSaver(mockEditor, pageId, title),
 				{
 					initialProps: { pageId: "id1", title: "title1" },
+					wrapper,
 				},
 			);
 

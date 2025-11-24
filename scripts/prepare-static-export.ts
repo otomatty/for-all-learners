@@ -2,16 +2,16 @@
 
 /**
  * Prepare static export by temporarily disabling Route Handlers and API Routes
- * 
+ *
  * This script renames Route Handler and API Route files to .disabled extension
  * before static export build, then restores them after build.
- * 
+ *
  * Usage:
  *   bun run scripts/prepare-static-export.ts prepare   # Before build
  *   bun run scripts/prepare-static-export.ts restore   # After build
  */
 
-import { existsSync, renameSync, readdirSync, statSync } from "fs";
+import { existsSync, readdirSync, renameSync, statSync } from "fs";
 import { join } from "path";
 
 const ROUTE_HANDLERS_TO_DISABLE = [
@@ -29,7 +29,7 @@ function findRouteFiles(dir: string, fileList: string[] = []): string[] {
 
 	for (const file of files) {
 		const filePath = join(dir, file);
-		
+
 		// Skip node_modules and .next directories
 		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
 			continue;
@@ -56,7 +56,7 @@ function findDynamicPages(dir: string, fileList: string[] = []): string[] {
 
 	for (const file of files) {
 		const filePath = join(dir, file);
-		
+
 		// Skip node_modules and .next directories
 		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
 			continue;
@@ -84,9 +84,10 @@ function findDynamicPages(dir: string, fileList: string[] = []): string[] {
 	return fileList;
 }
 
-
 function prepare() {
-	console.log("🔧 Preparing static export: Disabling Route Handlers, API Routes, Server Actions, and dynamic pages...");
+	console.log(
+		"🔧 Preparing static export: Disabling Route Handlers, API Routes, Server Actions, and dynamic pages...",
+	);
 
 	// Disable Route Handlers and API Routes
 	const allRouteFiles = findRouteFiles("app");
@@ -94,8 +95,9 @@ function prepare() {
 		// Disable all API routes and route handlers
 		// Tauri environment uses Loopback Server for OAuth, so auth/callback route handler is not needed
 		const isAPIRoute = file.includes("/api/");
-		const isRouteHandler = file.includes("/route.ts") || file.includes("/route.js");
-		
+		const isRouteHandler =
+			file.includes("/route.ts") || file.includes("/route.js");
+
 		return isAPIRoute || isRouteHandler;
 	});
 
@@ -156,7 +158,7 @@ function restore() {
 
 	// Find all disabled files (both route files and page files)
 	const allFiles: string[] = [];
-	
+
 	function findDisabledFiles(dir: string) {
 		if (!existsSync(dir)) {
 			return;
@@ -166,7 +168,7 @@ function restore() {
 
 		for (const file of files) {
 			const filePath = join(dir, file);
-			
+
 			if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
 				continue;
 			}
@@ -203,7 +205,8 @@ if (command === "prepare") {
 } else if (command === "restore") {
 	restore();
 } else {
-	console.error("Usage: bun run scripts/prepare-static-export.ts [prepare|restore]");
+	console.error(
+		"Usage: bun run scripts/prepare-static-export.ts [prepare|restore]",
+	);
 	process.exit(1);
 }
-

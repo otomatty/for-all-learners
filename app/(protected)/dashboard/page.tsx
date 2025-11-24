@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/layouts/container";
 import { UserIdSetter } from "@/components/user-id-setter";
 import { createClient } from "@/lib/supabase/server";
-import type { MonthData } from "./_components/ActivityCalendar/types";
 import { ActivityCalendar } from "./_components/ActivityCalendar";
+import type { MonthData } from "./_components/ActivityCalendar/types";
 import { GoalSummary } from "./_components/GoalSummary";
 import { PluginAutoLoader } from "./_components/PluginAutoLoader";
 import { PluginWidgetsSection } from "./_components/PluginWidgetsSection";
@@ -58,7 +58,10 @@ async function getMonthlyActivitySummary(
 
 	for (const page of pages) {
 		const createdDate = new Date(page.created_at).toISOString().split("T")[0];
-		if (createdDate >= startDateISO.split("T")[0] && createdDate <= endDateISO.split("T")[0]) {
+		if (
+			createdDate >= startDateISO.split("T")[0] &&
+			createdDate <= endDateISO.split("T")[0]
+		) {
 			if (!daysMap.has(createdDate)) {
 				daysMap.set(createdDate, {
 					date: createdDate,
@@ -105,7 +108,9 @@ async function getMonthlyActivitySummary(
 	};
 }
 
-async function getAllDueCountsByUser(userId: string): Promise<Record<string, number>> {
+async function getAllDueCountsByUser(
+	userId: string,
+): Promise<Record<string, number>> {
 	const supabase = await createClient();
 	const now = new Date().toISOString();
 	const { data, error } = await supabase
@@ -137,7 +142,9 @@ export default async function DashboardPage({
 		redirect("/auth/login");
 	}
 
-	const searchParams = searchParamsPromise ? await searchParamsPromise : undefined;
+	const searchParams = searchParamsPromise
+		? await searchParamsPromise
+		: undefined;
 	const currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
 
 	const today = new Date();
@@ -161,27 +168,19 @@ export default async function DashboardPage({
 	}
 
 	// Fetch all required data in parallel
-	const [
-		studyGoalsResult,
-		logsResult,
-		decksResult,
-		dueMap,
-		monthData,
-	] = await Promise.all([
-		supabase
-			.from("study_goals")
-			.select("*")
-			.eq("user_id", user.id)
-			.order("priority_order", { ascending: true })
-			.order("created_at", { ascending: false }),
-		supabase
-			.from("learning_logs")
-			.select("*")
-			.eq("user_id", user.id),
-		supabase.from("decks").select("*").eq("user_id", user.id),
-		getAllDueCountsByUser(user.id),
-		getMonthlyActivitySummary(user.id, currentYear, currentMonth),
-	]);
+	const [studyGoalsResult, logsResult, decksResult, dueMap, monthData] =
+		await Promise.all([
+			supabase
+				.from("study_goals")
+				.select("*")
+				.eq("user_id", user.id)
+				.order("priority_order", { ascending: true })
+				.order("created_at", { ascending: false }),
+			supabase.from("learning_logs").select("*").eq("user_id", user.id),
+			supabase.from("decks").select("*").eq("user_id", user.id),
+			getAllDueCountsByUser(user.id),
+			getMonthlyActivitySummary(user.id, currentYear, currentMonth),
+		]);
 
 	if (studyGoalsResult.error) throw studyGoalsResult.error;
 	if (logsResult.error) throw logsResult.error;

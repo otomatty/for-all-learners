@@ -24,14 +24,14 @@ import {
 	generateRSAKeyPair,
 } from "@/lib/plugins/plugin-signature/key-manager";
 import { signPlugin } from "@/lib/plugins/plugin-signature/signer";
-import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
+import type {
+	PluginSignatureInfo,
+	SignatureAlgorithm,
+	SignatureVerificationLog,
+} from "@/lib/plugins/plugin-signature/types";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/server";
 import type { PluginManifest } from "@/types/plugin";
-import type {
-	PluginSignatureInfo,
-	SignatureVerificationLog,
-} from "@/lib/plugins/plugin-signature/types";
 
 // Re-export types for backward compatibility
 export type { PluginSignatureInfo, SignatureVerificationLog };

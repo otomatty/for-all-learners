@@ -18,8 +18,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
-import { createClient } from "@/lib/supabase/server";
 import type { SecurityAuditLogEntry } from "@/lib/plugins/plugin-security/types";
+import { createClient } from "@/lib/supabase/server";
 
 // Re-export type for backward compatibility
 export type { SecurityAuditLogEntry };

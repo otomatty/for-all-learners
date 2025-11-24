@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import type { MonthData } from "@/app/(protected)/dashboard/_components/ActivityCalendar/types";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * 指定月の日別活動サマリーを取得
@@ -38,9 +38,7 @@ export function useMonthlyActivitySummary(
 				.from("pages")
 				.select("*")
 				.eq("owner_id", userId)
-				.or(
-					`created_at.gte.${startDateISO},updated_at.gte.${startDateISO}`,
-				);
+				.or(`created_at.gte.${startDateISO},updated_at.gte.${startDateISO}`);
 
 			if (pagesError) throw pagesError;
 
@@ -64,11 +62,18 @@ export function useMonthlyActivitySummary(
 
 			// Process pages (simplified - you may need to adjust based on actual requirements)
 			for (const page of pages || []) {
-				const createdDate = new Date(page.created_at).toISOString().split("T")[0];
-				const updatedDate = new Date(page.updated_at).toISOString().split("T")[0];
-				
+				const createdDate = new Date(page.created_at)
+					.toISOString()
+					.split("T")[0];
+				const updatedDate = new Date(page.updated_at)
+					.toISOString()
+					.split("T")[0];
+
 				// Count creation
-				if (createdDate >= startDateISO.split("T")[0] && createdDate <= endDateISO.split("T")[0]) {
+				if (
+					createdDate >= startDateISO.split("T")[0] &&
+					createdDate <= endDateISO.split("T")[0]
+				) {
 					if (!daysMap.has(createdDate)) {
 						daysMap.set(createdDate, {
 							date: createdDate,
@@ -84,7 +89,8 @@ export function useMonthlyActivitySummary(
 			// Convert to array and calculate activity levels
 			const todayStr = new Date().toISOString().split("T")[0];
 			const days = Array.from(daysMap.values()).map((day) => {
-				const totalMinutes = day.learning.totalMinutes + day.notes.totalEditMinutes;
+				const totalMinutes =
+					day.learning.totalMinutes + day.notes.totalEditMinutes;
 				let activityLevel: "excellent" | "good" | "partial" | "none" = "none";
 				if (totalMinutes >= 60) activityLevel = "excellent";
 				else if (totalMinutes >= 30) activityLevel = "good";
@@ -113,7 +119,9 @@ export function useMonthlyActivitySummary(
 			// Calculate streak and active days
 			const sortedDays = days.sort((a, b) => a.date.localeCompare(b.date));
 			let streakCount = 0;
-			let totalActiveDays = days.filter((d) => d.activityLevel !== "none").length;
+			const totalActiveDays = days.filter(
+				(d) => d.activityLevel !== "none",
+			).length;
 
 			// Calculate streak (simplified)
 			for (let i = sortedDays.length - 1; i >= 0; i--) {
@@ -134,4 +142,3 @@ export function useMonthlyActivitySummary(
 		},
 	});
 }
-

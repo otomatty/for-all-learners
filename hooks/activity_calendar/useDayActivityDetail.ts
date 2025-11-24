@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import type { DayActivityDetail } from "@/app/(protected)/dashboard/_components/ActivityCalendar/types";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * 特定日の詳細な活動データを取得
@@ -11,7 +11,12 @@ export function useDayActivityDetail(userId: string, date: Date) {
 	const supabase = createClient();
 
 	return useQuery({
-		queryKey: ["activity_calendar", "day", userId, date.toISOString().split("T")[0]],
+		queryKey: [
+			"activity_calendar",
+			"day",
+			userId,
+			date.toISOString().split("T")[0],
+		],
 		queryFn: async (): Promise<DayActivityDetail> => {
 			const dateStr = date.toISOString().split("T")[0];
 			const startDate = new Date(dateStr);
@@ -112,4 +117,3 @@ export function useDayActivityDetail(userId: string, date: Date) {
 		},
 	});
 }
-

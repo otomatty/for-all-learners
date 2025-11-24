@@ -98,11 +98,8 @@ export function ActivityCalendar({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [monthData.year, monthData.month, monthData.days]); // Re-enrich when month changes
 
-	const { data: monthDataFromQuery, isLoading: isLoadingMonth } = useMonthlyActivitySummary(
-		userId,
-		currentMonth.year,
-		currentMonth.month,
-	);
+	const { data: monthDataFromQuery, isLoading: isLoadingMonth } =
+		useMonthlyActivitySummary(userId, currentMonth.year, currentMonth.month);
 
 	useEffect(() => {
 		if (monthDataFromQuery) {

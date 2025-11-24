@@ -5,8 +5,8 @@
 
 import type { Editor } from "@tiptap/core";
 import { toast } from "sonner";
-import { createPage } from "@/app/_actions/pages";
 import logger from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
 import { normalizeTitleToKey } from "../utils";
 import { notifyPageCreated } from "./broadcast";
 import { updateMarkToExists } from "./mark-operations";
@@ -35,26 +35,35 @@ export async function createPageFromMark(
 			throw new Error("User ID is required for page creation");
 		}
 
-		// Create page via Server Action
-		const newPage = await createPage({
-			title,
-			content_tiptap: {
-				type: "doc",
-				content: [
-					{
-						type: "paragraph",
-						content: [
-							{
-								type: "text",
-								text: `# ${title}\n\n新しいページです。`,
-							},
-						],
-					},
-				],
-			},
-			user_id: userId,
-			is_public: false, // Default to private
-		});
+		// Create page directly using Supabase client
+		const supabase = createClient();
+		const { data: newPage, error: insertError } = await supabase
+			.from("pages")
+			.insert({
+				user_id: userId,
+				title,
+				content_tiptap: {
+					type: "doc",
+					content: [
+						{
+							type: "paragraph",
+							content: [
+								{
+									type: "text",
+									text: `# ${title}\n\n新しいページです。`,
+								},
+							],
+						},
+					],
+				},
+				is_public: false, // Default to private
+			})
+			.select("id")
+			.single();
+
+		if (insertError || !newPage) {
+			throw insertError || new Error("Page creation returned no ID");
+		}
 
 		// TODO: If noteSlug is provided, associate with note_pages table
 		// if (noteSlug && newPage?.id) {

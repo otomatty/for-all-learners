@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { useRemoveGoalDeckLink, type Deck } from "@/hooks/goal_decks";
+import { type Deck, useRemoveGoalDeckLink } from "@/hooks/goal_decks";
 import { AddDeckLinkDialog } from "./AddDeckLinkDialog";
 import { AddStudySessionDialog } from "./AddStudySessionDialog";
 // components

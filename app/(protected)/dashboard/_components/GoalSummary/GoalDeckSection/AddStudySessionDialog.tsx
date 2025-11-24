@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useAddDeckStudyLog } from "@/hooks/goal_decks";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAddDeckStudyLog } from "@/hooks/goal_decks";
 
 interface AddStudySessionDialogProps {
 	deckId: string;

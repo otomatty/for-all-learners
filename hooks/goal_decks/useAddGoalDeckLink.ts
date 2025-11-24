@@ -32,8 +32,9 @@ export function useAddGoalDeckLink() {
 			if (error) throw error;
 		},
 		onSuccess: (_, variables) => {
-			queryClient.invalidateQueries({ queryKey: ["goal_decks", variables.goalId] });
+			queryClient.invalidateQueries({
+				queryKey: ["goal_decks", variables.goalId],
+			});
 		},
 	});
 }
-

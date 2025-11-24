@@ -2,12 +2,6 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useCreateDeck } from "@/hooks/decks";
-import {
-	useAddGoalDeckLink,
-	useGetAvailableDecksForGoal,
-	type Deck,
-} from "@/hooks/goal_decks";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +21,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useCreateDeck } from "@/hooks/decks";
+import {
+	type Deck,
+	useAddGoalDeckLink,
+	useGetAvailableDecksForGoal,
+} from "@/hooks/goal_decks";
 import { DecksTableSkeleton } from "./DecksTableSkeleton";
 
 interface AddDeckLinkDialogProps {
@@ -87,7 +87,13 @@ export function AddDeckLinkDialog({
 		setIsDialogOpen(false);
 		setSelectedDeckIds([]);
 		setNewDeckTitle("");
-	}, [goalId, newDeckTitle, onSuccess, createDeckMutation, addGoalDeckLinkMutation]);
+	}, [
+		goalId,
+		newDeckTitle,
+		onSuccess,
+		createDeckMutation,
+		addGoalDeckLinkMutation,
+	]);
 
 	// フィルタリングとソート
 	const filteredAndSortedDecks = availableDecks

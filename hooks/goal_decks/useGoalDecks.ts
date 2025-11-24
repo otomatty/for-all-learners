@@ -25,9 +25,7 @@ export function useGoalDecks(goalId: string) {
 
 			const { data, error } = await supabase
 				.from("goal_deck_links")
-				.select(
-					"deck_id, decks(*), card_count:cards(count)",
-				)
+				.select("deck_id, decks(*), card_count:cards(count)")
 				.eq("goal_id", goalId);
 
 			if (error) throw error;
@@ -42,4 +40,3 @@ export function useGoalDecks(goalId: string) {
 		},
 	});
 }
-

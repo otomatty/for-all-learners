@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import type { Deck as ClientDeck } from "./GoalDecksSectionClient";
 import ClientGoalDecksSection from "./GoalDecksSectionClient";
-import type { Database } from "@/types/database.types";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
 	card_count?: number;

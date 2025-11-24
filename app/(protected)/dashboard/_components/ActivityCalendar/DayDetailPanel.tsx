@@ -8,8 +8,8 @@
 
 import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDayActivityDetail } from "@/hooks/activity_calendar";
 import { Button } from "@/components/ui/button";
+import { useDayActivityDetail } from "@/hooks/activity_calendar";
 import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { ACTIVITY_COLORS } from "./constants";
@@ -25,8 +25,13 @@ interface DayDetailPanelProps {
 }
 
 export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
-	const { data: detail, isLoading, error } = useDayActivityDetail(userId, new Date(date));
-	const [enrichedDetail, setEnrichedDetail] = useState<DayActivityDetail | null>(null);
+	const {
+		data: detail,
+		isLoading,
+		error,
+	} = useDayActivityDetail(userId, new Date(date));
+	const [enrichedDetail, setEnrichedDetail] =
+		useState<DayActivityDetail | null>(null);
 
 	useEffect(() => {
 		if (detail) {
@@ -151,10 +156,12 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 				</div>
 			</div>
 
-				{/* コンテンツ */}
+			{/* コンテンツ */}
 			<div className="p-4 space-y-6">
 				{/* 学習活動 */}
-				<LearningActivitySection activities={displayDetail.learningActivities} />
+				<LearningActivitySection
+					activities={displayDetail.learningActivities}
+				/>
 
 				{/* ノート活動 */}
 				<NoteActivitySection activities={displayDetail.noteActivities} />
