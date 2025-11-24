@@ -1,5 +1,3 @@
-"use server";
-
 import { ActiveUsersCard } from "@/app/admin/_components/ActiveUsersCard";
 import { NewUsersCard } from "@/app/admin/_components/NewUsersCard";
 import { SupabaseStatusCard } from "@/app/admin/_components/SupabaseStatusCard";
