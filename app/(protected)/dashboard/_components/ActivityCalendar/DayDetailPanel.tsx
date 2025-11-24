@@ -25,11 +25,10 @@ interface DayDetailPanelProps {
 }
 
 export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
-	const {
-		data: detail,
-		isLoading,
-		error,
-	} = useDayActivityDetail(userId, new Date(date));
+	const { data: detail, isLoading } = useDayActivityDetail(
+		userId,
+		new Date(date),
+	);
 	const [enrichedDetail, setEnrichedDetail] =
 		useState<DayActivityDetail | null>(null);
 
@@ -138,10 +137,10 @@ export function DayDetailPanel({ date, userId, onClose }: DayDetailPanelProps) {
 						<p className="text-sm font-bold flex items-center gap-1">
 							<span>{activityColor.icon}</span>
 							<span className={activityColor.text}>
-								{detail.summary.activityLevel === "excellent" && "優秀"}
-								{detail.summary.activityLevel === "good" && "良好"}
-								{detail.summary.activityLevel === "partial" && "わずか"}
-								{detail.summary.activityLevel === "none" && "活動なし"}
+								{displayDetail.summary.activityLevel === "excellent" && "優秀"}
+								{displayDetail.summary.activityLevel === "good" && "良好"}
+								{displayDetail.summary.activityLevel === "partial" && "わずか"}
+								{displayDetail.summary.activityLevel === "none" && "活動なし"}
 							</span>
 						</p>
 					</div>

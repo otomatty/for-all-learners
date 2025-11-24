@@ -31,7 +31,6 @@ export function ActivityCalendar({
 	const [monthData, setMonthData] = useState(initialMonthData);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
 	const isEnrichingPluginsRef = useRef(false);
 	const lastEnrichedMonthRef = useRef<{ year: number; month: number } | null>(
 		null,

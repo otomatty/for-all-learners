@@ -66,7 +66,7 @@ export function useChangelogData() {
 			const entryIds = entries.map((entry) => entry.id);
 
 			// Fetch all changelog items in a single query
-			const { data: allItems, error: itemsError } = await supabase
+			const { data: allItems } = await supabase
 				.from("changelog_items")
 				.select("entry_id, type, description")
 				.in("entry_id", entryIds)

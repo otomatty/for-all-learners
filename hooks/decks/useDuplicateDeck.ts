@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
@@ -68,9 +69,9 @@ export function useDuplicateDeck() {
 					difficulty: card.difficulty,
 					last_reviewed_at: card.last_reviewed_at,
 					next_review_at: card.next_review_at,
-					review_count: card.review_count,
+					repetition_count: card.repetition_count,
 					ease_factor: card.ease_factor,
-					interval_days: card.interval_days,
+					review_interval: card.review_interval,
 				}));
 
 				const { error: insertCardsError } = await supabase
@@ -79,7 +80,10 @@ export function useDuplicateDeck() {
 
 				if (insertCardsError) {
 					// If cards insert fails, still return the new deck
-					console.error("Failed to copy cards:", insertCardsError);
+					logger.error(
+						{ error: insertCardsError },
+						"Failed to copy cards when duplicating deck",
+					);
 				}
 			}
 

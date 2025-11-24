@@ -48,12 +48,13 @@ export function useDayActivityDetail(userId: string, date: Date) {
 			if (pagesError) throw pagesError;
 
 			// Calculate summary
+			// effort_time is in milliseconds, convert to minutes
 			const totalMinutes = (learningLogs || []).reduce(
-				(sum, log) => sum + (log.duration || 0),
+				(sum, log) => sum + (log.effort_time || 0) / 60000,
 				0,
 			);
 			const sessionCount = learningLogs?.length || 0;
-			const editCount = pages?.length || 0;
+			const _editCount = pages?.length || 0;
 
 			let activityLevel: "excellent" | "good" | "partial" | "none" = "none";
 			if (totalMinutes >= 60) activityLevel = "excellent";
@@ -63,10 +64,13 @@ export function useDayActivityDetail(userId: string, date: Date) {
 			// Separate created and updated pages
 			const createdPages = (pages || []).filter(
 				(page) =>
+					page.created_at &&
 					new Date(page.created_at).toISOString().split("T")[0] === dateStr,
 			);
 			const updatedPages = (pages || []).filter(
 				(page) =>
+					page.updated_at &&
+					page.created_at &&
 					new Date(page.updated_at).toISOString().split("T")[0] === dateStr &&
 					new Date(page.created_at).toISOString().split("T")[0] !== dateStr,
 			);
@@ -97,19 +101,29 @@ export function useDayActivityDetail(userId: string, date: Date) {
 					reviewedCards: 1,
 					newCards: 0,
 					correctRate: 0,
-					timeSpentMinutes: log.duration || 0,
+					timeSpentMinutes: (log.effort_time || 0) / 60000,
 				})),
 				noteActivities: {
-					created: createdPages.map((page) => ({
-						title: page.title || "",
-						id: page.id,
-						createdAt: page.created_at,
-					})),
-					updated: updatedPages.map((page) => ({
-						title: page.title || "",
-						id: page.id,
-						updatedAt: page.updated_at,
-					})),
+					created: createdPages
+						.filter(
+							(page): page is typeof page & { created_at: string } =>
+								page.created_at !== null,
+						)
+						.map((page) => ({
+							title: page.title || "",
+							id: page.id,
+							createdAt: page.created_at,
+						})),
+					updated: updatedPages
+						.filter(
+							(page): page is typeof page & { updated_at: string } =>
+								page.updated_at !== null,
+						)
+						.map((page) => ({
+							title: page.title || "",
+							id: page.id,
+							updatedAt: page.updated_at,
+						})),
 					linksCreated: 0,
 				},
 				goalAchievements: [],

@@ -23,10 +23,10 @@ import {
 } from "@/components/ui/table";
 import { useCreateDeck } from "@/hooks/decks";
 import {
-	type Deck,
 	useAddGoalDeckLink,
 	useGetAvailableDecksForGoal,
 } from "@/hooks/goal_decks";
+import { createClient } from "@/lib/supabase/client";
 import { DecksTableSkeleton } from "./DecksTableSkeleton";
 
 interface AddDeckLinkDialogProps {
@@ -55,6 +55,7 @@ export function AddDeckLinkDialog({
 		useGetAvailableDecksForGoal(goalId);
 	const addGoalDeckLinkMutation = useAddGoalDeckLink();
 	const createDeckMutation = useCreateDeck();
+	const supabase = createClient();
 
 	useEffect(() => {
 		if (isDialogOpen) {
@@ -64,7 +65,7 @@ export function AddDeckLinkDialog({
 			setSortBy("updated_at_desc");
 			setSelectedDeckIds([]);
 		}
-	}, [goalId, isDialogOpen]);
+	}, [isDialogOpen]);
 
 	const handleAddSelected = useCallback(async () => {
 		for (const deckId of selectedDeckIds) {
@@ -76,8 +77,17 @@ export function AddDeckLinkDialog({
 	}, [goalId, selectedDeckIds, onSuccess, addGoalDeckLinkMutation]);
 
 	const handleCreate = useCallback(async () => {
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
+		if (userError || !user) {
+			throw new Error("ユーザー認証に失敗しました");
+		}
+
 		const newDeck = await createDeckMutation.mutateAsync({
 			title: newDeckTitle,
+			user_id: user.id,
 		});
 		if (!newDeck || !newDeck.id) {
 			throw new Error("新規デッキの作成に失敗しました。");
@@ -93,6 +103,7 @@ export function AddDeckLinkDialog({
 		onSuccess,
 		createDeckMutation,
 		addGoalDeckLinkMutation,
+		supabase,
 	]);
 
 	// フィルタリングとソート
@@ -148,7 +159,6 @@ export function AddDeckLinkDialog({
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}
 				dialogTitle="デッキ追加"
-				className="!max-w-2xl"
 			>
 				<div className="space-y-2 p-4 max-h-[70vh] overflow-auto">
 					{!isCreatingNew && (
@@ -247,9 +257,11 @@ export function AddDeckLinkDialog({
 															{deck.title}
 														</TableCell>
 														<TableCell className="hidden md:table-cell px-2 md:px-4">
-															{new Date(deck.created_at).toLocaleDateString(
-																"ja-JP",
-															)}
+															{deck.created_at
+																? new Date(deck.created_at).toLocaleDateString(
+																		"ja-JP",
+																	)
+																: "なし"}
 														</TableCell>
 														<TableCell className="hidden md:table-cell px-2 md:px-4">
 															{deck.updated_at

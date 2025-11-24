@@ -11,14 +11,11 @@
  *   bun run scripts/prepare-static-export.ts restore   # After build
  */
 
-import { existsSync, readdirSync, renameSync, statSync } from "fs";
-import { join } from "path";
+import { existsSync, readdirSync, renameSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-const ROUTE_HANDLERS_TO_DISABLE = [
-	"app/(protected)/notes/[slug]/new/route.ts",
-	"app/(protected)/notes/default/new/route.ts",
-	"app/api/ai/api-key/route.ts",
-];
+// Note: ROUTE_HANDLERS_TO_DISABLE was removed as it's no longer used
+// All route handlers are now found dynamically via findRouteFiles()
 
 function findRouteFiles(dir: string, fileList: string[] = []): string[] {
 	if (!existsSync(dir)) {
@@ -47,42 +44,8 @@ function findRouteFiles(dir: string, fileList: string[] = []): string[] {
 	return fileList;
 }
 
-function findDynamicPages(dir: string, fileList: string[] = []): string[] {
-	if (!existsSync(dir)) {
-		return fileList;
-	}
-
-	const files = readdirSync(dir);
-
-	for (const file of files) {
-		const filePath = join(dir, file);
-
-		// Skip node_modules and .next directories
-		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
-			continue;
-		}
-
-		const stat = statSync(filePath);
-
-		if (stat.isDirectory()) {
-			// Check if directory name contains dynamic route pattern [param]
-			if (file.includes("[") && file.includes("]")) {
-				// This is a dynamic route directory
-				findDynamicPages(filePath, fileList);
-			} else {
-				findDynamicPages(filePath, fileList);
-			}
-		} else if (file === "page.tsx" || file === "page.js") {
-			// Check if parent directory is a dynamic route
-			const parentDir = dir;
-			if (parentDir.includes("[") && parentDir.includes("]")) {
-				fileList.push(filePath);
-			}
-		}
-	}
-
-	return fileList;
-}
+// Note: findDynamicPages function was removed as it's no longer used
+// Dynamic pages are now explicitly listed in dynamicPagesToDisable array
 
 function prepare() {
 	console.log(

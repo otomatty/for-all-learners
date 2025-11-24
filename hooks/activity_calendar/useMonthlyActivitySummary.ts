@@ -47,6 +47,7 @@ export function useMonthlyActivitySummary(
 
 			// Process learning logs
 			for (const log of learningLogs || []) {
+				if (!log.answered_at) continue;
 				const date = new Date(log.answered_at).toISOString().split("T")[0];
 				if (!daysMap.has(date)) {
 					daysMap.set(date, {
@@ -56,18 +57,20 @@ export function useMonthlyActivitySummary(
 					});
 				}
 				const day = daysMap.get(date);
-				day.learning.totalMinutes += log.duration || 0;
+				// effort_time is in milliseconds, convert to minutes
+				day.learning.totalMinutes += (log.effort_time || 0) / 60000;
 				day.learning.sessionCount += 1;
 			}
 
 			// Process pages (simplified - you may need to adjust based on actual requirements)
 			for (const page of pages || []) {
+				if (!page.created_at) continue;
 				const createdDate = new Date(page.created_at)
 					.toISOString()
 					.split("T")[0];
-				const updatedDate = new Date(page.updated_at)
-					.toISOString()
-					.split("T")[0];
+				const _updatedDate = page.updated_at
+					? new Date(page.updated_at).toISOString().split("T")[0]
+					: null;
 
 				// Count creation
 				if (

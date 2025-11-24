@@ -45,13 +45,10 @@ interface PluginDetailsProps {
 
 export function PluginDetails({ plugin }: PluginDetailsProps) {
 	// Load initial reviews for display count
-	const { data: reviewsData, isLoading: isLoadingReviews } = usePluginReviews(
-		plugin.pluginId,
-		{
-			limit: 10,
-			offset: 0,
-		},
-	);
+	const { data: reviewsData } = usePluginReviews(plugin.pluginId, {
+		limit: 10,
+		offset: 0,
+	});
 
 	const handleRatingSubmitted = () => {
 		// Rating mutations will automatically invalidate queries
