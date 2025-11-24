@@ -5,8 +5,6 @@ import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { createAudioTranscription } from "@/app/_actions/audio_transcriptions";
-import { transcribeAudio } from "@/app/_actions/transcribe";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -22,6 +20,7 @@ import { useCreateActionLog } from "@/hooks/action_logs";
 import { useCreateCards } from "@/hooks/cards";
 import { useGenerateCards, useGenerateTitle } from "@/lib/hooks/ai";
 import { useUploadAudio } from "@/lib/hooks/storage";
+import { createClient } from "@/lib/supabase/client";
 
 interface AudioCardGeneratorProps {
 	deckId: string;
@@ -33,6 +32,7 @@ export function AudioCardGenerator({
 	userId,
 }: AudioCardGeneratorProps) {
 	const router = useRouter();
+	const supabase = createClient();
 	const createCardsMutation = useCreateCards();
 	const uploadAudioMutation = useUploadAudio();
 	const generateCardsMutation = useGenerateCards();
@@ -128,26 +128,57 @@ export function AudioCardGenerator({
 					expiresIn: 60 * 5, // 5分
 				});
 
-			// 1. サーバーアクションで文字起こしを実行 (URLを渡す)
-			const transcript = await transcribeAudio(audioFileUrl);
+			// 1. API Routeで文字起こしを実行 (URLを渡す)
+			const transcribeResponse = await fetch("/api/audio/transcribe", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ audioUrl: audioFileUrl }),
+			});
+
+			if (!transcribeResponse.ok) {
+				const errorData = await transcribeResponse.json();
+				throw new Error(errorData.error || "文字起こしに失敗しました");
+			}
+
+			const transcribeData = (await transcribeResponse.json()) as {
+				success: boolean;
+				transcript?: string;
+				error?: string;
+			};
+
+			if (!transcribeData.success || !transcribeData.transcript) {
+				throw new Error(transcribeData.error || "文字起こしに失敗しました");
+			}
+
+			const transcript = transcribeData.transcript;
+
 			// タイトルを自動生成
 			const titleResponse = await generateTitleMutation.mutateAsync({
 				transcript,
 			});
 			const title = titleResponse.title;
+
 			// 1.1. 音声文字起こしレコードをDBに保存
-			await createAudioTranscription({
-				user_id: userId,
-				deck_id: deckId,
-				file_path: filePath,
-				signed_url: audioFileUrl,
-				transcript,
-				title,
-				duration_sec: Math.floor(
-					(Date.now() - recordingStartRef.current) / 1000,
-				),
-				model_name: "gemini-2.5-flash",
-			});
+			const { error: insertError } = await supabase
+				.from("audio_transcriptions")
+				.insert({
+					user_id: userId,
+					deck_id: deckId,
+					file_path: filePath,
+					signed_url: audioFileUrl,
+					transcript,
+					title,
+					duration_sec: Math.floor(
+						(Date.now() - recordingStartRef.current) / 1000,
+					),
+					model_name: "gemini-2.5-flash",
+				});
+
+			if (insertError) {
+				throw new Error(`DB保存エラー: ${insertError.message}`);
+			}
 			toast.success("文字起こし完了", {
 				description: `${transcript.substring(0, 50)}...`,
 			});

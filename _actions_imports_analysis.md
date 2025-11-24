@@ -4,19 +4,34 @@
 これらは全てサーバーアクション（`"use server"`ディレクティブを使用）を使用しているため、Tauri環境への移行時にAPIエンドポイントまたはRPC関数に置き換える必要があります。
 
 **更新日**: 2025-01-XX
-**ステータス**: 主要なファイルの修正を完了。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
+**ステータス**: 優先度の高いファイルの修正を完了。残りのファイルは型定義のみのインポートまたはクライアントコンポーネント。
 
 ## 修正済みファイル（✅）
 
 以下のファイルは既に修正済みで、直接SupabaseクライアントまたはAPIエンドポイントを使用するように変更されています：
 
+### API Routes
 - ✅ `app/api/cards/save/route.ts` - `convertTextToTiptapJSON`と直接Supabaseクエリに置き換え
+- ✅ `app/api/batch/unified/route.ts` - バッチ処理関数を直接実装
+- ✅ `app/api/batch/multi-file/route.ts` - マルチファイル処理を直接実装
+- ✅ `app/api/notes/[slug]/pages/route.ts` - RPC関数を直接呼び出し
+- ✅ `app/api/gyazo/callback/route.ts` - OAuthコールバック処理を直接実装
+- ✅ `app/api/audio/transcribe/route.ts` - 新規作成: 単一音声文字起こし用API Route
+- ✅ `app/api/image/ocr/route.ts` - 新規作成: 単一画像OCR用API Route
+
+### Route Handlers
 - ✅ `app/(protected)/notes/default/new/route.ts` - 直接Supabaseクエリに置き換え
 - ✅ `app/auth/callback/route.ts` - 直接Supabaseクエリに置き換え
-- ✅ `app/auth/login/_components/MagicLinkForm.tsx` - クライアント側Supabaseクライアントに置き換え
-- ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - クライアント側Supabaseクライアントに置き換え
+
+### Pages
 - ✅ `app/(protected)/notes/[slug]/page.tsx` - 直接Supabaseクエリに置き換え
 - ✅ `app/(protected)/notes/[slug]/[id]/page.tsx` - 直接Supabaseクエリに置き換え
+
+### Components
+- ✅ `app/auth/login/_components/MagicLinkForm.tsx` - クライアント側Supabaseクライアントに置き換え
+- ✅ `app/auth/login/_components/GoogleLoginForm.tsx` - クライアント側Supabaseクライアントに置き換え
+- ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - API Route呼び出しとSupabaseクエリに置き換え
+- ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - API Route呼び出しとSupabaseクエリに置き換え
 
 ## インポート元ファイル一覧
 
@@ -32,10 +47,10 @@
 - `app/api/plugins/security/alerts/statistics/route.ts` - `isAdmin`
 - `app/api/plugins/security/alerts/run-detection/route.ts` - `isAdmin`
 - `app/api/plugins/security/alerts/[alertId]/route.ts` - `isAdmin`
-- `app/api/batch/unified/route.ts` - `audioBatchProcessing`, `multiFileBatchProcessing`, `transcribeImageBatch`
-- `app/api/batch/multi-file/route.ts` - `multiFileBatchProcessing`
-- `app/api/notes/[slug]/pages/route.ts` - `getNotePages`
-- `app/api/gyazo/callback/route.ts` - `handleGyazoCallback`
+- ✅ `app/api/batch/unified/route.ts` - **修正済み**: バッチ処理関数を直接実装
+- ✅ `app/api/batch/multi-file/route.ts` - **修正済み**: マルチファイル処理を直接実装
+- ✅ `app/api/notes/[slug]/pages/route.ts` - **修正済み**: RPC関数を直接呼び出し
+- ✅ `app/api/gyazo/callback/route.ts` - **修正済み**: OAuthコールバック処理を直接実装
 
 #### Route Handlers
 - ✅ `app/(protected)/notes/default/new/route.ts` - **修正済み**: 直接Supabaseクエリに置き換え
@@ -71,8 +86,8 @@
 - `app/(protected)/goals/_components/GoalItem/EditGoalDialog.tsx` - `updateStudyGoal`
 - `app/(protected)/goals/_components/GoalItem/DeleteGoalDialog.tsx` - `deleteStudyGoal`
 - `app/(protected)/learn/_components/QuizSession.tsx` - `QuizMode`
-- `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - `createAudioTranscription`, `transcribeAudio`
-- `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - `GeneratedCard`, `createRawInput`, `transcribeImage`
+- ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
+- ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**: API Route呼び出しとSupabaseクエリに置き換え
 - `app/(protected)/decks/[deckId]/_components/DeckPageClient.tsx` - `note-deck-links`
 - `app/(protected)/decks/[deckId]/_components/DeckNoteManager.tsx` - `note-deck-links`
 - `app/(protected)/notes/[slug]/_components/note-deck-manager.tsx` - `note-deck-links`
@@ -204,12 +219,12 @@
 ### 残りの作業（⚠️）
 
 #### 優先度: 高（実行時エラーが発生する可能性）
-- `app/api/batch/unified/route.ts` - `audioBatchProcessing`, `multiFileBatchProcessing`, `transcribeImageBatch`
-- `app/api/batch/multi-file/route.ts` - `multiFileBatchProcessing`
-- `app/api/notes/[slug]/pages/route.ts` - `getNotePages`
-- `app/api/gyazo/callback/route.ts` - `handleGyazoCallback`
-- `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - `createAudioTranscription`, `transcribeAudio`
-- `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - `createRawInput`, `transcribeImage`
+- ✅ `app/api/batch/unified/route.ts` - **修正済み**
+- ✅ `app/api/batch/multi-file/route.ts` - **修正済み**
+- ✅ `app/api/notes/[slug]/pages/route.ts` - **修正済み**
+- ✅ `app/api/gyazo/callback/route.ts` - **修正済み**
+- ✅ `app/(protected)/decks/[deckId]/audio/_components/AudioCardGenerator.tsx` - **修正済み**
+- ✅ `app/(protected)/decks/[deckId]/ocr/_components/ImageCardGenerator.tsx` - **修正済み**
 
 #### 優先度: 中（型定義のみ、またはコメントアウト済み）
 - 型定義のみのインポート（`import type`）は実行時エラーにはならないが、型定義ファイルの移動が必要
@@ -221,7 +236,8 @@
 ## 次のステップ
 
 1. ✅ 主要なサーバーコンポーネントとAPI Routesの修正（完了）
-2. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正
-3. ⚠️ 型定義の移動（`types/`ディレクトリへ）
-4. ⚠️ テストファイルの更新
+2. ✅ 優先度の高いAPI Routesとクライアントコンポーネントの修正（完了）
+3. ⚠️ 残りのAPI Routesとクライアントコンポーネントの修正（優先度: 中）
+4. ⚠️ 型定義の移動（`types/`ディレクトリへ）
+5. ⚠️ テストファイルの更新
 
