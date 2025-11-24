@@ -47,11 +47,49 @@ function findRouteFiles(dir: string, fileList: string[] = []): string[] {
 	return fileList;
 }
 
-function prepare() {
-	console.log("🔧 Preparing static export: Disabling Route Handlers and API Routes...");
+function findDynamicPages(dir: string, fileList: string[] = []): string[] {
+	if (!existsSync(dir)) {
+		return fileList;
+	}
 
+	const files = readdirSync(dir);
+
+	for (const file of files) {
+		const filePath = join(dir, file);
+		
+		// Skip node_modules and .next directories
+		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
+			continue;
+		}
+
+		const stat = statSync(filePath);
+
+		if (stat.isDirectory()) {
+			// Check if directory name contains dynamic route pattern [param]
+			if (file.includes("[") && file.includes("]")) {
+				// This is a dynamic route directory
+				findDynamicPages(filePath, fileList);
+			} else {
+				findDynamicPages(filePath, fileList);
+			}
+		} else if (file === "page.tsx" || file === "page.js") {
+			// Check if parent directory is a dynamic route
+			const parentDir = dir;
+			if (parentDir.includes("[") && parentDir.includes("]")) {
+				fileList.push(filePath);
+			}
+		}
+	}
+
+	return fileList;
+}
+
+function prepare() {
+	console.log("🔧 Preparing static export: Disabling Route Handlers, API Routes, and dynamic pages...");
+
+	// Disable Route Handlers and API Routes
 	const allRouteFiles = findRouteFiles("app");
-	const filesToDisable = allRouteFiles.filter((file) => {
+	const routeFilesToDisable = allRouteFiles.filter((file) => {
 		// Disable all API routes and route handlers
 		// Tauri environment uses Loopback Server for OAuth, so auth/callback route handler is not needed
 		const isAPIRoute = file.includes("/api/");
@@ -61,12 +99,12 @@ function prepare() {
 	});
 
 	let disabledCount = 0;
-	for (const file of filesToDisable) {
+	for (const file of routeFilesToDisable) {
 		if (existsSync(file) && !file.endsWith(".disabled")) {
 			const disabledFile = `${file}.disabled`;
 			try {
 				renameSync(file, disabledFile);
-				console.log(`  ✓ Disabled: ${file}`);
+				console.log(`  ✓ Disabled route: ${file}`);
 				disabledCount++;
 			} catch (error) {
 				console.error(`  ✗ Failed to disable ${file}:`, error);
@@ -74,22 +112,75 @@ function prepare() {
 		}
 	}
 
-	console.log(`✅ Disabled ${disabledCount} route files`);
+	// Disable dynamic pages that don't generate static params
+	// These pages will cause errors in static export
+	const dynamicPagesToDisable = [
+		"app/(protected)/decks/[deckId]/audio/page.tsx",
+		"app/(protected)/decks/[deckId]/ocr/page.tsx",
+		"app/(protected)/decks/[deckId]/pdf/page.tsx",
+		// Note: Other dynamic pages have generateStaticParams() that return empty array
+		// which should work, but if they cause errors, add them here
+	];
+
+	for (const file of dynamicPagesToDisable) {
+		if (existsSync(file) && !file.endsWith(".disabled")) {
+			const disabledFile = `${file}.disabled`;
+			try {
+				renameSync(file, disabledFile);
+				console.log(`  ✓ Disabled dynamic page: ${file}`);
+				disabledCount++;
+			} catch (error) {
+				console.error(`  ✗ Failed to disable ${file}:`, error);
+			}
+		}
+	}
+
+	console.log(`✅ Disabled ${disabledCount} files`);
 }
 
 function restore() {
-	console.log("🔧 Restoring Route Handlers and API Routes...");
+	console.log("🔧 Restoring Route Handlers, API Routes, and dynamic pages...");
 
-	const allRouteFiles = findRouteFiles("app");
-	const filesToRestore = allRouteFiles.filter((file) => file.endsWith(".disabled"));
+	// Find all disabled files (both route files and page files)
+	const allFiles: string[] = [];
+	
+	function findDisabledFiles(dir: string) {
+		if (!existsSync(dir)) {
+			return;
+		}
 
-	for (const file of filesToRestore) {
-		const originalFile = file.replace(".disabled", "");
-		renameSync(file, originalFile);
-		console.log(`  ✓ Restored: ${originalFile}`);
+		const files = readdirSync(dir);
+
+		for (const file of files) {
+			const filePath = join(dir, file);
+			
+			if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
+				continue;
+			}
+
+			const stat = statSync(filePath);
+
+			if (stat.isDirectory()) {
+				findDisabledFiles(filePath);
+			} else if (file.endsWith(".disabled")) {
+				allFiles.push(filePath);
+			}
+		}
 	}
 
-	console.log(`✅ Restored ${filesToRestore.length} route files`);
+	findDisabledFiles("app");
+
+	for (const file of allFiles) {
+		const originalFile = file.replace(".disabled", "");
+		try {
+			renameSync(file, originalFile);
+			console.log(`  ✓ Restored: ${originalFile}`);
+		} catch (error) {
+			console.error(`  ✗ Failed to restore ${file}:`, error);
+		}
+	}
+
+	console.log(`✅ Restored ${allFiles.length} files`);
 }
 
 const command = process.argv[2];
