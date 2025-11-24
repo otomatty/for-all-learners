@@ -20,6 +20,7 @@ import type {
 	GeneratedCardListProps,
 	TiptapContent,
 } from "@/types/pdf-card-generator";
+import type { GeneratedPdfCard } from "@/types/pdf-processing";
 
 export function PdfGeneratedCardList({
 	cards,
@@ -48,13 +49,16 @@ export function PdfGeneratedCardList({
 
 		try {
 			// TiptapJSON形式のカードデータに変換
-			const cardsToInsert = selectedCardsList.map((card) => ({
-				user_id: userId,
-				deck_id: deckId,
-				front_content: card.front_content,
-				back_content: card.back_content,
-				source_pdf_url: card.source_pdf_url,
-			}));
+			const cardsToInsert = selectedCardsList.map((card) => {
+				const pdfCard = card as unknown as GeneratedPdfCard;
+				return {
+					user_id: userId,
+					deck_id: deckId,
+					front_content: card.front_content,
+					back_content: card.back_content,
+					source_pdf_url: pdfCard.source_pdf_url,
+				};
+			});
 
 			await createCardsMutation.mutateAsync(cardsToInsert);
 
@@ -101,6 +105,7 @@ export function PdfGeneratedCardList({
 					{cards.map((card, index) => {
 						const indexStr = index.toString();
 						const isSelected = selectedCards[indexStr] || false;
+						const pdfCard = card as unknown as GeneratedPdfCard;
 
 						// TiptapJSONからテキストを抽出
 						const frontText =
@@ -119,7 +124,7 @@ export function PdfGeneratedCardList({
 
 						return (
 							<div
-								key={card.metadata.problem_id}
+								key={pdfCard.pdf_metadata?.problem_id || index.toString()}
 								className={`border rounded-lg p-4 ${
 									isSelected ? "border-blue-200 bg-blue-50" : "border-gray-200"
 								}`}
@@ -135,11 +140,18 @@ export function PdfGeneratedCardList({
 									/>
 									<div className="flex-1 space-y-2">
 										<div className="flex items-center gap-2">
-											<Badge variant="outline">ページ {card.source_page}</Badge>
-											{card.metadata && (
+											{pdfCard.source_page && (
+												<Badge variant="outline">
+													ページ {pdfCard.source_page}
+												</Badge>
+											)}
+											{pdfCard.pdf_metadata && (
 												<Badge variant="secondary">
 													信頼度:{" "}
-													{Math.round(card.metadata.confidence_score * 100)}%
+													{Math.round(
+														pdfCard.pdf_metadata.confidence_score * 100,
+													)}
+													%
 												</Badge>
 											)}
 										</div>

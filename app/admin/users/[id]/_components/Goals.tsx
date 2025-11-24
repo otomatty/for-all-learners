@@ -15,8 +15,8 @@ export default async function Goals({ userId }: GoalsProps) {
 	const supabase = await createClient();
 	const goalsWithDecks = await Promise.all(
 		goals.map(async (goal) => {
-			const { data: decks, error } = await supabase
-				.from("goal_decks")
+			const { data: deckLinks, error } = await supabase
+				.from("goal_deck_links")
 				.select("*, decks(*)")
 				.eq("goal_id", goal.id);
 
@@ -26,11 +26,21 @@ export default async function Goals({ userId }: GoalsProps) {
 
 			return {
 				...goal,
-				decks: (decks || []).map((gd) => ({
-					id: gd.decks.id,
-					title: gd.decks.title,
-					card_count: gd.decks.card_count ?? 0,
-				})),
+				decks: (deckLinks || []).map((link) => {
+					const deck = link.decks as {
+						id: string;
+						title: string;
+						card_count?: number;
+					} | null;
+					if (!deck) {
+						return { id: "", title: "", card_count: 0 };
+					}
+					return {
+						id: deck.id,
+						title: deck.title,
+						card_count: deck.card_count ?? 0,
+					};
+				}),
 			};
 		}),
 	);

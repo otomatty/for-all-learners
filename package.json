@@ -9,6 +9,8 @@
 		"start": "next start",
 		"lint": "biome check --write ./app ./components ./lib ./hooks ./types ./stores ./scripts ./templates ./middleware.ts",
 		"lint:ci": "biome check --diagnostic-level=error ./app ./components ./lib ./hooks ./types ./stores ./scripts ./templates ./middleware.ts",
+		"typecheck": "tsc --noEmit",
+		"ci": "bun run typecheck && bun run lint:ci && bun run test && bun run build",
 		"gen:types": "supabase gen types typescript --project-id 'ablwpfboagwcegeehmtg' --schema public > types/database.types.ts",
 		"test": "npx vitest run",
 		"test:ui": "vitest --ui",

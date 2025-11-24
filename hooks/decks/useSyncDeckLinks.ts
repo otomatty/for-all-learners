@@ -48,7 +48,7 @@ export function useSyncDeckLinks() {
 				if (outgoingIds.length > 0) {
 					const linksToInsert = outgoingIds.map((linkedId) => ({
 						card_id: card.id,
-						linked_id: linkedId,
+						page_id: linkedId,
 					}));
 
 					const { error: insertError } = await supabase

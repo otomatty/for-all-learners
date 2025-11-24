@@ -11,6 +11,9 @@ import { MobileDecksList } from "./MobileDecksList";
 
 // Deck type extends base Deck and adds today's review count
 export interface DeckWithReviewCount extends Deck {
+	card_count: number; // Override to make required
+	description: string; // Override to make required (non-nullable)
+	is_public: boolean; // Override to make required (non-nullable)
 	todayReviewCount: number;
 }
 

@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
-import type { Deck as ClientDeck } from "./GoalDecksSectionClient";
-import ClientGoalDecksSection from "./GoalDecksSectionClient";
+import ClientGoalDecksSection, {
+	type DeckWithReviewCount,
+} from "./GoalDecksSectionClient";
 
 type Deck = Database["public"]["Tables"]["decks"]["Row"] & {
 	card_count?: number;
@@ -46,8 +47,11 @@ export default async function ServerGoalDecksSection({
 	})) as Deck[];
 
 	// 親から渡された dueMap を用いて復習対象件数をマージ
-	const initialDecks: ClientDeck[] = decks.map((d) => ({
+	const initialDecks: DeckWithReviewCount[] = decks.map((d) => ({
 		...d,
+		card_count: d.card_count ?? 0,
+		description: d.description ?? "",
+		is_public: d.is_public ?? false,
 		todayReviewCount: dueMap[d.id] ?? 0,
 	}));
 

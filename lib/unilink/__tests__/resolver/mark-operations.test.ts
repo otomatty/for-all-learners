@@ -56,7 +56,7 @@ describe("Mark Operations Module", () => {
 		// Mock view
 		mockView = {
 			state: mockState as EditorState,
-			dispatch: mockDispatch,
+			dispatch: mockDispatch as (tr: Transaction) => void,
 		};
 
 		// Mock editor

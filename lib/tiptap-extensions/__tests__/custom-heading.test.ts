@@ -87,7 +87,10 @@ describe("CustomHeading", () => {
 			const json = editor.getJSON();
 			expect(json.content?.[0]?.type).toBe("heading");
 			expect(json.content?.[0]?.attrs?.level).toBe(2);
-			expect(json.content?.[0]?.content?.[0]?.text).toContain("Title");
+			const textNode = json.content?.[0]?.content?.[0] as
+				| { text?: string }
+				| undefined;
+			expect(textNode?.text).toContain("Title");
 		});
 	});
 
