@@ -7,7 +7,8 @@
  *   └─ app/api/ai/generate-title/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generateTitle.ts (generateTitleFromTranscript - mocked)
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey - mocked)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
@@ -21,10 +22,10 @@ vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
+import type { LLMClient } from "@/lib/llm/client";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
-import type { LLMClient } from "@/lib/llm/client";
 import { POST } from "../route";
 
 // Helper: Create mock NextRequest
@@ -164,7 +165,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("API key not configured"),
 			);
 
@@ -189,7 +190,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockRejectedValue(
+			vi.mocked(mockLLMClient.generate).mockRejectedValue(
 				new Error("タイトル生成に失敗しました"),
 			);
 

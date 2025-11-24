@@ -1,10 +1,11 @@
 "use client";
 
+import type { UseMutationOptions } from "@tanstack/react-query";
+import type {
+	UpdateStudyGoalPayload,
+	UpdateStudyGoalResult,
+} from "./useUpdateStudyGoal";
 import { useUpdateStudyGoal } from "./useUpdateStudyGoal";
-
-export type UpdateStudyGoalResult =
-	| { success: true; data: unknown }
-	| { success: false; error: string };
 
 /**
  * 学習目標を完了状態に設定します。
@@ -15,8 +16,26 @@ export function useCompleteStudyGoal() {
 
 	return {
 		...updateGoal,
-		mutate: (goalId: string) => {
-			updateGoal.mutate({
+		mutate: (
+			goalId: string,
+			options?: UseMutationOptions<
+				UpdateStudyGoalResult,
+				Error,
+				UpdateStudyGoalPayload,
+				unknown
+			>,
+		) => {
+			updateGoal.mutate(
+				{
+					goalId,
+					status: "completed",
+					progressRate: 100,
+				},
+				options,
+			);
+		},
+		mutateAsync: async (goalId: string) => {
+			return updateGoal.mutateAsync({
 				goalId,
 				status: "completed",
 				progressRate: 100,

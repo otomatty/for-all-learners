@@ -14,7 +14,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { completeStudyGoal } from "@/app/_actions/study_goals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +23,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCompleteStudyGoal } from "@/hooks/study_goals/useCompleteStudyGoal";
 import { DeleteGoalDialog } from "./DeleteGoalDialog";
 import { EditGoalDialog } from "./EditGoalDialog";
 import { GoalProgressBar } from "./GoalProgressBar";
@@ -48,7 +48,7 @@ export function GoalItem({ goal }: GoalItemProps) {
 	const router = useRouter();
 	const [editOpen, setEditOpen] = useState(false);
 	const [deleteOpen, setDeleteOpen] = useState(false);
-	const [isCompleting, setIsCompleting] = useState(false);
+	const completeGoal = useCompleteStudyGoal();
 
 	const getStatusBadge = () => {
 		switch (goal.status) {
@@ -71,20 +71,17 @@ export function GoalItem({ goal }: GoalItemProps) {
 	};
 
 	const handleComplete = async () => {
-		setIsCompleting(true);
-		try {
-			const result = await completeStudyGoal(goal.id);
-			if (result.success) {
+		completeGoal.mutate(goal.id, {
+			onSuccess: () => {
 				toast.success("目標を完了にしました");
 				router.refresh();
-			} else {
-				toast.error(result.error);
-			}
-		} catch (_error) {
-			toast.error("目標の完了に失敗しました");
-		} finally {
-			setIsCompleting(false);
-		}
+			},
+			onError: (error) => {
+				toast.error(
+					error instanceof Error ? error.message : "目標の完了に失敗しました",
+				);
+			},
+		});
 	};
 
 	const formatDate = (dateString: string) => {
@@ -123,7 +120,7 @@ export function GoalItem({ goal }: GoalItemProps) {
 								{goal.status !== "completed" && (
 									<DropdownMenuItem
 										onClick={handleComplete}
-										disabled={isCompleting}
+										disabled={completeGoal.isPending}
 									>
 										<CheckCircle2 className="mr-2 h-4 w-4" />
 										完了にする

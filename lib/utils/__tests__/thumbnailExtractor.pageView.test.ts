@@ -8,7 +8,12 @@
  */
 
 import type { JSONContent } from "@tiptap/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Mock non-existent Server Actions module
+vi.mock("@/app/_actions/autoSetThumbnail", () => ({
+	shouldAutoSetThumbnail: vi.fn(),
+}));
 
 // テスト用のサンプルコンテンツ
 const pageWithGyazoImage: JSONContent = {

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { updateStudyGoal } from "@/app/_actions/study_goals";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { useUpdateStudyGoal } from "@/hooks/study_goals/useUpdateStudyGoal";
 
 interface StudyGoal {
 	id: string;
@@ -58,7 +58,7 @@ export function EditGoalDialog({
 }: EditGoalDialogProps) {
 	const router = useRouter();
 	const [submitError, setSubmitError] = useState<string>("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const updateGoal = useUpdateStudyGoal();
 
 	const form = useForm<GoalFormFields>({
 		defaultValues: {
@@ -86,30 +86,29 @@ export function EditGoalDialog({
 
 	const onSubmit = async (data: GoalFormFields) => {
 		setSubmitError("");
-		setIsSubmitting(true);
 
-		try {
-			const result = await updateStudyGoal({
+		updateGoal.mutate(
+			{
 				goalId: goal.id,
 				title: data.title,
 				description: data.description,
 				deadline: data.deadline,
 				status: data.status,
 				progressRate: data.progress_rate,
-			});
-
-			if (result.success) {
-				toast.success("目標を更新しました");
-				router.refresh();
-				onOpenChange(false);
-			} else {
-				setSubmitError(result.error);
-			}
-		} catch (_error) {
-			setSubmitError("目標の更新に失敗しました");
-		} finally {
-			setIsSubmitting(false);
-		}
+			},
+			{
+				onSuccess: () => {
+					toast.success("目標を更新しました");
+					router.refresh();
+					onOpenChange(false);
+				},
+				onError: (error) => {
+					const errorMessage =
+						error instanceof Error ? error.message : "目標の更新に失敗しました";
+					setSubmitError(errorMessage);
+				},
+			},
+		);
 	};
 
 	const progressRate = form.watch("progress_rate");
@@ -147,7 +146,7 @@ export function EditGoalDialog({
 									{...form.register("title", {
 										required: "タイトルは必須です",
 									})}
-									disabled={isSubmitting}
+									disabled={updateGoal.isPending}
 								/>
 							</FormControl>
 							<FormMessage />
@@ -158,7 +157,7 @@ export function EditGoalDialog({
 							<FormControl>
 								<Input
 									{...form.register("description")}
-									disabled={isSubmitting}
+									disabled={updateGoal.isPending}
 								/>
 							</FormControl>
 						</FormItem>
@@ -169,7 +168,7 @@ export function EditGoalDialog({
 								<Input
 									type="date"
 									{...form.register("deadline")}
-									disabled={isSubmitting}
+									disabled={updateGoal.isPending}
 								/>
 							</FormControl>
 						</FormItem>
@@ -181,7 +180,7 @@ export function EditGoalDialog({
 								onValueChange={(
 									value: "not_started" | "in_progress" | "completed",
 								) => form.setValue("status", value)}
-								disabled={isSubmitting}
+								disabled={updateGoal.isPending}
 							>
 								<FormControl>
 									<SelectTrigger>
@@ -208,7 +207,7 @@ export function EditGoalDialog({
 									min={0}
 									step={5}
 									className="w-full"
-									disabled={isSubmitting}
+									disabled={updateGoal.isPending}
 								/>
 							</FormControl>
 						</FormItem>
@@ -226,12 +225,12 @@ export function EditGoalDialog({
 								type="button"
 								variant="outline"
 								onClick={() => onOpenChange(false)}
-								disabled={isSubmitting}
+								disabled={updateGoal.isPending}
 							>
 								キャンセル
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "更新中..." : "更新"}
+							<Button type="submit" disabled={updateGoal.isPending}>
+								{updateGoal.isPending ? "更新中..." : "更新"}
 							</Button>
 						</div>
 					</form>

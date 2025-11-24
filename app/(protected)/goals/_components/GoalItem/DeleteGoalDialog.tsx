@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
-import { deleteStudyGoal } from "@/app/_actions/study_goals";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,6 +12,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useDeleteStudyGoal } from "@/hooks/study_goals/useDeleteStudyGoal";
 
 interface StudyGoal {
 	id: string;
@@ -39,24 +38,21 @@ export function DeleteGoalDialog({
 	onOpenChange,
 }: DeleteGoalDialogProps) {
 	const router = useRouter();
-	const [isDeleting, setIsDeleting] = useState(false);
+	const deleteGoal = useDeleteStudyGoal();
 
-	const handleDelete = async () => {
-		setIsDeleting(true);
-		try {
-			const result = await deleteStudyGoal(goal.id);
-			if (result.success) {
+	const handleDelete = () => {
+		deleteGoal.mutate(goal.id, {
+			onSuccess: () => {
 				toast.success("目標を削除しました");
 				router.refresh();
 				onOpenChange(false);
-			} else {
-				toast.error(result.error);
-			}
-		} catch (_error) {
-			toast.error("目標の削除に失敗しました");
-		} finally {
-			setIsDeleting(false);
-		}
+			},
+			onError: (error) => {
+				toast.error(
+					error instanceof Error ? error.message : "目標の削除に失敗しました",
+				);
+			},
+		});
 	};
 
 	return (
@@ -80,15 +76,15 @@ export function DeleteGoalDialog({
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel disabled={isDeleting}>
+					<AlertDialogCancel disabled={deleteGoal.isPending}>
 						キャンセル
 					</AlertDialogCancel>
 					<AlertDialogAction
 						onClick={handleDelete}
-						disabled={isDeleting}
+						disabled={deleteGoal.isPending}
 						className="bg-red-600 hover:bg-red-700"
 					>
-						{isDeleting ? "削除中..." : "削除"}
+						{deleteGoal.isPending ? "削除中..." : "削除"}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

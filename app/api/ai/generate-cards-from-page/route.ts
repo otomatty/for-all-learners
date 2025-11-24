@@ -17,20 +17,20 @@
  *   └─ Tests: ./__tests__/route.test.ts (将来作成)
  */
 
+import type { JSONContent } from "@tiptap/core";
 import { type NextRequest, NextResponse } from "next/server";
+import { extractTextFromTiptap } from "@/components/pages/extract-text-from-tiptap";
+import type { LLMProvider } from "@/lib/llm/client";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 import { buildPrompt } from "@/lib/llm/prompt-builder";
-import { extractTextFromTiptap } from "@/components/pages/extract-text-from-tiptap";
-import { convertTextToTiptapJSON } from "@/lib/utils/pdfUtils";
-import type { LLMProvider } from "@/lib/llm/client";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
+import { convertTextToTiptapJSON } from "@/lib/utils/pdfUtils";
 import {
 	getProviderValidationErrorMessage,
 	isValidProvider,
 } from "@/lib/validators/ai";
 import type { Json } from "@/types/database.types";
-import type { JSONContent } from "@tiptap/core";
 
 interface GenerateCardsFromPageRequest {
 	pageContentTiptap: Json | null;

@@ -7,7 +7,8 @@
  *   └─ app/api/ai/api-key/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/ai/apiKey.ts (getAPIKeyStatus, saveAPIKey, deleteAPIKey, testAPIKey - mocked)
+ *   ├─ lib/encryption/api-key-vault.ts (encryptAPIKey - mocked)
+ *   ├─ lib/llm/client.ts (createLLMClient - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
@@ -15,17 +16,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/ai/apiKey");
+vi.mock("@/lib/encryption/api-key-vault", () => ({
+	encryptAPIKey: vi.fn(),
+}));
+
+vi.mock("@/lib/llm/client", async () => {
+	const actual = await vi.importActual("@/lib/llm/client");
+	return {
+		...actual,
+		createLLMClient: vi.fn(),
+	};
+});
+
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import {
-	deleteAPIKey,
-	getAPIKeyStatus,
-	saveAPIKey,
-	testAPIKey,
-} from "@/app/_actions/ai/apiKey";
+import { encryptAPIKey } from "@/lib/encryption/api-key-vault";
+import { createLLMClient } from "@/lib/llm/client";
 import { createClient } from "@/lib/supabase/server";
 import { DELETE, GET, POST } from "../route";
 
@@ -38,6 +46,14 @@ function createMockRequest(body?: unknown): NextRequest {
 
 // Helper: Create mock Supabase client with authenticated user
 function createMockSupabaseClient(authenticated = true) {
+	const mockFrom = vi.fn(() => ({
+		select: vi.fn().mockReturnThis(),
+		eq: vi.fn().mockReturnThis(),
+		upsert: vi.fn().mockReturnThis(),
+		delete: vi.fn().mockReturnThis(),
+		single: vi.fn(),
+	}));
+
 	return {
 		auth: {
 			getUser: () =>
@@ -48,6 +64,7 @@ function createMockSupabaseClient(authenticated = true) {
 					error: authenticated ? null : new Error("Not authenticated"),
 				}),
 		},
+		from: mockFrom,
 	};
 }
 
@@ -61,19 +78,40 @@ describe("GET /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-001: Get API key status", () => {
 		it("should return API key status successfully", async () => {
-			const mockStatus = {
-				google: { configured: true, updatedAt: "2025-01-01T00:00:00Z" },
-				openai: { configured: false, updatedAt: null },
-				anthropic: { configured: false, updatedAt: null },
-			};
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockSelect = vi.fn().mockReturnThis();
+			const mockEq = vi.fn().mockReturnThis();
+			const mockSingle = vi.fn().mockResolvedValue({
+				data: [
+					{
+						provider: "google",
+						updated_at: "2025-01-01T00:00:00Z",
+					},
+				],
+				error: null,
+			});
 
-			vi.mocked(getAPIKeyStatus).mockResolvedValue({
-				success: true,
-				data: mockStatus,
+			vi.mocked(mockClient.from).mockReturnValue({
+				select: mockSelect,
+				eq: mockEq,
+				single: mockSingle,
+			} as never);
+
+			mockSelect.mockReturnValue({
+				eq: mockEq,
+			});
+			mockEq.mockReturnValue({
+				eq: vi.fn().mockResolvedValue({
+					data: [
+						{
+							provider: "google",
+							updated_at: "2025-01-01T00:00:00Z",
+						},
+					],
+					error: null,
+				}),
 			});
 
 			const request = createMockRequest();
@@ -82,7 +120,9 @@ describe("GET /api/ai/api-key", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
-			expect(data.data).toEqual(mockStatus);
+			expect(data.data.google.configured).toBe(true);
+			expect(data.data.openai.configured).toBe(false);
+			expect(data.data.anthropic.configured).toBe(false);
 		});
 	});
 
@@ -102,7 +142,6 @@ describe("GET /api/ai/api-key", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(getAPIKeyStatus).not.toHaveBeenCalled();
 		});
 	});
 
@@ -111,13 +150,25 @@ describe("GET /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-003: Status retrieval error", () => {
 		it("should return 500 when status retrieval fails", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(getAPIKeyStatus).mockResolvedValue({
-				success: false,
-				error: "データベースエラー",
+			const mockSelect = vi.fn().mockReturnThis();
+			const mockEq = vi.fn().mockReturnThis();
+
+			vi.mocked(mockClient.from).mockReturnValue({
+				select: mockSelect,
+				eq: mockEq,
+			} as never);
+
+			mockSelect.mockReturnValue({
+				eq: mockEq,
+			});
+			mockEq.mockReturnValue({
+				eq: vi.fn().mockResolvedValue({
+					data: null,
+					error: { message: "データベースエラー" },
+				}),
 			});
 
 			const request = createMockRequest();
@@ -126,7 +177,7 @@ describe("GET /api/ai/api-key", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(500);
-			expect(data.error).toBe("データベースエラー");
+			expect(data.error).toBe("データベースエラーが発生しました");
 		});
 	});
 });
@@ -141,14 +192,19 @@ describe("POST /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-001: Save API key without test", () => {
 		it("should save API key successfully", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(saveAPIKey).mockResolvedValue({
-				success: true,
-				message: "APIキーを保存しました",
+			vi.mocked(encryptAPIKey).mockResolvedValue("encrypted-key");
+
+			const mockUpsert = vi.fn().mockResolvedValue({
+				data: null,
+				error: null,
 			});
+
+			vi.mocked(mockClient.from).mockReturnValue({
+				upsert: mockUpsert,
+			} as never);
 
 			const request = createMockRequest({
 				provider: "google",
@@ -161,8 +217,8 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.message).toBe("APIキーを保存しました");
-			expect(saveAPIKey).toHaveBeenCalledWith("google", "test-api-key");
-			expect(testAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).toHaveBeenCalledWith("test-api-key");
+			expect(mockUpsert).toHaveBeenCalled();
 		});
 	});
 
@@ -171,19 +227,24 @@ describe("POST /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-002: Save API key with test", () => {
 		it("should test API key before saving", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(testAPIKey).mockResolvedValue({
-				success: true,
-				message: "APIキーは有効です",
+			const mockLLMClient = {
+				generate: vi.fn().mockResolvedValue("こんにちは"),
+			};
+			vi.mocked(createLLMClient).mockResolvedValue(mockLLMClient as never);
+
+			vi.mocked(encryptAPIKey).mockResolvedValue("encrypted-key");
+
+			const mockUpsert = vi.fn().mockResolvedValue({
+				data: null,
+				error: null,
 			});
 
-			vi.mocked(saveAPIKey).mockResolvedValue({
-				success: true,
-				message: "APIキーを保存しました",
-			});
+			vi.mocked(mockClient.from).mockReturnValue({
+				upsert: mockUpsert,
+			} as never);
 
 			const request = createMockRequest({
 				provider: "openai",
@@ -196,8 +257,12 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.message).toBe("APIキーを保存しました");
-			expect(testAPIKey).toHaveBeenCalledWith("openai", "test-api-key");
-			expect(saveAPIKey).toHaveBeenCalledWith("openai", "test-api-key");
+			expect(createLLMClient).toHaveBeenCalledWith({
+				provider: "openai",
+				apiKey: "test-api-key",
+			});
+			expect(mockLLMClient.generate).toHaveBeenCalledWith("こんにちは");
+			expect(encryptAPIKey).toHaveBeenCalledWith("test-api-key");
 		});
 	});
 
@@ -206,14 +271,13 @@ describe("POST /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-003: API key test failure", () => {
 		it("should return 400 when API key test fails", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(testAPIKey).mockResolvedValue({
-				success: false,
-				error: "APIキーが無効です",
-			});
+			const mockLLMClient = {
+				generate: vi.fn().mockRejectedValue(new Error("API_KEY_INVALID")),
+			};
+			vi.mocked(createLLMClient).mockResolvedValue(mockLLMClient as never);
 
 			const request = createMockRequest({
 				provider: "google",
@@ -226,7 +290,7 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("APIキーが無効です");
-			expect(saveAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -249,7 +313,7 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(saveAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -271,7 +335,7 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("providerは必須です");
-			expect(saveAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -293,7 +357,7 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("apiKeyは必須です");
-			expect(saveAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -316,7 +380,7 @@ describe("POST /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toContain("無効なproviderです");
-			expect(saveAPIKey).not.toHaveBeenCalled();
+			expect(encryptAPIKey).not.toHaveBeenCalled();
 		});
 	});
 });
@@ -331,13 +395,28 @@ describe("DELETE /api/ai/api-key", () => {
 	// ========================================
 	describe("TC-001: Delete API key", () => {
 		it("should delete API key successfully", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(deleteAPIKey).mockResolvedValue({
-				success: true,
-				message: "APIキーを削除しました",
+			const mockDelete = vi.fn().mockReturnThis();
+			const mockEq = vi.fn().mockResolvedValue({
+				data: null,
+				error: null,
+			});
+
+			vi.mocked(mockClient.from).mockReturnValue({
+				delete: mockDelete,
+				eq: mockEq,
+			} as never);
+
+			mockDelete.mockReturnValue({
+				eq: mockEq,
+			});
+			mockEq.mockReturnValue({
+				eq: vi.fn().mockResolvedValue({
+					data: null,
+					error: null,
+				}),
 			});
 
 			const request = createMockRequest({
@@ -349,7 +428,7 @@ describe("DELETE /api/ai/api-key", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.message).toBe("APIキーを削除しました");
-			expect(deleteAPIKey).toHaveBeenCalledWith("google");
+			expect(mockClient.from).toHaveBeenCalledWith("user_api_keys");
 		});
 	});
 
@@ -371,7 +450,6 @@ describe("DELETE /api/ai/api-key", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(deleteAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -391,7 +469,6 @@ describe("DELETE /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("providerは必須です");
-			expect(deleteAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -413,7 +490,6 @@ describe("DELETE /api/ai/api-key", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toContain("無効なproviderです");
-			expect(deleteAPIKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -421,14 +497,29 @@ describe("DELETE /api/ai/api-key", () => {
 	// TC-005: 削除エラー
 	// ========================================
 	describe("TC-005: Delete error", () => {
-		it("should return 400 when delete fails", async () => {
-			vi.mocked(createClient).mockResolvedValue(
-				createMockSupabaseClient() as never,
-			);
+		it("should return 500 when delete fails", async () => {
+			const mockClient = createMockSupabaseClient();
+			vi.mocked(createClient).mockResolvedValue(mockClient as never);
 
-			vi.mocked(deleteAPIKey).mockResolvedValue({
-				success: false,
-				error: "削除に失敗しました",
+			const mockDelete = vi.fn().mockReturnThis();
+			const mockEq = vi.fn().mockResolvedValue({
+				data: null,
+				error: { message: "削除に失敗しました" },
+			});
+
+			vi.mocked(mockClient.from).mockReturnValue({
+				delete: mockDelete,
+				eq: mockEq,
+			} as never);
+
+			mockDelete.mockReturnValue({
+				eq: mockEq,
+			});
+			mockEq.mockReturnValue({
+				eq: vi.fn().mockResolvedValue({
+					data: null,
+					error: { message: "削除に失敗しました" },
+				}),
 			});
 
 			const request = createMockRequest({
@@ -439,7 +530,7 @@ describe("DELETE /api/ai/api-key", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(500);
-			expect(data.error).toBe("削除に失敗しました");
+			expect(data.error).toBe("データベースエラーが発生しました");
 		});
 	});
 });

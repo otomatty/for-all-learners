@@ -4,12 +4,8 @@ import type { JSONContent } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { KeyboardEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { autoSetThumbnailOnPageView } from "@/app/_actions/autoSetThumbnail";
-import { duplicatePage } from "@/app/_actions/duplicatePage";
-import { uploadAndSaveGyazoImage } from "@/app/_actions/gyazo";
-import { deletePage } from "@/app/_actions/pages";
 // Hooks
 import { useDateShortcut } from "@/components/pages/_hooks/useDateShortcut";
 import { usePageEditorLogic } from "@/components/pages/_hooks/usePageEditorLogic";
@@ -26,6 +22,7 @@ import { PageHeader } from "@/components/pages/page-header";
 import PageLinksGrid from "@/components/pages/page-links-grid";
 import ResponsiveToolbar from "@/components/pages/responsive-toolbar";
 import { TableBubbleMenu } from "@/components/pages/table-bubble-menu";
+import { useDeletePage } from "@/hooks/pages/useDeletePage";
 // Logger
 import logger from "@/lib/logger";
 // Supabase
@@ -94,40 +91,41 @@ export default function EditPageForm({
 	// }, [originalTitle, hasPromptedLink, title]);
 
 	// 自動サムネイル設定（ページ表示時）
-	useEffect(() => {
-		const autoSetThumbnail = async () => {
-			// サムネイルが既に設定されている場合はスキップ
-			if (page.thumbnail_url) {
-				return;
-			}
+	// TODO: API Routeを作成して置き換え
+	// useEffect(() => {
+	// 	const autoSetThumbnail = async () => {
+	// 		// サムネイルが既に設定されている場合はスキップ
+	// 		if (page.thumbnail_url) {
+	// 			return;
+	// 		}
 
-			// initialContentがある場合のみ実行
-			if (!initialContent) {
-				return;
-			}
+	// 		// initialContentがある場合のみ実行
+	// 		if (!initialContent) {
+	// 			return;
+	// 		}
 
-			try {
-				const result = await autoSetThumbnailOnPageView(
-					page.id,
-					initialContent,
-					page.thumbnail_url,
-				);
+	// 		try {
+	// 			const result = await autoSetThumbnailOnPageView(
+	// 				page.id,
+	// 				initialContent,
+	// 				page.thumbnail_url,
+	// 			);
 
-				if (result.thumbnailSet && result.thumbnailUrl) {
-					// 必要に応じてページを再読み込みまたは状態を更新
-				} else if (result.error) {
-				}
-			} catch (error) {
-				logger.error(
-					{ error, pageId: page.id },
-					"サムネイル自動設定でエラーが発生",
-				);
-			}
-		};
-		autoSetThumbnail();
-	}, [page.id, page.thumbnail_url, initialContent]);
+	// 			if (result.thumbnailSet && result.thumbnailUrl) {
+	// 				// 必要に応じてページを再読み込みまたは状態を更新
+	// 			} else if (result.error) {
+	// 			}
+	// 		} catch (error) {
+	// 			logger.error(
+	// 				{ error, pageId: page.id },
+	// 				"サムネイル自動設定でエラーが発生",
+	// 			);
+	// 		}
+	// 	};
+	// 	autoSetThumbnail();
+	// }, [page.id, page.thumbnail_url, initialContent]);
 
-	const [isDeleting, setIsDeleting] = useState(false);
+	const deletePageMutation = useDeletePage();
 
 	// State for create page confirmation dialog
 	const [createPageDialogOpen, setCreatePageDialogOpen] = useState(false);
@@ -152,11 +150,10 @@ export default function EditPageForm({
 
 	// Handler for deleting page with empty title
 	const handleDeleteEmptyTitlePage = useCallback(async () => {
-		setIsDeleting(true);
 		setIsLoading(true);
 		toast.loading("ページを削除しています...");
 		try {
-			await deletePage(page.id);
+			await deletePageMutation.mutateAsync(page.id);
 			toast.dismiss();
 			toast.success("タイトルが空のため、ページを削除しました");
 			// Redirect to appropriate page
@@ -170,10 +167,9 @@ export default function EditPageForm({
 			toast.dismiss();
 			toast.error("ページの削除に失敗しました");
 		} finally {
-			setIsDeleting(false);
 			setIsLoading(false);
 		}
-	}, [page.id, noteSlug, router, setIsLoading]);
+	}, [deletePageMutation, page.id, noteSlug, router, setIsLoading]);
 
 	const {
 		editor,
@@ -251,47 +247,50 @@ export default function EditPageForm({
 	);
 
 	const handleDeletePage = useCallback(async () => {
-		setIsDeleting(true);
-		setIsLoading(true); // 共通のローディングインジケータを使う場合
+		setIsLoading(true);
 		toast.loading("ページを削除しています...");
 		try {
-			const { error } = await supabase.from("pages").delete().eq("id", page.id);
-			if (error) throw error;
-			toast.dismiss(); // ローディング中のトーストを消す
+			await deletePageMutation.mutateAsync(page.id);
+			toast.dismiss();
 			toast.success(`ページ「${title}」を削除しました`);
 			router.push("/notes/default"); // デフォルトノートのページ一覧にリダイレクト
 		} catch (error) {
 			logger.error({ error, pageId: page.id, title }, "ページ削除エラー");
-			toast.dismiss(); // ローディング中のトーストを消す
+			toast.dismiss();
 			toast.error("ページの削除に失敗しました");
 			throw new Error("ページ削除エラー", { cause: error }); // DeletePageDialog でエラーを捕捉できるように再スロー
 		} finally {
-			setIsDeleting(false);
 			setIsLoading(false);
 		}
-	}, [supabase, page.id, router, title, setIsLoading]);
+	}, [deletePageMutation, page.id, router, title, setIsLoading]);
 
 	// 画像アップロード用ハンドラ
+	// TODO: API Routeを作成して置き換え
 	const handleUploadImage = useCallback(
-		async (file: File) => {
+		async (_file: File) => {
 			setIsLoading(true);
 			try {
-				// Gyazo API returns direct image URL
-				const { url } = await uploadAndSaveGyazoImage(file);
-				if (editor) {
-					editor
-						.chain()
-						.focus()
-						.insertContent({ type: "gyazoImage", attrs: { src: url } })
-						.run();
-				}
+				// TODO: API Route `/api/gyazo/upload` を作成
+				// const response = await fetch("/api/gyazo/upload", {
+				// 	method: "POST",
+				// 	body: file,
+				// });
+				// const { url } = await response.json();
+				toast.error("画像アップロード機能は現在利用できません");
+				// if (editor) {
+				// 	editor
+				// 		.chain()
+				// 		.focus()
+				// 		.insertContent({ type: "gyazoImage", attrs: { src: url } })
+				// 		.run();
+				// }
 			} catch {
 				toast.error("画像アップロードに失敗しました");
 			} finally {
 				setIsLoading(false);
 			}
 		},
-		[editor, setIsLoading],
+		[setIsLoading],
 	);
 
 	// Handler for generating cards
@@ -301,35 +300,37 @@ export default function EditPageForm({
 	}, [router, page.id, noteSlug]);
 
 	// Handler for duplicating page
+	// TODO: API Routeを作成して置き換え
 	const handleDuplicatePage = useCallback(async () => {
 		setIsLoading(true);
 		toast.loading("ページを複製しています...");
 		try {
-			// note内のページかどうかを判定
-			const isInNote = noteSlug !== undefined;
-
-			const newPage = await duplicatePage({
-				originalPageId: page.id,
-				newTitle: `${title} copy`,
-				linkToSameNote: isInNote,
-			});
-
+			// TODO: API Route `/api/pages/duplicate` を作成
+			// const isInNote = noteSlug !== undefined;
+			// const response = await fetch("/api/pages/duplicate", {
+			// 	method: "POST",
+			// 	headers: { "Content-Type": "application/json" },
+			// 	body: JSON.stringify({
+			// 		originalPageId: page.id,
+			// 		newTitle: `${title} copy`,
+			// 		linkToSameNote: isInNote,
+			// 	}),
+			// });
+			// const newPage = await response.json();
+			// if (isInNote && noteSlug) {
+			// 	router.push(`/notes/${encodeURIComponent(noteSlug)}/${newPage.id}`);
+			// } else {
+			// 	router.push(`/notes/default/${newPage.id}`);
+			// }
 			toast.dismiss();
-			toast.success(`ページ「${title}」を複製しました`);
-
-			// 複製されたページに移動
-			if (isInNote) {
-				router.push(`/notes/${encodeURIComponent(noteSlug)}/${newPage.id}`);
-			} else {
-				router.push(`/notes/default/${newPage.id}`);
-			}
+			toast.error("ページ複製機能は現在利用できません");
 		} catch {
 			toast.dismiss();
 			toast.error("ページの複製に失敗しました");
 		} finally {
 			setIsLoading(false);
 		}
-	}, [page.id, title, noteSlug, router, setIsLoading]);
+	}, [setIsLoading]);
 
 	return (
 		<>
@@ -368,7 +369,7 @@ export default function EditPageForm({
 									splitPage={splitPage}
 								/>
 								<TableBubbleMenu editor={editor} />
-								{isGenerating || isDeleting ? ( // 削除中もスケルトン表示
+								{isGenerating || deletePageMutation.isPending ? ( // 削除中もスケルトン表示
 									<ContentSkeleton />
 								) : (
 									<EditorContent

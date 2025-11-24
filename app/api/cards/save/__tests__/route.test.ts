@@ -15,7 +15,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generateCardsFromPage");
+// Mock non-existent Server Actions module
+vi.mock("@/app/_actions/generateCardsFromPage", () => ({
+	saveGeneratedCards: vi.fn(),
+	wrapTextInTiptapJson: vi.fn(),
+}));
+
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 

@@ -21,10 +21,10 @@ vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
+import type { LLMClient } from "@/lib/llm/client";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
-import type { LLMClient } from "@/lib/llm/client";
 import { POST } from "../route";
 
 // Helper: Create mock NextRequest
