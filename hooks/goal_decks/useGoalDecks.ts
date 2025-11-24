@@ -17,18 +17,28 @@ export function useGoalDecks(goalId: string) {
 	return useQuery({
 		queryKey: ["goal_decks", goalId],
 		queryFn: async (): Promise<Deck[]> => {
+			const {
+				data: { user },
+				error: userError,
+			} = await supabase.auth.getUser();
+			if (userError || !user) throw new Error("User not authenticated");
+
 			const { data, error } = await supabase
 				.from("goal_deck_links")
-				.select("decks(*), card_count:cards(count)")
+				.select(
+					"deck_id, decks(*), card_count:cards(count)",
+				)
 				.eq("goal_id", goalId);
 
 			if (error) throw error;
 
 			// Transform the data structure
-			return (data || []).map((link: any) => ({
-				...link.decks,
-				card_count: link.card_count?.[0]?.count || 0,
-			})) as Deck[];
+			return (data || [])
+				.filter((link: any) => link.decks !== null)
+				.map((link: any) => ({
+					...link.decks,
+					card_count: link.card_count?.[0]?.count || 0,
+				})) as Deck[];
 		},
 	});
 }
