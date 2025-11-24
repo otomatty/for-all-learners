@@ -112,14 +112,20 @@ function prepare() {
 		}
 	}
 
-	// Disable dynamic pages that don't generate static params
-	// These pages will cause errors in static export
+	// Disable dynamic pages that cause errors in static export
+	// Even with generateStaticParams() returning empty array, Next.js static export
+	// requires these pages to be excluded if they use dynamic features
 	const dynamicPagesToDisable = [
+		"app/(protected)/decks/[deckId]/page.tsx",
 		"app/(protected)/decks/[deckId]/audio/page.tsx",
 		"app/(protected)/decks/[deckId]/ocr/page.tsx",
 		"app/(protected)/decks/[deckId]/pdf/page.tsx",
-		// Note: Other dynamic pages have generateStaticParams() that return empty array
-		// which should work, but if they cause errors, add them here
+		"app/(protected)/notes/[slug]/page.tsx",
+		"app/(protected)/notes/[slug]/[id]/page.tsx",
+		"app/(protected)/notes/[slug]/[id]/generate-cards/page.tsx",
+		"app/admin/inquiries/[id]/page.tsx",
+		// Note: These pages have generateStaticParams() but still cause errors
+		// in static export because they use dynamic features (auth, user-specific data)
 	];
 
 	for (const file of dynamicPagesToDisable) {
