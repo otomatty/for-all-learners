@@ -140,10 +140,10 @@ git push origin v0.3.0
 
 ビルドが完了すると、以下の成果物が生成されます：
 
-- **macOS (x64)**: `For All Learners_0.3.0_x64.dmg`
-- **macOS (Apple Silicon)**: `For All Learners_0.3.0_aarch64.dmg`
-- **Windows**: `For All Learners_0.3.0_x64_en-US.msi`
-- **Linux**: `For All Learners_0.3.0_amd64.AppImage`
+- **macOS (x64)**: `For All Learners_vX.Y.Z_x64.dmg`
+- **macOS (Apple Silicon)**: `For All Learners_vX.Y.Z_aarch64.dmg`
+- **Windows**: `For All Learners_vX.Y.Z_x64_en-US.msi`
+- **Linux**: `For All Learners_vX.Y.Z_amd64.AppImage`
 
 ## トラブルシューティング
 
