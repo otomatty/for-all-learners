@@ -123,9 +123,12 @@ function prepare() {
 		"app/(protected)/notes/[slug]/page.tsx",
 		"app/(protected)/notes/[slug]/[id]/page.tsx",
 		"app/(protected)/notes/[slug]/[id]/generate-cards/page.tsx",
+		// Admin pages: Web app only, excluded from Tauri static export
 		"app/admin/inquiries/[id]/page.tsx",
+		"app/admin/users/[id]/page.tsx",
 		// Note: These pages have generateStaticParams() but still cause errors
 		// in static export because they use dynamic features (auth, user-specific data)
+		// Admin pages are web-only and not needed in Tauri builds
 	];
 
 	for (const file of dynamicPagesToDisable) {
