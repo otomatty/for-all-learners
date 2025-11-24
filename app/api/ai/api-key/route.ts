@@ -31,6 +31,11 @@ import {
 	isValidProvider,
 } from "@/lib/validators/ai";
 
+// Static export: API routes are not supported in static export mode
+// This API route will be disabled during static export builds
+export const dynamic = "force-static";
+export const revalidate = false;
+
 // GET: APIキーの状態取得
 export async function GET(_request: NextRequest) {
 	try {

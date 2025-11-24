@@ -3,6 +3,11 @@ import { getDefaultNote } from "@/app/_actions/notes";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
+// Static export: Route handlers are not supported in static export mode
+// This route handler will be disabled during static export builds
+export const dynamic = "force-static";
+export const revalidate = false;
+
 export async function GET(req: NextRequest) {
 	// Initialize Supabase server client
 	const supabase = await createClient();
