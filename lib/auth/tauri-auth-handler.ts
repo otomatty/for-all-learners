@@ -9,7 +9,8 @@ import { createClient } from "@/lib/supabase/client";
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ lib/auth/tauri-login.ts
+ *   ├─ lib/auth/tauri-login.ts
+ *   └─ lib/auth/__tests__/tauri-auth-handler.test.ts
  *
  * Dependencies (External files that this file imports):
  *   ├─ @/lib/supabase/client
@@ -19,6 +20,54 @@ import { createClient } from "@/lib/supabase/client";
  *   ├─ Spec: docs/guides/tauri-oauth-loopback-guide.md
  *   └─ Log: docs/05_logs/2025_11/20251123/10_tauri-auth-migration-to-loopback.md
  */
+
+/**
+ * Tauri環境での認証コールバックを処理（URLパラメータから自動取得）
+ *
+ * この関数は、Tauri環境でURLパラメータから認証情報を読み取り、
+ * handleAuthCallbackを呼び出します。
+ */
+export async function handleTauriAuthCallback() {
+	// Tauri環境でない場合は何もしない
+	if (typeof window === "undefined" || !window.__TAURI__) {
+		return;
+	}
+
+	const urlParams = new URLSearchParams(window.location.search);
+	const code = urlParams.get("code");
+	const accessToken = urlParams.get("access_token");
+	const refreshToken = urlParams.get("refresh_token");
+	const error = urlParams.get("error");
+	const redirectTo = urlParams.get("redirect_to");
+
+	// OAuthエラーパラメータの処理
+	if (error) {
+		// エラーメッセージをサニタイズ（100文字に制限）
+		const sanitizedError = error.length > 100 ? error.substring(0, 100) : error;
+		window.location.href = `/auth/login?error=${encodeURIComponent(sanitizedError)}`;
+		return;
+	}
+
+	// リダイレクトURLの検証
+	if (redirectTo) {
+		// tauri://スキームのみ許可
+		if (!redirectTo.startsWith("tauri://")) {
+			window.location.href = "/auth/login?error=invalid_redirect";
+			return;
+		}
+	}
+
+	// 認証情報がない場合は何もしない
+	if (!code && !accessToken) {
+		return;
+	}
+
+	await handleAuthCallback({
+		code,
+		accessToken,
+		refreshToken,
+	});
+}
 
 /**
  * 認証コールバックを処理

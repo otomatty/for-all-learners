@@ -8,6 +8,9 @@
  * - TC-004: エッジケース - URLが返されない場合
  */
 
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-shell";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createClient } from "@/lib/supabase/client";
 import { loginWithGoogleTauri } from "../tauri-login";
@@ -20,9 +23,24 @@ import {
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
 
+// Mock Tauri API
+vi.mock("@tauri-apps/api/core", () => ({
+	invoke: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+	listen: vi.fn(),
+}));
+
+vi.mock("@tauri-apps/plugin-shell", () => ({
+	open: vi.fn(),
+}));
+
 describe("loginWithGoogleTauri", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
-	let mockWindowOpen: ReturnType<typeof vi.fn>;
+	let mockInvoke: ReturnType<typeof vi.fn>;
+	let mockListen: ReturnType<typeof vi.fn>;
+	let mockOpen: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -31,13 +49,15 @@ describe("loginWithGoogleTauri", () => {
 			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 		);
 
-		// Mock window.open
-		mockWindowOpen = vi.fn();
-		Object.defineProperty(window, "open", {
-			value: mockWindowOpen,
-			configurable: true,
-			writable: true,
-		});
+		// Mock Tauri API functions
+		mockInvoke = vi.mocked(invoke);
+		mockListen = vi.mocked(listen);
+		mockOpen = vi.mocked(open);
+
+		// Setup default mocks
+		mockInvoke.mockResolvedValue(8080); // Default port
+		mockListen.mockResolvedValue(vi.fn()); // Return unlisten function
+		mockOpen.mockResolvedValue(undefined);
 	});
 
 	afterEach(() => {
@@ -57,14 +77,15 @@ describe("loginWithGoogleTauri", () => {
 
 		await loginWithGoogleTauri();
 
+		expect(mockInvoke).toHaveBeenCalledWith("start_oauth_server");
 		expect(mockSupabaseClient.auth.signInWithOAuth).toHaveBeenCalledWith({
 			provider: "google",
 			options: {
-				redirectTo: "tauri://localhost/auth/callback",
+				redirectTo: "http://localhost:8080",
 				skipBrowserRedirect: true,
 			},
 		});
-		expect(mockWindowOpen).toHaveBeenCalledWith(mockOAuthUrl, "_blank");
+		expect(mockOpen).toHaveBeenCalledWith(mockOAuthUrl);
 	});
 
 	// TC-002: 異常系 - Tauri環境でない場合のエラー
@@ -88,9 +109,9 @@ describe("loginWithGoogleTauri", () => {
 		});
 
 		await expect(loginWithGoogleTauri()).rejects.toThrow(
-			"Google login failed: Network error",
+			"Google認証の開始に失敗しました: Network error",
 		);
-		expect(mockWindowOpen).not.toHaveBeenCalled();
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 
 	// TC-004: エッジケース - URLが返されない場合
@@ -102,9 +123,11 @@ describe("loginWithGoogleTauri", () => {
 			error: null,
 		});
 
-		await loginWithGoogleTauri();
+		await expect(loginWithGoogleTauri()).rejects.toThrow(
+			"認証URLの取得に失敗しました",
+		);
 
 		expect(mockSupabaseClient.auth.signInWithOAuth).toHaveBeenCalled();
-		expect(mockWindowOpen).not.toHaveBeenCalled();
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 });
