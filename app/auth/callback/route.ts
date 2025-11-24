@@ -19,6 +19,7 @@ export async function GET(request: Request) {
 
 	const accessToken = requestUrl.searchParams.get("access_token");
 	const refreshToken = requestUrl.searchParams.get("refresh_token");
+
 	const supabase = await createClient();
 
 	if (accessToken && refreshToken) {

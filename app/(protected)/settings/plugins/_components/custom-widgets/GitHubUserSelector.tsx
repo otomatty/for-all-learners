@@ -110,14 +110,6 @@ export function GitHubUserSelector({
 
 			// Update value
 			onChange(username.trim());
-
-			// Log success in development only
-			if (process.env.NODE_ENV === "development") {
-				// biome-ignore lint/suspicious/noConsole: Development logging only
-				console.log(
-					`[GitHubUserSelector] Successfully fetched ${repoList.length} repositories for user: ${username}`,
-				);
-			}
 		} catch (err) {
 			let errorMessage = "リポジトリの取得に失敗しました";
 
@@ -128,15 +120,6 @@ export function GitHubUserSelector({
 			}
 
 			setError(errorMessage);
-
-			// Log error in development only
-			if (process.env.NODE_ENV === "development") {
-				// biome-ignore lint/suspicious/noConsole: Development error logging only
-				console.error(
-					`[GitHubUserSelector] Failed to fetch repositories for user: ${username}`,
-					err,
-				);
-			}
 		} finally {
 			setIsLoading(false);
 		}

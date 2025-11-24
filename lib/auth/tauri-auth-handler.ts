@@ -2,7 +2,6 @@
 
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
-import { isTauri } from "@/lib/utils/environment";
 
 /**
  * Tauri環境でのOAuth認証コールバックを処理
@@ -10,60 +9,70 @@ import { isTauri } from "@/lib/utils/environment";
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ components/auth/TauriAuthHandler.tsx
+ *   ├─ lib/auth/tauri-login.ts
+ *   └─ lib/auth/__tests__/tauri-auth-handler.test.ts
  *
  * Dependencies (External files that this file imports):
  *   ├─ @/lib/supabase/client
- *   ├─ @/lib/utils/environment
  *   └─ @/lib/logger
  *
  * Related Documentation:
- *   ├─ Spec: docs/02_research/2025_11/20251109_02_supabase-tauri-integration.md
- *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
+ *   ├─ Spec: docs/guides/tauri-oauth-loopback-guide.md
+ *   └─ Log: docs/05_logs/2025_11/20251123/10_tauri-auth-migration-to-loopback.md
+ */
+
+/**
+ * Tauri環境での認証コールバックを処理（URLパラメータから自動取得）
+ *
+ * この関数は、Tauri環境でURLパラメータから認証情報を読み取り、
+ * handleAuthCallbackを呼び出します。
  */
 export async function handleTauriAuthCallback() {
-	if (!isTauri()) {
-		return; // Web環境では不要
+	// Tauri環境でない場合は何もしない
+	if (typeof window === "undefined" || !window.__TAURI__) {
+		return;
 	}
 
-	// URLパラメータから認証情報を取得（Tauri環境ではURLが直接渡される）
 	const urlParams = new URLSearchParams(window.location.search);
 	const code = urlParams.get("code");
 	const accessToken = urlParams.get("access_token");
 	const refreshToken = urlParams.get("refresh_token");
 	const error = urlParams.get("error");
+	const redirectTo = urlParams.get("redirect_to");
 
-	// リダイレクトURLの検証（セキュリティ）
-	// Tauri環境では、tauri://スキームのみ許可
-	const redirectUrl = urlParams.get("redirect_to");
-	if (redirectUrl && !redirectUrl.startsWith("tauri://")) {
-		logger.error(
-			{ redirectUrl },
-			"Invalid redirect URL: Only tauri:// scheme is allowed",
-		);
-		window.location.href = "/auth/login?error=invalid_redirect";
-		return;
-	}
-
+	// OAuthエラーパラメータの処理
 	if (error) {
-		// エラーパラメータの検証（セキュリティ）
-		const sanitizedError = encodeURIComponent(
-			error.length > 100 ? error.substring(0, 100) : error,
-		);
-		// エラーページにリダイレクト
-		window.location.href = `/auth/login?error=${sanitizedError}`;
+		// エラーメッセージをサニタイズ（100文字に制限）
+		const sanitizedError = error.length > 100 ? error.substring(0, 100) : error;
+		window.location.href = `/auth/login?error=${encodeURIComponent(sanitizedError)}`;
 		return;
 	}
 
-	if (code || (accessToken && refreshToken)) {
-		await handleAuthCallback({ code, accessToken, refreshToken });
+	// リダイレクトURLの検証
+	if (redirectTo) {
+		// tauri://スキームのみ許可
+		if (!redirectTo.startsWith("tauri://")) {
+			window.location.href = "/auth/login?error=invalid_redirect";
+			return;
+		}
 	}
+
+	// 認証情報がない場合は何もしない
+	if (!code && !accessToken) {
+		return;
+	}
+
+	await handleAuthCallback({
+		code,
+		accessToken,
+		refreshToken,
+	});
 }
 
 /**
  * 認証コールバックを処理
  */
-async function handleAuthCallback({
+export async function handleAuthCallback({
 	code,
 	accessToken,
 	refreshToken,
@@ -123,5 +132,9 @@ async function handleAuthCallback({
 	// 必要に応じて実行されます。
 
 	// ダッシュボードにリダイレクト
-	window.location.href = "/dashboard";
+	// Tauri環境では、ページをリロードしてセッションを確実に反映させる
+	// 少し遅延を入れて、セッション設定が完了するのを待つ
+	setTimeout(() => {
+		window.location.href = "/dashboard";
+	}, 100);
 }

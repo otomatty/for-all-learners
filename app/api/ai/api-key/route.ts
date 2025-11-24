@@ -32,7 +32,7 @@ import {
 } from "@/lib/validators/ai";
 
 // GET: APIキーの状態取得
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
 	try {
 		// 認証チェック
 		const supabase = await createClient();

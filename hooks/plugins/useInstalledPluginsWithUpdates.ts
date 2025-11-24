@@ -17,7 +17,6 @@
 
 "use client";
 
-import type { PluginMetadata, UserPlugin } from "@/types/plugin";
 import { useInstalledPlugins } from "./useInstalledPlugins";
 import { isUpdateAvailable } from "./utils/version";
 

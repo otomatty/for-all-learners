@@ -6,8 +6,8 @@
 	"build": {
 		"frontendDist": "../out",
 		"devUrl": "http://localhost:3000",
-		"beforeDevCommand": "bun dev",
-		"beforeBuildCommand": "bun build"
+		"beforeDevCommand": "bun run dev:webpack",
+		"beforeBuildCommand": "ENABLE_STATIC_EXPORT=true bun build"
 	},
 	"app": {
 		"windows": [

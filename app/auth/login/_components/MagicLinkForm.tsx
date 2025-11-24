@@ -65,6 +65,7 @@ export function MagicLinkForm({
 					}
 				}}
 				className="grid gap-4 mb-6"
+				suppressHydrationWarning
 			>
 				<div>
 					<Label htmlFor={emailId} className="sr-only">

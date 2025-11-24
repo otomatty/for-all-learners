@@ -36,6 +36,7 @@ describe("handleTauriAuthCallback", () => {
 	let mockLocationHref: string;
 
 	beforeEach(() => {
+		vi.useFakeTimers();
 		vi.clearAllMocks();
 		mockSupabaseClient = createMockSupabaseClient();
 		vi.mocked(createClient).mockReturnValue(
@@ -60,6 +61,7 @@ describe("handleTauriAuthCallback", () => {
 	});
 
 	afterEach(() => {
+		vi.useRealTimers();
 		cleanupTauriMock();
 	});
 
@@ -86,6 +88,8 @@ describe("handleTauriAuthCallback", () => {
 		});
 
 		await handleTauriAuthCallback();
+		// Advance timers to trigger setTimeout
+		await vi.runAllTimersAsync();
 
 		expect(mockSupabaseClient.auth.setSession).toHaveBeenCalledWith({
 			access_token: "token123",
@@ -118,6 +122,8 @@ describe("handleTauriAuthCallback", () => {
 		});
 
 		await handleTauriAuthCallback();
+		// Advance timers to trigger setTimeout
+		await vi.runAllTimersAsync();
 
 		expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
 			"auth-code-123",
@@ -280,6 +286,8 @@ describe("handleTauriAuthCallback", () => {
 		});
 
 		await handleTauriAuthCallback();
+		// Advance timers to trigger setTimeout
+		await vi.runAllTimersAsync();
 
 		expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith(
 			"test123",
