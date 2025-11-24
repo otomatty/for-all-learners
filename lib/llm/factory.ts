@@ -11,7 +11,8 @@
  *
  * Dependencies (依存先):
  *   ├─ lib/llm/client.ts (createLLMClient)
- *   ├─ app/_actions/ai/getUserAPIKey.ts
+ *   ├─ lib/supabase/client.ts (createClient)
+ *   ├─ lib/encryption/api-key-vault.ts (decryptAPIKey)
  *   └─ lib/logger.ts
  *
  * Related Files:

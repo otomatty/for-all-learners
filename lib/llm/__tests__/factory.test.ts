@@ -8,7 +8,7 @@
  *
  * Dependencies (Mocks):
  *   ├─ lib/llm/client.ts (createLLMClient)
- *   ├─ app/_actions/ai/getUserAPIKey.ts
+ *   ├─ lib/supabase/client.ts (createClient)
  *   └─ lib/logger.ts
  *
  * Related Files:
@@ -24,24 +24,30 @@ vi.mock("@/lib/llm/client", () => ({
 	createLLMClient: vi.fn(),
 }));
 
-vi.mock("@/app/_actions/ai/getUserAPIKey", () => ({
-	getUserAPIKey: vi.fn(),
+vi.mock("@/lib/supabase/client", () => ({
+	createClient: vi.fn(),
 }));
 
 vi.mock("@/lib/logger", () => ({
 	default: {
 		info: vi.fn(),
 		error: vi.fn(),
+		warn: vi.fn(),
 	},
 }));
 
+vi.mock("@/lib/encryption/api-key-vault", () => ({
+	decryptAPIKey: vi.fn(),
+}));
+
+import { decryptAPIKey } from "@/lib/encryption/api-key-vault";
 // Import AFTER mocks
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import {
 	createLLMClient,
 	type LLMClient,
 	type LLMProvider,
 } from "@/lib/llm/client";
+import { createClient } from "@/lib/supabase/client";
 import { createClientWithUserKey } from "../factory";
 
 // Mock LLMClient implementation
@@ -67,12 +73,33 @@ describe("createClientWithUserKey", () => {
 	// TC-001: Google Gemini クライアント生成
 	// ========================================
 	describe("TC-001: Google Gemini client creation", () => {
-		test("should create Google Gemini client with user API key", async () => {
+		test("should create Google Gemini client with user API key from database", async () => {
 			// Arrange
 			const provider: LLMProvider = "google";
 			const userApiKey = "user-google-api-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -80,8 +107,7 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
-			expect(getUserAPIKey).toHaveBeenCalledTimes(1);
+			expect(decryptAPIKey).toHaveBeenCalledWith(encryptedApiKey);
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
@@ -94,8 +120,29 @@ describe("createClientWithUserKey", () => {
 			const provider: LLMProvider = "google";
 			const model = "gemini-1.5-pro";
 			const userApiKey = "user-google-api-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -115,12 +162,33 @@ describe("createClientWithUserKey", () => {
 	// TC-002: OpenAI クライアント生成
 	// ========================================
 	describe("TC-002: OpenAI client creation", () => {
-		test("should create OpenAI client with user API key", async () => {
+		test("should create OpenAI client with user API key from database", async () => {
 			// Arrange
 			const provider: LLMProvider = "openai";
 			const userApiKey = "sk-user-openai-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -128,7 +196,6 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
@@ -141,8 +208,29 @@ describe("createClientWithUserKey", () => {
 			const provider: LLMProvider = "openai";
 			const model = "gpt-4-turbo";
 			const userApiKey = "sk-user-openai-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -162,12 +250,33 @@ describe("createClientWithUserKey", () => {
 	// TC-003: Anthropic クライアント生成
 	// ========================================
 	describe("TC-003: Anthropic client creation", () => {
-		test("should create Anthropic client with user API key", async () => {
+		test("should create Anthropic client with user API key from database", async () => {
 			// Arrange
 			const provider: LLMProvider = "anthropic";
 			const userApiKey = "sk-ant-user-anthropic-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -175,7 +284,6 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
@@ -188,8 +296,29 @@ describe("createClientWithUserKey", () => {
 			const provider: LLMProvider = "anthropic";
 			const model = "claude-3-opus-20240229";
 			const userApiKey = "sk-ant-user-anthropic-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -213,8 +342,29 @@ describe("createClientWithUserKey", () => {
 			// Arrange
 			const provider = "invalid" as LLMProvider;
 			const userApiKey = "some-api-key";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockRejectedValue(
 				new Error("Invalid provider: invalid"),
 			);
@@ -224,7 +374,6 @@ describe("createClientWithUserKey", () => {
 				"Invalid provider: invalid",
 			);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
 			expect(createLLMClient).toHaveBeenCalled();
 		});
 	});
@@ -233,12 +382,33 @@ describe("createClientWithUserKey", () => {
 	// TC-005: APIキー未設定時のフォールバック
 	// ========================================
 	describe("TC-005: API key fallback behavior", () => {
-		test("should use getUserAPIKey when apiKey not provided", async () => {
+		test("should use API key from database when apiKey not provided", async () => {
 			// Arrange
 			const provider: LLMProvider = "google";
-			const envApiKey = "env-google-api-key-123";
+			const userApiKey = "user-google-api-key-123";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(envApiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -246,29 +416,64 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
-			expect(getUserAPIKey).toHaveBeenCalledTimes(1);
+			expect(decryptAPIKey).toHaveBeenCalledWith(encryptedApiKey);
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
-				apiKey: envApiKey,
+				apiKey: userApiKey,
 			});
 		});
 
-		test("should propagate error when getUserAPIKey fails", async () => {
+		test("should fallback to environment variable when database query fails", async () => {
 			// Arrange
 			const provider: LLMProvider = "google";
-			const errorMessage = "API key not configured";
+			const envApiKey = "env-fallback-key";
 
-			vi.mocked(getUserAPIKey).mockRejectedValue(new Error(errorMessage));
+			// Mock environment variable
+			const originalEnv = process.env.GEMINI_API_KEY;
+			process.env.GEMINI_API_KEY = envApiKey;
 
-			// Act & Assert
-			await expect(createClientWithUserKey({ provider })).rejects.toThrow(
-				errorMessage,
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: null,
+						error: { code: "PGRST116", message: "No rows found" },
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 			);
+			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
-			expect(getUserAPIKey).toHaveBeenCalledWith(provider);
-			expect(createLLMClient).not.toHaveBeenCalled();
+			try {
+				// Act
+				const client = await createClientWithUserKey({ provider });
+
+				// Assert
+				expect(client).toBe(mockClient);
+				expect(createLLMClient).toHaveBeenCalledWith({
+					provider,
+					model: undefined,
+					apiKey: envApiKey,
+				});
+			} finally {
+				// Restore original environment variable
+				if (originalEnv !== undefined) {
+					process.env.GEMINI_API_KEY = originalEnv;
+				} else {
+					delete process.env.GEMINI_API_KEY;
+				}
+			}
 		});
 	});
 
@@ -276,13 +481,11 @@ describe("createClientWithUserKey", () => {
 	// TC-006: 提供されたAPIキーの優先使用
 	// ========================================
 	describe("TC-006: Provided API key priority", () => {
-		test("should use provided API key instead of fetching from getUserAPIKey", async () => {
+		test("should use provided API key instead of fetching from database", async () => {
 			// Arrange
 			const provider: LLMProvider = "google";
 			const providedApiKey = "explicit-api-key-123";
-			const userApiKey = "user-api-key-456";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(userApiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -293,7 +496,7 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			expect(createClient).not.toHaveBeenCalled();
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
@@ -318,7 +521,7 @@ describe("createClientWithUserKey", () => {
 
 			// Assert
 			expect(client).toBe(mockClient);
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			expect(createClient).not.toHaveBeenCalled();
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model,
@@ -343,7 +546,7 @@ describe("createClientWithUserKey", () => {
 				}),
 			).rejects.toThrow("API key is required");
 
-			expect(getUserAPIKey).not.toHaveBeenCalled();
+			expect(createClient).not.toHaveBeenCalled();
 			expect(createLLMClient).toHaveBeenCalledWith({
 				provider,
 				model: undefined,
@@ -376,7 +579,28 @@ describe("createClientWithUserKey", () => {
 			"should pass model $model to createLLMClient for provider $provider",
 			async ({ provider, model, apiKey }) => {
 				// Arrange
-				vi.mocked(getUserAPIKey).mockResolvedValue(apiKey);
+				const encryptedApiKey = "encrypted-key-123";
+				const mockSupabaseClient = {
+					auth: {
+						getUser: vi.fn().mockResolvedValue({
+							data: { user: { id: "user-123" } },
+							error: null,
+						}),
+					},
+					from: vi.fn().mockReturnValue({
+						select: vi.fn().mockReturnThis(),
+						eq: vi.fn().mockReturnThis(),
+						single: vi.fn().mockResolvedValue({
+							data: { encrypted_api_key: encryptedApiKey },
+							error: null,
+						}),
+					}),
+				};
+
+				vi.mocked(createClient).mockReturnValue(
+					mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+				);
+				vi.mocked(decryptAPIKey).mockResolvedValue(apiKey);
 				vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 				// Act
@@ -395,8 +619,29 @@ describe("createClientWithUserKey", () => {
 			// Arrange
 			const provider: LLMProvider = "google";
 			const apiKey = "google-key";
+			const encryptedApiKey = "encrypted-key-123";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(apiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(apiKey);
 			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
 			// Act
@@ -419,9 +664,30 @@ describe("createClientWithUserKey", () => {
 			// Arrange
 			const provider: LLMProvider = "google";
 			const apiKey = "test-key";
+			const encryptedApiKey = "encrypted-key-123";
 			const errorMessage = "Failed to create client: Network error";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue(apiKey);
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
+					}),
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
+
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(apiKey);
 			vi.mocked(createLLMClient).mockRejectedValue(new Error(errorMessage));
 
 			// Act & Assert
@@ -445,12 +711,32 @@ describe("createClientWithUserKey", () => {
 
 			// Act & Assert
 			for (const provider of providers) {
-				vi.mocked(getUserAPIKey).mockResolvedValue(apiKeys[provider]);
+				const encryptedApiKey = "encrypted-key-123";
+				const mockSupabaseClient = {
+					auth: {
+						getUser: vi.fn().mockResolvedValue({
+							data: { user: { id: "user-123" } },
+							error: null,
+						}),
+					},
+					from: vi.fn().mockReturnValue({
+						select: vi.fn().mockReturnThis(),
+						eq: vi.fn().mockReturnThis(),
+						single: vi.fn().mockResolvedValue({
+							data: { encrypted_api_key: encryptedApiKey },
+							error: null,
+						}),
+					}),
+				};
+
+				vi.mocked(createClient).mockReturnValue(
+					mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+				);
+				vi.mocked(decryptAPIKey).mockResolvedValue(apiKeys[provider]);
 
 				const client = await createClientWithUserKey({ provider });
 
 				expect(client).toBe(mockClient);
-				expect(getUserAPIKey).toHaveBeenCalledWith(provider);
 				expect(createLLMClient).toHaveBeenCalledWith({
 					provider,
 					model: undefined,
