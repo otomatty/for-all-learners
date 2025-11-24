@@ -11,7 +11,7 @@
  *   bun run scripts/prepare-static-export.ts restore   # After build
  */
 
-import { existsSync, renameSync, readdirSync, statSync, readFileSync } from "fs";
+import { existsSync, renameSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 
 const ROUTE_HANDLERS_TO_DISABLE = [
@@ -84,40 +84,6 @@ function findDynamicPages(dir: string, fileList: string[] = []): string[] {
 	return fileList;
 }
 
-function findServerActionFiles(dir: string, fileList: string[] = []): string[] {
-	if (!existsSync(dir)) {
-		return fileList;
-	}
-
-	const files = readdirSync(dir);
-
-	for (const file of files) {
-		const filePath = join(dir, file);
-		
-		// Skip node_modules and .next directories
-		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
-			continue;
-		}
-
-		const stat = statSync(filePath);
-
-		if (stat.isDirectory()) {
-			findServerActionFiles(filePath, fileList);
-		} else if (file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js") || file.endsWith(".jsx")) {
-			// Check if file contains "use server"
-			try {
-				const content = readFileSync(filePath, "utf-8");
-				if (content.includes('"use server"') || content.includes("'use server'")) {
-					fileList.push(filePath);
-				}
-			} catch (error) {
-				// Skip files that can't be read
-			}
-		}
-	}
-
-	return fileList;
-}
 
 function prepare() {
 	console.log("🔧 Preparing static export: Disabling Route Handlers, API Routes, Server Actions, and dynamic pages...");
@@ -147,21 +113,8 @@ function prepare() {
 		}
 	}
 
-	// Disable Server Actions (not supported in static export)
-	console.log("🔧 Disabling Server Actions...");
-	const serverActionFiles = findServerActionFiles("app/_actions");
-	for (const file of serverActionFiles) {
-		if (existsSync(file) && !file.endsWith(".disabled")) {
-			const disabledFile = `${file}.disabled`;
-			try {
-				renameSync(file, disabledFile);
-				console.log(`  ✓ Disabled Server Action: ${file}`);
-				disabledCount++;
-			} catch (error) {
-				console.error(`  ✗ Failed to disable ${file}:`, error);
-			}
-		}
-	}
+	// Note: Server Actions have been removed (except admin-related ones)
+	// Admin-related Server Actions are kept for web app only
 
 	// Disable dynamic pages that cause errors in static export
 	// Even with generateStaticParams() returning empty array, Next.js static export
