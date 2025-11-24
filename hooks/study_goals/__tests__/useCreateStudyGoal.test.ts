@@ -24,10 +24,6 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
-// Mock subscriptions actions
-vi.mock("@/app/_actions/subscriptions", () => ({
-	isUserPaid: vi.fn(),
-}));
 
 describe("useCreateStudyGoal", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -42,9 +38,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-001: 正常系 - 目標作成成功（無料ユーザー、制限内）
 	test("TC-001: Should create study goal successfully (free user, within limit)", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -64,6 +57,16 @@ describe("useCreateStudyGoal", () => {
 					});
 				}
 				return mockGoalsQuery; // Return this for chaining
+			}),
+		};
+
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
 			}),
 		};
 
@@ -91,6 +94,7 @@ describe("useCreateStudyGoal", () => {
 		mockSupabaseClient.from = vi
 			.fn()
 			.mockReturnValueOnce(mockGoalsQuery) // getStudyGoalsByUser
+			.mockReturnValueOnce(mockSubscriptionsQuery) // subscriptions table
 			.mockReturnValueOnce(mockCountQuery) // count for priority_order
 			.mockReturnValueOnce(mockInsertQuery); // insert
 
@@ -119,9 +123,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-002: 正常系 - 目標作成成功（有料ユーザー、制限内）
 	test("TC-002: Should create study goal successfully (paid user, within limit)", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(true);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -144,6 +145,16 @@ describe("useCreateStudyGoal", () => {
 					});
 				}
 				return mockGoalsQuery; // Return this for chaining
+			}),
+		};
+
+		// Mock subscriptions query (paid user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "premium" },
+				error: null,
 			}),
 		};
 
@@ -171,6 +182,7 @@ describe("useCreateStudyGoal", () => {
 		mockSupabaseClient.from = vi
 			.fn()
 			.mockReturnValueOnce(mockGoalsQuery) // getStudyGoalsByUser
+			.mockReturnValueOnce(mockSubscriptionsQuery) // subscriptions table
 			.mockReturnValueOnce(mockCountQuery) // count for priority_order
 			.mockReturnValueOnce(mockInsertQuery); // insert
 
@@ -196,9 +208,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-003: 異常系 - 制限超過エラー（無料ユーザー、3個以上）
 	test("TC-003: Should return error when free user exceeds limit (3 goals)", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -224,7 +233,20 @@ describe("useCreateStudyGoal", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockGoalsQuery);
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
+			}),
+		};
+
+		mockSupabaseClient.from = vi
+			.fn()
+			.mockReturnValueOnce(mockGoalsQuery) // study_goals table
+			.mockReturnValueOnce(mockSubscriptionsQuery); // subscriptions table
 
 		const { result } = renderHook(() => useCreateStudyGoal(), {
 			wrapper: createWrapper(),
@@ -255,9 +277,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-004: 異常系 - 制限超過エラー（有料ユーザー、10個以上）
 	test("TC-004: Should return error when paid user exceeds limit (10 goals)", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(true);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -283,7 +302,20 @@ describe("useCreateStudyGoal", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockGoalsQuery);
+		// Mock subscriptions query (paid user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "premium" },
+				error: null,
+			}),
+		};
+
+		mockSupabaseClient.from = vi
+			.fn()
+			.mockReturnValueOnce(mockGoalsQuery) // study_goals table
+			.mockReturnValueOnce(mockSubscriptionsQuery); // subscriptions table
 
 		const { result } = renderHook(() => useCreateStudyGoal(), {
 			wrapper: createWrapper(),
@@ -348,9 +380,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-006: 異常系 - データベースエラー
 	test("TC-006: Should handle database error", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -370,6 +399,16 @@ describe("useCreateStudyGoal", () => {
 					});
 				}
 				return mockGoalsQuery; // Return this for chaining
+			}),
+		};
+
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
 			}),
 		};
 
@@ -396,6 +435,7 @@ describe("useCreateStudyGoal", () => {
 		mockSupabaseClient.from = vi
 			.fn()
 			.mockReturnValueOnce(mockGoalsQuery) // getStudyGoalsByUser
+			.mockReturnValueOnce(mockSubscriptionsQuery) // subscriptions table
 			.mockReturnValueOnce(mockCountQuery) // count for priority_order
 			.mockReturnValueOnce(mockInsertQuery); // insert
 
@@ -428,9 +468,6 @@ describe("useCreateStudyGoal", () => {
 
 	// TC-007: エッジケース - deadline が空文字の場合は null にする
 	test("TC-007: Should set deadline to null when empty string", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -450,6 +487,16 @@ describe("useCreateStudyGoal", () => {
 					});
 				}
 				return mockGoalsQuery; // Return this for chaining
+			}),
+		};
+
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
 			}),
 		};
 
@@ -482,6 +529,7 @@ describe("useCreateStudyGoal", () => {
 		mockSupabaseClient.from = vi
 			.fn()
 			.mockReturnValueOnce(mockGoalsQuery) // getStudyGoalsByUser
+			.mockReturnValueOnce(mockSubscriptionsQuery) // subscriptions table
 			.mockReturnValueOnce(mockCountQuery) // count for priority_order
 			.mockReturnValueOnce(mockInsertQuery); // insert
 

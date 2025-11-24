@@ -18,7 +18,7 @@ import { CreatePageDialog } from "../create-page-dialog";
  */
 
 // Use vi.hoisted to declare mocks that will be used in vi.mock factories
-const { mockToast, mockCreatePage } = vi.hoisted(() => ({
+const { mockToast, mockMutateAsync } = vi.hoisted(() => ({
 	mockToast: {
 		success: vi.fn(),
 		error: vi.fn(),
@@ -30,7 +30,7 @@ const { mockToast, mockCreatePage } = vi.hoisted(() => ({
 		message: vi.fn(),
 		dismiss: vi.fn(),
 	},
-	mockCreatePage: vi.fn(),
+	mockMutateAsync: vi.fn(),
 }));
 
 // Mock sonner toast library
@@ -38,14 +38,17 @@ vi.mock("sonner", () => ({
 	toast: mockToast,
 }));
 
-// Mock pages actions
-vi.mock("@/app/_actions/pages", () => ({
-	createPage: mockCreatePage,
+// Mock useCreatePage hook
+vi.mock("@/hooks/pages/useCreatePage", () => ({
+	useCreatePage: () => ({
+		mutateAsync: mockMutateAsync,
+		isPending: false,
+	}),
 }));
 
 // Create mocks object for easy access in tests
 const mocks = {
-	createPage: mockCreatePage,
+	mutateAsync: mockMutateAsync,
 	toast: mockToast,
 };
 
@@ -176,7 +179,7 @@ describe("CreatePageDialog", () => {
 	 */
 	describe("Page Creation", () => {
 		it("should create page with valid input", async () => {
-			mocks.createPage.mockResolvedValue({
+			mocks.mutateAsync.mockResolvedValue({
 				id: "page-123",
 				title: "Test Page",
 			});
@@ -195,14 +198,16 @@ describe("CreatePageDialog", () => {
 			fireEvent.click(createButton);
 
 			await waitFor(() => {
-				expect(mocks.createPage).toHaveBeenCalledWith({
-					title: "Test Page",
-					content_tiptap: expect.objectContaining({
-						type: "doc",
-						content: expect.any(Array),
-					}),
-					user_id: "user-123",
-					is_public: false,
+				expect(mocks.mutateAsync).toHaveBeenCalledWith({
+					page: {
+						title: "Test Page",
+						content_tiptap: expect.objectContaining({
+							type: "doc",
+							content: expect.any(Array),
+						}),
+						user_id: "user-123",
+						is_public: false,
+					},
 				});
 			});
 
@@ -214,7 +219,7 @@ describe("CreatePageDialog", () => {
 		});
 
 		it("should create page with description", async () => {
-			mocks.createPage.mockResolvedValue({
+			mocks.mutateAsync.mockResolvedValue({
 				id: "page-123",
 				title: "Test Page",
 			});
@@ -238,11 +243,11 @@ describe("CreatePageDialog", () => {
 			fireEvent.click(createButton);
 
 			await waitFor(() => {
-				expect(mocks.createPage).toHaveBeenCalled();
+				expect(mocks.mutateAsync).toHaveBeenCalled();
 			});
 
-			const callArgs = mocks.createPage.mock.calls[0][0];
-			expect(callArgs.content_tiptap.content).toEqual(
+			const callArgs = mocks.mutateAsync.mock.calls[0][0];
+			expect(callArgs.page.content_tiptap.content).toEqual(
 				expect.arrayContaining([
 					expect.objectContaining({
 						type: "paragraph",
@@ -253,7 +258,7 @@ describe("CreatePageDialog", () => {
 		});
 
 		it("should create public page when switch is enabled", async () => {
-			mocks.createPage.mockResolvedValue({
+			mocks.mutateAsync.mockResolvedValue({
 				id: "page-123",
 				title: "Test Page",
 			});
@@ -275,9 +280,11 @@ describe("CreatePageDialog", () => {
 			fireEvent.click(createButton);
 
 			await waitFor(() => {
-				expect(mocks.createPage).toHaveBeenCalledWith(
+				expect(mocks.mutateAsync).toHaveBeenCalledWith(
 					expect.objectContaining({
-						is_public: true,
+						page: expect.objectContaining({
+							is_public: true,
+						}),
 					}),
 				);
 			});
@@ -308,7 +315,7 @@ describe("CreatePageDialog", () => {
 				);
 			});
 
-			expect(mocks.createPage).not.toHaveBeenCalled();
+			expect(mocks.mutateAsync).not.toHaveBeenCalled();
 			expect(mockOnPageCreated).not.toHaveBeenCalled();
 		});
 
@@ -332,7 +339,7 @@ describe("CreatePageDialog", () => {
 				);
 			});
 
-			expect(mocks.createPage).not.toHaveBeenCalled();
+			expect(mocks.mutateAsync).not.toHaveBeenCalled();
 		});
 	});
 
@@ -341,7 +348,7 @@ describe("CreatePageDialog", () => {
 	 */
 	describe("Error Handling", () => {
 		it("should handle page creation error", async () => {
-			mocks.createPage.mockRejectedValue(new Error("Database error"));
+			mocks.mutateAsync.mockRejectedValue(new Error("Database error"));
 
 			render(
 				<CreatePageDialog
@@ -367,7 +374,7 @@ describe("CreatePageDialog", () => {
 		});
 
 		it("should handle page creation with no ID returned", async () => {
-			mocks.createPage.mockResolvedValue({
+			mocks.mutateAsync.mockResolvedValue({
 				id: "",
 				title: "Test Page",
 				content_tiptap: {},
@@ -421,7 +428,7 @@ describe("CreatePageDialog", () => {
 			fireEvent.click(cancelButton);
 
 			expect(mockOnOpenChange).toHaveBeenCalledWith(false);
-			expect(mocks.createPage).not.toHaveBeenCalled();
+			expect(mocks.mutateAsync).not.toHaveBeenCalled();
 		});
 	});
 
@@ -505,7 +512,7 @@ describe("CreatePageDialog", () => {
 	 */
 	describe("Loading State", () => {
 		it("should disable form during submission", async () => {
-			mocks.createPage.mockImplementation(
+			mocks.mutateAsync.mockImplementation(
 				() =>
 					new Promise((resolve) =>
 						setTimeout(

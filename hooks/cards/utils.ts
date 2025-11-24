@@ -9,7 +9,6 @@
  *
  * Dependencies (External files that this file imports):
  *   ├─ @supabase/supabase-js
- *   ├─ @/app/_actions/subscriptions
  *   ├─ @/lib/gemini
  *   └─ @/lib/logger
  *
@@ -18,7 +17,6 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getUserPlanFeatures, isUserPaid } from "@/app/_actions/subscriptions";
 import type { QuestionType } from "@/lib/gemini";
 import logger from "@/lib/logger";
 import type { Card } from "./useCardsByDeck";
@@ -46,10 +44,31 @@ export async function triggerQuestionGeneration(
 	card: Card,
 ): Promise<void> {
 	try {
-		const paid = await isUserPaid(card.user_id);
-		if (!paid) return;
+		// Check if user has paid subscription
+		const { data: subscription } = await supabase
+			.from("subscriptions")
+			.select("plan_id")
+			.eq("user_id", card.user_id)
+			.maybeSingle();
 
-		const features = (await getUserPlanFeatures(card.user_id)) || [];
+		const isPaid =
+			subscription !== null && !subscription.plan_id.includes("_free");
+		if (!isPaid) return;
+
+		// Get user plan features
+		if (!subscription) return;
+		const { data: plan } = await supabase
+			.from("plans")
+			.select("features")
+			.eq("id", subscription.plan_id)
+			.single();
+
+		if (!plan || !plan.features) return;
+
+		// plan.features is Json type, cast to unknown first
+		const features = plan.features as unknown;
+		const featuresArray = Array.isArray(features) ? features : [];
+
 		const { data: settings } = await supabase
 			.from("user_settings")
 			.select("locale")
@@ -57,9 +76,7 @@ export async function triggerQuestionGeneration(
 			.single();
 		const locale = settings?.locale ?? DEFAULT_LOCALE;
 
-		const validFeatures = Array.isArray(features)
-			? features.filter(isQuestionType)
-			: [];
+		const validFeatures = featuresArray.filter(isQuestionType);
 
 		for (const type of validFeatures) {
 			await supabase.functions.invoke("generate-questions-bg", {
