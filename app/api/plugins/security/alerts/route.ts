@@ -22,26 +22,12 @@ import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import type { Database } from "@/types/database.types";
+import type { PluginSecurityAlert } from "@/lib/plugins/plugin-security/types";
 
 type AlertRow = Database["public"]["Tables"]["plugin_security_alerts"]["Row"];
 
-export interface PluginSecurityAlert {
-	id: string;
-	alertType: string;
-	severity: "low" | "medium" | "high" | "critical";
-	title: string;
-	description: string;
-	pluginId: string | null;
-	userId: string | null;
-	alertData: Record<string, unknown>;
-	context: Record<string, unknown>;
-	status: "open" | "acknowledged" | "resolved" | "dismissed";
-	acknowledgedBy: string | null;
-	acknowledgedAt: Date | null;
-	resolvedAt: Date | null;
-	createdAt: Date;
-	updatedAt: Date;
-}
+// Re-export type for backward compatibility
+export type { PluginSecurityAlert };
 
 /**
  * GET /api/plugins/security/alerts - Get plugin security alerts

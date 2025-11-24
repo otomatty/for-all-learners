@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PluginSecurityAlert } from "@/app/api/plugins/security/alerts/route";
+import type { PluginSecurityAlert } from "@/lib/plugins/plugin-security/types";
 
 /**
  * Get security alerts

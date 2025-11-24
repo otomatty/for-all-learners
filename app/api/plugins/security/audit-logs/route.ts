@@ -19,17 +19,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
+import type { SecurityAuditLogEntry } from "@/lib/plugins/plugin-security/types";
 
-export interface SecurityAuditLogEntry {
-	id: string;
-	pluginId: string;
-	userId: string | null;
-	eventType: string;
-	severity: "low" | "medium" | "high" | "critical";
-	eventData: Record<string, unknown>;
-	context: Record<string, unknown>;
-	createdAt: string;
-}
+// Re-export type for backward compatibility
+export type { SecurityAuditLogEntry };
 
 /**
  * GET /api/plugins/security/audit-logs - Get security audit logs (admin only)

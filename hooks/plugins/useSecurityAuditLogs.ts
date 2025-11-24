@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { SecurityAuditLogEntry } from "@/app/api/plugins/security/audit-logs/route";
+import type { SecurityAuditLogEntry } from "@/lib/plugins/plugin-security/types";
 
 /**
  * Get security audit logs
