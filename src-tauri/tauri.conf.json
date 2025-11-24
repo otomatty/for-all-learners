@@ -7,7 +7,7 @@
 		"frontendDist": "../out",
 		"devUrl": "http://localhost:3000",
 		"beforeDevCommand": "bun run dev:webpack",
-		"beforeBuildCommand": "ENABLE_STATIC_EXPORT=true bun run build"
+		"beforeBuildCommand": "bun run scripts/prepare-static-export.ts prepare && ENABLE_STATIC_EXPORT=true bun run build && bun run scripts/prepare-static-export.ts restore"
 	},
 	"app": {
 		"windows": [

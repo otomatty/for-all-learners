@@ -106,6 +106,10 @@ jobs:
       - name: Install dependencies (Bun)
         run: bun install --frozen-lockfile
 
+      - name: Prepare static export (disable route handlers)
+        shell: bash
+        run: bun run scripts/prepare-static-export.ts prepare
+
       - name: Build frontend (pre-build check)
         env:
           ENABLE_STATIC_EXPORT: true
@@ -121,6 +125,10 @@ jobs:
             exit 1
           fi
           echo "✅ Frontend build completed successfully"
+
+      - name: Restore route handlers
+        shell: bash
+        run: bun run scripts/prepare-static-export.ts restore || true
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
