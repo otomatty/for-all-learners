@@ -23,10 +23,10 @@ import {
 	getAvailablePluginsServer,
 	getInstalledPluginsWithUpdatesServer,
 } from "@/lib/services/pluginsService";
-import { PluginsPageClient } from "./_components/PluginsPageClient";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
 import { MarketplacePluginCard } from "./_components/MarketplacePluginCard";
 import { PluginFiltersClient } from "./_components/PluginFiltersClient";
+import { PluginsPageClient } from "./_components/PluginsPageClient";
 
 /**
  * Plugin Settings Page Component

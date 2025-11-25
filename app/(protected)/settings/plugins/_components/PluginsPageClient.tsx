@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import { Package } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAvailablePlugins } from "@/hooks/plugins/useAvailablePlugins";
@@ -34,11 +34,14 @@ export function PluginsPageClient() {
 	const search = searchParams.get("search") ?? "";
 	const isOfficial = searchParams.get("official") === "true" ? true : null;
 	const isReviewed = searchParams.get("reviewed") === "true" ? true : null;
+	const extensionPointParam = searchParams.get("extensionPoint");
 	const extensionPoint =
-		searchParams.get("extensionPoint") && searchParams.get("extensionPoint") !== "all"
-			? searchParams.get("extensionPoint")
+		extensionPointParam && extensionPointParam !== "all"
+			? extensionPointParam
 			: undefined;
-	const sort = (searchParams.get("sort") as "popular" | "rating" | "updated" | "name") ?? "popular";
+	const sort =
+		(searchParams.get("sort") as "popular" | "rating" | "updated" | "name") ??
+		"popular";
 	const tab = searchParams.get("tab") ?? "installed";
 	const validTab =
 		tab === "installed" || tab === "marketplace" ? tab : "installed";
@@ -53,7 +56,7 @@ export function PluginsPageClient() {
 			search: search || undefined,
 			isOfficial: isOfficial ?? undefined,
 			isReviewed: isReviewed ?? undefined,
-			extensionPoint,
+			extensionPoint: extensionPoint ?? undefined,
 			limit: 50,
 		});
 
@@ -178,4 +181,3 @@ export function PluginsPageClient() {
 		</div>
 	);
 }
-

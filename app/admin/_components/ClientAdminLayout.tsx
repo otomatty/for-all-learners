@@ -30,11 +30,7 @@ type Plan = Database["public"]["Tables"]["plans"]["Row"];
  * Related Documentation:
  *   └─ Plan: docs/03_plans/tauri-migration/20250124_01_static-export-client-side-auth-implementation-plan.md
  */
-export function ClientAdminLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export function ClientAdminLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 	const { user, loading: authLoading } = useAuth();
 	const [account, setAccount] = useState<
@@ -145,4 +141,3 @@ export function ClientAdminLayout({
 		</>
 	);
 }
-
