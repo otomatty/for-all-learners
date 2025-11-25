@@ -5,6 +5,7 @@ import { Container } from "@/components/layouts/container";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import pkg from "../../package.json";
+import { ClientAdminLayout } from "./_components/ClientAdminLayout";
 
 type Account = Database["public"]["Tables"]["accounts"]["Row"];
 type Plan = Database["public"]["Tables"]["plans"]["Row"];
@@ -16,6 +17,12 @@ interface AdminLayoutProps {
 const version = pkg.version;
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <ClientAdminLayout>{children}</ClientAdminLayout>;
+	}
+
 	const supabase = await createClient();
 
 	// 認証チェック

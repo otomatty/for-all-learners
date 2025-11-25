@@ -23,6 +23,7 @@ import {
 	getAvailablePluginsServer,
 	getInstalledPluginsWithUpdatesServer,
 } from "@/lib/services/pluginsService";
+import { PluginsPageClient } from "./_components/PluginsPageClient";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
 import { MarketplacePluginCard } from "./_components/MarketplacePluginCard";
 import { PluginFiltersClient } from "./_components/PluginFiltersClient";
@@ -42,6 +43,12 @@ export default async function PluginsPage({
 		tab?: string;
 	}>;
 }) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <PluginsPageClient />;
+	}
+
 	const params = await searchParams;
 	const search = params.search ?? "";
 	const isOfficial = params.official === "true" ? true : null;
