@@ -58,10 +58,3 @@ export function parseSecurityAuditLogsSearchParams(searchParams?: {
 		severity,
 	};
 }
-
-// Re-export types from service
-export type {
-	GetSecurityAuditLogsOptions,
-	SecurityAuditStats,
-} from "@/lib/services/pluginSecurityService";
-export { getSecurityAuditStatsServer as getSecurityAuditStats } from "@/lib/services/pluginSecurityService";
