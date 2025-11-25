@@ -12,7 +12,7 @@
  */
 
 import { existsSync, readdirSync, renameSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 
 // Note: ROUTE_HANDLERS_TO_DISABLE was removed as it's no longer used
 // All route handlers are now found dynamically via findRouteFiles()
@@ -57,9 +57,12 @@ function prepare() {
 	const routeFilesToDisable = allRouteFiles.filter((file) => {
 		// Disable all API routes and route handlers
 		// Tauri environment uses Loopback Server for OAuth, so auth/callback route handler is not needed
-		const isAPIRoute = file.includes("/api/");
+		// Use platform-independent path check (handles both / and \ separators)
+		const normalizedFile = file.replace(/\\/g, "/");
+		const isAPIRoute = normalizedFile.includes("/api/");
 		const isRouteHandler =
-			file.includes("/route.ts") || file.includes("/route.js");
+			normalizedFile.includes("/route.ts") ||
+			normalizedFile.includes("/route.js");
 
 		return isAPIRoute || isRouteHandler;
 	});
@@ -92,6 +95,9 @@ function prepare() {
 		"app/(protected)/notes/[slug]/page.tsx",
 		"app/(protected)/notes/[slug]/[id]/page.tsx",
 		"app/(protected)/notes/[slug]/[id]/generate-cards/page.tsx",
+		// New page routes: These use server-side logic that is incompatible with static export
+		"app/(protected)/notes/[slug]/new/page.tsx",
+		"app/(protected)/notes/default/new/page.tsx",
 		// Admin pages: Web app only, excluded from Tauri static export
 		"app/admin/inquiries/[id]/page.tsx",
 		"app/admin/users/[id]/page.tsx",
@@ -101,14 +107,16 @@ function prepare() {
 	];
 
 	for (const file of dynamicPagesToDisable) {
-		if (existsSync(file) && !file.endsWith(".disabled")) {
-			const disabledFile = `${file}.disabled`;
+		// Normalize path for cross-platform compatibility
+		const normalizedPath = file.split("/").join(sep);
+		if (existsSync(normalizedPath) && !normalizedPath.endsWith(".disabled")) {
+			const disabledFile = `${normalizedPath}.disabled`;
 			try {
-				renameSync(file, disabledFile);
-				console.log(`  ✓ Disabled dynamic page: ${file}`);
+				renameSync(normalizedPath, disabledFile);
+				console.log(`  ✓ Disabled dynamic page: ${normalizedPath}`);
 				disabledCount++;
 			} catch (error) {
-				console.error(`  ✗ Failed to disable ${file}:`, error);
+				console.error(`  ✗ Failed to disable ${normalizedPath}:`, error);
 			}
 		}
 	}
