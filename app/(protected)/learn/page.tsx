@@ -5,9 +5,16 @@ import {
 	getQuizQuestionsServer,
 	type QuizParams,
 } from "@/lib/services/quizService";
+import { LearnPageClient } from "./_components/LearnPageClient";
 import QuizSession from "./_components/QuizSession";
 
 export default async function SessionPage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <LearnPageClient />;
+	}
+
 	const cookieStore = await cookies();
 	const raw = cookieStore.get("quizSettings")?.value;
 	if (!raw) {
