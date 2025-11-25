@@ -19,17 +19,11 @@ export default async function LoginPage({
 }) {
 	// 静的エクスポート時はクライアントコンポーネントを使用
 	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
-	const resolvedSearchParams = await searchParams;
-
 	if (isStaticExport) {
-		return (
-			<LoginPageClient
-				message={resolvedSearchParams.message}
-				error={resolvedSearchParams.error}
-				errorDescription={resolvedSearchParams.error_description}
-			/>
-		);
+		return <LoginPageClient />;
 	}
+
+	const resolvedSearchParams = await searchParams;
 
 	const supabase = await createClient();
 	const {

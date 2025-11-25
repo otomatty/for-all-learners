@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -26,16 +26,23 @@ const version = pkg.version;
  *   └─ Plan: docs/03_plans/tauri-migration/20250124_01_static-export-client-side-auth-implementation-plan.md
  */
 export function LoginPageClient({
-	message,
-	error,
-	errorDescription,
+	message: messageProp,
+	error: errorProp,
+	errorDescription: errorDescriptionProp,
 }: {
 	message?: string;
 	error?: string;
 	errorDescription?: string;
-}) {
+} = {}) {
+	const searchParams = useSearchParams();
 	const { user, loading } = useAuth();
 	const router = useRouter();
+
+	// URLパラメータから値を取得（静的エクスポート時）
+	const message = messageProp ?? searchParams.get("message") ?? undefined;
+	const error = errorProp ?? searchParams.get("error") ?? undefined;
+	const errorDescription =
+		errorDescriptionProp ?? searchParams.get("error_description") ?? undefined;
 
 	useEffect(() => {
 		if (!loading && user) {
