@@ -5,6 +5,7 @@ import {
 	getSecurityAuditStatsServer,
 } from "@/lib/services/pluginSecurityService";
 import { SecurityAuditLogsFilters } from "./_components/SecurityAuditLogsFilters";
+import { SecurityAuditLogsPageClient } from "./_components/SecurityAuditLogsPageClient";
 import { SecurityAuditLogsPagination } from "./_components/SecurityAuditLogsPagination";
 import { SecurityAuditLogsTable } from "./_components/SecurityAuditLogsTable";
 import { SecurityAuditStatsCards } from "./_components/SecurityAuditStatsCards";
@@ -17,6 +18,12 @@ interface SecurityAuditLogsPageProps {
 export default async function SecurityAuditLogsPage({
 	searchParams,
 }: SecurityAuditLogsPageProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SecurityAuditLogsPageClient />;
+	}
+
 	const resolvedSearchParams = await searchParams;
 	const parsedParams = parseSecurityAuditLogsSearchParams(resolvedSearchParams);
 
