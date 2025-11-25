@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 import type { Viewport } from "next";
+import { ClientThemeProvider } from "@/components/layouts/ClientThemeProvider";
 import { Providers } from "@/components/providers";
 import { getUserSettingsTheme } from "@/lib/services/userSettingsService";
 import { createClient } from "@/lib/supabase/server";
@@ -79,7 +80,11 @@ export default async function RootLayout({
 			</head>
 			<body className={inter.className} suppressHydrationWarning>
 				<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
-					{children}
+					{isStaticExport ? (
+						<ClientThemeProvider>{children}</ClientThemeProvider>
+					) : (
+						children
+					)}
 				</Providers>
 			</body>
 		</html>

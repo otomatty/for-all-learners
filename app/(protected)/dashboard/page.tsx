@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { ActivityCalendar } from "./_components/ActivityCalendar";
 import type { MonthData } from "./_components/ActivityCalendar/types";
+import { DashboardPageClient } from "./_components/DashboardPageClient";
 import { GoalSummary } from "./_components/GoalSummary";
 import { PluginAutoLoader } from "./_components/PluginAutoLoader";
 import { PluginWidgetsSection } from "./_components/PluginWidgetsSection";
@@ -154,8 +155,12 @@ export default async function DashboardPage({
 }: {
 	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	// 静的エクスポート時はcookies()を使用できないため、デフォルト値を使用
+	// 静的エクスポート時はクライアントコンポーネントを使用
 	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <DashboardPageClient />;
+	}
+
 	let user: { id: string; email?: string } | null = null;
 	let _account = null;
 	let studyGoals: unknown[] = [];
@@ -176,79 +181,72 @@ export default async function DashboardPage({
 		streakCount: 0,
 	};
 
-	if (!isStaticExport) {
-		const supabase = await createClient();
-		const {
-			data: { user: authUser },
-			error: userError,
-		} = await supabase.auth.getUser();
-		if (userError || !authUser) {
-			redirect("/auth/login");
-		}
-		user = authUser;
-
-		const searchParams = searchParamsPromise
-			? await searchParamsPromise
-			: undefined;
-		const _currentGoalIdFromUrl = searchParams?.goalId as string | undefined;
-
-		const today = new Date();
-		const currentYear = today.getFullYear();
-		const currentMonth = today.getMonth() + 1;
-
-		// Fetch account info (ensure account exists)
-		const { data: accountData } = await supabase
-			.from("accounts")
-			.select("*")
-			.eq("id", user.id)
-			.single();
-
-		if (!accountData) {
-			// Create account if it doesn't exist
-			await supabase.from("accounts").insert({
-				id: user.id,
-				email: user.email,
-				user_slug: user.id,
-			});
-		}
-		_account = accountData;
-
-		// Fetch all required data in parallel
-		const [
-			studyGoalsResult,
-			logsResult,
-			decksResultData,
-			dueMapData,
-			monthDataResult,
-		] = await Promise.all([
-			supabase
-				.from("study_goals")
-				.select("*")
-				.eq("user_id", user.id)
-				.order("priority_order", { ascending: true })
-				.order("created_at", { ascending: false }),
-			supabase.from("learning_logs").select("*").eq("user_id", user.id),
-			supabase.from("decks").select("*").eq("user_id", user.id),
-			getAllDueCountsByUser(user.id),
-			getMonthlyActivitySummary(user.id, currentYear, currentMonth),
-		]);
-
-		if (studyGoalsResult.error) throw studyGoalsResult.error;
-		if (logsResult.error) throw logsResult.error;
-		if (decksResultData.error || !decksResultData.data) {
-			return (
-				<Container>
-					<p>デッキの取得に失敗しました。</p>
-				</Container>
-			);
-		}
-
-		studyGoals = studyGoalsResult.data || [];
-		logs = logsResult.data || [];
-		decksResult = decksResultData;
-		dueMap = dueMapData;
-		monthData = monthDataResult;
+	const supabase = await createClient();
+	const {
+		data: { user: authUser },
+		error: userError,
+	} = await supabase.auth.getUser();
+	if (userError || !authUser) {
+		redirect("/auth/login");
 	}
+	user = authUser;
+
+	const today = new Date();
+	const currentYear = today.getFullYear();
+	const currentMonth = today.getMonth() + 1;
+
+	// Fetch account info (ensure account exists)
+	const { data: accountData } = await supabase
+		.from("accounts")
+		.select("*")
+		.eq("id", user.id)
+		.single();
+
+	if (!accountData) {
+		// Create account if it doesn't exist
+		await supabase.from("accounts").insert({
+			id: user.id,
+			email: user.email,
+			user_slug: user.id,
+		});
+	}
+	_account = accountData;
+
+	// Fetch all required data in parallel
+	const [
+		studyGoalsResult,
+		logsResult,
+		decksResultData,
+		dueMapData,
+		monthDataResult,
+	] = await Promise.all([
+		supabase
+			.from("study_goals")
+			.select("*")
+			.eq("user_id", user.id)
+			.order("priority_order", { ascending: true })
+			.order("created_at", { ascending: false }),
+		supabase.from("learning_logs").select("*").eq("user_id", user.id),
+		supabase.from("decks").select("*").eq("user_id", user.id),
+		getAllDueCountsByUser(user.id),
+		getMonthlyActivitySummary(user.id, currentYear, currentMonth),
+	]);
+
+	if (studyGoalsResult.error) throw studyGoalsResult.error;
+	if (logsResult.error) throw logsResult.error;
+	if (decksResultData.error || !decksResultData.data) {
+		return (
+			<Container>
+				<p>デッキの取得に失敗しました。</p>
+			</Container>
+		);
+	}
+
+	studyGoals = studyGoalsResult.data || [];
+	logs = logsResult.data || [];
+	decksResult = decksResultData;
+	dueMap = dueMapData;
+	monthData = monthDataResult;
 
 	const searchParams = searchParamsPromise
 		? await searchParamsPromise

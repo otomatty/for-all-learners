@@ -2,6 +2,7 @@ import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { getUserSettingsServer } from "@/lib/services/userSettingsService";
 import { createClient } from "@/lib/supabase/server";
+import { SettingsPageClient } from "./_components/SettingsPageClient";
 import UserSettingsForm from "./_components/user-settings-form";
 
 type CosenseProject = {
@@ -13,6 +14,12 @@ type CosenseProject = {
 };
 
 export default async function SettingsPage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SettingsPageClient />;
+	}
+
 	const supabase = await createClient();
 
 	// 認証チェック

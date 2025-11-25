@@ -3,6 +3,7 @@ import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { createClient } from "@/lib/supabase/server";
 import pkg from "../../../package.json";
 import { LoginForm } from "./_components/LoginForm";
+import { LoginPageClient } from "./_components/LoginPageClient";
 
 const version = pkg.version;
 
@@ -16,6 +17,20 @@ export default async function LoginPage({
 		error_description?: string;
 	}>;
 }) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	const resolvedSearchParams = await searchParams;
+
+	if (isStaticExport) {
+		return (
+			<LoginPageClient
+				message={resolvedSearchParams.message}
+				error={resolvedSearchParams.error}
+				errorDescription={resolvedSearchParams.error_description}
+			/>
+		);
+	}
+
 	const supabase = await createClient();
 	const {
 		data: { user },
@@ -24,8 +39,6 @@ export default async function LoginPage({
 	if (user) {
 		redirect("/dashboard");
 	}
-
-	const resolvedSearchParams = await searchParams;
 
 	return (
 		<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
