@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { createClient } from "@/lib/supabase/server";
 import pkg from "../../../package.json";
