@@ -6,6 +6,7 @@ import {
 	getPluginSecurityAlertsServer,
 } from "@/lib/services/pluginSecurityService";
 import { SecurityAlertsFilters } from "./_components/SecurityAlertsFilters";
+import { SecurityAlertsPageClient } from "./_components/SecurityAlertsPageClient";
 import { SecurityAlertsPagination } from "./_components/SecurityAlertsPagination";
 import { SecurityAlertsStatsCards } from "./_components/SecurityAlertsStatsCards";
 import { SecurityAlertsTable } from "./_components/SecurityAlertsTable";
@@ -21,6 +22,12 @@ interface SecurityAlertsPageProps {
 export default async function SecurityAlertsPage({
 	searchParams,
 }: SecurityAlertsPageProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SecurityAlertsPageClient />;
+	}
+
 	const resolvedSearchParams = await searchParams;
 	const parsedParams = parseSecurityAlertsSearchParams(resolvedSearchParams);
 
