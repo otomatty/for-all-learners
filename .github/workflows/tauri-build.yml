@@ -118,7 +118,7 @@ jobs:
         shell: bash
         run: |
           bun run scripts/build-sandbox-worker.ts
-          ENABLE_STATIC_EXPORT=true bun run build
+          cross-env ENABLE_STATIC_EXPORT=true bun run build
           # Verify build output exists
           if [ ! -d "out" ]; then
             echo "❌ Build output directory 'out' not found"
