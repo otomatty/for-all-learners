@@ -7,8 +7,15 @@ import {
 } from "@/lib/services/studyGoalsService";
 import { createClient } from "@/lib/supabase/server";
 import { GoalsList } from "./_components/GoalsList";
+import { GoalsPageClient } from "./_components/GoalsPageClient";
 
 export default async function GoalsPage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <GoalsPageClient />;
+	}
+
 	const supabase = await createClient();
 
 	// 認証チェック
