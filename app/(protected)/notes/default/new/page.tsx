@@ -3,11 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { DefaultNewPageClient } from "./_components/DefaultNewPageClient";
 
+// Generate static params for dynamic routes
+// Returns empty array to enable dynamic rendering for all routes
+// Phase 6: Next.js静的化とTauri統合 (Issue #157)
 export async function generateStaticParams() {
-	// Return empty array for static export - this route will be handled client-side
-	if (process.env.ENABLE_STATIC_EXPORT) {
-		return [];
-	}
 	return [];
 }
 
