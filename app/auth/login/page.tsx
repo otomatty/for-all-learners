@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,20 @@ export default async function LoginPage({
 	// 静的エクスポート時はクライアントコンポーネントを使用
 	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
 	if (isStaticExport) {
-		return <LoginPageClient />;
+		return (
+			<Suspense
+				fallback={
+					<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+						<UnauthHeader version={version} />
+						<div className="flex flex-1 items-center justify-center px-4">
+							<div className="text-muted-foreground">読み込み中...</div>
+						</div>
+					</div>
+				}
+			>
+				<LoginPageClient />
+			</Suspense>
+		);
 	}
 
 	const resolvedSearchParams = await searchParams;
