@@ -1,9 +1,16 @@
 import { Container } from "@/components/layouts/container";
 import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
+import { ProfilePageClient } from "./_components/ProfilePageClient";
 import ProfileForm from "./_components/profile-form";
 
 export default async function ProfilePage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <ProfilePageClient />;
+	}
+
 	const supabase = await createClient();
 	const {
 		data: { user },
