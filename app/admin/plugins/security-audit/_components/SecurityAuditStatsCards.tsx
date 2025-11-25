@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SecurityAuditStats } from "../_utils";
+import type { SecurityAuditStats } from "@/lib/services/pluginSecurityService";
 
 interface SecurityAuditStatsCardsProps {
 	stats: SecurityAuditStats;
