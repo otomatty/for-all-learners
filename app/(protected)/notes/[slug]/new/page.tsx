@@ -14,6 +14,10 @@ export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
 	return [];
 }
 
+// Allow dynamic params to be generated at request time
+// This is required for static export with dynamic routes
+export const dynamicParams = true;
+
 export default async function NewPage({ params }: NewPageProps) {
 	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
 
