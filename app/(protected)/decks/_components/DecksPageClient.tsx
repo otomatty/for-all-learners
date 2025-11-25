@@ -4,15 +4,32 @@ import { CreateDeckDialog } from "@/app/(protected)/decks/_components/CreateDeck
 import { DecksList } from "@/app/(protected)/decks/_components/DecksList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDecks, useSharedDecks } from "@/hooks/decks";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 interface DecksPageClientProps {
-	userId: string;
+	userId?: string;
 }
 
-export function DecksPageClient({ userId }: DecksPageClientProps) {
+export function DecksPageClient({ userId: userIdProp }: DecksPageClientProps) {
+	const { user, loading: authLoading } = useAuth();
+	const userId = userIdProp || user?.id;
+
+	// フックは常に同じ順序で呼び出す必要があるため、早期リターンの前に配置
 	const { data: myDecks, isLoading: isLoadingMyDecks } = useDecks();
 	const { data: sharedDeckShares, isLoading: isLoadingSharedDecks } =
 		useSharedDecks();
+
+	if (authLoading) {
+		return (
+			<div className="flex items-center justify-center h-40">
+				<p className="text-muted-foreground">読み込み中...</p>
+			</div>
+		);
+	}
+
+	if (!userId) {
+		return null; // ClientProtectedLayoutでリダイレクトされる
+	}
 
 	const sharedDecks = sharedDeckShares?.map((share) => share.decks) ?? [];
 
