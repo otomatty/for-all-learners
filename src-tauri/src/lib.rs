@@ -1,5 +1,7 @@
 use tauri::{AppHandle, Emitter};
 
+pub mod db;
+
 #[tauri::command]
 async fn start_oauth_server(app: AppHandle) -> Result<u16, String> {
     tauri_plugin_oauth::start(move |url| {

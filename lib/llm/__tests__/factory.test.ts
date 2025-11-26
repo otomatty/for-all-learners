@@ -575,45 +575,46 @@ describe("createClientWithUserKey", () => {
 				model: "claude-3-haiku-20240307",
 				apiKey: "anthropic-key",
 			},
-		])(
-			"should pass model $model to createLLMClient for provider $provider",
-			async ({ provider, model, apiKey }) => {
-				// Arrange
-				const encryptedApiKey = "encrypted-key-123";
-				const mockSupabaseClient = {
-					auth: {
-						getUser: vi.fn().mockResolvedValue({
-							data: { user: { id: "user-123" } },
-							error: null,
-						}),
-					},
-					from: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnThis(),
-						eq: vi.fn().mockReturnThis(),
-						single: vi.fn().mockResolvedValue({
-							data: { encrypted_api_key: encryptedApiKey },
-							error: null,
-						}),
+		])("should pass model $model to createLLMClient for provider $provider", async ({
+			provider,
+			model,
+			apiKey,
+		}) => {
+			// Arrange
+			const encryptedApiKey = "encrypted-key-123";
+			const mockSupabaseClient = {
+				auth: {
+					getUser: vi.fn().mockResolvedValue({
+						data: { user: { id: "user-123" } },
+						error: null,
 					}),
-				};
+				},
+				from: vi.fn().mockReturnValue({
+					select: vi.fn().mockReturnThis(),
+					eq: vi.fn().mockReturnThis(),
+					single: vi.fn().mockResolvedValue({
+						data: { encrypted_api_key: encryptedApiKey },
+						error: null,
+					}),
+				}),
+			};
 
-				vi.mocked(createClient).mockReturnValue(
-					mockSupabaseClient as unknown as ReturnType<typeof createClient>,
-				);
-				vi.mocked(decryptAPIKey).mockResolvedValue(apiKey);
-				vi.mocked(createLLMClient).mockResolvedValue(mockClient);
+			vi.mocked(createClient).mockReturnValue(
+				mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			);
+			vi.mocked(decryptAPIKey).mockResolvedValue(apiKey);
+			vi.mocked(createLLMClient).mockResolvedValue(mockClient);
 
-				// Act
-				await createClientWithUserKey({ provider, model });
+			// Act
+			await createClientWithUserKey({ provider, model });
 
-				// Assert
-				expect(createLLMClient).toHaveBeenCalledWith({
-					provider,
-					model,
-					apiKey,
-				});
-			},
-		);
+			// Assert
+			expect(createLLMClient).toHaveBeenCalledWith({
+				provider,
+				model,
+				apiKey,
+			});
+		});
 
 		test("should pass undefined model when not specified (uses default)", async () => {
 			// Arrange

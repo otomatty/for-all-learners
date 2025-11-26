@@ -4,6 +4,8 @@ import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 import type { Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { ClientThemeProvider } from "@/components/layouts/ClientThemeProvider";
 import { Providers } from "@/components/providers";
 import { getUserSettingsTheme } from "@/lib/services/userSettingsService";
@@ -51,12 +53,16 @@ export default async function RootLayout({
 		}
 	}
 
+	// Get locale and messages for i18n
+	const locale = await getLocale();
+	const messages = await getMessages();
+
 	const themeClass = `theme-${theme}`;
 	const darkClass = mode === "dark" ? "dark" : "";
 
 	return (
 		<html
-			lang="ja"
+			lang={locale}
 			className={`${darkClass} ${themeClass}`}
 			suppressHydrationWarning
 		>
@@ -79,13 +85,15 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body className={inter.className} suppressHydrationWarning>
-				<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
-					{isStaticExport ? (
-						<ClientThemeProvider>{children}</ClientThemeProvider>
-					) : (
-						children
-					)}
-				</Providers>
+				<NextIntlClientProvider messages={messages}>
+					<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
+						{isStaticExport ? (
+							<ClientThemeProvider>{children}</ClientThemeProvider>
+						) : (
+							children
+						)}
+					</Providers>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

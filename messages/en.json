@@ -1,0 +1,118 @@
+{
+	"common": {
+		"loading": "Loading...",
+		"error": "An error occurred",
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"edit": "Edit",
+		"create": "Create",
+		"close": "Close",
+		"confirm": "Confirm",
+		"back": "Back",
+		"next": "Next",
+		"search": "Search",
+		"settings": "Settings",
+		"logout": "Logout"
+	},
+	"navigation": {
+		"dashboard": "Dashboard",
+		"notes": "Notes",
+		"decks": "Decks",
+		"goals": "Goals",
+		"learn": "Learn",
+		"search": "Search",
+		"profile": "Profile",
+		"settings": "Settings"
+	},
+	"auth": {
+		"login": "Login",
+		"loginWithGoogle": "Login with Google",
+		"loginWithGitHub": "Login with GitHub",
+		"welcomeBack": "Welcome back",
+		"loginDescription": "Please log in to your account"
+	},
+	"dashboard": {
+		"title": "Dashboard",
+		"welcomeMessage": "Welcome, {name}",
+		"todayGoal": "Today's Goal",
+		"studyStreak": "Study Streak",
+		"totalCards": "Total Cards",
+		"masteredCards": "Mastered Cards"
+	},
+	"notes": {
+		"title": "Notes",
+		"createNote": "Create new note",
+		"noteTitle": "Title",
+		"noteDescription": "Description",
+		"noNotes": "No notes found",
+		"deleteConfirm": "Are you sure you want to delete this note?",
+		"visibility": {
+			"public": "Public",
+			"unlisted": "Unlisted",
+			"invite": "Invite Only",
+			"private": "Private"
+		}
+	},
+	"decks": {
+		"title": "Decks",
+		"createDeck": "Create new deck",
+		"deckName": "Deck name",
+		"cardCount": "{count} cards",
+		"noDecks": "No decks found",
+		"deleteConfirm": "Are you sure you want to delete this deck?"
+	},
+	"cards": {
+		"front": "Front",
+		"back": "Back",
+		"createCard": "Create card",
+		"editCard": "Edit card",
+		"deleteCard": "Delete card",
+		"deleteConfirm": "Are you sure you want to delete this card?"
+	},
+	"learn": {
+		"title": "Learn",
+		"startLearning": "Start Learning",
+		"showAnswer": "Show Answer",
+		"again": "Again",
+		"hard": "Hard",
+		"good": "Good",
+		"easy": "Easy",
+		"completed": "Learning Complete",
+		"cardsRemaining": "{count} cards remaining"
+	},
+	"goals": {
+		"title": "Goals",
+		"createGoal": "Create Goal",
+		"goalTitle": "Goal Title",
+		"targetCards": "Target Cards",
+		"noGoals": "No goals found",
+		"progress": "Progress: {current}/{target}"
+	},
+	"settings": {
+		"title": "Settings",
+		"language": "Language",
+		"theme": "Theme",
+		"themeLight": "Light",
+		"themeDark": "Dark",
+		"themeSystem": "System",
+		"notifications": "Notifications",
+		"account": "Account",
+		"privacy": "Privacy",
+		"about": "About"
+	},
+	"profile": {
+		"title": "Profile",
+		"displayName": "Display Name",
+		"email": "Email",
+		"bio": "Bio",
+		"updateProfile": "Update Profile"
+	},
+	"errors": {
+		"notFound": "Page not found",
+		"unauthorized": "Login required",
+		"forbidden": "Access denied",
+		"serverError": "Server error occurred",
+		"networkError": "Network error occurred"
+	}
+}

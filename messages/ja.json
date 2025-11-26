@@ -1,0 +1,118 @@
+{
+	"common": {
+		"loading": "読み込み中...",
+		"error": "エラーが発生しました",
+		"save": "保存",
+		"cancel": "キャンセル",
+		"delete": "削除",
+		"edit": "編集",
+		"create": "作成",
+		"close": "閉じる",
+		"confirm": "確認",
+		"back": "戻る",
+		"next": "次へ",
+		"search": "検索",
+		"settings": "設定",
+		"logout": "ログアウト"
+	},
+	"navigation": {
+		"dashboard": "ダッシュボード",
+		"notes": "ノート",
+		"decks": "デッキ",
+		"goals": "目標",
+		"learn": "学習",
+		"search": "検索",
+		"profile": "プロフィール",
+		"settings": "設定"
+	},
+	"auth": {
+		"login": "ログイン",
+		"loginWithGoogle": "Googleでログイン",
+		"loginWithGitHub": "GitHubでログイン",
+		"welcomeBack": "おかえりなさい",
+		"loginDescription": "アカウントにログインしてください"
+	},
+	"dashboard": {
+		"title": "ダッシュボード",
+		"welcomeMessage": "ようこそ、{name}さん",
+		"todayGoal": "今日の目標",
+		"studyStreak": "学習連続日数",
+		"totalCards": "総カード数",
+		"masteredCards": "習得済みカード"
+	},
+	"notes": {
+		"title": "ノート",
+		"createNote": "新しいノートを作成",
+		"noteTitle": "タイトル",
+		"noteDescription": "説明",
+		"noNotes": "ノートがありません",
+		"deleteConfirm": "このノートを削除してもよろしいですか？",
+		"visibility": {
+			"public": "公開",
+			"unlisted": "限定公開",
+			"invite": "招待制",
+			"private": "非公開"
+		}
+	},
+	"decks": {
+		"title": "デッキ",
+		"createDeck": "新しいデッキを作成",
+		"deckName": "デッキ名",
+		"cardCount": "{count}枚のカード",
+		"noDecks": "デッキがありません",
+		"deleteConfirm": "このデッキを削除してもよろしいですか？"
+	},
+	"cards": {
+		"front": "表面",
+		"back": "裏面",
+		"createCard": "カードを作成",
+		"editCard": "カードを編集",
+		"deleteCard": "カードを削除",
+		"deleteConfirm": "このカードを削除してもよろしいですか？"
+	},
+	"learn": {
+		"title": "学習",
+		"startLearning": "学習を開始",
+		"showAnswer": "答えを見る",
+		"again": "もう一度",
+		"hard": "難しい",
+		"good": "良い",
+		"easy": "簡単",
+		"completed": "学習完了",
+		"cardsRemaining": "残り{count}枚"
+	},
+	"goals": {
+		"title": "目標",
+		"createGoal": "目標を作成",
+		"goalTitle": "目標タイトル",
+		"targetCards": "目標カード数",
+		"noGoals": "目標がありません",
+		"progress": "進捗: {current}/{target}"
+	},
+	"settings": {
+		"title": "設定",
+		"language": "言語",
+		"theme": "テーマ",
+		"themeLight": "ライト",
+		"themeDark": "ダーク",
+		"themeSystem": "システム",
+		"notifications": "通知",
+		"account": "アカウント",
+		"privacy": "プライバシー",
+		"about": "このアプリについて"
+	},
+	"profile": {
+		"title": "プロフィール",
+		"displayName": "表示名",
+		"email": "メールアドレス",
+		"bio": "自己紹介",
+		"updateProfile": "プロフィールを更新"
+	},
+	"errors": {
+		"notFound": "ページが見つかりません",
+		"unauthorized": "ログインが必要です",
+		"forbidden": "アクセスが拒否されました",
+		"serverError": "サーバーエラーが発生しました",
+		"networkError": "ネットワークエラーが発生しました"
+	}
+}

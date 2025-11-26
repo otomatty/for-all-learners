@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 import withPWA from "next-pwa";
 import webpack from "webpack";
+
+// Create next-intl plugin
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 // Detect if running in Tauri environment
 const _internalHost = process.env.TAURI_DEV_HOST || "localhost";
@@ -71,5 +75,5 @@ const nextConfig: NextConfig = {
 	},
 };
 
-// Export merged config using PWA plugin
-export default withPWA(pwaOptions)(nextConfig);
+// Export merged config using PWA and next-intl plugins
+export default withNextIntl(withPWA(pwaOptions)(nextConfig));
