@@ -163,5 +163,89 @@
 		"forbidden": "アクセスが拒否されました",
 		"serverError": "サーバーエラーが発生しました",
 		"networkError": "ネットワークエラーが発生しました"
+	},
+	"sync": {
+		"title": "同期",
+		"status": {
+			"idle": "待機中",
+			"syncing": "同期中...",
+			"error": "同期エラー",
+			"offline": "オフライン",
+			"paused": "一時停止中"
+		},
+		"lastSync": "最終同期: {time}",
+		"pendingChanges": "未同期の変更: {count}件",
+		"syncNow": "今すぐ同期",
+		"autoSync": "自動同期",
+		"syncInterval": "同期間隔",
+		"syncComplete": "同期が完了しました",
+		"syncFailed": "同期に失敗しました",
+		"conflictResolved": "競合を解決しました",
+		"offlineMode": "オフラインモード",
+		"offlineMessage": "インターネット接続がありません。変更はローカルに保存され、オンライン復帰時に同期されます。",
+		"pushComplete": "{count}件の変更をサーバーに送信しました",
+		"pullComplete": "{count}件の変更をサーバーから取得しました"
+	},
+	"pages": {
+		"title": "ページ",
+		"createPage": "新しいページを作成",
+		"newPage": "新規ページ",
+		"pageTitle": "ページタイトル",
+		"noPages": "ページがありません",
+		"deleteConfirm": "このページを削除してもよろしいですか？",
+		"linkedNotes": "リンクされたノート",
+		"attachedDecks": "関連デッキ",
+		"lastEdited": "最終編集: {time}",
+		"wordCount": "{count}文字",
+		"readingTime": "読了時間: {minutes}分"
+	},
+	"milestones": {
+		"title": "マイルストーン",
+		"createMilestone": "マイルストーンを作成",
+		"milestoneTitle": "マイルストーンタイトル",
+		"dueDate": "期限",
+		"completed": "完了",
+		"incomplete": "未完了",
+		"noMilestones": "マイルストーンがありません",
+		"markComplete": "完了にする",
+		"markIncomplete": "未完了にする"
+	},
+	"studyGoals": {
+		"title": "学習目標",
+		"createGoal": "学習目標を作成",
+		"goalDescription": "目標の説明",
+		"deadline": "締め切り",
+		"progressRate": "進捗率",
+		"status": {
+			"notStarted": "未開始",
+			"inProgress": "進行中",
+			"completed": "完了"
+		},
+		"linkedDecks": "関連デッキ",
+		"statistics": {
+			"totalCards": "総カード数",
+			"masteredCards": "習得済み",
+			"dueCards": "復習予定",
+			"accuracy": "正答率"
+		}
+	},
+	"learningLogs": {
+		"title": "学習ログ",
+		"todayStudy": "今日の学習",
+		"weeklyStudy": "週間学習",
+		"monthlyStudy": "月間学習",
+		"practiceMode": {
+			"flashcard": "フラッシュカード",
+			"quiz": "クイズ",
+			"typing": "タイピング",
+			"listening": "リスニング",
+			"reading": "リーディング"
+		},
+		"statistics": {
+			"totalReviews": "総復習回数",
+			"correctRate": "正答率",
+			"averageTime": "平均回答時間",
+			"streak": "連続学習日数"
+		}
 	}
 }

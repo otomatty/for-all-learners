@@ -68,10 +68,12 @@ export interface LocalNote extends SyncableEntity {
 	created_at: string;
 	/** 更新日時 */
 	updated_at: string;
-	/** ゴミ箱に入っているか */
-	is_trashed: boolean;
-	/** ゴミ箱に入れた日時 */
-	trashed_at: string | null;
+	/** ページ数 */
+	page_count: number;
+	/** 参加者数 */
+	participant_count: number;
+	/** デフォルトノートかどうか */
+	is_default_note: boolean | null;
 }
 
 /**
@@ -91,8 +93,6 @@ export interface UpdateNotePayload {
 	title?: string;
 	description?: string | null;
 	visibility?: NoteVisibility;
-	is_trashed?: boolean;
-	trashed_at?: string | null;
 }
 
 // ============================================================================
@@ -388,39 +388,71 @@ export interface CreateLearningLogPayload {
 }
 
 // ============================================================================
-// Milestones（マイルストーン）
+// Milestones（マイルストーン - ロードマップ用）
 // ============================================================================
 
 /**
+ * マイルストーンのステータス
+ */
+export type MilestoneStatus =
+	| "planning"
+	| "in-progress"
+	| "launched"
+	| "on-hold"
+	| "completed";
+
+/**
+ * 関連リンク
+ */
+export interface MilestoneRelatedLink {
+	title: string;
+	url: string;
+}
+
+/**
  * ローカルDBに保存するマイルストーンの型
+ * 注意: これはロードマップ用のマイルストーンです
  */
 export interface LocalMilestone extends SyncableEntity {
 	/** マイルストーンID（UUID） */
 	id: string;
-	/** 学習目標ID */
-	goal_id: string;
+	/** マイルストーン識別子（例: "v1-mvp"） */
+	milestone_id: string;
+	/** 時間枠 */
+	timeframe: string;
 	/** タイトル */
 	title: string;
 	/** 説明 */
 	description: string | null;
-	/** 期限 */
-	due_date: string | null;
-	/** 完了したか */
-	is_completed: boolean;
+	/** ステータス */
+	status: MilestoneStatus;
+	/** 進捗（0-100） */
+	progress: number | null;
+	/** 表示順序 */
+	sort_order: number;
 	/** 作成日時 */
 	created_at: string;
 	/** 更新日時 */
 	updated_at: string;
+	/** 画像URL */
+	image_url: string | null;
+	/** 機能リスト */
+	features: string[] | null;
+	/** 関連リンク */
+	related_links: MilestoneRelatedLink[] | null;
 }
 
 /**
  * マイルストーン作成時のペイロード
  */
 export interface CreateMilestonePayload {
-	goal_id: string;
+	milestone_id: string;
+	timeframe: string;
 	title: string;
 	description?: string | null;
-	due_date?: string | null;
+	status?: MilestoneStatus;
+	progress?: number | null;
+	sort_order?: number;
 }
 
 /**
@@ -429,8 +461,12 @@ export interface CreateMilestonePayload {
 export interface UpdateMilestonePayload {
 	title?: string;
 	description?: string | null;
-	due_date?: string | null;
-	is_completed?: boolean;
+	status?: MilestoneStatus;
+	progress?: number | null;
+	sort_order?: number;
+	image_url?: string | null;
+	features?: string[] | null;
+	related_links?: MilestoneRelatedLink[] | null;
 }
 
 // ============================================================================
@@ -581,7 +617,7 @@ export interface LocalAppDatabase extends DBSchema {
 		key: string;
 		value: LocalMilestone;
 		indexes: {
-			"by-goal": string;
+			"by-milestone-id": string;
 			"by-sync-status": SyncStatus;
 		};
 	};

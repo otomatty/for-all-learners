@@ -25,8 +25,8 @@ import {
 	studyGoalsClient,
 	tauriDB,
 	userSettingsClient,
-} from "./tauri-sqlite-client";
-import type { LocalDeck, LocalNote } from "./types";
+} from "../tauri-sqlite-client";
+import type { LocalDeck, LocalNote } from "../types";
 
 // ============================================================================
 // Notes クライアント テスト
@@ -62,8 +62,9 @@ describe("notesClient", () => {
 				visibility: "private",
 				created_at: "2025-01-01T00:00:00Z",
 				updated_at: "2025-01-01T00:00:00Z",
-				is_trashed: false,
-				trashed_at: null,
+				page_count: 0,
+				participant_count: 0,
+				is_default_note: null,
 				sync_status: "pending",
 				synced_at: null,
 				local_updated_at: "2025-01-01T00:00:00Z",
@@ -97,8 +98,9 @@ describe("notesClient", () => {
 				visibility: "private",
 				created_at: "2025-01-01T00:00:00Z",
 				updated_at: "2025-01-01T00:00:00Z",
-				is_trashed: false,
-				trashed_at: null,
+				page_count: 0,
+				participant_count: 0,
+				is_default_note: null,
 				sync_status: "pending",
 				synced_at: null,
 				local_updated_at: "2025-01-01T00:00:00Z",

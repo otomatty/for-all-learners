@@ -196,7 +196,8 @@ export interface LearningLogsClientInterface {
  * Milestones クライアントインターフェース
  */
 export interface MilestonesClientInterface {
-	getByGoal(goalId: string): Promise<LocalMilestone[]>;
+	getAll(): Promise<LocalMilestone[]>;
+	getByMilestoneId(milestoneId: string): Promise<LocalMilestone | undefined>;
 	getById(id: string): Promise<LocalMilestone | undefined>;
 	create(payload: CreateMilestonePayload): Promise<LocalMilestone>;
 	update(

@@ -163,5 +163,89 @@
 		"forbidden": "Access denied",
 		"serverError": "Server error occurred",
 		"networkError": "Network error occurred"
+	},
+	"sync": {
+		"title": "Sync",
+		"status": {
+			"idle": "Idle",
+			"syncing": "Syncing...",
+			"error": "Sync Error",
+			"offline": "Offline",
+			"paused": "Paused"
+		},
+		"lastSync": "Last sync: {time}",
+		"pendingChanges": "Pending changes: {count}",
+		"syncNow": "Sync Now",
+		"autoSync": "Auto Sync",
+		"syncInterval": "Sync Interval",
+		"syncComplete": "Sync completed",
+		"syncFailed": "Sync failed",
+		"conflictResolved": "Conflict resolved",
+		"offlineMode": "Offline Mode",
+		"offlineMessage": "No internet connection. Changes will be saved locally and synced when you're back online.",
+		"pushComplete": "Pushed {count} changes to server",
+		"pullComplete": "Pulled {count} changes from server"
+	},
+	"pages": {
+		"title": "Pages",
+		"createPage": "Create new page",
+		"newPage": "New Page",
+		"pageTitle": "Page Title",
+		"noPages": "No pages found",
+		"deleteConfirm": "Are you sure you want to delete this page?",
+		"linkedNotes": "Linked Notes",
+		"attachedDecks": "Attached Decks",
+		"lastEdited": "Last edited: {time}",
+		"wordCount": "{count} characters",
+		"readingTime": "Reading time: {minutes} min"
+	},
+	"milestones": {
+		"title": "Milestones",
+		"createMilestone": "Create Milestone",
+		"milestoneTitle": "Milestone Title",
+		"dueDate": "Due Date",
+		"completed": "Completed",
+		"incomplete": "Incomplete",
+		"noMilestones": "No milestones found",
+		"markComplete": "Mark as Complete",
+		"markIncomplete": "Mark as Incomplete"
+	},
+	"studyGoals": {
+		"title": "Study Goals",
+		"createGoal": "Create Study Goal",
+		"goalDescription": "Goal Description",
+		"deadline": "Deadline",
+		"progressRate": "Progress Rate",
+		"status": {
+			"notStarted": "Not Started",
+			"inProgress": "In Progress",
+			"completed": "Completed"
+		},
+		"linkedDecks": "Linked Decks",
+		"statistics": {
+			"totalCards": "Total Cards",
+			"masteredCards": "Mastered",
+			"dueCards": "Due for Review",
+			"accuracy": "Accuracy"
+		}
+	},
+	"learningLogs": {
+		"title": "Learning Logs",
+		"todayStudy": "Today's Study",
+		"weeklyStudy": "Weekly Study",
+		"monthlyStudy": "Monthly Study",
+		"practiceMode": {
+			"flashcard": "Flashcard",
+			"quiz": "Quiz",
+			"typing": "Typing",
+			"listening": "Listening",
+			"reading": "Reading"
+		},
+		"statistics": {
+			"totalReviews": "Total Reviews",
+			"correctRate": "Correct Rate",
+			"averageTime": "Average Response Time",
+			"streak": "Study Streak"
+		}
 	}
 }

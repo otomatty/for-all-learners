@@ -109,25 +109,50 @@
 
 ---
 
-### Week 3: 2025/12/10 〜 2025/12/16
+### Week 3: 2025/12/10 〜 2025/12/16 ✅ 完了
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Hybrid DB: Phase B 開始                                        │
-│  ├─ #193 同期マネージャー実装                                    │
-│  └─ #194 競合解決ロジック実装                                    │
+│  Hybrid DB: Phase B 完了 ✅                                      │
+│  ├─ #193 同期マネージャー実装 ✅                                  │
+│  └─ #194 競合解決ロジック実装 ✅                                  │
 │                                                                  │
-│  i18n: Phase 2 継続                                              │
-│  └─ Decks / Learn / Goals の翻訳対応                             │
+│  i18n: Phase 2 継続 ✅                                           │
+│  └─ Decks / Learn / Goals / Sync の翻訳対応 ✅                    │
 │                                                                  │
-│  状態: 並行開発可能                                               │
+│  状態: Week 3 目標達成 🎉                                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **今週のゴール**:
-- [ ] SyncManager 基本動作確認
-- [ ] Last Write Wins 競合解決実装
-- [ ] 主要機能の翻訳対応 50% 完了
+- [x] SyncManager 基本動作確認 ✅ (2025-11-26)
+- [x] Last Write Wins 競合解決実装 ✅ (2025-11-26)
+- [x] 主要機能の翻訳対応 50% 完了 ✅ (2025-11-26)
+
+<details>
+<summary>📝 Week 3 完了作業詳細</summary>
+
+#### 同期マネージャー (#193)
+- `lib/sync/types.ts` - 同期関連の型定義
+- `lib/sync/sync-manager.ts` - SyncManager クラス（プッシュ/プル/イベント管理）
+- `lib/sync/sync-queue.ts` - SyncQueue クラス（オフライン時のキュー管理）
+- `lib/sync/sync-triggers.ts` - 同期トリガー管理
+- `lib/sync/index.ts` - エントリーポイント
+- テスト: 49テスト（conflict-resolver: 13, sync-queue: 19, sync-manager: 17）
+
+#### 競合解決ロジック (#194)
+- `lib/sync/conflict-resolver.ts` - ConflictResolver クラス（LWW方式）
+- resolve() - ローカル/サーバーの比較
+- merge() - データのマージ
+- isServerNewer() - サーバーが新しいか判定
+- hasLocalChanges() - ローカル変更の有無判定
+
+#### i18n 翻訳追加
+- `messages/ja.json` - 同期、ページ、マイルストーン、学習目標、学習ログの翻訳追加
+- `messages/en.json` - 同上の英語翻訳追加
+- 翻訳キー数: 167 → 230+ エントリー
+
+</details>
 
 ---
 
@@ -305,8 +330,8 @@ export class RepositoryError extends Error {
 ✅ #190 IndexedDB Client     → 完了 (2025-11-26)
 ✅ #191 SQLite Schema (Rust) → 完了 (2025-11-26) ※Notes CRUD実装済み
 ✅ #192 Tauri Commands       → 完了 (2025-11-26) ※全エンティティCRUD実装済み
-#193 Sync Manager            → 後からエラーメッセージ翻訳可能
-#194 Conflict Resolution     → ロジック層、翻訳不要
+✅ #193 Sync Manager         → 完了 (2025-11-26) ※SyncManager, SyncQueue, SyncTriggers実装済み
+✅ #194 Conflict Resolution  → 完了 (2025-11-26) ※LWW方式の競合解決実装済み
 ```
 
 ### i18n Phase 1 完了後に着手推奨
@@ -345,4 +370,5 @@ export class RepositoryError extends Error {
 | 2025-11-26 | 初版作成 |
 | 2025-11-26 | Week 1 完了: IndexedDB基盤、SQLiteスキーマ、i18n基盤（#190, #191, #119） |
 | 2025-11-26 | Week 2 Tauri Commands完了: Rust Commands実装、TypeScriptクライアント実装（#192） |
+| 2025-11-26 | Week 3 完了: 同期マネージャー、競合解決ロジック、翻訳追加（#193, #194） |
 
