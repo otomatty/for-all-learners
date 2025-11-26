@@ -112,6 +112,15 @@ impl LocalPage {
     }
 }
 
+/// ページ更新用構造体
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PageUpdate {
+    pub title: Option<String>,
+    pub note_id: Option<Option<String>>,
+    pub thumbnail_url: Option<Option<String>>,
+    pub is_public: Option<bool>,
+}
+
 // ============================================================================
 // Decks
 // ============================================================================

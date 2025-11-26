@@ -666,6 +666,635 @@ impl LocalDB {
     }
 }
 
+// ============================================================================
+// Pages CRUD
+// ============================================================================
+
+impl LocalDB {
+    /// ユーザーの全ページを取得
+    pub fn get_pages_by_user(&self, user_id: &str) -> Result<Vec<LocalPage>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, note_id, title, thumbnail_url, is_public,
+                   scrapbox_page_id, scrapbox_page_list_synced_at, scrapbox_page_content_synced_at,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM pages
+            WHERE user_id = ?1 AND sync_status != 'deleted'
+            ORDER BY updated_at DESC
+            "#,
+        )?;
+
+        let pages = stmt
+            .query_map([user_id], |row| LocalPage::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(pages)
+    }
+
+    /// ノートに紐づくページを取得
+    pub fn get_pages_by_note(&self, note_id: &str) -> Result<Vec<LocalPage>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, note_id, title, thumbnail_url, is_public,
+                   scrapbox_page_id, scrapbox_page_list_synced_at, scrapbox_page_content_synced_at,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM pages
+            WHERE note_id = ?1 AND sync_status != 'deleted'
+            ORDER BY updated_at DESC
+            "#,
+        )?;
+
+        let pages = stmt
+            .query_map([note_id], |row| LocalPage::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(pages)
+    }
+
+    /// IDでページを取得
+    pub fn get_page_by_id(&self, id: &str) -> Result<Option<LocalPage>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, note_id, title, thumbnail_url, is_public,
+                   scrapbox_page_id, scrapbox_page_list_synced_at, scrapbox_page_content_synced_at,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM pages
+            WHERE id = ?1
+            "#,
+        )?;
+
+        let page = stmt.query_row([id], |row| LocalPage::from_row(row)).ok();
+
+        Ok(page)
+    }
+
+    /// ページを作成
+    pub fn insert_page(&self, page: &LocalPage) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        conn.execute(
+            r#"
+            INSERT INTO pages (
+                id, user_id, note_id, title, thumbnail_url, is_public,
+                scrapbox_page_id, scrapbox_page_list_synced_at, scrapbox_page_content_synced_at,
+                created_at, updated_at,
+                sync_status, synced_at, local_updated_at, server_updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+            "#,
+            rusqlite::params![
+                page.id,
+                page.user_id,
+                page.note_id,
+                page.title,
+                page.thumbnail_url,
+                page.is_public,
+                page.scrapbox_page_id,
+                page.scrapbox_page_list_synced_at,
+                page.scrapbox_page_content_synced_at,
+                page.created_at,
+                page.updated_at,
+                page.sync_status,
+                page.synced_at,
+                page.local_updated_at,
+                page.server_updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// ページを更新
+    pub fn update_page(&self, id: &str, updates: PageUpdate) -> Result<Option<LocalPage>, DbError> {
+        let conn = self.connection()?;
+        let now = chrono::Utc::now().to_rfc3339();
+
+        let current = self.get_page_by_id(id)?;
+        if current.is_none() {
+            return Ok(None);
+        }
+        let current = current.unwrap();
+
+        let updated = LocalPage {
+            title: updates.title.unwrap_or(current.title),
+            note_id: updates.note_id.unwrap_or(current.note_id),
+            thumbnail_url: updates.thumbnail_url.unwrap_or(current.thumbnail_url),
+            is_public: updates.is_public.unwrap_or(current.is_public),
+            updated_at: now.clone(),
+            local_updated_at: now.clone(),
+            sync_status: "pending".to_string(),
+            ..current
+        };
+
+        conn.execute(
+            r#"
+            UPDATE pages SET
+                title = ?1, note_id = ?2, thumbnail_url = ?3, is_public = ?4,
+                updated_at = ?5, local_updated_at = ?6, sync_status = ?7
+            WHERE id = ?8
+            "#,
+            rusqlite::params![
+                updated.title,
+                updated.note_id,
+                updated.thumbnail_url,
+                updated.is_public,
+                updated.updated_at,
+                updated.local_updated_at,
+                updated.sync_status,
+                id,
+            ],
+        )?;
+
+        Ok(Some(updated))
+    }
+
+    /// ページを削除（論理削除）
+    pub fn delete_page(&self, id: &str) -> Result<bool, DbError> {
+        let conn = self.connection()?;
+        let now = chrono::Utc::now().to_rfc3339();
+
+        let rows_affected = conn.execute(
+            r#"
+            UPDATE pages SET
+                sync_status = 'deleted',
+                local_updated_at = ?1
+            WHERE id = ?2
+            "#,
+            rusqlite::params![now, id],
+        )?;
+
+        Ok(rows_affected > 0)
+    }
+
+    /// 同期待ちのページを取得
+    pub fn get_pending_sync_pages(&self) -> Result<Vec<LocalPage>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, note_id, title, thumbnail_url, is_public,
+                   scrapbox_page_id, scrapbox_page_list_synced_at, scrapbox_page_content_synced_at,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM pages
+            WHERE sync_status = 'pending'
+            "#,
+        )?;
+
+        let pages = stmt
+            .query_map([], |row| LocalPage::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(pages)
+    }
+
+    /// ページを同期済みにマーク
+    pub fn mark_page_synced(&self, id: &str, server_updated_at: &str) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        let now = chrono::Utc::now().to_rfc3339();
+
+        conn.execute(
+            r#"
+            UPDATE pages SET
+                sync_status = 'synced',
+                synced_at = ?1,
+                server_updated_at = ?2
+            WHERE id = ?3
+            "#,
+            rusqlite::params![now, server_updated_at, id],
+        )?;
+
+        Ok(())
+    }
+}
+
+// ============================================================================
+// Study Goals CRUD
+// ============================================================================
+
+impl LocalDB {
+    /// ユーザーの全学習目標を取得
+    pub fn get_study_goals_by_user(&self, user_id: &str) -> Result<Vec<LocalStudyGoal>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, title, description,
+                   created_at, updated_at, deadline, progress_rate, status, completed_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM study_goals
+            WHERE user_id = ?1 AND sync_status != 'deleted'
+            ORDER BY updated_at DESC
+            "#,
+        )?;
+
+        let goals = stmt
+            .query_map([user_id], |row| LocalStudyGoal::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(goals)
+    }
+
+    /// IDで学習目標を取得
+    pub fn get_study_goal_by_id(&self, id: &str) -> Result<Option<LocalStudyGoal>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, title, description,
+                   created_at, updated_at, deadline, progress_rate, status, completed_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM study_goals
+            WHERE id = ?1
+            "#,
+        )?;
+
+        let goal = stmt
+            .query_row([id], |row| LocalStudyGoal::from_row(row))
+            .ok();
+
+        Ok(goal)
+    }
+
+    /// 学習目標を作成
+    pub fn insert_study_goal(&self, goal: &LocalStudyGoal) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        conn.execute(
+            r#"
+            INSERT INTO study_goals (
+                id, user_id, title, description,
+                created_at, updated_at, deadline, progress_rate, status, completed_at,
+                sync_status, synced_at, local_updated_at, server_updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+            "#,
+            rusqlite::params![
+                goal.id,
+                goal.user_id,
+                goal.title,
+                goal.description,
+                goal.created_at,
+                goal.updated_at,
+                goal.deadline,
+                goal.progress_rate,
+                goal.status,
+                goal.completed_at,
+                goal.sync_status,
+                goal.synced_at,
+                goal.local_updated_at,
+                goal.server_updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// 学習目標を削除（論理削除）
+    pub fn delete_study_goal(&self, id: &str) -> Result<bool, DbError> {
+        let conn = self.connection()?;
+        let now = chrono::Utc::now().to_rfc3339();
+
+        let rows_affected = conn.execute(
+            r#"
+            UPDATE study_goals SET
+                sync_status = 'deleted',
+                local_updated_at = ?1
+            WHERE id = ?2
+            "#,
+            rusqlite::params![now, id],
+        )?;
+
+        Ok(rows_affected > 0)
+    }
+
+    /// 同期待ちの学習目標を取得
+    pub fn get_pending_sync_study_goals(&self) -> Result<Vec<LocalStudyGoal>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, title, description,
+                   created_at, updated_at, deadline, progress_rate, status, completed_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM study_goals
+            WHERE sync_status = 'pending'
+            "#,
+        )?;
+
+        let goals = stmt
+            .query_map([], |row| LocalStudyGoal::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(goals)
+    }
+}
+
+// ============================================================================
+// Learning Logs CRUD
+// ============================================================================
+
+impl LocalDB {
+    /// ユーザーの学習ログを取得
+    pub fn get_learning_logs_by_user(&self, user_id: &str) -> Result<Vec<LocalLearningLog>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, card_id, question_id, answered_at, is_correct,
+                   user_answer, practice_mode, review_interval, next_review_at,
+                   quality, response_time, effort_time, attempt_count,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM learning_logs
+            WHERE user_id = ?1 AND sync_status != 'deleted'
+            ORDER BY answered_at DESC
+            "#,
+        )?;
+
+        let logs = stmt
+            .query_map([user_id], |row| LocalLearningLog::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(logs)
+    }
+
+    /// カードの学習ログを取得
+    pub fn get_learning_logs_by_card(&self, card_id: &str) -> Result<Vec<LocalLearningLog>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, card_id, question_id, answered_at, is_correct,
+                   user_answer, practice_mode, review_interval, next_review_at,
+                   quality, response_time, effort_time, attempt_count,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM learning_logs
+            WHERE card_id = ?1 AND sync_status != 'deleted'
+            ORDER BY answered_at DESC
+            "#,
+        )?;
+
+        let logs = stmt
+            .query_map([card_id], |row| LocalLearningLog::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(logs)
+    }
+
+    /// 学習ログを作成
+    pub fn insert_learning_log(&self, log: &LocalLearningLog) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        conn.execute(
+            r#"
+            INSERT INTO learning_logs (
+                id, user_id, card_id, question_id, answered_at, is_correct,
+                user_answer, practice_mode, review_interval, next_review_at,
+                quality, response_time, effort_time, attempt_count,
+                sync_status, synced_at, local_updated_at, server_updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+            "#,
+            rusqlite::params![
+                log.id,
+                log.user_id,
+                log.card_id,
+                log.question_id,
+                log.answered_at,
+                log.is_correct,
+                log.user_answer,
+                log.practice_mode,
+                log.review_interval,
+                log.next_review_at,
+                log.quality,
+                log.response_time,
+                log.effort_time,
+                log.attempt_count,
+                log.sync_status,
+                log.synced_at,
+                log.local_updated_at,
+                log.server_updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// 同期待ちの学習ログを取得
+    pub fn get_pending_sync_learning_logs(&self) -> Result<Vec<LocalLearningLog>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, card_id, question_id, answered_at, is_correct,
+                   user_answer, practice_mode, review_interval, next_review_at,
+                   quality, response_time, effort_time, attempt_count,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM learning_logs
+            WHERE sync_status = 'pending'
+            "#,
+        )?;
+
+        let logs = stmt
+            .query_map([], |row| LocalLearningLog::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(logs)
+    }
+}
+
+// ============================================================================
+// Milestones CRUD
+// ============================================================================
+
+impl LocalDB {
+    /// 学習目標に紐づくマイルストーンを取得
+    pub fn get_milestones_by_goal(&self, goal_id: &str) -> Result<Vec<LocalMilestone>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, goal_id, title, description, due_date, is_completed,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM milestones
+            WHERE goal_id = ?1 AND sync_status != 'deleted'
+            ORDER BY due_date ASC
+            "#,
+        )?;
+
+        let milestones = stmt
+            .query_map([goal_id], |row| LocalMilestone::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(milestones)
+    }
+
+    /// IDでマイルストーンを取得
+    pub fn get_milestone_by_id(&self, id: &str) -> Result<Option<LocalMilestone>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, goal_id, title, description, due_date, is_completed,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM milestones
+            WHERE id = ?1
+            "#,
+        )?;
+
+        let milestone = stmt
+            .query_row([id], |row| LocalMilestone::from_row(row))
+            .ok();
+
+        Ok(milestone)
+    }
+
+    /// マイルストーンを作成
+    pub fn insert_milestone(&self, milestone: &LocalMilestone) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        conn.execute(
+            r#"
+            INSERT INTO milestones (
+                id, goal_id, title, description, due_date, is_completed,
+                created_at, updated_at,
+                sync_status, synced_at, local_updated_at, server_updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+            "#,
+            rusqlite::params![
+                milestone.id,
+                milestone.goal_id,
+                milestone.title,
+                milestone.description,
+                milestone.due_date,
+                milestone.is_completed,
+                milestone.created_at,
+                milestone.updated_at,
+                milestone.sync_status,
+                milestone.synced_at,
+                milestone.local_updated_at,
+                milestone.server_updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// マイルストーンを削除（論理削除）
+    pub fn delete_milestone(&self, id: &str) -> Result<bool, DbError> {
+        let conn = self.connection()?;
+        let now = chrono::Utc::now().to_rfc3339();
+
+        let rows_affected = conn.execute(
+            r#"
+            UPDATE milestones SET
+                sync_status = 'deleted',
+                local_updated_at = ?1
+            WHERE id = ?2
+            "#,
+            rusqlite::params![now, id],
+        )?;
+
+        Ok(rows_affected > 0)
+    }
+
+    /// 同期待ちのマイルストーンを取得
+    pub fn get_pending_sync_milestones(&self) -> Result<Vec<LocalMilestone>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, goal_id, title, description, due_date, is_completed,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM milestones
+            WHERE sync_status = 'pending'
+            "#,
+        )?;
+
+        let milestones = stmt
+            .query_map([], |row| LocalMilestone::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(milestones)
+    }
+}
+
+// ============================================================================
+// User Settings CRUD
+// ============================================================================
+
+impl LocalDB {
+    /// ユーザー設定を取得
+    pub fn get_user_settings(&self, user_id: &str) -> Result<Option<LocalUserSettings>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, theme, mode, locale, timezone, notifications,
+                   items_per_page, play_help_video_audio,
+                   cosense_sync_enabled, notion_sync_enabled, gyazo_sync_enabled, quizlet_sync_enabled,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM user_settings
+            WHERE user_id = ?1
+            "#,
+        )?;
+
+        let settings = stmt
+            .query_row([user_id], |row| LocalUserSettings::from_row(row))
+            .ok();
+
+        Ok(settings)
+    }
+
+    /// ユーザー設定を作成または更新
+    pub fn upsert_user_settings(&self, settings: &LocalUserSettings) -> Result<(), DbError> {
+        let conn = self.connection()?;
+        conn.execute(
+            r#"
+            INSERT OR REPLACE INTO user_settings (
+                id, user_id, theme, mode, locale, timezone, notifications,
+                items_per_page, play_help_video_audio,
+                cosense_sync_enabled, notion_sync_enabled, gyazo_sync_enabled, quizlet_sync_enabled,
+                created_at, updated_at,
+                sync_status, synced_at, local_updated_at, server_updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)
+            "#,
+            rusqlite::params![
+                settings.id,
+                settings.user_id,
+                settings.theme,
+                settings.mode,
+                settings.locale,
+                settings.timezone,
+                settings.notifications,
+                settings.items_per_page,
+                settings.play_help_video_audio,
+                settings.cosense_sync_enabled,
+                settings.notion_sync_enabled,
+                settings.gyazo_sync_enabled,
+                settings.quizlet_sync_enabled,
+                settings.created_at,
+                settings.updated_at,
+                settings.sync_status,
+                settings.synced_at,
+                settings.local_updated_at,
+                settings.server_updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// 同期待ちのユーザー設定を取得
+    pub fn get_pending_sync_user_settings(&self) -> Result<Vec<LocalUserSettings>, DbError> {
+        let conn = self.connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT id, user_id, theme, mode, locale, timezone, notifications,
+                   items_per_page, play_help_video_audio,
+                   cosense_sync_enabled, notion_sync_enabled, gyazo_sync_enabled, quizlet_sync_enabled,
+                   created_at, updated_at,
+                   sync_status, synced_at, local_updated_at, server_updated_at
+            FROM user_settings
+            WHERE sync_status = 'pending'
+            "#,
+        )?;
+
+        let settings = stmt
+            .query_map([], |row| LocalUserSettings::from_row(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(settings)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
