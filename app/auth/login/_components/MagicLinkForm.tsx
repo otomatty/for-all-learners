@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function MagicLinkForm({
 	isSubmitting,
 	onSubmittingChange,
 }: MagicLinkFormProps) {
+	const t = useTranslations("auth");
 	const emailId = useId();
 
 	if (isTauri) {
@@ -52,14 +54,14 @@ export function MagicLinkForm({
 					// HTML5のrequired属性で検証されるため、JS検証は不要
 					try {
 						await loginWithMagicLinkTauri(email);
-						toast.success("認証メールを送信しました");
+						toast.success(t("authEmailSent"));
 						// フォームをリセット
 						e.currentTarget.reset();
 						onSubmittingChange(false);
 						window.location.href = "/auth/login?message=magic_link_sent";
 					} catch (err) {
 						toast.error(
-							err instanceof Error ? err.message : "エラーが発生しました",
+							err instanceof Error ? err.message : t("errorOccurred"),
 						);
 						onSubmittingChange(false);
 					}
@@ -69,13 +71,13 @@ export function MagicLinkForm({
 			>
 				<div>
 					<Label htmlFor={emailId} className="sr-only">
-						メールアドレス
+						{t("emailLabel")}
 					</Label>
 					<Input
 						type="email"
 						name="email"
 						id={emailId}
-						placeholder="メールアドレス"
+						placeholder={t("emailPlaceholder")}
 						required
 						className="w-full"
 						disabled={isSubmitting}
@@ -83,7 +85,7 @@ export function MagicLinkForm({
 				</div>
 				<Button type="submit" variant="default" disabled={isSubmitting}>
 					<Mail className="mr-2 h-4 w-4" />
-					メールアドレスでログイン
+					{t("loginWithEmail")}
 				</Button>
 			</form>
 		);
@@ -104,35 +106,33 @@ export function MagicLinkForm({
 						},
 					});
 					if (error) {
-						toast.error(`認証メールの送信に失敗しました: ${error.message}`);
+						toast.error(`${t("emailAuthFailed")}: ${error.message}`);
 					} else {
-						toast.success("認証メールを送信しました");
+						toast.success(t("authEmailSent"));
 						e.currentTarget.reset();
 					}
 				} catch (err) {
-					toast.error(
-						err instanceof Error ? err.message : "エラーが発生しました",
-					);
+					toast.error(err instanceof Error ? err.message : t("errorOccurred"));
 				}
 			}}
 			className="grid gap-4 mb-6"
 		>
 			<div>
 				<Label htmlFor={emailId} className="sr-only">
-					メールアドレス
+					{t("emailLabel")}
 				</Label>
 				<Input
 					type="email"
 					name="email"
 					id={emailId}
-					placeholder="メールアドレス"
+					placeholder={t("emailPlaceholder")}
 					required
 					className="w-full"
 				/>
 			</div>
 			<Button type="submit" variant="default">
 				<Mail className="mr-2 h-4 w-4" />
-				メールアドレスでログイン
+				{t("loginWithEmail")}
 			</Button>
 		</form>
 	);

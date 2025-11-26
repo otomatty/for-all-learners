@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/layouts/container";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/ui/button";
@@ -12,70 +13,78 @@ import {
 } from "@/components/ui/card";
 
 export default function PricingSection() {
+	const t = useTranslations("landing.pricing");
+
 	return (
 		<section className="w-full py-12 md:py-24 lg:py-32" id="pricing">
 			<Container>
 				<SectionHeader
-					label="料金プラン"
-					title="あなたに合ったプランを選択"
-					description="より多くの方にご利用いただき、その効果を実感していただくために、複数のプランをご用意しています。"
+					label={t("label")}
+					title={t("title")}
+					description={t("description")}
 				/>
 
 				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8 mt-12 max-w-5xl mx-auto">
 					{/* フリープラン */}
 					<Card className="flex flex-col">
 						<CardHeader className="flex flex-col space-y-1.5">
-							<CardTitle className="text-2xl">フリープラン</CardTitle>
-							<CardDescription>まずは気軽に試してみたい方向け</CardDescription>
+							<CardTitle className="text-2xl">{t("free.name")}</CardTitle>
+							<CardDescription>{t("free.description")}</CardDescription>
 							<div className="mt-4">
-								<span className="text-4xl font-bold">¥0</span>
-								<span className="text-muted-foreground">/月</span>
+								<span className="text-4xl font-bold">{t("free.price")}</span>
+								<span className="text-muted-foreground">
+									{t("free.priceUnit")}
+								</span>
 							</div>
 						</CardHeader>
 						<CardContent className="grid gap-4 flex-1">
 							<div className="grid gap-2">
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>AI問題自動生成（月間3回まで）</span>
+									<span>{t("free.features.aiGeneration")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>FSRSアルゴリズム（基本機能）</span>
+									<span>{t("free.features.fsrsBasic")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>デッキ数上限：5デッキ</span>
+									<span>{t("free.features.deckLimit")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>カード総数上限：100カード</span>
+									<span>{t("free.features.cardLimit")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>ノート機能（月間3ノートまで）</span>
+									<span>{t("free.features.noteLimit")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>閲覧専用リンク共有</span>
+									<span>{t("free.features.shareReadOnly")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<X className="h-4 w-4 text-muted-foreground" />
 									<span className="text-muted-foreground">
-										AIノートアシスト
+										{t("free.features.noAiAssist")}
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<X className="h-4 w-4 text-muted-foreground" />
-									<span className="text-muted-foreground">高度な共有機能</span>
+									<span className="text-muted-foreground">
+										{t("free.features.noAdvancedShare")}
+									</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<X className="h-4 w-4 text-muted-foreground" />
-									<span className="text-muted-foreground">広告非表示</span>
+									<span className="text-muted-foreground">
+										{t("free.features.noAdFree")}
+									</span>
 								</div>
 							</div>
 						</CardContent>
 						<CardFooter>
-							<Button className="w-full">無料で始める</Button>
+							<Button className="w-full">{t("free.cta")}</Button>
 						</CardFooter>
 					</Card>
 
@@ -83,17 +92,17 @@ export default function PricingSection() {
 					<Card className="flex flex-col border-primary">
 						<CardHeader className="flex flex-col space-y-1.5">
 							<div className="inline-flex self-center rounded-full bg-primary/20 px-3 py-1 text-sm font-medium text-primary mb-2">
-								おすすめ
+								{t("premium.recommended")}
 							</div>
-							<CardTitle className="text-2xl">プレミアムプラン</CardTitle>
-							<CardDescription>
-								全機能を活用して学習効果を最大化
-							</CardDescription>
+							<CardTitle className="text-2xl">{t("premium.name")}</CardTitle>
+							<CardDescription>{t("premium.description")}</CardDescription>
 							<div className="mt-4">
-								<span className="text-4xl font-bold">¥1,280</span>
-								<span className="text-muted-foreground">/月</span>
+								<span className="text-4xl font-bold">{t("premium.price")}</span>
+								<span className="text-muted-foreground">
+									{t("premium.priceUnit")}
+								</span>
 								<p className="text-xs text-muted-foreground mt-1">
-									年額プラン：¥12,800（約2ヶ月分お得）
+									{t("premium.yearlyNote")}
 								</p>
 							</div>
 						</CardHeader>
@@ -101,45 +110,45 @@ export default function PricingSection() {
 							<div className="grid gap-2">
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>AI問題自動生成（無制限）</span>
+									<span>{t("premium.features.aiGeneration")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>FSRSアルゴリズム（高度機能）</span>
+									<span>{t("premium.features.fsrsAdvanced")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>デッキ数：無制限</span>
+									<span>{t("premium.features.deckUnlimited")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>カード総数：無制限</span>
+									<span>{t("premium.features.cardUnlimited")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>ノート機能（無制限、AIアシスト付き）</span>
+									<span>{t("premium.features.noteUnlimited")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>高度な共有機能（共同編集、チーム共有）</span>
+									<span>{t("premium.features.advancedShare")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>全てのゲーミフィケーション要素</span>
+									<span>{t("premium.features.gamification")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>広告非表示</span>
+									<span>{t("premium.features.adFree")}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Check className="h-4 w-4 text-primary" />
-									<span>優先カスタマーサポート</span>
+									<span>{t("premium.features.prioritySupport")}</span>
 								</div>
 							</div>
 						</CardContent>
 						<CardFooter>
 							<Button className="w-full" variant="default">
-								14日間無料トライアル
+								{t("premium.cta")}
 							</Button>
 						</CardFooter>
 					</Card>
@@ -147,11 +156,11 @@ export default function PricingSection() {
 
 				<div className="mt-8 text-center text-sm text-muted-foreground">
 					<p>
-						すべてのプランは、いつでもキャンセル可能です。詳細な機能比較は
+						{t("footer")}
 						<a href="/features" className="underline text-primary">
-							こちら
+							{t("footerLink")}
 						</a>
-						をご覧ください。
+						{t("footerEnd")}
 					</p>
 				</div>
 			</Container>

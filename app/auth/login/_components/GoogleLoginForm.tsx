@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { loginWithGoogleTauri } from "@/lib/auth/tauri-login";
@@ -34,6 +35,8 @@ export function GoogleLoginForm({
 	isSubmitting,
 	onSubmittingChange,
 }: GoogleLoginFormProps) {
+	const t = useTranslations("auth");
+
 	if (isTauri) {
 		return (
 			<form
@@ -42,14 +45,14 @@ export function GoogleLoginForm({
 					onSubmittingChange(true);
 					try {
 						await loginWithGoogleTauri();
-						toast.success("認証ページを開きました");
+						toast.success(t("authPageOpened"));
 					} catch (err) {
 						const errorMessage =
 							err instanceof Error
 								? err.message
 								: typeof err === "string"
 									? err
-									: "エラーが発生しました";
+									: t("errorOccurred");
 						toast.error(errorMessage);
 						onSubmittingChange(false);
 					}
@@ -65,7 +68,7 @@ export function GoogleLoginForm({
 						height={20}
 						className="mr-2"
 					/>
-					<span>Googleでログイン</span>
+					<span>{t("loginWithGoogle")}</span>
 				</Button>
 			</form>
 		);
@@ -84,7 +87,7 @@ export function GoogleLoginForm({
 						},
 					});
 					if (error) {
-						toast.error(`Google認証に失敗しました: ${error.message}`);
+						toast.error(`${t("googleAuthFailed")}: ${error.message}`);
 					} else if (data.url) {
 						window.location.href = data.url;
 					}
@@ -94,7 +97,7 @@ export function GoogleLoginForm({
 							? err.message
 							: typeof err === "string"
 								? err
-								: "エラーが発生しました";
+								: t("errorOccurred");
 					toast.error(errorMessage);
 				}
 			}}
@@ -108,7 +111,7 @@ export function GoogleLoginForm({
 					height={20}
 					className="mr-2"
 				/>
-				<span>Googleでログイン</span>
+				<span>{t("loginWithGoogle")}</span>
 			</Button>
 		</form>
 	);

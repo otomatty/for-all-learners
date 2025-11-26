@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { isTauri } from "@/lib/utils/environment";
 import { GoogleLoginForm } from "./GoogleLoginForm";
@@ -17,6 +18,7 @@ export function LoginForm({
 	error,
 	errorDescription,
 }: LoginFormProps) {
+	const t = useTranslations("auth");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	// Tauri環境判定をクライアント側でのみ実行（ハイドレーション不一致を防ぐ）
 	// サーバー側では false を返し、クライアント側で実際の値を設定
@@ -48,10 +50,10 @@ export function LoginForm({
 				/>
 
 				<h1 className="text-2xl text-gray-800 dark:text-gray-200 font-semibold mt-4">
-					アカウントにログイン
+					{t("loginTitle")}
 				</h1>
 				<p className="text-sm text-muted-foreground mt-2">
-					お好みの方法でログインして学習を始めましょう
+					{t("loginSubtitle")}
 				</p>
 			</div>
 
@@ -61,7 +63,7 @@ export function LoginForm({
 					className="mb-4 p-3 rounded-md bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm"
 					role="alert"
 				>
-					指定されたメールアドレスにログインリンクを送信しました。メールを確認してください。
+					{t("magicLinkSent")}
 				</div>
 			)}
 			{/* エラーメッセージ */}
@@ -70,7 +72,7 @@ export function LoginForm({
 					className="mb-4 p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm"
 					role="alert"
 				>
-					エラーが発生しました: {errorDescription || error}
+					{t("errorOccurred")}: {errorDescription || error}
 				</div>
 			)}
 
@@ -87,7 +89,7 @@ export function LoginForm({
 				</div>
 				<div className="relative flex justify-center text-xs uppercase">
 					<span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
-						または
+						{t("or")}
 					</span>
 				</div>
 			</div>

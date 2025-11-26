@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ export default async function LoginPage({
 		error_description?: string;
 	}>;
 }) {
+	const t = await getTranslations("common");
 	// 静的エクスポート時はクライアントコンポーネントを使用
 	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
 	if (isStaticExport) {
@@ -27,7 +29,7 @@ export default async function LoginPage({
 					<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
 						<UnauthHeader version={version} />
 						<div className="flex flex-1 items-center justify-center px-4">
-							<div className="text-muted-foreground">読み込み中...</div>
+							<div className="text-muted-foreground">{t("loading")}</div>
 						</div>
 					</div>
 				}

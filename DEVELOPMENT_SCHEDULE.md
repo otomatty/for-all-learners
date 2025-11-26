@@ -156,36 +156,67 @@
 
 ---
 
-### Week 4: 2025/12/17 〜 2025/12/23
+### Week 4: 2025/12/17 〜 2025/12/23 ✅ 完了
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Hybrid DB: Phase C 開始                                        │
-│  ├─ #195 Repository 基盤設計                                     │
-│  ├─ #196 Notes/Pages Repository                                  │
-│  └─ #197 Decks/Cards Repository                                  │
+│  Hybrid DB: Phase C 完了 ✅                                      │
+│  ├─ #195 Repository 基盤設計 ✅                                   │
+│  ├─ #196 Notes/Pages Repository ✅                                │
+│  └─ #197 Decks/Cards Repository ✅                                │
 │                                                                  │
-│  i18n: Phase 2 継続                                              │
-│  └─ 公開ページ（Landing / Auth）翻訳対応                         │
+│  i18n: Phase 2 継続 ✅                                            │
+│  └─ 公開ページ（Landing / Auth）翻訳対応 ✅                       │
 │                                                                  │
-│  ⚠️ 同期ポイント: Repository層のエラーメッセージでi18nキーを考慮  │
+│  状態: Week 4 目標達成 🎉                                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **今週のゴール**:
-- [ ] Repository パターン基盤完成
-- [ ] Notes/Pages/Decks/Cards Repository 実装
-- [ ] エラーコード方式でi18n対応準備
+- [x] Repository パターン基盤完成 ✅ (2025-11-26)
+- [x] Notes/Pages/Decks/Cards Repository 実装 ✅ (2025-11-26)
+- [x] エラーコード方式でi18n対応準備 ✅ (2025-11-26)
+- [x] 公開ページ翻訳対応 ✅ (2025-11-26)
 
-**注意事項**:
-```typescript
-// Repository層ではエラーコードを返し、UI層で翻訳
-export class RepositoryError extends Error {
-  constructor(public code: string, public details?: unknown) {
-    super(code);
-  }
-}
-```
+<details>
+<summary>📝 Week 4 完了作業詳細</summary>
+
+#### Repository基盤 (#195)
+- `lib/repositories/types.ts` - Repository, RepositoryOptions, RepositoryErrorCode 型定義
+- `lib/repositories/base-repository.ts` - BaseRepository 抽象クラス, RepositoryError
+- テスト: 16テスト（CRUD, 同期, バックグラウンド同期）
+
+#### Notes Repository (#196)
+- `lib/repositories/notes-repository.ts` - NotesRepository クラス
+- 固有メソッド: getBySlug(), getDefaultNote()
+- テスト: 6テスト
+
+#### Pages Repository (#196)
+- `lib/repositories/pages-repository.ts` - PagesRepository クラス
+- 固有メソッド: getByNoteId(), updateMetadata()
+- テスト: 5テスト
+
+#### Decks Repository (#197)
+- `lib/repositories/decks-repository.ts` - DecksRepository クラス
+- テスト: 3テスト
+
+#### Cards Repository (#197)
+- `lib/repositories/cards-repository.ts` - CardsRepository クラス
+- 固有メソッド: getByDeckId(), getDueCards(), updateReviewResult(), createBatch()
+- FSRS初期値設定: ease_factor=2.5, repetition_count=0 等
+- テスト: 5テスト
+
+#### テスト結果
+- 全35テスト成功（5ファイル）
+
+#### 公開ページ翻訳対応
+- `messages/ja.json` - Auth セクション拡張（12キー）、Landing セクション追加（100+キー）
+- `messages/en.json` - 同上の英語翻訳追加
+- Auth コンポーネント: `LoginForm.tsx`, `GoogleLoginForm.tsx`, `MagicLinkForm.tsx`, `page.tsx`
+- Landing コンポーネント: `hero-section.tsx`, `value-proposition-section.tsx`, `feature-section.tsx`, `pricing-section.tsx`, `faq-section.tsx`, `testimonial-section.tsx`, `cta-section.tsx`
+- 動的データ対応: `testimonials` と `faq` は配列データとして翻訳ファイルから取得
+
+</details>
 
 ---
 
@@ -332,15 +363,12 @@ export class RepositoryError extends Error {
 ✅ #192 Tauri Commands       → 完了 (2025-11-26) ※全エンティティCRUD実装済み
 ✅ #193 Sync Manager         → 完了 (2025-11-26) ※SyncManager, SyncQueue, SyncTriggers実装済み
 ✅ #194 Conflict Resolution  → 完了 (2025-11-26) ※LWW方式の競合解決実装済み
+✅ #195 Repository Base      → 完了 (2025-11-26) ※BaseRepository, RepositoryError実装済み
+✅ #196 Notes/Pages Repo     → 完了 (2025-11-26) ※NotesRepository, PagesRepository実装済み
+✅ #197 Decks/Cards Repo     → 完了 (2025-11-26) ※DecksRepository, CardsRepository実装済み
 ```
 
-### i18n Phase 1 完了後に着手推奨
-
-```
-#195 Repository Base         → エラーコード設計でi18n考慮
-#196 Notes/Pages Repository  → 同上
-#197 Decks/Cards Repository  → 同上
-```
+### 次フェーズ（i18n Phase 2 以降と並行）
 
 ### i18n Phase 2 以降と並行
 
@@ -371,4 +399,6 @@ export class RepositoryError extends Error {
 | 2025-11-26 | Week 1 完了: IndexedDB基盤、SQLiteスキーマ、i18n基盤（#190, #191, #119） |
 | 2025-11-26 | Week 2 Tauri Commands完了: Rust Commands実装、TypeScriptクライアント実装（#192） |
 | 2025-11-26 | Week 3 完了: 同期マネージャー、競合解決ロジック、翻訳追加（#193, #194） |
+| 2025-11-26 | Week 4 Phase C完了: Repository基盤、Notes/Pages/Decks/Cards Repository（#195, #196, #197） |
+| 2025-11-26 | Week 4 i18n完了: 公開ページ（Landing / Auth）翻訳対応完了 |
 
