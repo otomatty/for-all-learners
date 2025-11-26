@@ -42,16 +42,65 @@
 	},
 	"notes": {
 		"title": "Notes",
+		"myNotes": "My Notes",
+		"recommendedNotes": "Recommended Public Notes",
 		"createNote": "Create new note",
+		"newNote": "New Note",
 		"noteTitle": "Title",
 		"noteDescription": "Description",
 		"noNotes": "No notes found",
 		"deleteConfirm": "Are you sure you want to delete this note?",
 		"visibility": {
+			"label": "Visibility",
 			"public": "Public",
 			"unlisted": "Unlisted",
 			"invite": "Invite Only",
 			"private": "Private"
+		},
+		"form": {
+			"titleRequired": "Title is required",
+			"slugRequired": "Slug is required",
+			"slugValidationError": "Error checking slug availability",
+			"slugTaken": "This slug is already taken",
+			"slugHint": "Use only alphanumeric characters and hyphens",
+			"creating": "Creating...",
+			"create": "Create"
+		},
+		"share": {
+			"title": "Share Note",
+			"description": "Select users to share with.",
+			"sharing": "Sharing...",
+			"shareButton": "Share"
+		},
+		"list": {
+			"pageCount": "Pages",
+			"participantCount": "Participants",
+			"lastUpdated": "Last updated"
+		},
+		"explorer": {
+			"title": "Notes Explorer",
+			"noteList": "Notes",
+			"pageList": "Pages",
+			"selectNote": "Select a note from the left",
+			"items": "{count} items"
+		},
+		"operations": {
+			"preparing": "Preparing {action}...",
+			"processing": "{action}...",
+			"move": "move",
+			"copy": "copy",
+			"moved": "Moved {count} pages",
+			"copied": "Copied {count} pages",
+			"operationError": "An error occurred during processing",
+			"operationFailed": "Operation failed",
+			"cancelled": "Operation cancelled"
+		},
+		"trash": {
+			"title": "Trash",
+			"movingToTrash": "Moving to trash...",
+			"deleting": "Deleting permanently...",
+			"deleteFailed": "Failed to delete",
+			"deleteCancelled": "Delete cancelled"
 		}
 	},
 	"decks": {

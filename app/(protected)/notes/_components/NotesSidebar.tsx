@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { ChevronRight, FolderOpen } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
 	Sidebar,
@@ -48,6 +49,7 @@ export function NotesExplorerSidebar({
 	notes,
 	onPageMove,
 }: NotesExplorerSidebarProps) {
+	const t = useTranslations("notes");
 	const pathname = usePathname();
 	const [_activeId, setActiveId] = useState<string | null>(null);
 
@@ -105,12 +107,12 @@ export function NotesExplorerSidebar({
 				<SidebarHeader>
 					<div className="flex items-center gap-2 px-2 py-1">
 						<FolderOpen className="h-4 w-4" />
-						<span className="font-semibold">ノートエクスプローラー</span>
+						<span className="font-semibold">{t("explorer.title")}</span>
 					</div>
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
-						<SidebarGroupLabel>ノート一覧</SidebarGroupLabel>
+						<SidebarGroupLabel>{t("explorer.noteList")}</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SortableContext

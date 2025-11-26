@@ -42,16 +42,65 @@
 	},
 	"notes": {
 		"title": "ノート",
+		"myNotes": "マイノート",
+		"recommendedNotes": "おすすめの公開ノート",
 		"createNote": "新しいノートを作成",
+		"newNote": "新規ノート",
 		"noteTitle": "タイトル",
 		"noteDescription": "説明",
 		"noNotes": "ノートがありません",
 		"deleteConfirm": "このノートを削除してもよろしいですか？",
 		"visibility": {
+			"label": "公開範囲",
 			"public": "公開",
 			"unlisted": "限定公開",
 			"invite": "招待制",
 			"private": "非公開"
+		},
+		"form": {
+			"titleRequired": "タイトルは必須です",
+			"slugRequired": "Slugは必須です",
+			"slugValidationError": "Slugの確認中にエラーが発生しました",
+			"slugTaken": "Slugは既に使用されています",
+			"slugHint": "英数字とハイフンのみを使用してください",
+			"creating": "作成中...",
+			"create": "作成"
+		},
+		"share": {
+			"title": "ノートを共有",
+			"description": "共有するユーザーを選択してください。",
+			"sharing": "共有中...",
+			"shareButton": "共有する"
+		},
+		"list": {
+			"pageCount": "ページ数",
+			"participantCount": "参加者数",
+			"lastUpdated": "最終更新日"
+		},
+		"explorer": {
+			"title": "ノートエクスプローラー",
+			"noteList": "ノート一覧",
+			"pageList": "ページ一覧",
+			"selectNote": "左側のノートを選択してください",
+			"items": "{count}件"
+		},
+		"operations": {
+			"preparing": "{action}の準備中...",
+			"processing": "{action}中...",
+			"move": "移動",
+			"copy": "コピー",
+			"moved": "{count}件のページを移動しました",
+			"copied": "{count}件のページをコピーしました",
+			"operationError": "処理中にエラーが発生しました",
+			"operationFailed": "処理に失敗しました",
+			"cancelled": "操作をキャンセルしました"
+		},
+		"trash": {
+			"title": "ゴミ箱",
+			"movingToTrash": "ゴミ箱に移動中...",
+			"deleting": "完全削除中...",
+			"deleteFailed": "削除に失敗しました",
+			"deleteCancelled": "削除をキャンセルしました"
 		}
 	},
 	"decks": {

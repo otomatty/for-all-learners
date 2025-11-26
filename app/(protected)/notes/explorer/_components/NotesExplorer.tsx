@@ -12,6 +12,7 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ interface NotesExplorerProps {
 }
 
 export default function NotesExplorer({ notes }: NotesExplorerProps) {
+	const t = useTranslations("notes");
 	const [selectedNoteId, setSelectedNoteId] = useState<string | null>(
 		notes.length > 0 ? notes[0].id : null,
 	);
@@ -143,8 +145,10 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	) => {
 		if (!selectedNoteId) return;
 
+		const actionLabel = isCopy ? t("operations.copy") : t("operations.move");
+
 		try {
-			toast.loading(`${isCopy ? "コピー" : "移動"}の準備中...`);
+			toast.loading(t("operations.preparing", { action: actionLabel }));
 
 			// まず競合をチェック
 			const conflicts = await checkBatchConflicts.mutateAsync({
@@ -170,7 +174,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 			await executeBatchMove(pageIds, targetNoteId, isCopy, []);
 		} catch (_error) {
 			toast.dismiss();
-			toast.error("処理に失敗しました");
+			toast.error(t("operations.operationFailed"));
 		}
 	};
 
@@ -183,8 +187,10 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	) => {
 		if (!selectedNoteId) return;
 
+		const actionLabel = isCopy ? t("operations.copy") : t("operations.move");
+
 		try {
-			toast.loading(`${isCopy ? "コピー" : "移動"}中...`);
+			toast.loading(t("operations.processing", { action: actionLabel }));
 
 			const result = await batchMovePages.mutateAsync({
 				pageIds,
@@ -198,9 +204,10 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 
 			if (result.success) {
 				// 成功時
-				toast.success(
-					`${result.movedPages.length}件のページを${isCopy ? "コピー" : "移動"}しました`,
-				);
+				const successMessage = isCopy
+					? t("operations.copied", { count: result.movedPages.length })
+					: t("operations.moved", { count: result.movedPages.length });
+				toast.success(successMessage);
 
 				// 選択をクリア
 				setSelectedPageIds([]);
@@ -210,12 +217,12 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 			} else {
 				// エラーがある場合
 				toast.error(
-					`処理中にエラーが発生しました: ${result.errors[0]?.error || "不明なエラー"}`,
+					`${t("operations.operationError")}: ${result.errors[0]?.error || "Unknown error"}`,
 				);
 			}
 		} catch (_error) {
 			toast.dismiss();
-			toast.error("処理に失敗しました");
+			toast.error(t("operations.operationFailed"));
 		}
 	};
 
@@ -232,7 +239,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 	// 競合解決のキャンセル
 	const handleConflictCancel = () => {
 		setPendingOperation(null);
-		toast.info("操作をキャンセルしました");
+		toast.info(t("operations.cancelled"));
 	};
 
 	// 削除処理の開始
@@ -264,7 +271,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 
 		try {
 			if (deleteType === "trash") {
-				toast.loading("ゴミ箱に移動中...");
+				toast.loading(t("trash.movingToTrash"));
 				const result = await moveToTrash.mutateAsync({ pageIds, noteId });
 				toast.dismiss();
 
@@ -276,7 +283,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 					toast.error(result.message);
 				}
 			} else {
-				toast.loading("完全削除中...");
+				toast.loading(t("trash.deleting"));
 				const result = await deletePagesPermanently.mutateAsync({ pageIds });
 				toast.dismiss();
 
@@ -290,14 +297,14 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 			}
 		} catch (_error) {
 			toast.dismiss();
-			toast.error("削除に失敗しました");
+			toast.error(t("trash.deleteFailed"));
 		}
 	};
 
 	// 削除のキャンセル
 	const handleDeleteCancel = () => {
 		setPendingDelete(null);
-		toast.info("削除をキャンセルしました");
+		toast.info(t("trash.deleteCancelled"));
 	};
 
 	// ゴミ箱復元完了時の処理
@@ -320,7 +327,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 						<div className="h-full border-r bg-muted/30">
 							<div className="p-4 border-b">
 								<h3 className="font-semibold flex items-center gap-2">
-									🗂️ ノート一覧
+									🗂️ {t("explorer.noteList")}
 								</h3>
 							</div>
 							<NotesTree
@@ -338,10 +345,11 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 						<div className="h-full flex flex-col">
 							<div className="p-4 border-b">
 								<h3 className="font-semibold flex items-center gap-2">
-									📄 ページ一覧
+									📄 {t("explorer.pageList")}
 									{selectedNote && (
 										<span className="text-sm text-muted-foreground">
-											- {selectedNote.title} ({selectedNote.pageCount}件)
+											- {selectedNote.title} (
+											{t("explorer.items", { count: selectedNote.pageCount })})
 										</span>
 									)}
 								</h3>
@@ -356,7 +364,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 									/>
 								) : (
 									<div className="h-full flex items-center justify-center text-muted-foreground">
-										左側のノートを選択してください
+										{t("explorer.selectNote")}
 									</div>
 								)}
 							</div>
@@ -407,7 +415,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 				<div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
 					<div className="bg-background rounded-lg shadow-lg w-full max-w-4xl h-[80vh] flex flex-col">
 						<div className="p-4 border-b flex items-center justify-between">
-							<h2 className="text-lg font-semibold">ゴミ箱</h2>
+							<h2 className="text-lg font-semibold">{t("trash.title")}</h2>
 							<Button
 								variant="ghost"
 								size="sm"

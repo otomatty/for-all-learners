@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/layouts/container";
 import { useNotes } from "@/hooks/notes/useNotes";
 import CreateNoteDialog from "./_components/CreateNoteDialog";
@@ -11,8 +12,8 @@ const mockRecommended: NoteSummary[] = [
 	{
 		id: "101",
 		slug: "public-note-1",
-		title: "公開ノート1",
-		description: "おすすめの公開ノートサンプル。",
+		title: "Public Note 1",
+		description: "A sample recommended public note.",
 		visibility: "public",
 		pageCount: 10,
 		participantCount: 5,
@@ -21,8 +22,8 @@ const mockRecommended: NoteSummary[] = [
 	{
 		id: "102",
 		slug: "public-note-2",
-		title: "公開ノート2",
-		description: "もう一つのおすすめノート。",
+		title: "Public Note 2",
+		description: "Another recommended note.",
 		visibility: "public",
 		pageCount: 8,
 		participantCount: 3,
@@ -31,13 +32,15 @@ const mockRecommended: NoteSummary[] = [
 ];
 
 export default function NotesPage() {
+	const t = useTranslations("notes");
+	const tCommon = useTranslations("common");
 	const { data: notes, isLoading, error } = useNotes();
 
 	if (isLoading) {
 		return (
 			<Container>
 				<div className="flex items-center justify-center p-8">
-					<p>読み込み中...</p>
+					<p>{tCommon("loading")}</p>
 				</div>
 			</Container>
 		);
@@ -47,7 +50,7 @@ export default function NotesPage() {
 		return (
 			<Container>
 				<div className="flex items-center justify-center p-8">
-					<p className="text-destructive">エラーが発生しました</p>
+					<p className="text-destructive">{tCommon("error")}</p>
 				</div>
 			</Container>
 		);
@@ -57,13 +60,13 @@ export default function NotesPage() {
 		<Container>
 			<section className="mb-8">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-xl font-bold">My Notes</h2>
+					<h2 className="text-xl font-bold">{t("myNotes")}</h2>
 					<CreateNoteDialog />
 				</div>
 				<NotesList notes={notes || []} />
 			</section>
 			<section className="mb-8">
-				<h2 className="text-xl font-bold mb-4">おすすめの公開Notes</h2>
+				<h2 className="text-xl font-bold mb-4">{t("recommendedNotes")}</h2>
 				<RecommendedPublicNotes notes={mockRecommended} />
 			</section>
 		</Container>
