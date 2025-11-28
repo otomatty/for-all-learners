@@ -21,7 +21,7 @@ export const mockUser = {
 	created_at: "2025-01-01T00:00:00Z",
 };
 
-// Mock deck data
+// Mock deck data (LocalDeck型)
 export const mockDeck = {
 	id: "deck-123",
 	title: "Test Deck",
@@ -30,6 +30,11 @@ export const mockDeck = {
 	is_public: false,
 	created_at: "2025-01-01T00:00:00Z",
 	updated_at: "2025-01-01T00:00:00Z",
+	// 同期メタデータ
+	sync_status: "synced" as const,
+	synced_at: "2025-01-01T00:00:00Z",
+	local_updated_at: "2025-01-01T00:00:00Z",
+	server_updated_at: "2025-01-01T00:00:00Z",
 };
 
 // Mock deck share data

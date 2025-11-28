@@ -4,7 +4,7 @@
  * Test Coverage:
  * - TC-001: 正常系 - データ取得成功
  * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - データベースエラー
+ * - TC-003: 異常系 - Repository エラー
  * - TC-004: エッジケース - 空の結果セット
  * - TC-005: 所有ノートと共有ノートの統合
  * - TC-006: 重複ノートの除去
@@ -12,6 +12,7 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { notesRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 import { useNotes } from "../useNotes";
 import {
@@ -23,6 +24,32 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
+
+// Mock NotesRepository
+vi.mock("@/lib/repositories", () => ({
+	notesRepository: {
+		getAll: vi.fn(),
+		getById: vi.fn(),
+		create: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn(),
+		getPendingSync: vi.fn(),
+		markSynced: vi.fn(),
+		syncFromServer: vi.fn(),
+		getBySlug: vi.fn(),
+		getDefaultNote: vi.fn(),
+	},
+	RepositoryError: class RepositoryError extends Error {
+		constructor(
+			public readonly code: string,
+			message?: string,
+			public readonly details?: unknown,
+		) {
+			super(message ?? code);
+			this.name = "RepositoryError";
+		}
+	},
+}));
 
 describe("useNotes", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -47,23 +74,8 @@ describe("useNotes", () => {
 			error: null,
 		});
 
-		// Mock owned notes query
-		const mockOwnedQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				data: ownedNotes.map((n) => ({
-					id: n.id,
-					slug: n.slug,
-					title: n.title,
-					description: n.description,
-					visibility: n.visibility,
-					updated_at: n.updated_at,
-					page_count: n.page_count,
-					participant_count: n.participant_count,
-				})),
-				error: null,
-			}),
-		};
+		// Mock Repository.getAll for owned notes
+		vi.mocked(notesRepository.getAll).mockResolvedValue(ownedNotes);
 
 		// Mock shared links query
 		const mockSharedLinksQuery = {
@@ -96,7 +108,6 @@ describe("useNotes", () => {
 
 		mockSupabaseClient.from = vi
 			.fn()
-			.mockReturnValueOnce(mockOwnedQuery)
 			.mockReturnValueOnce(mockSharedLinksQuery)
 			.mockReturnValueOnce(mockSharedNotesQuery);
 
@@ -112,6 +123,7 @@ describe("useNotes", () => {
 		expect(result.current.data?.length).toBe(2);
 		expect(result.current.data?.some((n) => n.id === mockNote.id)).toBe(true);
 		expect(result.current.data?.some((n) => n.id === sharedNote.id)).toBe(true);
+		expect(notesRepository.getAll).toHaveBeenCalledWith(mockUser.id);
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -133,22 +145,17 @@ describe("useNotes", () => {
 		expect(result.current.error?.message).toContain("not authenticated");
 	});
 
-	// TC-003: 異常系 - データベースエラー
-	test("TC-003: Should handle database error", async () => {
+	// TC-003: 異常系 - Repository エラー
+	test("TC-003: Should handle repository error", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		const mockOwnedQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "PGRST116" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockOwnedQuery);
+		// Mock Repository.getAll to throw error
+		vi.mocked(notesRepository.getAll).mockRejectedValue(
+			new Error("Repository error: DB_ERROR - Database error"),
+		);
 
 		const { result } = renderHook(() => useNotes(), {
 			wrapper: createWrapper(),
@@ -168,13 +175,8 @@ describe("useNotes", () => {
 			error: null,
 		});
 
-		const mockOwnedQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				data: [],
-				error: null,
-			}),
-		};
+		// Mock Repository.getAll to return empty array
+		vi.mocked(notesRepository.getAll).mockResolvedValue([]);
 
 		const mockSharedLinksQuery = {
 			select: vi.fn().mockReturnThis(),
@@ -184,10 +186,7 @@ describe("useNotes", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi
-			.fn()
-			.mockReturnValueOnce(mockOwnedQuery)
-			.mockReturnValueOnce(mockSharedLinksQuery);
+		mockSupabaseClient.from = vi.fn().mockReturnValue(mockSharedLinksQuery);
 
 		const { result } = renderHook(() => useNotes(), {
 			wrapper: createWrapper(),
@@ -211,24 +210,8 @@ describe("useNotes", () => {
 			error: null,
 		});
 
-		const mockOwnedQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				data: [
-					{
-						id: ownedNote.id,
-						slug: ownedNote.slug,
-						title: ownedNote.title,
-						description: ownedNote.description,
-						visibility: ownedNote.visibility,
-						updated_at: ownedNote.updated_at,
-						page_count: ownedNote.page_count,
-						participant_count: ownedNote.participant_count,
-					},
-				],
-				error: null,
-			}),
-		};
+		// Mock Repository.getAll for owned notes
+		vi.mocked(notesRepository.getAll).mockResolvedValue([ownedNote]);
 
 		const mockSharedLinksQuery = {
 			select: vi.fn().mockReturnThis(),
@@ -259,7 +242,6 @@ describe("useNotes", () => {
 
 		mockSupabaseClient.from = vi
 			.fn()
-			.mockReturnValueOnce(mockOwnedQuery)
 			.mockReturnValueOnce(mockSharedLinksQuery)
 			.mockReturnValueOnce(mockSharedNotesQuery);
 
@@ -291,24 +273,7 @@ describe("useNotes", () => {
 		});
 
 		// Same note appears in both owned and shared
-		const mockOwnedQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockResolvedValue({
-				data: [
-					{
-						id: duplicateNote.id,
-						slug: duplicateNote.slug,
-						title: duplicateNote.title,
-						description: duplicateNote.description,
-						visibility: duplicateNote.visibility,
-						updated_at: duplicateNote.updated_at,
-						page_count: duplicateNote.page_count,
-						participant_count: duplicateNote.participant_count,
-					},
-				],
-				error: null,
-			}),
-		};
+		vi.mocked(notesRepository.getAll).mockResolvedValue([duplicateNote]);
 
 		const mockSharedLinksQuery = {
 			select: vi.fn().mockReturnThis(),
@@ -339,7 +304,6 @@ describe("useNotes", () => {
 
 		mockSupabaseClient.from = vi
 			.fn()
-			.mockReturnValueOnce(mockOwnedQuery)
 			.mockReturnValueOnce(mockSharedLinksQuery)
 			.mockReturnValueOnce(mockSharedNotesQuery);
 
