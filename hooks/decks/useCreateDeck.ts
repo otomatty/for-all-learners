@@ -26,7 +26,7 @@ import type {
 	LocalDeck,
 	CreateDeckPayload as RepoCreateDeckPayload,
 } from "@/lib/db/types";
-import { decksRepository, RepositoryError } from "@/lib/repositories";
+import { decksRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -76,9 +76,10 @@ export function useCreateDeck() {
 
 				return createdDeck;
 			} catch (error) {
-				if (error instanceof RepositoryError) {
-					throw new Error(`Repository error: ${error.code} - ${error.message}`);
-				}
+				// RepositoryError を含むすべてのエラーをそのままスローし、
+				// react-query のエラーハンドリングに委ねます。
+				// これにより、呼び出し側で useRepositoryError フックが
+				// RepositoryError のインスタンスを正しく判定できるようになります。
 				throw error;
 			}
 		},

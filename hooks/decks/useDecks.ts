@@ -23,7 +23,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { LocalDeck } from "@/lib/db/types";
-import { decksRepository, RepositoryError } from "@/lib/repositories";
+import { decksRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -82,10 +82,10 @@ export function useDecks() {
 				// DeckSummary形式にマッピング
 				return decks.map(toDeckSummary);
 			} catch (error) {
-				// RepositoryErrorの場合はそのまま再スロー
-				if (error instanceof RepositoryError) {
-					throw new Error(`Repository error: ${error.code} - ${error.message}`);
-				}
+				// RepositoryError を含むすべてのエラーをそのままスローし、
+				// react-query のエラーハンドリングに委ねます。
+				// これにより、呼び出し側で useRepositoryError フックが
+				// RepositoryError のインスタンスを正しく判定できるようになります。
 				throw error;
 			}
 		},

@@ -23,7 +23,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LocalDeck } from "@/lib/db/types";
-import { decksRepository, RepositoryError } from "@/lib/repositories";
+import { decksRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -67,18 +67,18 @@ export function useUpdateDeck() {
 
 			try {
 				// Repositoryを使ってローカルDBを更新
+				// スプレッド構文でupdatesを展開し、updated_atを追加
 				const updatedDeck = await decksRepository.update(id, {
-					title: updates.title,
-					description: updates.description,
-					is_public: updates.is_public,
+					...updates,
 					updated_at: new Date().toISOString(),
 				});
 
 				return updatedDeck;
 			} catch (error) {
-				if (error instanceof RepositoryError) {
-					throw new Error(`Repository error: ${error.code} - ${error.message}`);
-				}
+				// RepositoryError を含むすべてのエラーをそのままスローし、
+				// react-query のエラーハンドリングに委ねます。
+				// これにより、呼び出し側で useRepositoryError フックが
+				// RepositoryError のインスタンスを正しく判定できるようになります。
 				throw error;
 			}
 		},
