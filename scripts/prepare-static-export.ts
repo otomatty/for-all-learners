@@ -98,7 +98,11 @@ function prepare() {
 		// New page routes: These use server-side logic that is incompatible with static export
 		"app/(protected)/notes/[slug]/new/page.tsx",
 		"app/(protected)/notes/default/new/page.tsx",
+		// Notes explorer: Uses headers() which is incompatible with static export
+		"app/(protected)/notes/explorer/page.tsx",
 		// Admin pages: Web app only, excluded from Tauri static export
+		// These use headers() and other server-side features
+		"app/admin/page.tsx",
 		"app/admin/inquiries/[id]/page.tsx",
 		"app/admin/users/[id]/page.tsx",
 		// Note: These pages have generateStaticParams() but still cause errors
