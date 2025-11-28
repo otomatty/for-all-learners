@@ -3,6 +3,7 @@
  *
  * Provides common utilities for testing Notes-related custom hooks:
  * - Mock Supabase client factory
+ * - Mock NotesRepository factory
  * - QueryClientProvider wrapper
  * - Mock data constants
  */
@@ -11,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
 import { vi } from "vitest";
+import type { LocalNote } from "@/lib/db/types";
 
 // Mock user data
 export const mockUser = {
@@ -22,8 +24,8 @@ export const mockUser = {
 	created_at: "2025-01-01T00:00:00Z",
 };
 
-// Mock note data
-export const mockNote = {
+// Mock note data (LocalNote型)
+export const mockNote: LocalNote = {
 	id: "note-123",
 	slug: "test-note",
 	title: "Test Note",
@@ -35,6 +37,11 @@ export const mockNote = {
 	page_count: 0,
 	participant_count: 0,
 	is_default_note: false,
+	// 同期メタデータ
+	sync_status: "synced",
+	synced_at: "2025-01-01T00:00:00Z",
+	local_updated_at: "2025-01-01T00:00:00Z",
+	server_updated_at: "2025-01-01T00:00:00Z",
 };
 
 // Mock page data
@@ -129,4 +136,22 @@ export function createMockQueryChain<T = unknown>(
 	chain.maybeSingle.mockResolvedValue({ data, error });
 
 	return chain;
+}
+
+/**
+ * Creates a mock NotesRepository
+ */
+export function createMockNotesRepository() {
+	return {
+		getAll: vi.fn(),
+		getById: vi.fn(),
+		create: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn(),
+		getPendingSync: vi.fn(),
+		markSynced: vi.fn(),
+		syncFromServer: vi.fn(),
+		getBySlug: vi.fn(),
+		getDefaultNote: vi.fn(),
+	};
 }

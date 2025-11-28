@@ -174,7 +174,29 @@
 		"unauthorized": "Login required",
 		"forbidden": "Access denied",
 		"serverError": "Server error occurred",
-		"networkError": "Network error occurred"
+		"networkError": "Network error occurred",
+		"repository": {
+			"NOT_FOUND": "Data not found",
+			"VALIDATION_ERROR": "There is an issue with the input",
+			"DB_ERROR": "Database error occurred",
+			"SYNC_ERROR": "Sync error occurred",
+			"notFoundEntity": "{entity} not found",
+			"createFailed": "Failed to create {entity}",
+			"updateFailed": "Failed to update {entity}",
+			"deleteFailed": "Failed to delete {entity}",
+			"fetchFailed": "Failed to fetch {entity}"
+		},
+		"auth": {
+			"notAuthenticated": "Not authenticated",
+			"sessionExpired": "Session expired. Please log in again"
+		},
+		"notes": {
+			"cannotDeleteDefault": "Cannot delete default note",
+			"slugAlreadyExists": "This slug is already in use"
+		},
+		"decks": {
+			"notFound": "Deck not found"
+		}
 	},
 	"sync": {
 		"title": "Sync",

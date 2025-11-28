@@ -4,12 +4,13 @@
  * Test Coverage:
  * - TC-001: 正常系 - デッキ作成成功
  * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - データベースエラー
+ * - TC-003: 異常系 - Repository エラー
  * - TC-004: 正常系 - キャッシュの無効化
  */
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { decksRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 import { useCreateDeck } from "../useCreateDeck";
 import {
@@ -21,6 +22,30 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
+
+// Mock DecksRepository
+vi.mock("@/lib/repositories", () => ({
+	decksRepository: {
+		getAll: vi.fn(),
+		getById: vi.fn(),
+		create: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn(),
+		getPendingSync: vi.fn(),
+		markSynced: vi.fn(),
+		syncFromServer: vi.fn(),
+	},
+	RepositoryError: class RepositoryError extends Error {
+		constructor(
+			public readonly code: string,
+			message?: string,
+			public readonly details?: unknown,
+		) {
+			super(message ?? code);
+			this.name = "RepositoryError";
+		}
+	},
+}));
 
 describe("useCreateDeck", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -41,16 +66,8 @@ describe("useCreateDeck", () => {
 		});
 
 		const newDeck = { ...mockDeck, id: "new-deck-123" };
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: newDeck,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock Repository.create
+		vi.mocked(decksRepository.create).mockResolvedValue(newDeck);
 
 		const { result } = renderHook(() => useCreateDeck(), {
 			wrapper: createWrapper(),
@@ -70,7 +87,11 @@ describe("useCreateDeck", () => {
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.title).toBe(newDeck.title);
-		expect(mockQuery.insert).toHaveBeenCalledWith([payload]);
+		expect(decksRepository.create).toHaveBeenCalledWith(mockUser.id, {
+			title: payload.title,
+			description: payload.description ?? null,
+			is_public: false,
+		});
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -100,23 +121,17 @@ describe("useCreateDeck", () => {
 		expect(result.current.error?.message).toContain("not authenticated");
 	});
 
-	// TC-003: 異常系 - データベースエラー
-	test("TC-003: Should handle database error", async () => {
+	// TC-003: 異常系 - Repository エラー
+	test("TC-003: Should handle repository error", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "23505" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock Repository.create to throw error
+		vi.mocked(decksRepository.create).mockRejectedValue(
+			new Error("Repository error: DB_ERROR - Database error"),
+		);
 
 		const { result } = renderHook(() => useCreateDeck(), {
 			wrapper: createWrapper(),
@@ -145,16 +160,8 @@ describe("useCreateDeck", () => {
 		});
 
 		const newDeck = { ...mockDeck, id: "new-deck-123" };
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: newDeck,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock Repository.create
+		vi.mocked(decksRepository.create).mockResolvedValue(newDeck);
 
 		const { result } = renderHook(() => useCreateDeck(), {
 			wrapper: createWrapper(),

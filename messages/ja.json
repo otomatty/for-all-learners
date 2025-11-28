@@ -174,7 +174,29 @@
 		"unauthorized": "ログインが必要です",
 		"forbidden": "アクセスが拒否されました",
 		"serverError": "サーバーエラーが発生しました",
-		"networkError": "ネットワークエラーが発生しました"
+		"networkError": "ネットワークエラーが発生しました",
+		"repository": {
+			"NOT_FOUND": "データが見つかりません",
+			"VALIDATION_ERROR": "入力内容に問題があります",
+			"DB_ERROR": "データベースエラーが発生しました",
+			"SYNC_ERROR": "同期エラーが発生しました",
+			"notFoundEntity": "{entity}が見つかりません",
+			"createFailed": "{entity}の作成に失敗しました",
+			"updateFailed": "{entity}の更新に失敗しました",
+			"deleteFailed": "{entity}の削除に失敗しました",
+			"fetchFailed": "{entity}の取得に失敗しました"
+		},
+		"auth": {
+			"notAuthenticated": "認証されていません",
+			"sessionExpired": "セッションが期限切れです。再度ログインしてください"
+		},
+		"notes": {
+			"cannotDeleteDefault": "デフォルトノートは削除できません",
+			"slugAlreadyExists": "このスラッグは既に使用されています"
+		},
+		"decks": {
+			"notFound": "デッキが見つかりません"
+		}
 	},
 	"sync": {
 		"title": "同期",

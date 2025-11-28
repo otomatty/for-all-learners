@@ -21,7 +21,14 @@ export {
 	type ReviewResult,
 } from "./cards-repository";
 export { DecksRepository, decksRepository } from "./decks-repository";
-
+// Error Utilities
+export {
+	type ErrorTranslationKey,
+	getErrorFallbackMessage,
+	getErrorTranslationKey,
+	getUserFriendlyErrorMessage,
+	isRepositoryError,
+} from "./error-messages";
 // Entity Repositories
 export { NotesRepository, notesRepository } from "./notes-repository";
 export { PagesRepository, pagesRepository } from "./pages-repository";

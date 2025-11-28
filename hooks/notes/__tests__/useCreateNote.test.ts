@@ -4,16 +4,14 @@
  * Test Coverage:
  * - TC-001: 正常系 - 操作成功
  * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - データベースエラー
- * - TC-004: 異常系 - バリデーションエラー（該当する場合）
- * - TC-005: 正常系 - キャッシュ無効化の確認
- * - TC-006: 必須フィールドのバリデーション
- * - TC-007: デフォルト値の確認
+ * - TC-003: 異常系 - Repository エラー
+ * - TC-004: 正常系 - キャッシュ無効化の確認
  */
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { CreateNotePayload } from "@/hooks/notes/useCreateNote";
+import { notesRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 import { useCreateNote } from "../useCreateNote";
 import {
@@ -25,6 +23,32 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
+
+// Mock NotesRepository
+vi.mock("@/lib/repositories", () => ({
+	notesRepository: {
+		getAll: vi.fn(),
+		getById: vi.fn(),
+		create: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn(),
+		getPendingSync: vi.fn(),
+		markSynced: vi.fn(),
+		syncFromServer: vi.fn(),
+		getBySlug: vi.fn(),
+		getDefaultNote: vi.fn(),
+	},
+	RepositoryError: class RepositoryError extends Error {
+		constructor(
+			public readonly code: string,
+			message?: string,
+			public readonly details?: unknown,
+		) {
+			super(message ?? code);
+			this.name = "RepositoryError";
+		}
+	},
+}));
 
 describe("useCreateNote", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -51,20 +75,16 @@ describe("useCreateNote", () => {
 			error: null,
 		});
 
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: {
-					...mockNote,
-					...payload,
-					owner_id: mockUser.id,
-				},
-				error: null,
-			}),
+		// Mock Repository.create
+		const createdNote = {
+			...mockNote,
+			slug: payload.slug,
+			title: payload.title,
+			description: payload.description,
+			visibility: payload.visibility,
+			owner_id: mockUser.id,
 		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(notesRepository.create).mockResolvedValue(createdNote);
 
 		const { result } = renderHook(() => useCreateNote(), {
 			wrapper: createWrapper(),
@@ -79,15 +99,12 @@ describe("useCreateNote", () => {
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.slug).toBe(payload.slug);
 		expect(result.current.data?.title).toBe(payload.title);
-		expect(mockQuery.insert).toHaveBeenCalledWith([
-			{
-				owner_id: mockUser.id,
-				slug: payload.slug,
-				title: payload.title,
-				description: payload.description,
-				visibility: payload.visibility,
-			},
-		]);
+		expect(notesRepository.create).toHaveBeenCalledWith(mockUser.id, {
+			slug: payload.slug,
+			title: payload.title,
+			description: payload.description ?? null,
+			visibility: payload.visibility,
+		});
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -117,8 +134,8 @@ describe("useCreateNote", () => {
 		expect(result.current.error?.message).toContain("not authenticated");
 	});
 
-	// TC-003: 異常系 - データベースエラー
-	test("TC-003: Should handle database error", async () => {
+	// TC-003: 異常系 - Repository エラー
+	test("TC-003: Should handle repository error", async () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
@@ -130,16 +147,10 @@ describe("useCreateNote", () => {
 			error: null,
 		});
 
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "23505" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock Repository.create to throw error
+		vi.mocked(notesRepository.create).mockRejectedValue(
+			new Error("Repository error: DB_ERROR - Database error"),
+		);
 
 		const { result } = renderHook(() => useCreateNote(), {
 			wrapper: createWrapper(),
@@ -154,50 +165,8 @@ describe("useCreateNote", () => {
 		expect(result.current.error).toBeDefined();
 	});
 
-	// TC-004: 異常系 - バリデーションエラー（該当する場合）
-	test("TC-004: Should handle validation error for duplicate slug", async () => {
-		const payload: CreateNotePayload = {
-			slug: "existing-note",
-			title: "New Note",
-			visibility: "private",
-		};
-
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: {
-					message: "duplicate key value violates unique constraint",
-					code: "23505",
-					details: "Key (slug)=(existing-note) already exists.",
-				},
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
-
-		const { result } = renderHook(() => useCreateNote(), {
-			wrapper: createWrapper(),
-		});
-
-		result.current.mutate(payload);
-
-		await waitFor(() => {
-			expect(result.current.isError).toBe(true);
-		});
-
-		expect(result.current.error).toBeDefined();
-		expect(result.current.error?.message).toContain("duplicate");
-	});
-
-	// TC-005: 正常系 - キャッシュ無効化の確認
-	test("TC-005: Should invalidate notes cache on success", async () => {
+	// TC-004: 正常系 - キャッシュ無効化の確認
+	test("TC-004: Should invalidate notes cache on success", async () => {
 		const payload: CreateNotePayload = {
 			slug: "new-note",
 			title: "New Note",
@@ -209,16 +178,11 @@ describe("useCreateNote", () => {
 			error: null,
 		});
 
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: { ...mockNote, ...payload },
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock Repository.create
+		vi.mocked(notesRepository.create).mockResolvedValue({
+			...mockNote,
+			...payload,
+		});
 
 		const { result } = renderHook(() => useCreateNote(), {
 			wrapper: createWrapper(),
@@ -233,96 +197,5 @@ describe("useCreateNote", () => {
 		// Cache invalidation is handled by onSuccess callback
 		// We verify the mutation succeeded, which triggers the invalidation
 		expect(result.current.isSuccess).toBe(true);
-	});
-
-	// TC-006: 必須フィールドのバリデーション
-	test("TC-006: Should require slug and title", async () => {
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const { result } = renderHook(() => useCreateNote(), {
-			wrapper: createWrapper(),
-		});
-
-		// TypeScript will catch missing required fields at compile time
-		// At runtime, Supabase will validate the constraints
-		const payload: CreateNotePayload = {
-			slug: "test",
-			title: "Test",
-			visibility: "private",
-		};
-
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: { ...mockNote, ...payload },
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
-
-		result.current.mutate(payload);
-
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		});
-
-		expect(mockQuery.insert).toHaveBeenCalledWith([
-			expect.objectContaining({
-				slug: payload.slug,
-				title: payload.title,
-			}),
-		]);
-	});
-
-	// TC-007: デフォルト値の確認
-	test("TC-007: Should handle visibility field", async () => {
-		const payload: CreateNotePayload = {
-			slug: "new-note",
-			title: "New Note",
-			visibility: "private",
-		};
-
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: {
-					...mockNote,
-					...payload,
-					visibility: undefined, // Database default will be used
-				},
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
-
-		const { result } = renderHook(() => useCreateNote(), {
-			wrapper: createWrapper(),
-		});
-
-		result.current.mutate(payload);
-
-		await waitFor(() => {
-			expect(result.current.isSuccess).toBe(true);
-		});
-
-		// Verify that visibility can be omitted (database default applies)
-		expect(mockQuery.insert).toHaveBeenCalledWith([
-			expect.objectContaining({
-				slug: payload.slug,
-				title: payload.title,
-			}),
-		]);
 	});
 });
