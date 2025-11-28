@@ -130,10 +130,13 @@ export async function registerBackgroundSync(
 		const registration = await navigator.serviceWorker.ready;
 		// @ts-expect-error - SyncManager is not in the TypeScript types
 		await registration.sync.register(tag);
-		logger.info("[SyncTriggers] Background sync registered:", tag);
+		logger.info({ tag }, "[SyncTriggers] Background sync registered");
 		return true;
 	} catch (error) {
-		logger.error("[SyncTriggers] Failed to register background sync:", error);
+		logger.error(
+			{ error },
+			"[SyncTriggers] Failed to register background sync",
+		);
 		return false;
 	}
 }
@@ -160,8 +163,8 @@ export async function registerPeriodicBackgroundSync(
 
 	try {
 		const registration = await navigator.serviceWorker.ready;
-		// @ts-expect-error - periodicSync is not in the TypeScript types
 		const status = await navigator.permissions.query({
+			// @ts-expect-error - periodic-background-sync is not in the TypeScript types
 			name: "periodic-background-sync",
 		});
 
@@ -175,15 +178,14 @@ export async function registerPeriodicBackgroundSync(
 		// @ts-expect-error - periodicSync is not in the TypeScript types
 		await registration.periodicSync.register(tag, { minInterval });
 		logger.info(
-			"[SyncTriggers] Periodic background sync registered:",
-			tag,
-			minInterval,
+			{ tag, minInterval },
+			"[SyncTriggers] Periodic background sync registered",
 		);
 		return true;
 	} catch (error) {
 		logger.error(
-			"[SyncTriggers] Failed to register periodic background sync:",
-			error,
+			{ error },
+			"[SyncTriggers] Failed to register periodic background sync",
 		);
 		return false;
 	}
@@ -206,8 +208,8 @@ export function setupBeforeUnloadSync(syncManager: SyncManager): () => void {
 			const state = syncManager.getState();
 			if (state.pendingCount > 0) {
 				logger.debug(
-					"[SyncTriggers] Page unloading with pending data:",
-					state.pendingCount,
+					{ pendingCount: state.pendingCount },
+					"[SyncTriggers] Page unloading with pending data",
 				);
 				// ここでは警告のみ。実際の同期は Service Worker で行う
 			}

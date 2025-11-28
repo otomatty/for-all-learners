@@ -21,6 +21,7 @@
  */
 
 import {
+	type BaseCRUDClientInterface,
 	getDBClient,
 	type HybridDBClientInterface,
 } from "@/lib/db/hybrid-client";
@@ -66,11 +67,11 @@ export class RepositoryError extends Error {
  * 全てのRepositoryクラスの基底クラス。
  * ローカルDBとの通信と同期メタデータの管理を担当。
  *
- * @template T エンティティの型（SyncableEntityを継承）
+ * @template T エンティティの型（SyncableEntityを継承し、idを持つ）
  * @template CreatePayload 作成時のペイロード型
  */
 export abstract class BaseRepository<
-	T extends SyncableEntity,
+	T extends SyncableEntity & { id: string },
 	CreatePayload = unknown,
 > implements Repository<T, CreatePayload>
 {
@@ -111,10 +112,22 @@ export abstract class BaseRepository<
 
 	/**
 	 * エンティティ固有のDBクライアントを取得
+	 *
+	 * @remarks
+	 * BaseRepositoryはCRUD操作をサポートするエンティティ用に設計されている。
+	 * UserSettingsは異なるAPIを持つため、このメソッドはUserSettings以外の
+	 * エンティティに対してのみ使用すべき。
 	 */
-	protected async getEntityClient() {
+	protected async getEntityClient(): Promise<
+		BaseCRUDClientInterface<T, CreatePayload>
+	> {
 		const db = await this.getDB();
-		return db[this.entityName];
+		// Note: userSettings は異なるインターフェースを持つため、
+		// BaseRepository では使用しない想定。型アサーションで対応。
+		return db[this.entityName] as unknown as BaseCRUDClientInterface<
+			T,
+			CreatePayload
+		>;
 	}
 
 	/**
@@ -237,7 +250,10 @@ export abstract class BaseRepository<
 				server_updated_at: null,
 			};
 
-			const result = await client.create(userId, newEntity);
+			const result = await client.create(
+				userId,
+				newEntity as unknown as CreatePayload,
+			);
 
 			// バックグラウンドで同期をトリガー
 			this.triggerBackgroundSync();

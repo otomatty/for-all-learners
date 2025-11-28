@@ -350,6 +350,24 @@ export const userSettingsClient = {
 		invoke("get_user_settings", { userId }),
 
 	/**
+	 * ユーザーの全設定を取得（配列として返す）
+	 * UserSettingsはユーザーごとに1つなので、最大1要素の配列を返す
+	 */
+	getAll: async (userId: string): Promise<LocalUserSettings[]> => {
+		const settings = await invoke<LocalUserSettings | null>(
+			"get_user_settings",
+			{ userId },
+		);
+		return settings ? [settings] : [];
+	},
+
+	/**
+	 * IDでユーザー設定を取得
+	 */
+	getById: (id: string): Promise<LocalUserSettings | null> =>
+		invoke("get_user_settings_by_id", { id }),
+
+	/**
 	 * ユーザー設定を作成または更新
 	 */
 	upsert: (settings: LocalUserSettings): Promise<void> =>
@@ -360,6 +378,18 @@ export const userSettingsClient = {
 	 */
 	getPendingSync: (): Promise<LocalUserSettings[]> =>
 		invoke("get_pending_sync_user_settings"),
+
+	/**
+	 * 同期完了をマーク
+	 */
+	markSynced: (id: string, serverUpdatedAt: string): Promise<void> =>
+		invoke("mark_user_settings_synced", { id, serverUpdatedAt }),
+
+	/**
+	 * サーバーデータで上書き
+	 */
+	overwriteWithServer: (serverSettings: LocalUserSettings): Promise<void> =>
+		invoke("overwrite_user_settings_with_server", { serverSettings }),
 };
 
 // ============================================================================

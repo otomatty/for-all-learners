@@ -82,6 +82,24 @@ export function isIndexedDBAvailable(): boolean {
 // ============================================================================
 
 /**
+ * 共通のCRUDクライアントインターフェース
+ *
+ * BaseRepositoryで使用するための共通インターフェース。
+ * UserSettingsは異なるAPIを持つため、このインターフェースを実装しない。
+ */
+export interface BaseCRUDClientInterface<T, CreatePayload> {
+	getAll(userId: string): Promise<T[]>;
+	getById(id: string): Promise<T | undefined>;
+	create(userId: string, payload: CreatePayload): Promise<T>;
+	update(id: string, payload: Partial<T>): Promise<T | null>;
+	delete(id: string): Promise<boolean>;
+	hardDelete(id: string): Promise<void>;
+	getPendingSync(): Promise<T[]>;
+	markSynced(id: string, serverUpdatedAt: string): Promise<void>;
+	overwriteWithServer(serverEntity: T): Promise<void>;
+}
+
+/**
  * Notes クライアントインターフェース
  */
 export interface NotesClientInterface {
@@ -216,6 +234,7 @@ export interface MilestonesClientInterface {
  */
 export interface UserSettingsClientInterface {
 	get(userId: string): Promise<LocalUserSettings | undefined>;
+	getAll(userId: string): Promise<LocalUserSettings[]>;
 	getById(id: string): Promise<LocalUserSettings | undefined>;
 	upsert(
 		userId: string,

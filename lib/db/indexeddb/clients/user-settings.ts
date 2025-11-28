@@ -36,6 +36,15 @@ export const userSettingsClient = {
 	},
 
 	/**
+	 * ユーザーの全設定を取得（配列として返す）
+	 * UserSettingsはユーザーごとに1つなので、最大1要素の配列を返す
+	 */
+	async getAll(userId: string): Promise<LocalUserSettings[]> {
+		const db = await getLocalDB();
+		return db.getAllFromIndex("user_settings", "by-user", userId);
+	},
+
+	/**
 	 * IDでユーザー設定を取得
 	 */
 	async getById(id: string): Promise<LocalUserSettings | undefined> {
