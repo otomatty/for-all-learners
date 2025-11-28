@@ -3,7 +3,7 @@
 import { Grid, List, Type } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { startQuizAction } from "@/app/_actions/startQuiz";
+// TODO: API Route `/api/quiz/start` を作成して置き換え
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -88,8 +88,13 @@ export function QuizSettingsDialog({
 				dialogTitle="学習モード設定"
 			>
 				<form
-					action={startQuizAction}
-					onSubmit={handleFormSubmit}
+					// TODO: API Route `/api/quiz/start` を作成して置き換え
+					// action={startQuizAction}
+					onSubmit={(e) => {
+						e.preventDefault();
+						// TODO: fetch("/api/quiz/start", { method: "POST", body: formData })
+						handleFormSubmit(e);
+					}}
 					className="space-y-4 p-4 max-w-md"
 				>
 					<input type="hidden" name="deckId" value={deckId ?? ""} />

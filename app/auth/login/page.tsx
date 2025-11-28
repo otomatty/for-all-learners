@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { UnauthHeader } from "@/components/auth/UnauthHeader";
 import { createClient } from "@/lib/supabase/server";
 import pkg from "../../../package.json";
 import { LoginForm } from "./_components/LoginForm";
+import { LoginPageClient } from "./_components/LoginPageClient";
 
 const version = pkg.version;
 
@@ -16,6 +19,28 @@ export default async function LoginPage({
 		error_description?: string;
 	}>;
 }) {
+	const t = await getTranslations("common");
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return (
+			<Suspense
+				fallback={
+					<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+						<UnauthHeader version={version} />
+						<div className="flex flex-1 items-center justify-center px-4">
+							<div className="text-muted-foreground">{t("loading")}</div>
+						</div>
+					</div>
+				}
+			>
+				<LoginPageClient />
+			</Suspense>
+		);
+	}
+
+	const resolvedSearchParams = await searchParams;
+
 	const supabase = await createClient();
 	const {
 		data: { user },
@@ -24,8 +49,6 @@ export default async function LoginPage({
 	if (user) {
 		redirect("/dashboard");
 	}
-
-	const resolvedSearchParams = await searchParams;
 
 	return (
 		<div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">

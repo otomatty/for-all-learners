@@ -13,7 +13,6 @@
  *   └─ lib/plugins/plugin-signature/key-manager.ts (generateEd25519KeyPair, generateRSAKeyPair)
  *
  * Related Documentation:
- *   ├─ Original Server Action: app/_actions/plugin-signatures.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 
@@ -24,33 +23,17 @@ import {
 	generateRSAKeyPair,
 } from "@/lib/plugins/plugin-signature/key-manager";
 import { signPlugin } from "@/lib/plugins/plugin-signature/signer";
-import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
+import type {
+	PluginSignatureInfo,
+	SignatureAlgorithm,
+	SignatureVerificationLog,
+} from "@/lib/plugins/plugin-signature/types";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/server";
 import type { PluginManifest } from "@/types/plugin";
 
-export interface PluginSignatureInfo {
-	pluginId: string;
-	name: string;
-	version: string;
-	author: string;
-	hasSignature: boolean;
-	signature: string | null;
-	publicKey: string | null;
-	signatureAlgorithm: "ed25519" | "rsa" | null;
-	signedAt: Date | null;
-	isOfficial: boolean;
-	isReviewed: boolean;
-}
-
-export interface SignatureVerificationLog {
-	id: string;
-	pluginId: string;
-	userId: string | null;
-	verificationResult: "valid" | "invalid" | "missing" | "error";
-	errorMessage: string | null;
-	verifiedAt: Date;
-}
+// Re-export types for backward compatibility
+export type { PluginSignatureInfo, SignatureVerificationLog };
 
 /**
  * Check if user is admin

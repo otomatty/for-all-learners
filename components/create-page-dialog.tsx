@@ -3,13 +3,13 @@
 import type { Editor } from "@tiptap/core";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
-import { createPage } from "@/app/_actions/pages";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreatePage } from "@/hooks/pages/useCreatePage";
 
 interface CreatePageDialogProps {
 	/** Dialog open state */
@@ -43,6 +43,7 @@ export function CreatePageDialog({
 	userId,
 	noteSlug: _noteSlug,
 }: CreatePageDialogProps) {
+	const createPageMutation = useCreatePage();
 	const [formState, setFormState] = useState<FormState>({
 		title: initialTitle,
 		description: "",
@@ -106,11 +107,13 @@ export function CreatePageDialog({
 				],
 			};
 
-			const newPage = await createPage({
-				title: formState.title,
-				content_tiptap: initialContent,
-				user_id: userId,
-				is_public: formState.isPublic,
+			const newPage = await createPageMutation.mutateAsync({
+				page: {
+					title: formState.title,
+					content_tiptap: initialContent,
+					user_id: userId,
+					is_public: formState.isPublic,
+				},
 			});
 
 			if (newPage?.id) {
@@ -195,8 +198,13 @@ export function CreatePageDialog({
 					>
 						キャンセル
 					</Button>
-					<Button type="submit" disabled={formState.isSubmitting}>
-						{formState.isSubmitting ? "作成中..." : "作成"}
+					<Button
+						type="submit"
+						disabled={formState.isSubmitting || createPageMutation.isPending}
+					>
+						{formState.isSubmitting || createPageMutation.isPending
+							? "作成中..."
+							: "作成"}
 					</Button>
 				</div>
 			</form>

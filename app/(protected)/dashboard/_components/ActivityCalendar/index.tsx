@@ -7,7 +7,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getMonthlyActivitySummary } from "@/app/_actions/activity_calendar";
+import { useMonthlyActivitySummary } from "@/hooks/activity_calendar";
 import logger from "@/lib/logger";
 import { getDailyExtensionData } from "@/lib/plugins/calendar-registry";
 import { CalendarGrid } from "./CalendarGrid";
@@ -31,7 +31,6 @@ export function ActivityCalendar({
 	const [monthData, setMonthData] = useState(initialMonthData);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
 	const isEnrichingPluginsRef = useRef(false);
 	const lastEnrichedMonthRef = useRef<{ year: number; month: number } | null>(
 		null,
@@ -98,58 +97,43 @@ export function ActivityCalendar({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [monthData.year, monthData.month, monthData.days]); // Re-enrich when month changes
 
-	const handlePreviousMonth = async () => {
-		setLoading(true);
-		lastEnrichedMonthRef.current = null; // Reset enrichment state
-		try {
-			const newMonth = currentMonth.month === 1 ? 12 : currentMonth.month - 1;
-			const newYear =
-				currentMonth.month === 1 ? currentMonth.year - 1 : currentMonth.year;
+	const { data: monthDataFromQuery, isLoading: isLoadingMonth } =
+		useMonthlyActivitySummary(userId, currentMonth.year, currentMonth.month);
 
-			const data = await getMonthlyActivitySummary(userId, newYear, newMonth);
-			setCurrentMonth({ year: newYear, month: newMonth });
-			setMonthData(data);
-			setSelectedDate(null);
-			setIsDetailOpen(false);
-		} finally {
-			setLoading(false);
+	useEffect(() => {
+		if (monthDataFromQuery) {
+			setMonthData(monthDataFromQuery);
 		}
+	}, [monthDataFromQuery]);
+
+	const handlePreviousMonth = () => {
+		lastEnrichedMonthRef.current = null; // Reset enrichment state
+		const newMonth = currentMonth.month === 1 ? 12 : currentMonth.month - 1;
+		const newYear =
+			currentMonth.month === 1 ? currentMonth.year - 1 : currentMonth.year;
+		setCurrentMonth({ year: newYear, month: newMonth });
+		setSelectedDate(null);
+		setIsDetailOpen(false);
 	};
 
-	const handleNextMonth = async () => {
-		setLoading(true);
+	const handleNextMonth = () => {
 		lastEnrichedMonthRef.current = null; // Reset enrichment state
-		try {
-			const newMonth = currentMonth.month === 12 ? 1 : currentMonth.month + 1;
-			const newYear =
-				currentMonth.month === 12 ? currentMonth.year + 1 : currentMonth.year;
-
-			const data = await getMonthlyActivitySummary(userId, newYear, newMonth);
-			setCurrentMonth({ year: newYear, month: newMonth });
-			setMonthData(data);
-			setSelectedDate(null);
-			setIsDetailOpen(false);
-		} finally {
-			setLoading(false);
-		}
+		const newMonth = currentMonth.month === 12 ? 1 : currentMonth.month + 1;
+		const newYear =
+			currentMonth.month === 12 ? currentMonth.year + 1 : currentMonth.year;
+		setCurrentMonth({ year: newYear, month: newMonth });
+		setSelectedDate(null);
+		setIsDetailOpen(false);
 	};
 
-	const handleToday = async () => {
-		setLoading(true);
+	const handleToday = () => {
 		lastEnrichedMonthRef.current = null; // Reset enrichment state
-		try {
-			const today = new Date();
-			const year = today.getFullYear();
-			const month = today.getMonth() + 1;
-
-			const data = await getMonthlyActivitySummary(userId, year, month);
-			setCurrentMonth({ year, month });
-			setMonthData(data);
-			setSelectedDate(null);
-			setIsDetailOpen(false);
-		} finally {
-			setLoading(false);
-		}
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = today.getMonth() + 1;
+		setCurrentMonth({ year, month });
+		setSelectedDate(null);
+		setIsDetailOpen(false);
 	};
 
 	const handleDayClick = (day: DailyActivitySummary) => {
@@ -168,7 +152,7 @@ export function ActivityCalendar({
 					onToday={handleToday}
 				/>
 
-				{loading ? (
+				{isLoadingMonth ? (
 					<div className="border rounded-lg p-12 flex items-center justify-center bg-background">
 						<div className="text-center">
 							<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />

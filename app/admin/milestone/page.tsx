@@ -1,13 +1,9 @@
-// "use client"; // クライアントコンポーネント指定を削除
-
-import { getMilestones } from "@/app/_actions/milestone";
-import MilestoneAdminView from "./_components/MilestoneAdminView"; // 新しいクライアントコンポーネントをインポート
+import { getMilestonesServer } from "@/lib/services/milestonesService";
+import MilestoneAdminView from "./_components/MilestoneAdminView";
 
 export default async function MilestonesAdminPage() {
-	// サーバーコンポーネント内でデータを取得
-	const initialMilestones = await getMilestones();
-	// エラーハンドリングが必要な場合はここで行う
-	// 例: try-catchで囲み、エラーページを表示するなど
+	// マイルストーン一覧を取得（既存フックのロジックを再利用）
+	const initialMilestones = await getMilestonesServer();
 
 	return (
 		<div style={{ padding: "20px" }}>

@@ -17,7 +17,7 @@
 import type { Editor, JSONContent } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { updatePage } from "@/app/_actions/updatePage";
+import { useUpdatePage } from "@/hooks/pages/useUpdatePage";
 import logger from "@/lib/logger";
 import { removeH1Headings } from "@/lib/utils/editor/heading-remover";
 
@@ -99,6 +99,7 @@ export function usePageSaver(
 		onDeleteEmptyTitlePage,
 	} = options;
 
+	const updatePageMutation = useUpdatePage();
 	const [isSaving, setIsSaving] = useState(false);
 	const isSavingRef = useRef(false);
 	const onSaveSuccessRef = useRef(onSaveSuccess);
@@ -167,11 +168,13 @@ export function usePageSaver(
 			// Remove H1 headings (they should only appear as page title)
 			content = removeH1Headings(content);
 
-			// Save page content to database
-			await updatePage({
+			// Save page content to database using mutation hook
+			await updatePageMutation.mutateAsync({
 				id: pageId,
-				title: trimmedTitle,
-				content: JSON.stringify(content),
+				updates: {
+					title: trimmedTitle,
+					content_tiptap: content,
+				},
 			});
 
 			// Success callbacks
@@ -188,7 +191,7 @@ export function usePageSaver(
 			isSavingRef.current = false;
 			setIsLoadingRef.current?.(false);
 		}
-	}, [editor, pageId, title]);
+	}, [editor, pageId, title, updatePageMutation]);
 
 	/**
 	 * Block browser navigation (page refresh, close, etc.) during save
@@ -231,6 +234,6 @@ export function usePageSaver(
 
 	return {
 		savePage,
-		isSaving,
+		isSaving: isSaving || updatePageMutation.isPending,
 	};
 }

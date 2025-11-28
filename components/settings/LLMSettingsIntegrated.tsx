@@ -8,7 +8,7 @@
  *
  * Dependencies (依存先):
  *   ├─ lib/contexts/LLMProviderContext.tsx (useLLMProvider)
- *   ├─ app/_actions/ai/apiKey.ts (saveAPIKey, deleteAPIKey, getAPIKeyStatus)
+ *   ├─ lib/hooks/ai/useAPIKey.ts (useAPIKeyStatus, useSaveAPIKey, useDeleteAPIKey)
  *   ├─ components/ui/* (shadcn/ui components)
  *   ├─ lucide-react (Icons)
  *   └─ sonner (toast)
@@ -31,14 +31,8 @@ import {
 	Sparkles,
 	Zap,
 } from "lucide-react";
-import { useEffect, useId, useState, useTransition } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
-import {
-	type APIKeyStatus,
-	deleteAPIKey,
-	getAPIKeyStatus,
-	saveAPIKey,
-} from "@/app/_actions/ai/apiKey";
 import {
 	Accordion,
 	AccordionContent,
@@ -56,6 +50,12 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLLMProvider } from "@/lib/contexts/LLMProviderContext";
+import {
+	type APIKeyStatus,
+	useAPIKeyStatus,
+	useDeleteAPIKey,
+	useSaveAPIKey,
+} from "@/lib/hooks/ai/useAPIKey";
 import type { LLMProvider } from "@/lib/llm/client";
 
 // ============================================================================
@@ -181,37 +181,21 @@ export function LLMSettingsIntegrated() {
 		openai: false,
 		anthropic: false,
 	});
-	const [apiKeyStatus, setApiKeyStatus] = useState<
-		Record<LLMProvider, APIKeyStatus>
-	>({
-		google: { configured: false, updatedAt: null },
-		openai: { configured: false, updatedAt: null },
-		anthropic: { configured: false, updatedAt: null },
-	});
-	const [isLoading, setIsLoading] = useState(true);
+	const { data: apiKeyStatusData, isLoading } = useAPIKeyStatus();
+	const saveAPIKeyMutation = useSaveAPIKey();
+	const deleteAPIKeyMutation = useDeleteAPIKey();
+
 	const [savingProvider, setSavingProvider] = useState<LLMProvider | null>(
 		null,
 	);
-	const [_isPending, startTransition] = useTransition();
 
-	// Load API key status
-	useEffect(() => {
-		const loadStatus = async () => {
-			try {
-				setIsLoading(true);
-				const result = await getAPIKeyStatus();
-				if (result.success) {
-					setApiKeyStatus(result.data);
-				}
-			} catch {
-				// Error is already logged by the server action
-			} finally {
-				setIsLoading(false);
-			}
+	// Map API key status data to state format
+	const apiKeyStatus: Record<LLMProvider, APIKeyStatus> =
+		apiKeyStatusData?.data || {
+			google: { configured: false, updatedAt: null },
+			openai: { configured: false, updatedAt: null },
+			anthropic: { configured: false, updatedAt: null },
 		};
-
-		loadStatus();
-	}, []);
 
 	// Event handlers
 	const handleModelToggle = (provider: LLMProvider, modelValue: string) => {
@@ -245,55 +229,39 @@ export function LLMSettingsIntegrated() {
 		}
 
 		setSavingProvider(provider);
-		startTransition(async () => {
-			try {
-				const result = await saveAPIKey(provider, apiKey);
-				if (result.success) {
+		saveAPIKeyMutation.mutate(
+			{ provider, apiKey },
+			{
+				onSuccess: () => {
 					toast.success(`${PROVIDER_LABELS[provider]} のAPIキーを保存しました`);
 					setApiKeys((prev) => ({ ...prev, [provider]: "" }));
 					setShowAPIKeys((prev) => ({ ...prev, [provider]: false }));
-
-					// Reload status
-					const statusResult = await getAPIKeyStatus();
-					if (statusResult.success) {
-						setApiKeyStatus(statusResult.data);
-					}
-				} else {
-					toast.error(result.error || "APIキーの保存に失敗しました");
-				}
-			} catch {
-				// Error is already logged by the server action
-				toast.error("APIキーの保存に失敗しました");
-			} finally {
-				setSavingProvider(null);
-			}
-		});
+					setSavingProvider(null);
+				},
+				onError: (error) => {
+					toast.error(error.message || "APIキーの保存に失敗しました");
+					setSavingProvider(null);
+				},
+			},
+		);
 	};
 
 	const handleDeleteAPIKey = (provider: LLMProvider) => {
 		setSavingProvider(provider);
-		startTransition(async () => {
-			try {
-				const result = await deleteAPIKey(provider);
-				if (result.success) {
+		deleteAPIKeyMutation.mutate(
+			{ provider },
+			{
+				onSuccess: () => {
 					toast.success(`${PROVIDER_LABELS[provider]} のAPIキーを削除しました`);
 					setApiKeys((prev) => ({ ...prev, [provider]: "" }));
-
-					// Reload status
-					const statusResult = await getAPIKeyStatus();
-					if (statusResult.success) {
-						setApiKeyStatus(statusResult.data);
-					}
-				} else {
-					toast.error(result.error || "APIキーの削除に失敗しました");
-				}
-			} catch {
-				// Error is already logged by the server action
-				toast.error("APIキーの削除に失敗しました");
-			} finally {
-				setSavingProvider(null);
-			}
-		});
+					setSavingProvider(null);
+				},
+				onError: (error) => {
+					toast.error(error.message || "APIキーの削除に失敗しました");
+					setSavingProvider(null);
+				},
+			},
+		);
 	};
 
 	// Loading state

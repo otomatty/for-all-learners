@@ -4,8 +4,12 @@ import { Inter } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 import type { Viewport } from "next";
-import { getUserSettings } from "@/app/_actions/user_settings";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { ClientThemeProvider } from "@/components/layouts/ClientThemeProvider";
 import { Providers } from "@/components/providers";
+import { getUserSettingsTheme } from "@/lib/services/userSettingsService";
+import { createClient } from "@/lib/supabase/server";
 import "tiptap-extension-code-block-shiki";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,14 +30,41 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	// サーバーサイドでユーザー設定を取得
-	const { theme, mode } = await getUserSettings();
+	// 静的エクスポート時はcookies()を使用できないため、デフォルト値を使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	let theme = "light";
+	let mode: "light" | "dark" | "system" = "system";
+
+	if (!isStaticExport) {
+		try {
+			// サーバーサイドでユーザー設定を取得（既存フックのロジックを再利用）
+			const supabase = await createClient();
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+
+			if (user) {
+				const settings = await getUserSettingsTheme(user.id);
+				theme = settings.theme;
+				mode = settings.mode;
+			}
+		} catch (_error) {
+			// エラー時はデフォルト値を使用
+		}
+	}
+
+	// Get locale and messages for i18n
+	// 静的エクスポート時のgetLocale/getMessagesの動作はi18n/request.tsで制御
+	// i18n/request.tsでENABLE_STATIC_EXPORT時はrequestLocaleをawaitしない
+	const locale = await getLocale();
+	const messages = await getMessages();
+
 	const themeClass = `theme-${theme}`;
 	const darkClass = mode === "dark" ? "dark" : "";
 
 	return (
 		<html
-			lang="ja"
+			lang={locale}
 			className={`${darkClass} ${themeClass}`}
 			suppressHydrationWarning
 		>
@@ -56,9 +87,15 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body className={inter.className} suppressHydrationWarning>
-				<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
-					{children}
-				</Providers>
+				<NextIntlClientProvider messages={messages}>
+					<Providers theme={theme} mode={mode as "light" | "dark" | "system"}>
+						{isStaticExport ? (
+							<ClientThemeProvider>{children}</ClientThemeProvider>
+						) : (
+							children
+						)}
+					</Providers>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

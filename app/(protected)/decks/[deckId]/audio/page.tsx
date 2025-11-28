@@ -3,9 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { AudioPageClient } from "./_components/AudioPageClient";
 
 // Generate static params for dynamic routes
-// Returns empty array to enable dynamic rendering for all routes
 // Phase 6: Next.js静的化とTauri統合 (Issue #157)
+// Note: For static export, dynamic routes require generateStaticParams
+// This page will be excluded from static export build if no params are generated
 export async function generateStaticParams() {
+	// Return empty array - this page will be dynamically rendered at runtime
+	// For static export, Next.js will skip this page if no params are generated
 	return [];
 }
 

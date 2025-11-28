@@ -10,8 +10,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { PluginSecurityAlert } from "@/app/_actions/plugin-security-alerts";
-import { updateAlertStatus } from "@/app/_actions/plugin-security-alerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +27,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useUpdateAlertStatus } from "@/hooks/plugins/useSecurityAlerts";
+import type { PluginSecurityAlert } from "@/lib/plugins/plugin-security/types";
 
 interface SecurityAlertsTableProps {
 	alerts: PluginSecurityAlert[];
@@ -43,6 +43,7 @@ export function SecurityAlertsTable({
 }: SecurityAlertsTableProps) {
 	const router = useRouter();
 	const [updatingAlertId, setUpdatingAlertId] = useState<string | null>(null);
+	const updateAlertStatusMutation = useUpdateAlertStatus();
 
 	const handleStatusChange = async (
 		alertId: string,
@@ -50,13 +51,12 @@ export function SecurityAlertsTable({
 	) => {
 		setUpdatingAlertId(alertId);
 		try {
-			const result = await updateAlertStatus(alertId, newStatus);
-			if (result.success) {
-				toast.success("アラートステータスを更新しました");
-				router.refresh();
-			} else {
-				toast.error(result.message || "ステータスの更新に失敗しました");
-			}
+			await updateAlertStatusMutation.mutateAsync({
+				alertId,
+				status: newStatus,
+			});
+			toast.success("アラートステータスを更新しました");
+			router.refresh();
 		} catch (_error) {
 			toast.error("エラーが発生しました");
 		} finally {

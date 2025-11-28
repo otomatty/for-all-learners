@@ -14,7 +14,6 @@
  * Related Documentation:
  *   ├─ API Route: app/api/batch/image/ocr/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useTranscribeImagesBatch.test.ts
- *   ├─ Original Server Action: app/_actions/transcribeImageBatch.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

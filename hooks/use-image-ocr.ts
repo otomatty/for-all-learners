@@ -5,7 +5,6 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { processGyazoImageOcr } from "@/app/_actions/transcribeImage";
 
 // Server Action用の結果型
 export interface ServerOcrResult {
@@ -112,9 +111,20 @@ export function useImageOcr(
 					});
 				}, 500);
 
-				// Server Actionを呼び出し
+				// API Routeを呼び出し
 				setCurrentStage("OCR処理中...");
-				const serverResult = await processGyazoImageOcr(imageUrl);
+				const response = await fetch("/api/image/ocr", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ imageUrl }),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(errorData.error || "OCR処理に失敗しました");
+				}
+
+				const serverResult = await response.json();
 
 				clearInterval(progressInterval);
 
@@ -261,7 +271,18 @@ export function useQuickImageOcr() {
 			setIsLoading(true);
 
 			try {
-				const result = await processGyazoImageOcr(imageUrl);
+				const response = await fetch("/api/image/ocr", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ imageUrl }),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(errorData.error || "OCR処理に失敗しました");
+				}
+
+				const result = await response.json();
 
 				if (result.success && result.text.length > 0) {
 					onSuccess(result.text);

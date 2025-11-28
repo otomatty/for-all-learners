@@ -1,5 +1,5 @@
-import { getGoalDecks } from "@/app/_actions/goal-decks";
-import { getStudyGoalsByUser } from "@/app/_actions/study_goals";
+import { getStudyGoalsByUserServer } from "@/lib/services/studyGoalsService";
+import { createClient } from "@/lib/supabase/server";
 
 interface GoalsProps {
 	userId: string;
@@ -10,13 +10,39 @@ interface GoalsProps {
  */
 export default async function Goals({ userId }: GoalsProps) {
 	// ユーザーの目標を取得
-	const goals = await getStudyGoalsByUser(userId);
+	const goals = await getStudyGoalsByUserServer(userId);
 	// それぞれの目標に紐づくデッキを取得
+	const supabase = await createClient();
 	const goalsWithDecks = await Promise.all(
-		goals.map(async (goal) => ({
-			...goal,
-			decks: await getGoalDecks(goal.id),
-		})),
+		goals.map(async (goal) => {
+			const { data: deckLinks, error } = await supabase
+				.from("goal_deck_links")
+				.select("*, decks(*)")
+				.eq("goal_id", goal.id);
+
+			if (error) {
+				throw new Error(`デッキの取得に失敗しました: ${error.message}`);
+			}
+
+			return {
+				...goal,
+				decks: (deckLinks || []).map((link) => {
+					const deck = link.decks as {
+						id: string;
+						title: string;
+						card_count?: number;
+					} | null;
+					if (!deck) {
+						return { id: "", title: "", card_count: 0 };
+					}
+					return {
+						id: deck.id,
+						title: deck.title,
+						card_count: deck.card_count ?? 0,
+					};
+				}),
+			};
+		}),
 	);
 	// 日付フォーマットヘルパー
 	const formatDate = (s: string | null): string =>

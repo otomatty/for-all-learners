@@ -11,12 +11,6 @@
 
 import { useCallback, useId, useState } from "react";
 import { toast } from "sonner";
-import {
-	type BatchUpdateResult,
-	batchUpdateMissingThumbnails,
-	batchUpdateUserThumbnails,
-	getThumbnailStats,
-} from "@/app/_actions/batchUpdateThumbnails";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -30,16 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-
-/**
- * サムネイル統計情報の型定義
- */
-interface ThumbnailStats {
-	totalPages: number;
-	withThumbnail: number;
-	withoutThumbnail: number;
-	withImages: number;
-}
+import type { BatchUpdateResult, ThumbnailStats } from "@/types/admin";
 
 /**
  * サムネイル一括更新管理コンポーネント
@@ -64,7 +49,17 @@ export function ThumbnailBatchUpdate() {
 	const loadStats = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const statsData = await getThumbnailStats(targetUserId || undefined);
+			const params = new URLSearchParams();
+			if (targetUserId) {
+				params.append("userId", targetUserId);
+			}
+			const response = await fetch(
+				`/api/admin/batch-update-thumbnails/stats?${params}`,
+			);
+			if (!response.ok) {
+				throw new Error("統計情報の取得に失敗しました");
+			}
+			const statsData: ThumbnailStats = await response.json();
 			setStats(statsData);
 		} catch (_error) {
 			toast.error("統計情報の取得に失敗しました");
@@ -89,10 +84,24 @@ export function ThumbnailBatchUpdate() {
 		setLastResult(null);
 
 		try {
-			const result = targetUserId
-				? await batchUpdateUserThumbnails(targetUserId, dryRun)
-				: await batchUpdateMissingThumbnails(undefined, dryRun, batchLimit);
+			const response = await fetch("/api/admin/batch-update-thumbnails", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					userId: targetUserId || undefined,
+					dryRun,
+					batchLimit,
+				}),
+			});
 
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || "バッチ更新に失敗しました");
+			}
+
+			const result: BatchUpdateResult = await response.json();
 			setLastResult(result);
 			setProgress(100);
 

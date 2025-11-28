@@ -2,19 +2,9 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
-import {
-	getAllUserPromptTemplates,
-	updateUserPromptTemplate,
-} from "@/app/_actions/promptTemplate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-// プロンプト行の型定義
-interface PromptRow {
-	prompt_key: string;
-	template: string;
-}
+import type { PromptRow } from "@/types/prompt-templates";
 
 export default function PromptTemplates() {
 	const [prompts, setPrompts] = useState<PromptRow[]>([]);
@@ -29,8 +19,14 @@ export default function PromptTemplates() {
 	// Load all user prompts
 	useEffect(() => {
 		setPromptsLoading(true);
-		getAllUserPromptTemplates()
-			.then((rows) => {
+		fetch("/api/prompt-templates")
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error("プロンプト一覧の取得に失敗しました");
+				}
+				return res.json();
+			})
+			.then((rows: PromptRow[]) => {
 				setPrompts(rows);
 				if (rows.length > 0) {
 					setSelectedKey(rows[0].prompt_key);
@@ -57,7 +53,19 @@ export default function PromptTemplates() {
 	const handleSave = () => {
 		startSave(async () => {
 			try {
-				await updateUserPromptTemplate(selectedKey, template);
+				const response = await fetch("/api/prompt-templates", {
+					method: "PUT",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						prompt_key: selectedKey,
+						template,
+					}),
+				});
+				if (!response.ok) {
+					throw new Error("保存に失敗しました");
+				}
 				toast.success("プロンプトを保存しました");
 			} catch (_e) {
 				toast.error("保存に失敗しました");
@@ -68,7 +76,20 @@ export default function PromptTemplates() {
 	const handleGenerate = () => {
 		startGenerate(async () => {
 			try {
-				const result = await generatePageInfo(title);
+				const response = await fetch("/api/generate-page-info", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						title,
+						prompt: template,
+					}),
+				});
+				if (!response.ok) {
+					throw new Error("生成に失敗しました");
+				}
+				const result: string = await response.json();
 				setPreview(result);
 			} catch (_e) {
 				toast.error("生成に失敗しました");

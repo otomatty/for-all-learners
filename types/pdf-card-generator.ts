@@ -1,8 +1,3 @@
-import type {
-	EnhancedPdfCard,
-	GeneratedPdfCard,
-} from "@/app/_actions/pdfProcessing";
-
 /**
  * PDF処理モード
  */
@@ -37,6 +32,22 @@ export interface PdfCardGeneratorProps {
  * カード選択状態
  */
 export type CardSelectionState = Record<string, boolean>;
+
+/**
+ * 生成されたPDFカードの基本型
+ */
+export interface GeneratedPdfCard {
+	front_content: string;
+	back_content: string;
+	source_audio_url?: string;
+}
+
+/**
+ * 拡張されたPDFカード（解説付き）
+ */
+export interface EnhancedPdfCard extends GeneratedPdfCard {
+	explanation?: string;
+}
 
 /**
  * 生成されたカードの型

@@ -7,7 +7,6 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ app/_actions/plugins.ts
  *   └─ app/(protected)/settings/plugins/page.tsx
  *
  * Dependencies:

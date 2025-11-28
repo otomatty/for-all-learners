@@ -7,7 +7,6 @@
  *   └─ app/api/ai/generate-cards/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generateCards.ts (generateCardsFromTranscript - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
@@ -15,12 +14,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generateCards");
+vi.mock("@/lib/llm/factory");
+vi.mock("@/lib/llm/prompt-builder");
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import { generateCardsFromTranscript } from "@/app/_actions/generateCards";
+import type { LLMClient } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "../route";
 
@@ -47,8 +49,17 @@ function createMockSupabaseClient(authenticated = true) {
 }
 
 describe("POST /api/ai/generate-cards", () => {
+	const mockLLMClient: LLMClient = {
+		generate: vi.fn(),
+		generateStream: vi.fn(),
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(buildPrompt).mockImplementation((parts) =>
+			Array.isArray(parts) ? parts.join("\n\n") : "",
+		);
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockLLMClient);
 	});
 
 	// ========================================
@@ -60,7 +71,6 @@ describe("POST /api/ai/generate-cards", () => {
 				{
 					front_content: "What is React?",
 					back_content: "A JavaScript library",
-					source_audio_url: "https://example.com/audio.mp3",
 				},
 			];
 
@@ -68,8 +78,8 @@ describe("POST /api/ai/generate-cards", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateCardsFromTranscript).mockResolvedValue(
-				mockCards as never,
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			const request = createMockRequest({
@@ -81,12 +91,16 @@ describe("POST /api/ai/generate-cards", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
-			expect(data.cards).toEqual(mockCards);
-			expect(generateCardsFromTranscript).toHaveBeenCalledWith(
-				"React is a JavaScript library",
+			expect(data.cards).toHaveLength(1);
+			expect(data.cards[0].front_content).toBe("What is React?");
+			expect(data.cards[0].back_content).toBe("A JavaScript library");
+			expect(data.cards[0].source_audio_url).toBe(
 				"https://example.com/audio.mp3",
-				{ provider: undefined, model: undefined },
 			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+				model: undefined,
+			});
 		});
 	});
 
@@ -99,7 +113,6 @@ describe("POST /api/ai/generate-cards", () => {
 				{
 					front_content: "Question",
 					back_content: "Answer",
-					source_audio_url: "https://example.com/audio.mp3",
 				},
 			];
 
@@ -107,8 +120,8 @@ describe("POST /api/ai/generate-cards", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateCardsFromTranscript).mockResolvedValue(
-				mockCards as never,
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(
+				JSON.stringify(mockCards),
 			);
 
 			const request = createMockRequest({
@@ -122,12 +135,11 @@ describe("POST /api/ai/generate-cards", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(200);
-			expect(data.cards).toEqual(mockCards);
-			expect(generateCardsFromTranscript).toHaveBeenCalledWith(
-				"Transcript text",
-				"https://example.com/audio.mp3",
-				{ provider: "openai", model: "gpt-4" },
-			);
+			expect(data.cards).toHaveLength(1);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "openai",
+				model: "gpt-4",
+			});
 		});
 	});
 
@@ -150,7 +162,7 @@ describe("POST /api/ai/generate-cards", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(generateCardsFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -172,7 +184,7 @@ describe("POST /api/ai/generate-cards", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptは必須です");
-			expect(generateCardsFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -195,7 +207,7 @@ describe("POST /api/ai/generate-cards", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptが空です");
-			expect(generateCardsFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -217,7 +229,7 @@ describe("POST /api/ai/generate-cards", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("sourceAudioUrlは必須です");
-			expect(generateCardsFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -241,7 +253,7 @@ describe("POST /api/ai/generate-cards", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toContain("無効なproviderです");
-			expect(generateCardsFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -254,7 +266,7 @@ describe("POST /api/ai/generate-cards", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateCardsFromTranscript).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("API key not configured"),
 			);
 
@@ -280,7 +292,7 @@ describe("POST /api/ai/generate-cards", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateCardsFromTranscript).mockRejectedValue(
+			vi.mocked(mockLLMClient.generate).mockRejectedValue(
 				new Error("カード生成に失敗しました"),
 			);
 
@@ -293,7 +305,7 @@ describe("POST /api/ai/generate-cards", () => {
 			const data = await response.json();
 
 			expect(response.status).toBe(500);
-			expect(data.error).toBe("カード生成に失敗しました");
+			expect(data.error).toContain("カード生成に失敗しました");
 		});
 	});
 });

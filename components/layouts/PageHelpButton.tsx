@@ -3,8 +3,7 @@
 import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { toggleHelpVideoAudioSetting } from "@/app/_actions/user_settings";
+import { useEffect, useState } from "react";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +11,10 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+	useUpdateUserSettings,
+	useUserSettings,
+} from "@/hooks/user_settings/useUserSettings";
 import { pageHelpConfig } from "@/lib/pageHelpConfig";
 
 /**
@@ -26,9 +29,21 @@ interface PageHelpButtonProps {
 
 export function PageHelpButton({ playAudio = false }: PageHelpButtonProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	// 音声設定をローカル state で管理
-	const [localPlayAudio, setLocalPlayAudio] = useState(playAudio);
+	const { data: userSettings } = useUserSettings();
+	const updateUserSettings = useUpdateUserSettings();
+	// 音声設定をローカル state で管理（初期値はuserSettingsから取得）
+	const [localPlayAudio, setLocalPlayAudio] = useState(
+		userSettings?.play_help_video_audio ?? playAudio,
+	);
 	const pathname = usePathname();
+
+	// userSettingsが変更されたときにlocalPlayAudioを更新
+	useEffect(() => {
+		if (userSettings?.play_help_video_audio !== undefined) {
+			setLocalPlayAudio(userSettings.play_help_video_audio);
+		}
+	}, [userSettings?.play_help_video_audio]);
+
 	// 動的ルート含め、セグメントごとにマッチング
 	const matchedRoute = Object.keys(pageHelpConfig).find((route) => {
 		// パスを / で分割して空文字を除去
@@ -44,11 +59,14 @@ export function PageHelpButton({ playAudio = false }: PageHelpButtonProps) {
 
 	if (!config) return null;
 
-	// サーバーアクションで設定をトグル
-	async function handleToggleAudio() {
-		const updated = await toggleHelpVideoAudioSetting(localPlayAudio);
-		setLocalPlayAudio(updated);
-	}
+	// 設定をトグル
+	const handleToggleAudio = () => {
+		const newValue = !localPlayAudio;
+		setLocalPlayAudio(newValue);
+		updateUserSettings.mutate({
+			play_help_video_audio: newValue,
+		});
+	};
 
 	return (
 		<>
@@ -68,7 +86,6 @@ export function PageHelpButton({ playAudio = false }: PageHelpButtonProps) {
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}
 				dialogTitle="操作ガイド"
-				className="!max-w-5xl"
 			>
 				<div className="space-y-4">
 					{config.mode === "video" ? (

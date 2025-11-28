@@ -14,8 +14,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteDeck } from "@/app/_actions/decks";
-import { duplicateDeck } from "@/app/_actions/duplicateDeck";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import {
 	AlertDialog,
@@ -35,6 +33,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDeleteDeck, useDuplicateDeck } from "@/hooks/decks";
 import { DeckForm } from "../../../../../components/decks/DeckForm";
 import { CardForm } from "./CardForm";
 
@@ -58,9 +57,12 @@ export default function ActionMenu({
 	const [showCardFormDialog, setShowCardFormDialog] = useState(false);
 	const [showDeckFormDialog, setShowDeckFormDialog] = useState(false);
 
+	const deleteDeckMutation = useDeleteDeck();
+	const duplicateDeckMutation = useDuplicateDeck();
+
 	const handleDelete = async () => {
 		try {
-			await deleteDeck(deckId);
+			await deleteDeckMutation.mutateAsync(deckId);
 			toast.success("デッキを削除しました");
 			router.push("/decks");
 		} catch (_err) {
@@ -73,10 +75,7 @@ export default function ActionMenu({
 	const handleDuplicate = async () => {
 		try {
 			toast.loading("デッキを複製しています...");
-			const newDeck = await duplicateDeck({
-				originalDeckId: deckId,
-				newTitle: `${deckTitle} copy`,
-			});
+			const newDeck = await duplicateDeckMutation.mutateAsync(deckId);
 			toast.dismiss();
 			toast.success(`デッキ「${deckTitle}」を複製しました`);
 			router.push(`/decks/${newDeck.id}`);

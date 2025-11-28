@@ -1,11 +1,8 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { getPageBacklinks } from "@/app/_actions/pages/get-backlinks";
 import { PageCard } from "@/components/notes/PageCard";
 import { Badge } from "@/components/ui/badge";
+import { usePageBacklinks } from "@/hooks/pages/usePageBacklinks";
 import { extractTextFromTiptap } from "./extract-text-from-tiptap";
 
 /**
@@ -17,7 +14,6 @@ import { extractTextFromTiptap } from "./extract-text-from-tiptap";
  *   └─ app/(protected)/pages/[id]/_components/page-tabs.tsx
  *
  * Dependencies (依存先):
- *   ├─ @/app/_actions/pages/get-backlinks
  *   ├─ @/components/notes/PageCard
  *   ├─ ./extract-text-from-tiptap
  *   └─ sonner
@@ -30,40 +26,8 @@ interface BacklinksGridProps {
 	pageId: string;
 }
 
-interface BacklinkPage {
-	id: string;
-	title: string;
-	thumbnail_url: string | null;
-	content_tiptap: JSONContent;
-	updated_at: string | null;
-}
-
 export default function BacklinksGrid({ pageId }: BacklinksGridProps) {
-	const [backlinks, setBacklinks] = useState<BacklinkPage[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [hasLoaded, setHasLoaded] = useState(false);
-
-	useEffect(() => {
-		// Already loaded, skip
-		if (hasLoaded) return;
-
-		const fetchBacklinks = async () => {
-			setLoading(true);
-			const { data, error } = await getPageBacklinks(pageId);
-
-			if (error) {
-				toast.error(error);
-				setBacklinks([]);
-			} else {
-				setBacklinks(data || []);
-			}
-
-			setLoading(false);
-			setHasLoaded(true);
-		};
-
-		fetchBacklinks();
-	}, [pageId, hasLoaded]);
+	const { data: backlinks = [], isLoading: loading } = usePageBacklinks(pageId);
 
 	if (loading) {
 		return (

@@ -21,8 +21,8 @@
  *   └─ Plan: docs/03_plans/plugin-system/phase4-development-tools.md
  */
 
-import { getAllPluginStorage } from "@/app/_actions/plugin-storage";
 import logger from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
 import type { LoadedPlugin } from "@/types/plugin";
 import { getCalendarExtensions } from "./calendar-registry";
 import { getRegisteredCommands } from "./plugin-api";
@@ -322,6 +322,37 @@ export function getPluginRegistryState(pluginId: string): PluginRegistryState {
  * @param pluginId Plugin ID
  * @returns Configuration information or null if error
  */
+async function getAllPluginStorage(
+	pluginId: string,
+): Promise<Record<string, unknown>> {
+	const supabase = createClient();
+	const {
+		data: { user },
+		error: userError,
+	} = await supabase.auth.getUser();
+
+	if (userError || !user) {
+		throw new Error("User not authenticated");
+	}
+
+	const { data, error } = await supabase
+		.from("plugin_storage")
+		.select("key, value")
+		.eq("user_id", user.id)
+		.eq("plugin_id", pluginId);
+
+	if (error) {
+		throw error;
+	}
+
+	const config: Record<string, unknown> = {};
+	for (const item of data || []) {
+		config[item.key] = item.value;
+	}
+
+	return config;
+}
+
 export async function getPluginConfigInfo(
 	pluginId: string,
 ): Promise<PluginConfigInfo | null> {

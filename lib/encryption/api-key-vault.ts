@@ -4,7 +4,6 @@
  * DEPENDENCY MAP:
  *
  * Parents (使用先):
- *   ├─ app/_actions/ai/apiKey.ts (Phase 0.4)
  *   └─ lib/mastra/client.ts (Phase 0.3)
  *
  * Dependencies (依存先):

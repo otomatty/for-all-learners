@@ -162,6 +162,12 @@ const handleAnchorClick = async (
 			// Use onShowCreatePageDialog callback if provided
 			if (context.options.onShowCreatePageDialog) {
 				context.options.onShowCreatePageDialog(newTitle, async () => {
+					if (!userId) {
+						logger.error({}, "UserId is required but not available");
+						toast.error("ユーザーIDが取得できませんでした");
+						return;
+					}
+
 					try {
 						// Import createPageFromLink dynamically
 						const { createPageFromLink } = await import(
@@ -171,7 +177,7 @@ const handleAnchorClick = async (
 						// Create page and navigate
 						const result = await createPageFromLink(
 							newTitle,
-							userId!,
+							userId,
 							context.options.noteSlug,
 						);
 
@@ -193,6 +199,12 @@ const handleAnchorClick = async (
 				});
 			} else {
 				// Fallback: Create page directly without confirmation dialog
+				if (!userId) {
+					logger.error({}, "UserId is required but not available");
+					toast.error("ユーザーIDが取得できませんでした");
+					return true;
+				}
+
 				try {
 					// Import createPageFromLink dynamically
 					const { createPageFromLink } = await import(
@@ -202,7 +214,7 @@ const handleAnchorClick = async (
 					// Create page and navigate
 					const result = await createPageFromLink(
 						newTitle,
-						userId!,
+						userId,
 						context.options.noteSlug,
 					);
 

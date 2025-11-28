@@ -7,7 +7,8 @@
  *   └─ app/api/ai/generate-title/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generateTitle.ts (generateTitleFromTranscript - mocked)
+ *   ├─ lib/llm/factory.ts (createClientWithUserKey - mocked)
+ *   ├─ lib/llm/prompt-builder.ts (buildPrompt - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
@@ -15,12 +16,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generateTitle");
+vi.mock("@/lib/llm/factory");
+vi.mock("@/lib/llm/prompt-builder");
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import { generateTitleFromTranscript } from "@/app/_actions/generateTitle";
+import type { LLMClient } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "../route";
 
@@ -47,8 +51,17 @@ function createMockSupabaseClient(authenticated = true) {
 }
 
 describe("POST /api/ai/generate-title", () => {
+	const mockLLMClient: LLMClient = {
+		generate: vi.fn(),
+		generateStream: vi.fn(),
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(buildPrompt).mockImplementation((parts) =>
+			Array.isArray(parts) ? parts.join("\n\n") : "",
+		);
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockLLMClient);
 	});
 
 	// ========================================
@@ -62,7 +75,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockResolvedValue(mockTitle);
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(mockTitle);
 
 			const request = createMockRequest({
 				transcript: "React Hooksについて説明します...",
@@ -73,9 +86,9 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.title).toBe(mockTitle);
-			expect(generateTitleFromTranscript).toHaveBeenCalledWith(
-				"React Hooksについて説明します...",
-			);
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
+			});
 		});
 	});
 
@@ -97,7 +110,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -117,7 +130,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptは必須です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -139,7 +152,7 @@ describe("POST /api/ai/generate-title", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("transcriptが空です");
-			expect(generateTitleFromTranscript).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -152,7 +165,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("API key not configured"),
 			);
 
@@ -177,7 +190,7 @@ describe("POST /api/ai/generate-title", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generateTitleFromTranscript).mockRejectedValue(
+			vi.mocked(mockLLMClient.generate).mockRejectedValue(
 				new Error("タイトル生成に失敗しました"),
 			);
 

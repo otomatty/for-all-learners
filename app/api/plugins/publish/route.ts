@@ -12,7 +12,6 @@
  *   └─ node:fs, node:path (filesystem operations)
  *
  * Related Documentation:
- *   ├─ Original Server Action: app/_actions/plugin-publish.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

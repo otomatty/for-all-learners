@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeLogEntry } from "@/app/_actions/changelog";
+import type { ChangeLogEntry } from "@/hooks/changelog";
 import { useChangelogData } from "@/hooks/changelog";
 import { ChangelogEntry } from "./ChangelogEntry";
 

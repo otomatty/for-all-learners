@@ -1,5 +1,4 @@
-import { getCardsByUser } from "@/app/_actions/cards";
-import { getDecksByUser, getSharedDecksByUser } from "@/app/_actions/decks";
+import { createClient } from "@/lib/supabase/server";
 
 interface DecksAndCardsProps {
 	userId: string;
@@ -9,9 +8,42 @@ interface DecksAndCardsProps {
  * Displays user's own decks, shared decks, and card statistics.
  */
 export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
-	const decks = await getDecksByUser(userId);
-	const sharedDecks = await getSharedDecksByUser(userId);
-	const cards = await getCardsByUser(userId);
+	const supabase = await createClient();
+
+	// Get user's own decks
+	const { data: decks, error: decksError } = await supabase
+		.from("decks")
+		.select("*")
+		.eq("user_id", userId)
+		.order("created_at", { ascending: false });
+
+	if (decksError) {
+		throw new Error(`デッキの取得に失敗しました: ${decksError.message}`);
+	}
+
+	// Get shared decks
+	const { data: sharedDecks, error: sharedDecksError } = await supabase
+		.from("deck_shares")
+		.select("*, decks(*)")
+		.eq("shared_with_user_id", userId)
+		.order("created_at", { ascending: false });
+
+	if (sharedDecksError) {
+		throw new Error(
+			`共有デッキの取得に失敗しました: ${sharedDecksError.message}`,
+		);
+	}
+
+	// Get cards
+	const { data: cards, error: cardsError } = await supabase
+		.from("cards")
+		.select("*")
+		.eq("user_id", userId)
+		.order("created_at", { ascending: false });
+
+	if (cardsError) {
+		throw new Error(`カードの取得に失敗しました: ${cardsError.message}`);
+	}
 
 	// 日付文字列のフォーマット用ヘルパー
 	const formatDate = (dateString: string | null): string =>
@@ -23,7 +55,7 @@ export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
 			{/* 自作デッキ */}
 			<section>
 				<h3 className="text-md font-medium mb-2">自作デッキ</h3>
-				{decks.length === 0 ? (
+				{(decks?.length ?? 0) === 0 ? (
 					<p>デッキがありません。</p>
 				) : (
 					<table className="w-full table-auto border-collapse">
@@ -37,7 +69,7 @@ export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
 							</tr>
 						</thead>
 						<tbody>
-							{decks.map((deck) => (
+							{(decks || []).map((deck) => (
 								<tr key={deck.id}>
 									<td>{deck.title}</td>
 									<td>{deck.description}</td>
@@ -53,7 +85,7 @@ export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
 			{/* 共有デッキ */}
 			<section>
 				<h3 className="text-md font-medium mb-2">共有デッキ</h3>
-				{sharedDecks.length === 0 ? (
+				{(sharedDecks?.length ?? 0) === 0 ? (
 					<p>共有デッキがありません。</p>
 				) : (
 					<table className="w-full table-auto border-collapse">
@@ -65,9 +97,9 @@ export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
 							</tr>
 						</thead>
 						<tbody>
-							{sharedDecks.map((share) => (
+							{(sharedDecks || []).map((share) => (
 								<tr key={share.id}>
-									<td>{share.decks.title}</td>
+									<td>{(share.decks as { title: string }).title}</td>
 									<td>{share.permission_level}</td>
 									<td>{formatDate(share.created_at)}</td>
 								</tr>
@@ -79,10 +111,10 @@ export default async function DecksAndCards({ userId }: DecksAndCardsProps) {
 			{/* カード情報 */}
 			<section>
 				<h3 className="text-md font-medium mb-2">カード情報</h3>
-				<p>合計カード数: {cards.length}</p>
-				{cards.length > 0 && (
+				<p>合計カード数: {cards?.length ?? 0}</p>
+				{(cards?.length ?? 0) > 0 && (
 					<ul className="list-disc ml-5">
-						{cards.slice(0, 5).map((c) => (
+						{(cards || []).slice(0, 5).map((c) => (
 							<li key={c.id}>{c.id}</li>
 						))}
 					</ul>

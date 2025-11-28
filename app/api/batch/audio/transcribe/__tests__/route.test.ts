@@ -5,7 +5,6 @@
  *
  * Related Files:
  * - Implementation: app/api/batch/audio/transcribe/route.ts
- * - Original Server Action: app/_actions/audioBatchProcessing.ts
  */
 
 import { NextRequest } from "next/server";

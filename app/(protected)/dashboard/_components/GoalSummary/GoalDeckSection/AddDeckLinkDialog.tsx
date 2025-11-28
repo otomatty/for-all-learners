@@ -1,13 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { createDeckAction } from "@/app/_actions/decks";
-import type { Deck } from "@/app/_actions/goal-decks";
-import {
-	addGoalDeckLink,
-	getAvailableDecksForGoal,
-} from "@/app/_actions/goal-decks";
+import { useCallback, useEffect, useState } from "react";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +21,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useCreateDeck } from "@/hooks/decks";
+import {
+	useAddGoalDeckLink,
+	useGetAvailableDecksForGoal,
+} from "@/hooks/goal_decks";
+import { createClient } from "@/lib/supabase/client";
 import { DecksTableSkeleton } from "./DecksTableSkeleton";
 
 interface AddDeckLinkDialogProps {
@@ -45,13 +45,17 @@ export function AddDeckLinkDialog({
 	triggerText = "デッキを追加",
 }: AddDeckLinkDialogProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const [availableDecks, setAvailableDecks] = useState<Deck[]>([]);
 	const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState<string>("");
 	const [sortBy, setSortBy] = useState<string>("updated_at_desc");
 	const [newDeckTitle, setNewDeckTitle] = useState<string>("");
 	const [isCreatingNew, setIsCreatingNew] = useState(false);
-	const [isPending, startTransition] = useTransition();
+
+	const { data: availableDecks = [], isLoading: isLoadingDecks } =
+		useGetAvailableDecksForGoal(goalId);
+	const addGoalDeckLinkMutation = useAddGoalDeckLink();
+	const createDeckMutation = useCreateDeck();
+	const supabase = createClient();
 
 	useEffect(() => {
 		if (isDialogOpen) {
@@ -59,44 +63,48 @@ export function AddDeckLinkDialog({
 			setIsCreatingNew(false);
 			setSearchQuery("");
 			setSortBy("updated_at_desc");
-			// Open時のみ実行
-			startTransition(async () => {
-				const decks = await getAvailableDecksForGoal(goalId);
-				setAvailableDecks(decks);
-			});
+			setSelectedDeckIds([]);
 		}
-	}, [goalId, isDialogOpen]);
+	}, [isDialogOpen]);
 
-	const handleAddSelected = useCallback(() => {
-		startTransition(async () => {
-			for (const deckId of selectedDeckIds) {
-				await addGoalDeckLink(goalId, deckId);
-			}
-			onSuccess();
-			setIsDialogOpen(false);
-			const decks = await getAvailableDecksForGoal(goalId);
-			setAvailableDecks(decks);
-			setSelectedDeckIds([]);
-		});
-	}, [goalId, selectedDeckIds, onSuccess]);
+	const handleAddSelected = useCallback(async () => {
+		for (const deckId of selectedDeckIds) {
+			await addGoalDeckLinkMutation.mutateAsync({ goalId, deckId });
+		}
+		onSuccess();
+		setIsDialogOpen(false);
+		setSelectedDeckIds([]);
+	}, [goalId, selectedDeckIds, onSuccess, addGoalDeckLinkMutation]);
 
-	const handleCreate = useCallback(() => {
-		startTransition(async () => {
-			const formData = new FormData();
-			formData.append("title", newDeckTitle);
-			const newDeck = await createDeckAction(formData);
-			if (!newDeck || !newDeck.id) {
-				throw new Error("新規デッキの作成に失敗しました。");
-			}
-			await addGoalDeckLink(goalId, newDeck.id);
-			onSuccess();
-			setIsDialogOpen(false);
-			const decks = await getAvailableDecksForGoal(goalId);
-			setAvailableDecks(decks);
-			setSelectedDeckIds([]);
-			setNewDeckTitle("");
+	const handleCreate = useCallback(async () => {
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
+		if (userError || !user) {
+			throw new Error("ユーザー認証に失敗しました");
+		}
+
+		const newDeck = await createDeckMutation.mutateAsync({
+			title: newDeckTitle,
+			user_id: user.id,
 		});
-	}, [goalId, newDeckTitle, onSuccess]);
+		if (!newDeck || !newDeck.id) {
+			throw new Error("新規デッキの作成に失敗しました。");
+		}
+		await addGoalDeckLinkMutation.mutateAsync({ goalId, deckId: newDeck.id });
+		onSuccess();
+		setIsDialogOpen(false);
+		setSelectedDeckIds([]);
+		setNewDeckTitle("");
+	}, [
+		goalId,
+		newDeckTitle,
+		onSuccess,
+		createDeckMutation,
+		addGoalDeckLinkMutation,
+		supabase,
+	]);
 
 	// フィルタリングとソート
 	const filteredAndSortedDecks = availableDecks
@@ -151,7 +159,6 @@ export function AddDeckLinkDialog({
 				open={isDialogOpen}
 				onOpenChange={setIsDialogOpen}
 				dialogTitle="デッキ追加"
-				className="!max-w-2xl"
 			>
 				<div className="space-y-2 p-4 max-h-[70vh] overflow-auto">
 					{!isCreatingNew && (
@@ -192,7 +199,9 @@ export function AddDeckLinkDialog({
 									</SelectContent>
 								</Select>
 							</div>
-							{isPending ? (
+							{isLoadingDecks ||
+							addGoalDeckLinkMutation.isPending ||
+							createDeckMutation.isPending ? (
 								<DecksTableSkeleton />
 							) : (
 								<div className="max-h-[300px] overflow-y-auto border rounded-md">
@@ -248,9 +257,11 @@ export function AddDeckLinkDialog({
 															{deck.title}
 														</TableCell>
 														<TableCell className="hidden md:table-cell px-2 md:px-4">
-															{new Date(deck.created_at).toLocaleDateString(
-																"ja-JP",
-															)}
+															{deck.created_at
+																? new Date(deck.created_at).toLocaleDateString(
+																		"ja-JP",
+																	)
+																: "なし"}
 														</TableCell>
 														<TableCell className="hidden md:table-cell px-2 md:px-4">
 															{deck.updated_at
@@ -271,7 +282,10 @@ export function AddDeckLinkDialog({
 							)}
 							<div className="flex justify-end">
 								<Button
-									disabled={isPending || selectedDeckIds.length === 0}
+									disabled={
+										addGoalDeckLinkMutation.isPending ||
+										selectedDeckIds.length === 0
+									}
 									onClick={handleAddSelected}
 								>
 									選択したデッキを追加
@@ -317,7 +331,11 @@ export function AddDeckLinkDialog({
 									キャンセル
 								</Button>
 								<Button
-									disabled={isPending || !newDeckTitle}
+									disabled={
+										createDeckMutation.isPending ||
+										addGoalDeckLinkMutation.isPending ||
+										!newDeckTitle
+									}
 									onClick={handleCreate}
 								>
 									デッキを作成して追加

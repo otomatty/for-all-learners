@@ -7,8 +7,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ lib/plugins/plugin-api.ts
- *   └─ app/_actions/activity_calendar.ts
+ *   └─ lib/plugins/plugin-api.ts
  *
  * Dependencies:
  *   ├─ lib/plugins/types.ts (Calendar extension types)

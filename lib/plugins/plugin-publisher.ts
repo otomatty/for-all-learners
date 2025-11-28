@@ -7,7 +7,6 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this):
- *   ├─ app/_actions/plugin-publish.ts
  *   └─ scripts/plugins/publish-plugin.ts
  *
  * Dependencies:

@@ -2,12 +2,8 @@
 
 import { ExternalLink, FileText, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-	createNoteDeckLink,
-	removeNoteDeckLink,
-} from "@/app/_actions/note-deck-links";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -29,6 +25,10 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+	useCreateNoteDeckLink,
+	useRemoveNoteDeckLink,
+} from "@/hooks/decks/useNoteDeckLinks";
 import type { Database } from "@/types/database.types";
 
 type Note = Database["public"]["Tables"]["notes"]["Row"];
@@ -44,11 +44,15 @@ export function DeckNoteManager({
 	linkedNotes,
 	availableNotes,
 }: DeckNoteManagerProps) {
-	const [isPending, startTransition] = useTransition();
+	const createLinkMutation = useCreateNoteDeckLink();
+	const removeLinkMutation = useRemoveNoteDeckLink();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 	const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+
+	const isPending =
+		createLinkMutation.isPending || removeLinkMutation.isPending;
 
 	const filteredAvailableNotes = availableNotes.filter(
 		(note) =>
@@ -56,19 +60,20 @@ export function DeckNoteManager({
 			note.description?.toLowerCase().includes(searchTerm.toLowerCase()),
 	);
 
-	const handleLinkNote = (noteId: string) => {
-		startTransition(async () => {
-			try {
-				await createNoteDeckLink({ note_id: noteId, deck_id: deckId });
-				toast.success("ノートをリンクしました");
-				setIsDialogOpen(false);
-				setSearchTerm("");
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "リンクに失敗しました";
-				toast.error(errorMessage);
-			}
-		});
+	const handleLinkNote = async (noteId: string) => {
+		try {
+			await createLinkMutation.mutateAsync({
+				note_id: noteId,
+				deck_id: deckId,
+			});
+			toast.success("ノートをリンクしました");
+			setIsDialogOpen(false);
+			setSearchTerm("");
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "リンクに失敗しました";
+			toast.error(errorMessage);
+		}
 	};
 
 	const handleUnlinkNote = (noteId: string) => {
@@ -76,21 +81,22 @@ export function DeckNoteManager({
 		setDeleteConfirmOpen(true);
 	};
 
-	const confirmUnlinkNote = () => {
+	const confirmUnlinkNote = async () => {
 		if (!noteToDelete) return;
 
-		startTransition(async () => {
-			try {
-				await removeNoteDeckLink(noteToDelete, deckId);
-				toast.success("ノートのリンクを解除しました");
-				setDeleteConfirmOpen(false);
-				setNoteToDelete(null);
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "リンク解除に失敗しました";
-				toast.error(errorMessage);
-			}
-		});
+		try {
+			await removeLinkMutation.mutateAsync({
+				noteId: noteToDelete,
+				deckId,
+			});
+			toast.success("ノートのリンクを解除しました");
+			setDeleteConfirmOpen(false);
+			setNoteToDelete(null);
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "リンク解除に失敗しました";
+			toast.error(errorMessage);
+		}
 	};
 
 	const getVisibilityBadge = (visibility: string) => {

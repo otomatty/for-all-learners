@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { addDeckStudyLog } from "@/app/_actions/goal-decks";
+import { useState } from "react";
 import { ResponsiveDialog } from "@/components/layouts/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAddDeckStudyLog } from "@/hooks/goal_decks";
 
 interface AddStudySessionDialogProps {
 	deckId: string;
@@ -21,8 +21,8 @@ export function AddStudySessionDialog({
 	const [date, setDate] = useState<string>(
 		new Date().toISOString().slice(0, 10),
 	);
-	const [isPending, startTransition] = useTransition();
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const addDeckStudyLogMutation = useAddDeckStudyLog();
 
 	return (
 		<>
@@ -39,14 +39,12 @@ export function AddStudySessionDialog({
 						onChange={(e) => setDate(e.currentTarget.value)}
 					/>
 					<Button
-						disabled={isPending}
-						onClick={() =>
-							startTransition(async () => {
-								await addDeckStudyLog(deckId, date);
-								onSuccess();
-								setIsDialogOpen(false); // Close dialog on success
-							})
-						}
+						disabled={addDeckStudyLogMutation.isPending}
+						onClick={async () => {
+							await addDeckStudyLogMutation.mutateAsync({ deckId, date });
+							onSuccess();
+							setIsDialogOpen(false); // Close dialog on success
+						}}
 					>
 						登録
 					</Button>

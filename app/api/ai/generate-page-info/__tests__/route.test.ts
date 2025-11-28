@@ -7,7 +7,6 @@
  *   └─ app/api/ai/generate-page-info/route.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/generatePageInfo.ts (generatePageInfo - mocked)
  *   ├─ lib/supabase/server.ts (createClient - mocked)
  *   └─ lib/logger.ts (logger - mocked)
  */
@@ -15,12 +14,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies BEFORE imports
-vi.mock("@/app/_actions/generatePageInfo");
+vi.mock("@/lib/llm/factory");
+vi.mock("@/lib/llm/prompt-builder");
 vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/logger");
 
 import type { NextRequest } from "next/server";
-import { generatePageInfo } from "@/app/_actions/generatePageInfo";
+import type { LLMClient } from "@/lib/llm/client";
+import { createClientWithUserKey } from "@/lib/llm/factory";
+import { buildPrompt } from "@/lib/llm/prompt-builder";
 import { createClient } from "@/lib/supabase/server";
 import { POST } from "../route";
 
@@ -47,8 +49,17 @@ function createMockSupabaseClient(authenticated = true) {
 }
 
 describe("POST /api/ai/generate-page-info", () => {
+	const mockLLMClient: LLMClient = {
+		generate: vi.fn(),
+		generateStream: vi.fn(),
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(buildPrompt).mockImplementation((parts) =>
+			Array.isArray(parts) ? parts.join("\n\n") : "",
+		);
+		vi.mocked(createClientWithUserKey).mockResolvedValue(mockLLMClient);
 	});
 
 	// ========================================
@@ -56,13 +67,13 @@ describe("POST /api/ai/generate-page-info", () => {
 	// ========================================
 	describe("TC-001: Basic page info generation", () => {
 		it("should generate page info successfully", async () => {
-			const mockMarkdown = "# React Hooks\n\nReact Hooksは...";
+			const mockMarkdown = "## React Hooks\n\nReact Hooksは...";
 
 			vi.mocked(createClient).mockResolvedValue(
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generatePageInfo).mockResolvedValue(mockMarkdown);
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(mockMarkdown);
 
 			const request = createMockRequest({
 				title: "React Hooks",
@@ -73,8 +84,8 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.markdown).toBe(mockMarkdown);
-			expect(generatePageInfo).toHaveBeenCalledWith("React Hooks", {
-				provider: undefined,
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
+				provider: "google",
 				model: undefined,
 			});
 		});
@@ -85,13 +96,13 @@ describe("POST /api/ai/generate-page-info", () => {
 	// ========================================
 	describe("TC-002: Provider specification", () => {
 		it("should generate page info with specified provider", async () => {
-			const mockMarkdown = "# Title\n\nContent";
+			const mockMarkdown = "## Title\n\nContent";
 
 			vi.mocked(createClient).mockResolvedValue(
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generatePageInfo).mockResolvedValue(mockMarkdown);
+			vi.mocked(mockLLMClient.generate).mockResolvedValue(mockMarkdown);
 
 			const request = createMockRequest({
 				title: "Title",
@@ -104,7 +115,7 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(200);
 			expect(data.markdown).toBe(mockMarkdown);
-			expect(generatePageInfo).toHaveBeenCalledWith("Title", {
+			expect(createClientWithUserKey).toHaveBeenCalledWith({
 				provider: "openai",
 				model: "gpt-4",
 			});
@@ -129,7 +140,7 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(401);
 			expect(data.error).toBe("認証が必要です");
-			expect(generatePageInfo).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -149,7 +160,7 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("titleは必須です");
-			expect(generatePageInfo).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -171,7 +182,7 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toBe("titleが空です");
-			expect(generatePageInfo).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -194,7 +205,7 @@ describe("POST /api/ai/generate-page-info", () => {
 
 			expect(response.status).toBe(400);
 			expect(data.error).toContain("無効なproviderです");
-			expect(generatePageInfo).not.toHaveBeenCalled();
+			expect(createClientWithUserKey).not.toHaveBeenCalled();
 		});
 	});
 
@@ -207,7 +218,7 @@ describe("POST /api/ai/generate-page-info", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generatePageInfo).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("API key not configured"),
 			);
 
@@ -232,7 +243,7 @@ describe("POST /api/ai/generate-page-info", () => {
 				createMockSupabaseClient() as never,
 			);
 
-			vi.mocked(generatePageInfo).mockRejectedValue(
+			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error("生成に失敗しました"),
 			);
 

@@ -3,17 +3,6 @@
 import { atom, useAtom } from "jotai";
 import { Copy, Globe, Link, Lock, Trash2, UserPlus } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import {
-	generateNoteShareLink,
-	getNoteShareLinks,
-	getNoteShares,
-	joinNoteByLink,
-	joinNotePublic,
-	revokeNoteShareLink,
-	shareNote,
-	unshareNote,
-	updateNote,
-} from "@/app/_actions/notes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +25,15 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useGenerateNoteShareLink } from "@/hooks/notes/useGenerateNoteShareLink";
+import { useJoinNoteByLink } from "@/hooks/notes/useJoinNoteByLink";
+import { useJoinNotePublic } from "@/hooks/notes/useJoinNotePublic";
+import { useNoteShareLinks } from "@/hooks/notes/useNoteShareLinks";
+import { useNoteShares } from "@/hooks/notes/useNoteShares";
+import { useRevokeNoteShareLink } from "@/hooks/notes/useRevokeNoteShareLink";
+import { useShareNote } from "@/hooks/notes/useShareNote";
+import { useUnshareNote } from "@/hooks/notes/useUnshareNote";
+import { useUpdateNote } from "@/hooks/notes/useUpdateNote";
 import { createClient } from "@/lib/supabase/client";
 
 // ウィザードの現在ステップを管理するAtom
@@ -67,26 +65,22 @@ export function ShareSettingsModal({
 	const open = controlledOpen ?? internalOpen;
 	const setOpen = controlledOnOpenChange ?? setInternalOpen;
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-	const [shares, setShares] = useState<
-		Array<{
-			shared_with_user_id: string;
-			permission_level: string;
-			created_at: string;
-		}>
-	>([]);
-	const [links, setLinks] = useState<
-		Array<{
-			token: string;
-			permission_level: string;
-			created_at: string | null;
-			expires_at: string | null;
-		}>
-	>([]);
 	const [visibility, setVisibility] = useState(note.visibility);
 	const [inviteUserId, setInviteUserId] = useState("");
 	const [linkTokenInput, setLinkTokenInput] = useState("");
 	// ウィザード管理ステップ
 	const [currentStep, setCurrentStep] = useAtom(currentStepAtom);
+
+	// Hooks
+	const { data: shares = [] } = useNoteShares(note.id);
+	const { data: links = [] } = useNoteShareLinks(note.id);
+	const generateLink = useGenerateNoteShareLink();
+	const revokeLink = useRevokeNoteShareLink();
+	const shareNoteMutation = useShareNote();
+	const unshareNoteMutation = useUnshareNote();
+	const updateNoteMutation = useUpdateNote();
+	const joinByLink = useJoinNoteByLink();
+	const joinPublic = useJoinNotePublic();
 
 	useEffect(() => {
 		const supabase = createClient();
@@ -102,18 +96,7 @@ export function ShareSettingsModal({
 		fetchUser();
 	}, []);
 
-	useEffect(() => {
-		if (open) {
-			(async () => {
-				try {
-					const s = await getNoteShares(note.id);
-					setShares(s || []);
-					const l = await getNoteShareLinks(note.id);
-					setLinks(l || []);
-				} catch (_err) {}
-			})();
-		}
-	}, [open, note.id]);
+	// Shares and links are now fetched via hooks, no need for useEffect
 
 	// モーダル開くたびにステップをリセット
 	useEffect(() => {
@@ -145,44 +128,51 @@ export function ShareSettingsModal({
 	}, [visibility]);
 
 	const handleVisibilityChange = async (value: typeof visibility) => {
-		await updateNote(note.id, { visibility: value });
-		setVisibility(value);
+		updateNoteMutation.mutate(
+			{ id: note.id, payload: { visibility: value } },
+			{
+				onSuccess: () => {
+					setVisibility(value);
+				},
+			},
+		);
 	};
 
 	const handleInvite = async () => {
 		if (!inviteUserId) return;
-		await shareNote(note.id, inviteUserId, "viewer");
-		setInviteUserId("");
-		const s = await getNoteShares(note.id);
-		setShares(s || []);
+		shareNoteMutation.mutate(
+			{ noteId: note.id, userId: inviteUserId, permission: "viewer" },
+			{
+				onSuccess: () => {
+					setInviteUserId("");
+				},
+			},
+		);
 	};
 
 	const handleUnshare = async (userId: string) => {
-		await unshareNote(note.id, userId);
-		const s = await getNoteShares(note.id);
-		setShares(s || []);
+		unshareNoteMutation.mutate({ noteId: note.id, userId });
 	};
 
 	const handleGenerateLink = async () => {
-		await generateNoteShareLink(note.id, "viewer");
-		const l = await getNoteShareLinks(note.id);
-		setLinks(l || []);
+		generateLink.mutate({ noteId: note.id, permission: "viewer" });
 	};
 
 	const handleRevokeLink = async (token: string) => {
-		await revokeNoteShareLink(token);
-		const l = await getNoteShareLinks(note.id);
-		setLinks(l || []);
+		revokeLink.mutate(token);
 	};
 
 	const handleJoinByLink = async () => {
 		if (!linkTokenInput) return;
-		await joinNoteByLink(linkTokenInput);
-		setLinkTokenInput("");
+		joinByLink.mutate(linkTokenInput, {
+			onSuccess: () => {
+				setLinkTokenInput("");
+			},
+		});
 	};
 
 	const handleJoinPublic = async () => {
-		await joinNotePublic(note.slug);
+		joinPublic.mutate(note.slug);
 	};
 
 	return (

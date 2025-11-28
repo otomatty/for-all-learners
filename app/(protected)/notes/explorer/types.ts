@@ -1,20 +1,9 @@
-export interface ConflictInfo {
-	pageId: string;
-	pageTitle: string;
-	existingPages: {
-		id: string;
-		title: string;
-		createdAt: Date;
-		updatedAt: Date;
-		preview?: string;
-	}[];
-}
+// Re-export types from hooks for backward compatibility
+import type { ConflictResolution } from "@/hooks/notes/useBatchMovePages";
+import type { ConflictInfo } from "@/hooks/notes/useCheckBatchConflicts";
 
-export interface ConflictResolution {
-	pageId: string;
-	action: "rename" | "manual-rename" | "skip" | "replace";
-	newTitle?: string;
-}
+export type { ConflictResolution } from "@/hooks/notes/useBatchMovePages";
+export type { ConflictInfo } from "@/hooks/notes/useCheckBatchConflicts";
 
 export interface BatchMovePageParams {
 	pageIds: string[];

@@ -7,7 +7,6 @@
  *   └─ lib/gemini.ts
  *
  * Dependencies (Mocks):
- *   ├─ app/_actions/ai/getUserAPIKey.ts (mocked)
  *   ├─ lib/llm/factory.ts (mocked - createClientWithUserKey)
  *   └─ lib/logger.ts (mocked)
  *
@@ -25,10 +24,8 @@ vi.mock("@/lib/llm/factory", () => ({
 }));
 
 // Import other mocked modules
-vi.mock("@/app/_actions/ai/getUserAPIKey");
 vi.mock("@/lib/logger");
 
-import { getUserAPIKey } from "@/app/_actions/ai/getUserAPIKey";
 import { createClientWithUserKey } from "@/lib/llm/factory";
 // Import the function after mocks
 import { generateBulkQuestions, generateQuestions } from "../gemini";
@@ -66,7 +63,6 @@ describe("generateQuestions", () => {
 				answer: "Function to manage state in function components",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-google-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -100,7 +96,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
@@ -134,7 +129,6 @@ describe("generateQuestions", () => {
 				explanation: "HTTP stands for **HyperText Transfer Protocol**.",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -175,7 +169,6 @@ describe("generateQuestions", () => {
 				options: [["type-safe", "dynamic", "weak", "untyped"]],
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -201,7 +194,7 @@ describe("generateQuestions", () => {
 	// TC-004: OpenAIプロバイダーを使用した問題生成
 	// ========================================
 	describe("TC-004: Question generation with OpenAI provider", () => {
-		it("should call getUserAPIKey with openai provider", async () => {
+		it("should use openai provider", async () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
@@ -210,7 +203,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-openai-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -235,7 +227,7 @@ describe("generateQuestions", () => {
 	// TC-005: Anthropicプロバイダーを使用した問題生成
 	// ========================================
 	describe("TC-005: Question generation with Anthropic provider", () => {
-		it("should call getUserAPIKey with anthropic provider", async () => {
+		it("should use anthropic provider", async () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
@@ -244,7 +236,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-anthropic-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -278,7 +269,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("user-custom-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -307,11 +297,6 @@ describe("generateQuestions", () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
-			vi.mocked(getUserAPIKey).mockRejectedValue(
-				new Error(
-					"API key not configured for provider: openai. Please set it in Settings.",
-				),
-			);
 			// createClientWithUserKey will throw the error before creating a client
 			vi.mocked(createClientWithUserKey).mockRejectedValue(
 				new Error(
@@ -337,7 +322,6 @@ describe("generateQuestions", () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockRejectedValue(new Error("Request timeout"));
 
 			await expect(
@@ -354,7 +338,6 @@ describe("generateQuestions", () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(
 				"これは正しいJSONではありません { invalid }",
 			);
@@ -380,7 +363,6 @@ describe("generateQuestions", () => {
 
 			const mockResponse = `\`\`\`json\n${JSON.stringify(mockQuestion)}\n\`\`\``;
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
@@ -403,7 +385,6 @@ describe("generateQuestions", () => {
 			const mockQuestion = { question: "Q1", answer: "A1" };
 			const mockResponse = `以下のような問題を生成しました:\n${JSON.stringify(mockQuestion)}\nよろしくお願いします。`;
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
@@ -423,7 +404,6 @@ describe("generateQuestions", () => {
 			const mockFront = "Test";
 			const mockBack = "Test";
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue("");
 
 			await expect(
@@ -445,7 +425,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(
@@ -480,7 +459,6 @@ describe("generateQuestions", () => {
 				answer: "A",
 			});
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateQuestions(mockFront, mockBack, "flashcard");
@@ -519,7 +497,6 @@ describe("generateBulkQuestions", () => {
 
 			const mockResponse = JSON.stringify(mockQuestions);
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(mockResponse);
 
 			const result = await generateBulkQuestions(mockPairs, "flashcard", "ja", {
@@ -539,7 +516,6 @@ describe("generateBulkQuestions", () => {
 			const mockPairs = [{ front: "Test", back: "Test" }];
 			const mockQuestions = [{ question: "Q", answer: "A" }];
 
-			vi.mocked(getUserAPIKey).mockResolvedValue("mock-api-key");
 			mockGenerate.mockResolvedValue(JSON.stringify(mockQuestions));
 
 			const result = await generateBulkQuestions(mockPairs, "flashcard", "ja");

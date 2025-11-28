@@ -5,9 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import type { GeneratedCard } from "@/app/_actions/generateCards";
-import { createRawInput } from "@/app/_actions/rawInputs";
-import { transcribeImage } from "@/app/_actions/transcribeImage";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -20,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateCards } from "@/hooks/cards";
-import { useGenerateCards } from "@/lib/hooks/ai";
+import { type GeneratedCard, useGenerateCards } from "@/lib/hooks/ai";
 import { createClient } from "@/lib/supabase/client";
 
 interface ImageCardGeneratorProps {
@@ -119,13 +116,43 @@ export function ImageCardGenerator({
 				throw signedError || new Error("Signed URL取得失敗");
 			const imageFileUrl = signedData.signedUrl;
 
-			const transcript = await transcribeImage(imageFileUrl);
-			await createRawInput({
+			// API RouteでOCRを実行
+			const ocrResponse = await fetch("/api/image/ocr", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ imageUrl: imageFileUrl }),
+			});
+
+			if (!ocrResponse.ok) {
+				const errorData = await ocrResponse.json();
+				throw new Error(errorData.error || "OCR処理に失敗しました");
+			}
+
+			const ocrData = (await ocrResponse.json()) as {
+				success: boolean;
+				text?: string;
+				error?: string;
+			};
+
+			if (!ocrData.success || !ocrData.text) {
+				throw new Error(ocrData.error || "OCR処理に失敗しました");
+			}
+
+			const transcript = ocrData.text;
+
+			// raw_inputsテーブルに保存
+			const { error: insertError } = await supabase.from("raw_inputs").insert({
 				user_id: userId,
 				type: "ocr",
 				source_url: imageFileUrl,
 				text_content: transcript,
 			});
+
+			if (insertError) {
+				throw new Error(`DB保存エラー: ${insertError.message}`);
+			}
 			toast.success("OCR完了", {
 				description: `${transcript.substring(0, 50)}...`,
 			});

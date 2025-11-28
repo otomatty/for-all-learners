@@ -6,6 +6,7 @@ import { SearchPagination } from "@/components/notes/SearchPagination";
 import { SearchResultItem } from "@/components/notes/SearchResultItem";
 import { BackLink } from "@/components/ui/back-link";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import { SearchPageClient } from "./_components/SearchPageClient";
 
 /**
  * 検索結果項目の型定義
@@ -46,6 +47,12 @@ export default async function SearchPage({
 		page?: string;
 	}>;
 }) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SearchPageClient />;
+	}
+
 	const { q, type, sort, page } = await searchParams;
 	const query = q?.trim() ?? "";
 	const filterType = (type === "card" || type === "page" ? type : "all") as

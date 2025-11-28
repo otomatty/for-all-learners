@@ -8,16 +8,13 @@
  *
  * Dependencies (External files that this route uses):
  *   ├─ lib/supabase/server.ts (createClient)
- *   ├─ lib/supabase/adminClient.ts (createAdminClient)
- *   └─ app/_actions/admin.ts (isAdmin)
+ *   └─ lib/supabase/adminClient.ts (createAdminClient)
  *
  * Related Documentation:
- *   ├─ Original Server Action: app/_actions/plugin-security-alerts.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { createClient } from "@/lib/supabase/server";
@@ -41,8 +38,36 @@ export async function PATCH(
 	{ params }: { params: Promise<{ alertId: string }> },
 ) {
 	try {
+		const supabase = await createClient();
+
 		// Check admin access
-		if (!(await isAdmin())) {
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json(
+				{
+					error: "Unauthorized",
+					message: "認証が必要です",
+					success: false,
+				},
+				{ status: 401 },
+			);
+		}
+
+		const { data: adminData } = await supabase
+			.from("admin_users")
+			.select("role, is_active")
+			.eq("user_id", user.id)
+			.maybeSingle();
+
+		const admin = Boolean(
+			adminData?.is_active &&
+				(adminData.role === "superadmin" || adminData.role === "admin"),
+		);
+
+		if (!admin) {
 			return NextResponse.json(
 				{
 					error: "Unauthorized",
@@ -54,23 +79,7 @@ export async function PATCH(
 		}
 
 		const adminClient = createAdminClient();
-		const supabase = await createClient();
 		const { alertId } = await params;
-
-		// Get current user
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		if (!user) {
-			return NextResponse.json(
-				{
-					error: "Unauthorized",
-					message: "ユーザーが認証されていません",
-					success: false,
-				},
-				{ status: 401 },
-			);
-		}
 
 		// Parse request body
 		const body = (await request.json()) as {

@@ -1,0 +1,187 @@
+#!/usr/bin/env bun
+
+/**
+ * Prepare static export by temporarily disabling Route Handlers and API Routes
+ *
+ * This script renames Route Handler and API Route files to .disabled extension
+ * before static export build, then restores them after build.
+ *
+ * Usage:
+ *   bun run scripts/prepare-static-export.ts prepare   # Before build
+ *   bun run scripts/prepare-static-export.ts restore   # After build
+ */
+
+import { existsSync, readdirSync, renameSync, statSync } from "node:fs";
+import { join, sep } from "node:path";
+
+// Note: ROUTE_HANDLERS_TO_DISABLE was removed as it's no longer used
+// All route handlers are now found dynamically via findRouteFiles()
+
+function findRouteFiles(dir: string, fileList: string[] = []): string[] {
+	if (!existsSync(dir)) {
+		return fileList;
+	}
+
+	const files = readdirSync(dir);
+
+	for (const file of files) {
+		const filePath = join(dir, file);
+
+		// Skip node_modules and .next directories
+		if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
+			continue;
+		}
+
+		const stat = statSync(filePath);
+
+		if (stat.isDirectory()) {
+			findRouteFiles(filePath, fileList);
+		} else if (file === "route.ts" || file === "route.js") {
+			fileList.push(filePath);
+		}
+	}
+
+	return fileList;
+}
+
+// Note: findDynamicPages function was removed as it's no longer used
+// Dynamic pages are now explicitly listed in dynamicPagesToDisable array
+
+function prepare() {
+	console.log(
+		"🔧 Preparing static export: Disabling Route Handlers, API Routes, Server Actions, and dynamic pages...",
+	);
+
+	// Disable Route Handlers and API Routes
+	const allRouteFiles = findRouteFiles("app");
+	const routeFilesToDisable = allRouteFiles.filter((file) => {
+		// Disable all API routes and route handlers
+		// Tauri environment uses Loopback Server for OAuth, so auth/callback route handler is not needed
+		// Use platform-independent path check (handles both / and \ separators)
+		const normalizedFile = file.replace(/\\/g, "/");
+		const isAPIRoute = normalizedFile.includes("/api/");
+		const isRouteHandler =
+			normalizedFile.includes("/route.ts") ||
+			normalizedFile.includes("/route.js");
+
+		return isAPIRoute || isRouteHandler;
+	});
+
+	let disabledCount = 0;
+	for (const file of routeFilesToDisable) {
+		if (existsSync(file) && !file.endsWith(".disabled")) {
+			const disabledFile = `${file}.disabled`;
+			try {
+				renameSync(file, disabledFile);
+				console.log(`  ✓ Disabled route: ${file}`);
+				disabledCount++;
+			} catch (error) {
+				console.error(`  ✗ Failed to disable ${file}:`, error);
+			}
+		}
+	}
+
+	// Note: Server Actions have been removed (except admin-related ones)
+	// Admin-related Server Actions are kept for web app only
+
+	// Disable dynamic pages that cause errors in static export
+	// Even with generateStaticParams() returning empty array, Next.js static export
+	// requires these pages to be excluded if they use dynamic features
+	const dynamicPagesToDisable = [
+		"app/(protected)/decks/[deckId]/page.tsx",
+		"app/(protected)/decks/[deckId]/audio/page.tsx",
+		"app/(protected)/decks/[deckId]/ocr/page.tsx",
+		"app/(protected)/decks/[deckId]/pdf/page.tsx",
+		"app/(protected)/notes/[slug]/page.tsx",
+		"app/(protected)/notes/[slug]/[id]/page.tsx",
+		"app/(protected)/notes/[slug]/[id]/generate-cards/page.tsx",
+		// New page routes: These use server-side logic that is incompatible with static export
+		"app/(protected)/notes/[slug]/new/page.tsx",
+		"app/(protected)/notes/default/new/page.tsx",
+		// Notes explorer: Uses headers() which is incompatible with static export
+		"app/(protected)/notes/explorer/page.tsx",
+		// Admin pages: Web app only, excluded from Tauri static export
+		// These use headers() and other server-side features
+		"app/admin/page.tsx",
+		"app/admin/inquiries/[id]/page.tsx",
+		"app/admin/users/[id]/page.tsx",
+		// Note: These pages have generateStaticParams() but still cause errors
+		// in static export because they use dynamic features (auth, user-specific data)
+		// Admin pages are web-only and not needed in Tauri builds
+	];
+
+	for (const file of dynamicPagesToDisable) {
+		// Normalize path for cross-platform compatibility
+		const normalizedPath = file.split("/").join(sep);
+		if (existsSync(normalizedPath) && !normalizedPath.endsWith(".disabled")) {
+			const disabledFile = `${normalizedPath}.disabled`;
+			try {
+				renameSync(normalizedPath, disabledFile);
+				console.log(`  ✓ Disabled dynamic page: ${normalizedPath}`);
+				disabledCount++;
+			} catch (error) {
+				console.error(`  ✗ Failed to disable ${normalizedPath}:`, error);
+			}
+		}
+	}
+
+	console.log(`✅ Disabled ${disabledCount} files`);
+}
+
+function restore() {
+	console.log("🔧 Restoring Route Handlers, API Routes, and dynamic pages...");
+
+	// Find all disabled files (both route files and page files)
+	const allFiles: string[] = [];
+
+	function findDisabledFiles(dir: string) {
+		if (!existsSync(dir)) {
+			return;
+		}
+
+		const files = readdirSync(dir);
+
+		for (const file of files) {
+			const filePath = join(dir, file);
+
+			if (file === "node_modules" || file === ".next" || file.startsWith(".")) {
+				continue;
+			}
+
+			const stat = statSync(filePath);
+
+			if (stat.isDirectory()) {
+				findDisabledFiles(filePath);
+			} else if (file.endsWith(".disabled")) {
+				allFiles.push(filePath);
+			}
+		}
+	}
+
+	findDisabledFiles("app");
+
+	for (const file of allFiles) {
+		const originalFile = file.replace(".disabled", "");
+		try {
+			renameSync(file, originalFile);
+			console.log(`  ✓ Restored: ${originalFile}`);
+		} catch (error) {
+			console.error(`  ✗ Failed to restore ${file}:`, error);
+		}
+	}
+
+	console.log(`✅ Restored ${allFiles.length} files`);
+}
+
+const command = process.argv[2];
+
+if (command === "prepare") {
+	prepare();
+} else if (command === "restore") {
+	restore();
+} else {
+	console.error(
+		"Usage: bun run scripts/prepare-static-export.ts [prepare|restore]",
+	);
+	process.exit(1);
+}

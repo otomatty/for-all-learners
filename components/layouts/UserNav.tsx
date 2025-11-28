@@ -11,9 +11,6 @@ import {
 	UserRound,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { logout } from "@/app/_actions/auth";
-import { getUserGoalLimits } from "@/app/_actions/study_goals";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +23,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useGoalLimits } from "@/hooks/study_goals/useGoalLimits";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
@@ -46,41 +44,14 @@ export function UserNav({
 }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const [goalLimits, setGoalLimits] = useState<{
-		currentCount: number;
-		maxGoals: number;
-		canAddMore: boolean;
-		isPaid: boolean;
-		remainingGoals: number;
-	} | null>(null);
+	const { data: goalLimits } = useGoalLimits();
+	const supabase = createClient();
 
 	const handleSignOut = async () => {
-		await logout();
+		await supabase.auth.signOut();
+		router.push("/auth/login");
+		router.refresh();
 	};
-
-	// 目標制限情報を取得する関数
-	const fetchGoalLimits = useCallback(async () => {
-		try {
-			const supabase = createClient();
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-			if (user) {
-				const limits = await getUserGoalLimits(user.id);
-				setGoalLimits(limits);
-			}
-		} catch (_error) {}
-	}, []);
-
-	// 初期読み込み時に制限情報を取得
-	useEffect(() => {
-		fetchGoalLimits();
-	}, [fetchGoalLimits]);
-
-	// プラン情報が変更された場合に再取得
-	useEffect(() => {
-		fetchGoalLimits();
-	}, [fetchGoalLimits]);
 
 	// プランラベルの算出：goalLimitsの結果を優先して使用
 	const planLabel = goalLimits
@@ -88,7 +59,7 @@ export function UserNav({
 			? (plan?.name ?? "有料プラン")
 			: "無料プラン"
 		: (plan?.name ?? "無料プラン");
-	const isPaid = goalLimits ? goalLimits.isPaid : plan !== null;
+	const isPaid = goalLimits?.isPaid ?? plan !== null;
 
 	return (
 		<DropdownMenu>

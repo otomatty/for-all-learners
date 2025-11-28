@@ -92,3 +92,32 @@ export interface VerificationOptions {
 	publicKey: string; // Base64-encoded public key
 	algorithm?: SignatureAlgorithm;
 }
+
+/**
+ * Plugin signature information for API responses
+ */
+export interface PluginSignatureInfo {
+	pluginId: string;
+	name: string;
+	version: string;
+	author: string;
+	hasSignature: boolean;
+	signature: string | null;
+	publicKey: string | null;
+	signatureAlgorithm: "ed25519" | "rsa" | null;
+	signedAt: Date | null;
+	isOfficial: boolean;
+	isReviewed: boolean;
+}
+
+/**
+ * Signature verification log entry
+ */
+export interface SignatureVerificationLog {
+	id: string;
+	pluginId: string;
+	userId: string | null;
+	verificationResult: "valid" | "invalid" | "missing" | "error";
+	errorMessage: string | null;
+	verifiedAt: Date;
+}

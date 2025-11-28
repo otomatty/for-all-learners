@@ -1,14 +1,15 @@
 import { Suspense } from "react";
-import { getSecurityAuditLogs } from "@/app/_actions/plugin-security-audit-logs";
+import {
+	type GetSecurityAuditLogsOptions,
+	getSecurityAuditLogsServer,
+	getSecurityAuditStatsServer,
+} from "@/lib/services/pluginSecurityService";
 import { SecurityAuditLogsFilters } from "./_components/SecurityAuditLogsFilters";
+import { SecurityAuditLogsPageClient } from "./_components/SecurityAuditLogsPageClient";
 import { SecurityAuditLogsPagination } from "./_components/SecurityAuditLogsPagination";
 import { SecurityAuditLogsTable } from "./_components/SecurityAuditLogsTable";
 import { SecurityAuditStatsCards } from "./_components/SecurityAuditStatsCards";
-import {
-	type GetSecurityAuditLogsOptions,
-	getSecurityAuditStats,
-	parseSecurityAuditLogsSearchParams,
-} from "./_utils";
+import { parseSecurityAuditLogsSearchParams } from "./_utils";
 
 interface SecurityAuditLogsPageProps {
 	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,6 +18,12 @@ interface SecurityAuditLogsPageProps {
 export default async function SecurityAuditLogsPage({
 	searchParams,
 }: SecurityAuditLogsPageProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SecurityAuditLogsPageClient />;
+	}
+
 	const resolvedSearchParams = await searchParams;
 	const parsedParams = parseSecurityAuditLogsSearchParams(resolvedSearchParams);
 
@@ -34,7 +41,7 @@ export default async function SecurityAuditLogsPage({
 		},
 	};
 
-	const result = await getSecurityAuditLogs(options);
+	const result = await getSecurityAuditLogsServer(options);
 
 	if (!result.success) {
 		return (
@@ -128,6 +135,6 @@ export default async function SecurityAuditLogsPage({
  * This is needed to use Suspense for proper loading states
  */
 async function SecurityAuditStatsCardsWrapper() {
-	const stats = await getSecurityAuditStats();
+	const stats = await getSecurityAuditStatsServer();
 	return <SecurityAuditStatsCards stats={stats} />;
 }

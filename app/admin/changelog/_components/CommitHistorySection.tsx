@@ -8,11 +8,6 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
-import {
-	createVersionCommitStaging,
-	getVersionCommitStagingByVersion,
-	processVersionCommitStaging,
-} from "@/app/_actions/version";
 import { useCreateChangelogEntry } from "@/hooks/changelog";
 
 import { CommitDetails } from "./CommitDetails";
@@ -87,14 +82,18 @@ export function CommitHistorySection() {
 		if (selectedVersion) {
 			(async () => {
 				try {
-					const record =
-						await getVersionCommitStagingByVersion(selectedVersion);
-					if (record) {
-						setStagingStatus(record.status);
-						setStagingId(record.id);
-					} else {
-						setStagingStatus("idle");
-						setStagingId(undefined);
+					const response = await fetch(
+						`/api/version-commit-staging?version=${encodeURIComponent(selectedVersion)}`,
+					);
+					if (response.ok) {
+						const record = await response.json();
+						if (record) {
+							setStagingStatus(record.status);
+							setStagingId(record.id);
+						} else {
+							setStagingStatus("idle");
+							setStagingId(undefined);
+						}
 					}
 				} catch (_e) {}
 			})();
@@ -159,16 +158,41 @@ export function CommitHistorySection() {
 	const handleCreateSummary = async () => {
 		setLoadingSummary(true);
 		try {
-			const staging = await createVersionCommitStaging({
-				version: selectedGroup?.version ?? "",
-				commits: selectedGroup?.commits ?? [],
+			// Create staging record
+			const createResponse = await fetch("/api/version-commit-staging", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					version: selectedGroup?.version ?? "",
+					commits: selectedGroup?.commits ?? [],
+				}),
 			});
+
+			if (!createResponse.ok) {
+				throw new Error("Failed to create staging record");
+			}
+
+			const staging = await createResponse.json();
 			if (!staging || staging.id == null) {
 				return;
 			}
+
 			setStagingId(staging.id);
 			setStagingStatus("pending");
-			const processed = await processVersionCommitStaging(staging.id);
+
+			// Process staging record
+			const processResponse = await fetch(
+				`/api/version-commit-staging/${staging.id}`,
+				{
+					method: "PATCH",
+				},
+			);
+
+			if (!processResponse.ok) {
+				throw new Error("Failed to process staging record");
+			}
+
+			const processed = await processResponse.json();
 			setStagingStatus(processed.status);
 			setSummaryText(processed.summary ?? "");
 		} catch (_e) {

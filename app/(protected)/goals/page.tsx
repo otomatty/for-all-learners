@@ -1,15 +1,21 @@
 import { redirect } from "next/navigation";
-import { getAccountById } from "@/app/_actions/accounts";
-import {
-	getStudyGoalsByUser,
-	getUserGoalLimits,
-} from "@/app/_actions/study_goals";
 import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import { Container } from "@/components/layouts/container";
+import {
+	getGoalLimitsServer,
+	getStudyGoalsServer,
+} from "@/lib/services/studyGoalsService";
 import { createClient } from "@/lib/supabase/server";
 import { GoalsList } from "./_components/GoalsList";
+import { GoalsPageClient } from "./_components/GoalsPageClient";
 
 export default async function GoalsPage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <GoalsPageClient />;
+	}
+
 	const supabase = await createClient();
 
 	// 認証チェック
@@ -22,11 +28,10 @@ export default async function GoalsPage() {
 		redirect("/auth/login");
 	}
 
-	// アカウント情報と目標データを取得
-	await getAccountById(user.id);
+	// 目標データを取得（既存フックのロジックを再利用）
 	const [studyGoals, goalLimits] = await Promise.all([
-		getStudyGoalsByUser(user.id),
-		getUserGoalLimits(user.id),
+		getStudyGoalsServer(user.id),
+		getGoalLimitsServer(user.id),
 	]);
 
 	// 各目標に紐付いたデッキ情報を取得

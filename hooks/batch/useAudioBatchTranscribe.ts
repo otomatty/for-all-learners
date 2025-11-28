@@ -14,7 +14,6 @@
  * Related Documentation:
  *   ├─ API Route: app/api/batch/audio/transcribe/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useAudioBatchTranscribe.test.tsx
- *   ├─ Original Server Action: app/_actions/audioBatchProcessing.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

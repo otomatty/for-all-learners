@@ -32,7 +32,7 @@ interface GenerateCardsFormProps {
 export function GenerateCardsForm({
 	page,
 	decks,
-	userId,
+	userId: _userId,
 }: GenerateCardsFormProps) {
 	const router = useRouter();
 	const generateCardsMutation = useGenerateCardsFromPage();

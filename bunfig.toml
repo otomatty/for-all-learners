@@ -1,0 +1,17 @@
+# Bun Configuration
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Security: Disable lifecycle scripts (preinstall, install, postinstall)
+# This prevents potential supply chain attacks like Shai-Hulud
+# Reference: docs/02_research/2025_11/20251126_01_shai-hulud-npm-security-research.md
+#
+# Note: Some packages may require scripts to function properly (e.g., esbuild, node-gyp).
+# If you encounter issues, you can temporarily enable scripts for specific packages:
+#   bun install --trust <package-name>
+lifecycle.ignore = true
+
+# Use frozen lockfile in CI environments
+# This prevents unexpected package updates
+# Note: CI environments should use `bun install --frozen-lockfile`
+

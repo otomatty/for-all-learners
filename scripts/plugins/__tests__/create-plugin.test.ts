@@ -248,27 +248,26 @@ describe("createPlugin", () => {
 			"integration-extension",
 		];
 
-		it.each(validTemplates)(
-			"should accept valid template: %s",
-			async (template) => {
-				mockExistsSync.mockImplementation((path: string) => {
-					if (path.includes(`templates/plugins/${template}`)) {
-						return true;
-					}
-					if (path.includes("plugins/examples")) {
-						return false;
-					}
+		it.each(
+			validTemplates,
+		)("should accept valid template: %s", async (template) => {
+			mockExistsSync.mockImplementation((path: string) => {
+				if (path.includes(`templates/plugins/${template}`)) {
 					return true;
-				});
-				mockReadFileSync.mockReturnValue("{{PLUGIN_NAME}}");
+				}
+				if (path.includes("plugins/examples")) {
+					return false;
+				}
+				return true;
+			});
+			mockReadFileSync.mockReturnValue("{{PLUGIN_NAME}}");
 
-				await createPlugin("test-plugin", [`--template=${template}`]);
+			await createPlugin("test-plugin", [`--template=${template}`]);
 
-				expect(mockExistsSync).toHaveBeenCalledWith(
-					expect.stringContaining(template),
-				);
-			},
-		);
+			expect(mockExistsSync).toHaveBeenCalledWith(
+				expect.stringContaining(template),
+			);
+		});
 	});
 
 	describe("file operations", () => {

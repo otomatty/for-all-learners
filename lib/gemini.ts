@@ -3,7 +3,6 @@
  *
  * Parents (使用先):
  *   ├─ app/api/practice/generate/route.ts
- *   └─ app/_actions/quiz.ts (generateBulkQuestions)
  *
  * Dependencies (依存先):
  *   ├─ lib/llm/factory.ts (createClientWithUserKey)

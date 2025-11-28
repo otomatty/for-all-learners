@@ -16,8 +16,8 @@
 
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { updatePageLinks } from "@/app/_actions/updatePageLinks";
 import logger from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
 import { extractLinkData } from "@/lib/utils/linkUtils";
 
 export interface UseLinkSyncOptions {
@@ -114,7 +114,42 @@ export function useLinkSync(
 				);
 			}
 
-			await updatePageLinks({ pageId, outgoingIds });
+			// Update page_page_links table directly using Supabase client
+			const supabase = createClient();
+			const {
+				data: { user },
+				error: userError,
+			} = await supabase.auth.getUser();
+
+			if (userError || !user) {
+				throw new Error("User not authenticated");
+			}
+
+			// Delete existing links for this page
+			const { error: deleteError } = await supabase
+				.from("page_page_links")
+				.delete()
+				.eq("page_id", pageId);
+
+			if (deleteError) {
+				throw deleteError;
+			}
+
+			// Insert new links
+			if (outgoingIds.length > 0) {
+				const linksToInsert = outgoingIds.map((linkedId) => ({
+					page_id: pageId,
+					linked_id: linkedId,
+				}));
+
+				const { error: insertError } = await supabase
+					.from("page_page_links")
+					.insert(linksToInsert);
+
+				if (insertError) {
+					throw insertError;
+				}
+			}
 
 			lastSyncTimeRef.current = Date.now();
 			if (!hasInitialSyncRef.current) {

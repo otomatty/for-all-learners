@@ -17,20 +17,21 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+// Mock dependencies BEFORE imports
+vi.mock("@/lib/hooks/ai/useAPIKey", () => ({
+	useAPIKeyStatus: vi.fn(),
+	useSaveAPIKey: vi.fn(),
+	useDeleteAPIKey: vi.fn(),
+}));
+
 import {
 	type APIKeyStatus,
-	deleteAPIKey,
-	getAPIKeyStatus,
-	saveAPIKey,
-} from "@/app/_actions/ai/apiKey";
+	useAPIKeyStatus,
+	useDeleteAPIKey,
+	useSaveAPIKey,
+} from "@/lib/hooks/ai/useAPIKey";
 
 import { LLMSettingsIntegrated } from "../LLMSettingsIntegrated";
-
-vi.mock("@/app/_actions/ai/apiKey", () => ({
-	getAPIKeyStatus: vi.fn(),
-	saveAPIKey: vi.fn(),
-	deleteAPIKey: vi.fn(),
-}));
 
 vi.mock("sonner", () => ({
 	toast: {
@@ -65,13 +66,24 @@ vi.mock("@/lib/contexts/LLMProviderContext", () => ({
 	})),
 }));
 
-const mockGetAPIKeyStatus = getAPIKeyStatus as ReturnType<typeof vi.fn>;
-const mockSaveAPIKey = saveAPIKey as ReturnType<typeof vi.fn>;
-const mockDeleteAPIKey = deleteAPIKey as ReturnType<typeof vi.fn>;
+const mockUseAPIKeyStatus = useAPIKeyStatus as ReturnType<typeof vi.fn>;
+const mockUseSaveAPIKey = useSaveAPIKey as ReturnType<typeof vi.fn>;
+const mockUseDeleteAPIKey = useDeleteAPIKey as ReturnType<typeof vi.fn>;
 const mockToast = toast as unknown as {
 	success: ReturnType<typeof vi.fn>;
 	error: ReturnType<typeof vi.fn>;
 };
+
+// Helper to create mock mutation
+const createMockMutation = () => ({
+	mutate: vi.fn(),
+	mutateAsync: vi.fn(),
+	isPending: false,
+	isError: false,
+	isSuccess: false,
+	data: undefined,
+	error: null,
+});
 
 describe("LLMSettingsIntegrated", () => {
 	const mockAPIKeyStatus: Record<string, APIKeyStatus> = {
@@ -79,6 +91,9 @@ describe("LLMSettingsIntegrated", () => {
 		openai: { configured: false, updatedAt: null },
 		anthropic: { configured: false, updatedAt: null },
 	};
+
+	const mockSaveMutation = createMockMutation();
+	const mockDeleteMutation = createMockMutation();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -88,12 +103,13 @@ describe("LLMSettingsIntegrated", () => {
 			openai: ["gpt-4o"],
 			anthropic: ["claude-3-5-sonnet-20241022"],
 		};
-		mockGetAPIKeyStatus.mockResolvedValue({
-			success: true,
-			data: mockAPIKeyStatus as Record<string, APIKeyStatus>,
+		mockUseAPIKeyStatus.mockReturnValue({
+			data: { data: mockAPIKeyStatus as Record<string, APIKeyStatus> },
+			isLoading: false,
+			error: null,
 		});
-		mockSaveAPIKey.mockResolvedValue({ success: true });
-		mockDeleteAPIKey.mockResolvedValue({ success: true });
+		mockUseSaveAPIKey.mockReturnValue(mockSaveMutation);
+		mockUseDeleteAPIKey.mockReturnValue(mockDeleteMutation);
 		mockToast.success.mockReturnValue(undefined);
 		mockToast.error.mockReturnValue(undefined);
 		localStorage.clear();
@@ -152,12 +168,15 @@ describe("LLMSettingsIntegrated", () => {
 	// TC-003: API Key Save
 	// ========================================================================
 	test("TC-003: saves API key successfully", async () => {
-		mockGetAPIKeyStatus.mockResolvedValue({
-			success: true,
+		mockUseAPIKeyStatus.mockReturnValue({
 			data: {
-				...mockAPIKeyStatus,
-				google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
-			} as Record<string, APIKeyStatus>,
+				data: {
+					...mockAPIKeyStatus,
+					google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
+				} as Record<string, APIKeyStatus>,
+			},
+			isLoading: false,
+			error: null,
 		});
 
 		render(<LLMSettingsIntegrated />);
@@ -184,7 +203,17 @@ describe("LLMSettingsIntegrated", () => {
 		fireEvent.click(saveButton);
 
 		await waitFor(() => {
-			expect(mockSaveAPIKey).toHaveBeenCalledWith("google", "test-api-key");
+			expect(mockSaveMutation.mutate).toHaveBeenCalledWith(
+				{ provider: "google", apiKey: "test-api-key" },
+				expect.any(Object),
+			);
+		});
+
+		// Simulate successful mutation callback
+		const mutateCall = mockSaveMutation.mutate.mock.calls[0];
+		mutateCall?.[1]?.onSuccess?.({ message: "APIキーを保存しました" });
+
+		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				"Google Gemini のAPIキーを保存しました",
 			);
@@ -195,12 +224,15 @@ describe("LLMSettingsIntegrated", () => {
 	// TC-004: API Key Delete
 	// ========================================================================
 	test("TC-004: deletes API key successfully", async () => {
-		mockGetAPIKeyStatus.mockResolvedValue({
-			success: true,
+		mockUseAPIKeyStatus.mockReturnValue({
 			data: {
-				...mockAPIKeyStatus,
-				google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
-			} as Record<string, APIKeyStatus>,
+				data: {
+					...mockAPIKeyStatus,
+					google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
+				} as Record<string, APIKeyStatus>,
+			},
+			isLoading: false,
+			error: null,
 		});
 
 		render(<LLMSettingsIntegrated />);
@@ -224,7 +256,17 @@ describe("LLMSettingsIntegrated", () => {
 		fireEvent.click(deleteButton);
 
 		await waitFor(() => {
-			expect(mockDeleteAPIKey).toHaveBeenCalledWith("google");
+			expect(mockDeleteMutation.mutate).toHaveBeenCalledWith(
+				{ provider: "google" },
+				expect.any(Object),
+			);
+		});
+
+		// Simulate successful mutation callback
+		const mutateCall = mockDeleteMutation.mutate.mock.calls[0];
+		mutateCall?.[1]?.onSuccess?.({ message: "APIキーを削除しました" });
+
+		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				"Google Gemini のAPIキーを削除しました",
 			);
@@ -310,13 +352,16 @@ describe("LLMSettingsIntegrated", () => {
 	// TC-007: API Key Status Display
 	// ========================================================================
 	test("TC-007: displays configured status correctly", async () => {
-		mockGetAPIKeyStatus.mockResolvedValue({
-			success: true,
+		mockUseAPIKeyStatus.mockReturnValue({
 			data: {
-				google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
-				openai: { configured: false, updatedAt: null },
-				anthropic: { configured: false, updatedAt: null },
-			} as Record<string, APIKeyStatus>,
+				data: {
+					google: { configured: true, updatedAt: "2025-11-03T12:00:00Z" },
+					openai: { configured: false, updatedAt: null },
+					anthropic: { configured: false, updatedAt: null },
+				} as Record<string, APIKeyStatus>,
+			},
+			isLoading: false,
+			error: null,
 		});
 
 		render(<LLMSettingsIntegrated />);
@@ -343,10 +388,8 @@ describe("LLMSettingsIntegrated", () => {
 	// TC-008: Error Handling - Save Failure
 	// ========================================================================
 	test("TC-008: handles save error correctly", async () => {
-		mockSaveAPIKey.mockResolvedValue({
-			success: false,
-			error: "Invalid API key",
-		});
+		const errorMutation = createMockMutation();
+		mockUseSaveAPIKey.mockReturnValue(errorMutation);
 
 		render(<LLMSettingsIntegrated />);
 
@@ -367,6 +410,17 @@ describe("LLMSettingsIntegrated", () => {
 		const input = screen.getByPlaceholderText("APIキーを入力");
 		fireEvent.change(input, { target: { value: "invalid-key" } });
 		fireEvent.click(screen.getByText("保存"));
+
+		await waitFor(() => {
+			expect(errorMutation.mutate).toHaveBeenCalledWith(
+				{ provider: "google", apiKey: "invalid-key" },
+				expect.any(Object),
+			);
+		});
+
+		// Simulate error mutation callback
+		const mutateCall = errorMutation.mutate.mock.calls[0];
+		mutateCall?.[1]?.onError?.(new Error("Invalid API key"));
 
 		await waitFor(() => {
 			expect(mockToast.error).toHaveBeenCalledWith("Invalid API key");

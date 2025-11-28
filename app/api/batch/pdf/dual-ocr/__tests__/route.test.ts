@@ -5,7 +5,6 @@
  *
  * Related Files:
  * - Implementation: app/api/batch/pdf/dual-ocr/route.ts
- * - Original Server Action: app/_actions/pdfBatchOcr.ts (processDualPdfBatchOcr)
  */
 
 import { NextRequest } from "next/server";

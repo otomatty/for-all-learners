@@ -2,15 +2,15 @@ import type { JSONContent } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { splitPageSelection } from "@/app/_actions/splitPageSelection";
+// TODO: API Route `/api/pages/split` を作成して置き換え
 
 /**
  * Hook to split selected content into a new page and replace with link.
  */
 export function useSplitPage(
 	editor: Editor | null,
-	pageId: string,
-	savePage: () => Promise<void>,
+	_pageId: string, // TODO: API Route実装時に使用
+	_savePage: () => Promise<void>, // TODO: API Route実装時に使用
 ) {
 	return useCallback(async () => {
 		if (!editor) return;
@@ -44,21 +44,28 @@ export function useSplitPage(
 		titleText = titleText.trim() || "新規ページ";
 
 		try {
-			const _newPage = await splitPageSelection({
-				originalPageId: pageId,
-				title: titleText,
-				content: selectedContent,
-			});
-			editor
-				.chain()
-				.focus()
-				.deleteRange({ from, to })
-				.insertContentAt(from, `[${titleText}]`)
-				.run();
-			await savePage();
-			toast.success("ページを分割しました");
+			// TODO: API Route `/api/pages/split` を作成して置き換え
+			// const response = await fetch("/api/pages/split", {
+			// 	method: "POST",
+			// 	headers: { "Content-Type": "application/json" },
+			// 	body: JSON.stringify({
+			// 		originalPageId: pageId,
+			// 		title: titleText,
+			// 		content: selectedContent,
+			// 	}),
+			// });
+			// const newPage = await response.json();
+			toast.error("ページ分割機能は現在利用できません");
+			// editor
+			// 	.chain()
+			// 	.focus()
+			// 	.deleteRange({ from, to })
+			// 	.insertContentAt(from, `[${titleText}]`)
+			// 	.run();
+			// await savePage();
+			// toast.success("ページを分割しました");
 		} catch (_err) {
 			toast.error("ページ分割に失敗しました");
 		}
-	}, [editor, pageId, savePage]);
+	}, [editor]);
 }

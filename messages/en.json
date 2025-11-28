@@ -1,0 +1,461 @@
+{
+	"common": {
+		"loading": "Loading...",
+		"error": "An error occurred",
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"edit": "Edit",
+		"create": "Create",
+		"close": "Close",
+		"confirm": "Confirm",
+		"back": "Back",
+		"next": "Next",
+		"search": "Search",
+		"settings": "Settings",
+		"logout": "Logout"
+	},
+	"navigation": {
+		"dashboard": "Dashboard",
+		"notes": "Notes",
+		"decks": "Decks",
+		"goals": "Goals",
+		"learn": "Learn",
+		"search": "Search",
+		"profile": "Profile",
+		"settings": "Settings"
+	},
+	"auth": {
+		"login": "Login",
+		"loginWithGoogle": "Login with Google",
+		"loginWithGitHub": "Login with GitHub",
+		"loginWithEmail": "Login with Email",
+		"welcomeBack": "Welcome back",
+		"loginDescription": "Please log in to your account",
+		"loginTitle": "Log in to your account",
+		"loginSubtitle": "Choose your preferred method to start learning",
+		"magicLinkSent": "A login link has been sent to your email address. Please check your inbox.",
+		"errorOccurred": "An error occurred",
+		"authPageOpened": "Authentication page opened",
+		"authEmailSent": "Authentication email sent",
+		"googleAuthFailed": "Google authentication failed",
+		"emailAuthFailed": "Failed to send authentication email",
+		"emailPlaceholder": "Email address",
+		"emailLabel": "Email address",
+		"or": "or"
+	},
+	"dashboard": {
+		"title": "Dashboard",
+		"welcomeMessage": "Welcome, {name}",
+		"todayGoal": "Today's Goal",
+		"studyStreak": "Study Streak",
+		"totalCards": "Total Cards",
+		"masteredCards": "Mastered Cards"
+	},
+	"notes": {
+		"title": "Notes",
+		"myNotes": "My Notes",
+		"recommendedNotes": "Recommended Public Notes",
+		"createNote": "Create new note",
+		"newNote": "New Note",
+		"noteTitle": "Title",
+		"noteDescription": "Description",
+		"noNotes": "No notes found",
+		"deleteConfirm": "Are you sure you want to delete this note?",
+		"visibility": {
+			"label": "Visibility",
+			"public": "Public",
+			"unlisted": "Unlisted",
+			"invite": "Invite Only",
+			"private": "Private"
+		},
+		"form": {
+			"titleRequired": "Title is required",
+			"slugRequired": "Slug is required",
+			"slugValidationError": "Error checking slug availability",
+			"slugTaken": "This slug is already taken",
+			"slugHint": "Use only alphanumeric characters and hyphens",
+			"creating": "Creating...",
+			"create": "Create"
+		},
+		"share": {
+			"title": "Share Note",
+			"description": "Select users to share with.",
+			"sharing": "Sharing...",
+			"shareButton": "Share"
+		},
+		"list": {
+			"pageCount": "Pages",
+			"participantCount": "Participants",
+			"lastUpdated": "Last updated"
+		},
+		"explorer": {
+			"title": "Notes Explorer",
+			"noteList": "Notes",
+			"pageList": "Pages",
+			"selectNote": "Select a note from the left",
+			"items": "{count} items"
+		},
+		"operations": {
+			"preparing": "Preparing {action}...",
+			"processing": "{action}...",
+			"move": "move",
+			"copy": "copy",
+			"moved": "Moved {count} pages",
+			"copied": "Copied {count} pages",
+			"operationError": "An error occurred during processing",
+			"operationFailed": "Operation failed",
+			"cancelled": "Operation cancelled"
+		},
+		"trash": {
+			"title": "Trash",
+			"movingToTrash": "Moving to trash...",
+			"deleting": "Deleting permanently...",
+			"deleteFailed": "Failed to delete",
+			"deleteCancelled": "Delete cancelled"
+		}
+	},
+	"decks": {
+		"title": "Decks",
+		"createDeck": "Create new deck",
+		"deckName": "Deck name",
+		"cardCount": "{count} cards",
+		"noDecks": "No decks found",
+		"deleteConfirm": "Are you sure you want to delete this deck?"
+	},
+	"cards": {
+		"front": "Front",
+		"back": "Back",
+		"createCard": "Create card",
+		"editCard": "Edit card",
+		"deleteCard": "Delete card",
+		"deleteConfirm": "Are you sure you want to delete this card?"
+	},
+	"learn": {
+		"title": "Learn",
+		"startLearning": "Start Learning",
+		"showAnswer": "Show Answer",
+		"again": "Again",
+		"hard": "Hard",
+		"good": "Good",
+		"easy": "Easy",
+		"completed": "Learning Complete",
+		"cardsRemaining": "{count} cards remaining"
+	},
+	"goals": {
+		"title": "Goals",
+		"createGoal": "Create Goal",
+		"goalTitle": "Goal Title",
+		"targetCards": "Target Cards",
+		"noGoals": "No goals found",
+		"progress": "Progress: {current}/{target}"
+	},
+	"settings": {
+		"title": "Settings",
+		"language": "Language",
+		"theme": "Theme",
+		"themeLight": "Light",
+		"themeDark": "Dark",
+		"themeSystem": "System",
+		"notifications": "Notifications",
+		"account": "Account",
+		"privacy": "Privacy",
+		"about": "About"
+	},
+	"profile": {
+		"title": "Profile",
+		"displayName": "Display Name",
+		"email": "Email",
+		"bio": "Bio",
+		"updateProfile": "Update Profile"
+	},
+	"errors": {
+		"notFound": "Page not found",
+		"unauthorized": "Login required",
+		"forbidden": "Access denied",
+		"serverError": "Server error occurred",
+		"networkError": "Network error occurred"
+	},
+	"sync": {
+		"title": "Sync",
+		"status": {
+			"idle": "Idle",
+			"syncing": "Syncing...",
+			"error": "Sync Error",
+			"offline": "Offline",
+			"paused": "Paused"
+		},
+		"lastSync": "Last sync: {time}",
+		"pendingChanges": "Pending changes: {count}",
+		"syncNow": "Sync Now",
+		"autoSync": "Auto Sync",
+		"syncInterval": "Sync Interval",
+		"syncComplete": "Sync completed",
+		"syncFailed": "Sync failed",
+		"conflictResolved": "Conflict resolved",
+		"offlineMode": "Offline Mode",
+		"offlineMessage": "No internet connection. Changes will be saved locally and synced when you're back online.",
+		"pushComplete": "Pushed {count} changes to server",
+		"pullComplete": "Pulled {count} changes from server"
+	},
+	"pages": {
+		"title": "Pages",
+		"createPage": "Create new page",
+		"newPage": "New Page",
+		"pageTitle": "Page Title",
+		"noPages": "No pages found",
+		"deleteConfirm": "Are you sure you want to delete this page?",
+		"linkedNotes": "Linked Notes",
+		"attachedDecks": "Attached Decks",
+		"lastEdited": "Last edited: {time}",
+		"wordCount": "{count} characters",
+		"readingTime": "Reading time: {minutes} min"
+	},
+	"milestones": {
+		"title": "Milestones",
+		"createMilestone": "Create Milestone",
+		"milestoneTitle": "Milestone Title",
+		"dueDate": "Due Date",
+		"completed": "Completed",
+		"incomplete": "Incomplete",
+		"noMilestones": "No milestones found",
+		"markComplete": "Mark as Complete",
+		"markIncomplete": "Mark as Incomplete"
+	},
+	"studyGoals": {
+		"title": "Study Goals",
+		"createGoal": "Create Study Goal",
+		"goalDescription": "Goal Description",
+		"deadline": "Deadline",
+		"progressRate": "Progress Rate",
+		"status": {
+			"notStarted": "Not Started",
+			"inProgress": "In Progress",
+			"completed": "Completed"
+		},
+		"linkedDecks": "Linked Decks",
+		"statistics": {
+			"totalCards": "Total Cards",
+			"masteredCards": "Mastered",
+			"dueCards": "Due for Review",
+			"accuracy": "Accuracy"
+		}
+	},
+	"learningLogs": {
+		"title": "Learning Logs",
+		"todayStudy": "Today's Study",
+		"weeklyStudy": "Weekly Study",
+		"monthlyStudy": "Monthly Study",
+		"practiceMode": {
+			"flashcard": "Flashcard",
+			"quiz": "Quiz",
+			"typing": "Typing",
+			"listening": "Listening",
+			"reading": "Reading"
+		},
+		"statistics": {
+			"totalReviews": "Total Reviews",
+			"correctRate": "Correct Rate",
+			"averageTime": "Average Response Time",
+			"streak": "Study Streak"
+		}
+	},
+	"landing": {
+		"hero": {
+			"title1": "Revolutionize Learning",
+			"title2": "with AI & Science",
+			"description": "A learning support platform that combines the latest AI technology with scientific learning methods. Achieve efficient learning and sustained motivation to reach your goals.",
+			"ctaStart": "Get Started Free",
+			"ctaFeatures": "View Features",
+			"badge14Days": "14-day free trial",
+			"badgeNoCard": "No credit card required",
+			"badgeCancelAnytime": "Cancel anytime",
+			"screenshotAlt": "App screenshot"
+		},
+		"valueProposition": {
+			"label": "Why Choose Us",
+			"title": "Efficient, Sustainable Learning",
+			"description": "By integrating cutting-edge AI technology with sophisticated gamification elements, we provide personalized solutions to universal challenges such as 'time constraints,' 'difficulty in continuation,' and 'unclear outcomes.'",
+			"aiTitle": "AI-Powered Learning Efficiency",
+			"aiDescription": "AI analyzes your materials and automatically generates optimal question formats. The FSRS algorithm scientifically calculates the best review timing.",
+			"gamificationTitle": "Gamification Integration",
+			"gamificationDescription": "Enjoy learning with points, badges, skill trees, and various other elements that make continuing your studies feel like a game.",
+			"seamlessTitle": "Seamless Learning Experience",
+			"seamlessDescription": "From importing materials to generating questions, reviewing, and organizing knowledge—complete all learning processes in one platform."
+		},
+		"features": {
+			"label": "Key Features",
+			"title": "Features to Support Your Learning",
+			"description": "Innovative features combining AI and scientific approaches enable efficient learning and sustained motivation.",
+			"deckCard": {
+				"label": "Deck & Card Features",
+				"title": "Diverse Material Import & AI Question Generation",
+				"description": "Import materials through voice input, image OCR, or text input, and let AI automatically generate optimal questions. The FSRS algorithm creates scientific review schedules for effective memory retention.",
+				"imageAlt": "Deck & Card feature image",
+				"feature1": "Automatic transcription from voice input (reading aloud)",
+				"feature2": "Text extraction via image OCR",
+				"feature3": "Multi-format automatic question generation using Google Gemini API",
+				"feature4": "Automatic calculation of optimal review timing with FSRS algorithm"
+			},
+			"note": {
+				"label": "Note Features",
+				"title": "Advanced Note-Taking to Organize and Deepen Knowledge",
+				"description": "Easily register unfamiliar words and terms during study, and efficiently organize knowledge with AI-powered note generation. Build a knowledge graph with inter-note linking to visually understand knowledge relationships.",
+				"imageAlt": "Note feature image",
+				"feature1": "One-click note creation for unfamiliar phrases during study",
+				"feature2": "AI-generated drafts from titles or keyword input",
+				"feature3": "Build knowledge graphs with inter-note linking",
+				"feature4": "Export in Markdown/PDF format"
+			},
+			"aiOptimization": {
+				"title": "AI Learning Optimization",
+				"description": "AI analyzes your learning patterns and suggests personalized study plans. Identify weak areas and support focused learning."
+			},
+			"analytics": {
+				"title": "Detailed Learning Analytics",
+				"description": "Analyze study time, accuracy, and review efficiency in detail with visual displays. Track progress and maintain motivation."
+			},
+			"sharing": {
+				"title": "Sharing & Collaborative Learning",
+				"description": "Share your decks and notes with friends and colleagues. Collaborate on learning content creation and improve together."
+			}
+		},
+		"testimonials": {
+			"label": "Case Studies",
+			"title": "User Testimonials",
+			"description": "See how users with various goals have improved their learning efficiency with our application.",
+			"items": [
+				{
+					"quote": "\"Memorizing technical terms used to be painful, but with AI-generated quizzes, it became enjoyable. The FSRS review timing was perfect, and I could feel the knowledge sticking. Seeing my growth through the skill tree was also motivating.\"",
+					"imageAlt": "User A profile image",
+					"name": "User A (32, Female, Office Worker)",
+					"title": "Successfully obtained PMP certification"
+				},
+				{
+					"quote": "\"I was amazed at how AI-generated questions pinpointed my weak spots. The competitive mode with friends was exciting, and even difficult content became easy to memorize like a game. Much more efficient and fun than studying alone.\"",
+					"imageAlt": "User B profile image",
+					"name": "User B (21, Male, University Student)",
+					"title": "Achieved S grades in multiple exams"
+				},
+				{
+					"quote": "\"Thanks to this app, my scattered knowledge became connected, like building my own encyclopedia. The 'Discovery of the Day' cards are a daily joy, giving me stories to share with my grandchildren. It's easy to use and learning new things has become even more enjoyable.\"",
+					"imageAlt": "User C profile image",
+					"name": "User C (68, Female, Retired)",
+					"title": "Passed World Heritage Test Grade 2"
+				},
+				{
+					"quote": "\"I wanted to efficiently learn IT skills needed for work. The AI adjusted difficulty based on my understanding, allowing me to progress without waste. The practical question formats helped me gain knowledge applicable to actual work.\"",
+					"imageAlt": "User D profile image",
+					"name": "User D (29, Male, Engineer)",
+					"title": "Mastered a new programming language"
+				},
+				{
+					"quote": "\"I was about to give up on bookkeeping studies, but this app's game-like approach made it fun to continue. The ranking feature competing with other learners maintained my motivation. I overcame my weakness in journal entries.\"",
+					"imageAlt": "User E profile image",
+					"name": "User E (25, Female, Accounting Staff)",
+					"title": "Passed JBCI Level 2"
+				},
+				{
+					"quote": "\"I used it for last-minute exam preparation. The AI analyzed past questions and generated problems focused on frequently tested areas and my weak points, which was very efficient. I could confidently take the exam after intensive short-term study.\"",
+					"imageAlt": "User F profile image",
+					"name": "User F (35, Male, Public Servant)",
+					"title": "Passed national certification on first attempt"
+				},
+				{
+					"quote": "\"My hobby study of history deepened with this app. The AI provides related information and trivia, helping me understand not just facts but the stories behind them. The 'Discovery of the Day' feature brings new surprises every day.\"",
+					"imageAlt": "User G profile image",
+					"name": "User G (58, Male, History Enthusiast)",
+					"title": "Preparing for History Certification Test"
+				}
+			]
+		},
+		"pricing": {
+			"label": "Pricing Plans",
+			"title": "Choose the Plan That Fits You",
+			"description": "We offer multiple plans so more people can experience and benefit from our service.",
+			"free": {
+				"name": "Free Plan",
+				"description": "For those who want to try it out casually",
+				"price": "$0",
+				"priceUnit": "/month",
+				"cta": "Get Started Free",
+				"features": {
+					"aiGeneration": "AI question generation (up to 3/month)",
+					"fsrsBasic": "FSRS algorithm (basic features)",
+					"deckLimit": "Deck limit: 5 decks",
+					"cardLimit": "Card limit: 100 cards",
+					"noteLimit": "Notes feature (up to 3 notes/month)",
+					"shareReadOnly": "Read-only link sharing",
+					"noAiAssist": "AI note assistant",
+					"noAdvancedShare": "Advanced sharing features",
+					"noAdFree": "Ad-free experience"
+				}
+			},
+			"premium": {
+				"name": "Premium Plan",
+				"description": "Maximize learning with all features",
+				"recommended": "Recommended",
+				"price": "$9.99",
+				"priceUnit": "/month",
+				"yearlyNote": "Annual plan: $99.99 (Save ~2 months)",
+				"cta": "Start 14-Day Free Trial",
+				"features": {
+					"aiGeneration": "AI question generation (unlimited)",
+					"fsrsAdvanced": "FSRS algorithm (advanced features)",
+					"deckUnlimited": "Unlimited decks",
+					"cardUnlimited": "Unlimited cards",
+					"noteUnlimited": "Notes feature (unlimited, with AI assist)",
+					"advancedShare": "Advanced sharing (collaborative editing, team sharing)",
+					"gamification": "All gamification elements",
+					"adFree": "Ad-free experience",
+					"prioritySupport": "Priority customer support"
+				}
+			},
+			"footer": "All plans can be cancelled anytime. See detailed feature comparison",
+			"footerLink": "here",
+			"footerEnd": "."
+		},
+		"faq": {
+			"label": "FAQ",
+			"title": "Frequently Asked Questions",
+			"description": "We've compiled answers to questions frequently asked by our customers about using this application.",
+			"items": [
+				{
+					"question": "What types of materials can AI automatically generate questions from?",
+					"answer": "We support question generation from text input, voice input (reading aloud using a microphone), and image files (text extraction via OCR). Text from PDF files can also be used via copy and paste as text input."
+				},
+				{
+					"question": "What is the FSRS algorithm? How does it help with learning?",
+					"answer": "FSRS (Free Spaced Repetition Scheduler) is an algorithm that calculates optimal review timing based on scientific forgetting curve theory, tailored to each user's memory retention. Our application uses this algorithm to automatically suggest efficient review schedules that help learned content stick in long-term memory."
+				},
+				{
+					"question": "What can I do with the note feature?",
+					"answer": "Besides easily recording unfamiliar words or content during study, you can generate AI drafts (Premium plan), organize with tags, link notes bidirectionally for knowledge association, and attach images and files. This supports multifaceted knowledge organization and deepening."
+				},
+				{
+					"question": "What are the main differences between Free and Premium plans?",
+					"answer": "The Free plan has limitations on AI question generation frequency, number of decks/cards, and note creation. Some advanced features (AI note assist, detailed sharing settings, ad-free) are only available in the Premium plan. See the Pricing page for detailed feature comparison."
+				},
+				{
+					"question": "Is there a free trial for the Premium plan?",
+					"answer": "Yes, we offer a 14-day free trial for first-time Premium plan users. During the trial, you can use all Premium features. After the trial ends, you'll automatically be moved to the Free plan (no automatic billing)."
+				},
+				{
+					"question": "What devices can I use this on?",
+					"answer": "The service is primarily available through web browsers (responsive design for PC, smartphone, and tablet). We also plan to release native iOS and Android apps in the future."
+				},
+				{
+					"question": "Is my learning data stored securely?",
+					"answer": "Your learning data is securely stored on cloud servers with security measures in place. We take maximum care with information security including data encryption and access control. Please see our Privacy Policy for details."
+				}
+			]
+		},
+		"cta": {
+			"title": "It's Time to Revolutionize Your Learning",
+			"description": "Why not start an innovative learning experience that combines AI and scientific approaches today? Try all Premium features free for 14 days.",
+			"ctaStart": "Get Started Free",
+			"ctaDetails": "Learn More",
+			"footer": "No credit card required • Cancel anytime"
+		}
+	}
+}

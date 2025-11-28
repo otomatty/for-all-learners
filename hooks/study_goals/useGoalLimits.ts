@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { isUserPaid } from "@/app/_actions/subscriptions";
 import { createClient } from "@/lib/supabase/client";
 
 export type GoalLimits = {
@@ -46,7 +45,17 @@ export function useGoalLimits() {
 
 			if (goalsError) throw goalsError;
 
-			const isPaid = await isUserPaid(user.id);
+			// Check if user has paid subscription
+			const { data: subscription } = await supabase
+				.from("subscriptions")
+				.select("plan_id")
+				.eq("user_id", user.id)
+				.maybeSingle();
+
+			const isPaid =
+				subscription !== null &&
+				subscription.plan_id !== "free" &&
+				!subscription.plan_id.includes("_free");
 			const maxGoals = isPaid ? 10 : 3;
 			const currentCount = currentGoals?.length ?? 0;
 			const canAddMore = currentCount < maxGoals;

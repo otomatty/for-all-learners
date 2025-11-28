@@ -2,12 +2,12 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/core";
-import { syncCardLinks } from "@/app/_actions/syncCardLinks";
 import { createClient } from "@/lib/supabase/client";
+import { extractLinkData } from "@/lib/utils/linkUtils";
 
 /**
  * デッキ内のすべてのカードのリンクを同期します。
- * 各カードのfront_contentからpageLinkマークを収集し、syncCardLinksを呼び出します。
+ * 各カードのfront_contentからpageLinkマークを収集し、card_page_linksテーブルを更新します。
  */
 export function useSyncDeckLinks() {
 	const supabase = createClient();
@@ -32,7 +32,33 @@ export function useSyncDeckLinks() {
 			// 各カードのリンクを同期
 			for (const card of cards ?? []) {
 				const content = card.front_content as JSONContent;
-				await syncCardLinks(card.id, content);
+				const { outgoingIds } = extractLinkData(content);
+
+				// Delete existing links for this card
+				const { error: deleteError } = await supabase
+					.from("card_page_links")
+					.delete()
+					.eq("card_id", card.id);
+
+				if (deleteError) {
+					throw deleteError;
+				}
+
+				// Insert new links
+				if (outgoingIds.length > 0) {
+					const linksToInsert = outgoingIds.map((linkedId) => ({
+						card_id: card.id,
+						page_id: linkedId,
+					}));
+
+					const { error: insertError } = await supabase
+						.from("card_page_links")
+						.insert(linksToInsert);
+
+					if (insertError) {
+						throw insertError;
+					}
+				}
 			}
 		},
 		onSuccess: (_, deckId) => {

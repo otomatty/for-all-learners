@@ -1,6 +1,8 @@
 "use client";
+
 import { BookOpen, Clock, Users } from "lucide-react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
 	Card,
@@ -27,20 +29,17 @@ interface NotesListProps {
 }
 
 export default function NotesList({ notes }: NotesListProps) {
+	const t = useTranslations("notes");
+	const locale = useLocale();
+
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{notes.map((note) => {
 				const formattedDate = new Date(note.updatedAt).toLocaleDateString(
-					"ja-JP",
+					locale === "ja" ? "ja-JP" : "en-US",
 				);
-				const visibilityLabel =
-					note.visibility === "public"
-						? "公開"
-						: note.visibility === "unlisted"
-							? "限定公開"
-							: note.visibility === "invite"
-								? "招待"
-								: "非公開";
+				const visibilityLabel = t(`visibility.${note.visibility}`);
+
 				return (
 					<Link
 						key={note.id}
@@ -56,15 +55,21 @@ export default function NotesList({ notes }: NotesListProps) {
 								<div className="space-y-2 text-sm text-muted-foreground">
 									<div className="flex items-center gap-1">
 										<BookOpen className="h-4 w-4" />
-										<span>ページ数: {note.pageCount}</span>
+										<span>
+											{t("list.pageCount")}: {note.pageCount}
+										</span>
 									</div>
 									<div className="flex items-center gap-1">
 										<Users className="h-4 w-4" />
-										<span>参加者数: {note.participantCount}</span>
+										<span>
+											{t("list.participantCount")}: {note.participantCount}
+										</span>
 									</div>
 									<div className="flex items-center gap-1">
 										<Clock className="h-4 w-4" />
-										<span>最終更新日: {formattedDate}</span>
+										<span>
+											{t("list.lastUpdated")}: {formattedDate}
+										</span>
 									</div>
 								</div>
 							</CardContent>

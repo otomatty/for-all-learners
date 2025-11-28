@@ -2,11 +2,6 @@
  * Parse search params for security audit logs page
  */
 
-import {
-	type GetSecurityAuditLogsOptions,
-	getSecurityAuditLogs,
-} from "@/app/_actions/plugin-security-audit-logs";
-
 export interface ParsedSecurityAuditLogsSearchParams {
 	page: number;
 	limit: number;
@@ -63,71 +58,3 @@ export function parseSecurityAuditLogsSearchParams(searchParams?: {
 		severity,
 	};
 }
-
-/**
- * Security audit statistics
- */
-export interface SecurityAuditStats {
-	totalEvents: number;
-	eventsBySeverity: {
-		low: number;
-		medium: number;
-		high: number;
-		critical: number;
-	};
-	eventsByType: Record<string, number>;
-	recentCriticalEvents: number;
-}
-
-/**
- * Get security audit statistics
- */
-export async function getSecurityAuditStats(): Promise<SecurityAuditStats> {
-	// Get all logs from last 24 hours for statistics
-	const result = await getSecurityAuditLogs({
-		limit: 1000,
-		sortBy: "created_at",
-		sortOrder: "desc",
-	});
-
-	const logs = result.logs || [];
-	const stats: SecurityAuditStats = {
-		totalEvents: logs.length,
-		eventsBySeverity: {
-			low: 0,
-			medium: 0,
-			high: 0,
-			critical: 0,
-		},
-		eventsByType: {},
-		recentCriticalEvents: 0,
-	};
-
-	const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-	for (const log of logs) {
-		// Count by severity
-		if (log.severity in stats.eventsBySeverity) {
-			stats.eventsBySeverity[
-				log.severity as keyof typeof stats.eventsBySeverity
-			]++;
-		}
-
-		// Count by type
-		stats.eventsByType[log.eventType] =
-			(stats.eventsByType[log.eventType] || 0) + 1;
-
-		// Count recent critical events (last 24 hours)
-		const logTime = new Date(log.createdAt).getTime();
-		if (
-			logTime >= oneDayAgo &&
-			(log.severity === "critical" || log.severity === "high")
-		) {
-			stats.recentCriticalEvents++;
-		}
-	}
-
-	return stats;
-}
-
-export type { GetSecurityAuditLogsOptions };

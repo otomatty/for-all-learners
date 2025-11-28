@@ -23,11 +23,6 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
-// Mock subscriptions actions
-vi.mock("@/app/_actions/subscriptions", () => ({
-	isUserPaid: vi.fn(),
-	getUserPlanFeatures: vi.fn(),
-}));
 
 describe("useUpdateCard", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -42,9 +37,6 @@ describe("useUpdateCard", () => {
 
 	// TC-001: 正常系 - カード更新成功（無料ユーザー）
 	test("TC-001: Should update card successfully (free user)", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -61,7 +53,20 @@ describe("useUpdateCard", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
+			}),
+		};
+
+		mockSupabaseClient.from = vi
+			.fn()
+			.mockReturnValueOnce(mockQuery) // cards table
+			.mockReturnValueOnce(mockSubscriptionsQuery); // subscriptions table
 
 		const { result } = renderHook(() => useUpdateCard(), {
 			wrapper: createWrapper(),
@@ -86,26 +91,10 @@ describe("useUpdateCard", () => {
 
 	// TC-002: 正常系 - カード更新成功（有料ユーザー、バックグラウンド処理）
 	test("TC-002: Should update card successfully (paid user, background processing)", async () => {
-		const { isUserPaid, getUserPlanFeatures } = await import(
-			"@/app/_actions/subscriptions"
-		);
-		vi.mocked(isUserPaid).mockResolvedValue(true);
-		vi.mocked(getUserPlanFeatures).mockResolvedValue(["multiple_choice"]);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
-
-		// Mock user_settings query
-		const mockSettingsQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: mockUserSettings,
-				error: null,
-			}),
-		};
 
 		const updatedCard = { ...mockCard };
 		const mockQuery = {
@@ -118,9 +107,41 @@ describe("useUpdateCard", () => {
 			}),
 		};
 
+		// Mock subscriptions query (paid user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "premium" },
+				error: null,
+			}),
+		};
+
+		// Mock plans query
+		const mockPlansQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			single: vi.fn().mockResolvedValue({
+				data: { features: ["multiple_choice"] },
+				error: null,
+			}),
+		};
+
+		// Mock user_settings query
+		const mockSettingsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			single: vi.fn().mockResolvedValue({
+				data: mockUserSettings,
+				error: null,
+			}),
+		};
+
 		mockSupabaseClient.from = vi
 			.fn()
 			.mockReturnValueOnce(mockQuery) // cards table
+			.mockReturnValueOnce(mockSubscriptionsQuery) // subscriptions table
+			.mockReturnValueOnce(mockPlansQuery) // plans table
 			.mockReturnValueOnce(mockSettingsQuery); // user_settings table
 
 		mockSupabaseClient.functions.invoke = vi.fn().mockResolvedValue({
@@ -174,9 +195,6 @@ describe("useUpdateCard", () => {
 
 	// TC-004: 異常系 - データベースエラー
 	test("TC-004: Should handle database error", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -192,7 +210,20 @@ describe("useUpdateCard", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
+			}),
+		};
+
+		mockSupabaseClient.from = vi
+			.fn()
+			.mockReturnValueOnce(mockQuery) // cards table
+			.mockReturnValueOnce(mockSubscriptionsQuery); // subscriptions table
 
 		const { result } = renderHook(() => useUpdateCard(), {
 			wrapper: createWrapper(),
@@ -213,9 +244,6 @@ describe("useUpdateCard", () => {
 
 	// TC-005: 正常系 - キャッシュの無効化
 	test("TC-005: Should invalidate queries on success", async () => {
-		const { isUserPaid } = await import("@/app/_actions/subscriptions");
-		vi.mocked(isUserPaid).mockResolvedValue(false);
-
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -232,7 +260,20 @@ describe("useUpdateCard", () => {
 			}),
 		};
 
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		// Mock subscriptions query (free user)
+		const mockSubscriptionsQuery = {
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: { plan_id: "free" },
+				error: null,
+			}),
+		};
+
+		mockSupabaseClient.from = vi
+			.fn()
+			.mockReturnValueOnce(mockQuery) // cards table
+			.mockReturnValueOnce(mockSubscriptionsQuery); // subscriptions table
 
 		const { result } = renderHook(() => useUpdateCard(), {
 			wrapper: createWrapper(),

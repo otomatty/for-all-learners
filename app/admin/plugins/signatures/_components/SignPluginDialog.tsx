@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { generatePluginSignature } from "@/app/_actions/plugin-signatures";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -22,6 +21,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useGenerateKeyPair } from "@/hooks/plugins/usePluginSignatureKeyPair";
+import { useGeneratePluginSignature } from "@/hooks/plugins/usePluginSignatures";
 import type { SignatureAlgorithm } from "@/lib/plugins/plugin-signature/types";
 
 interface SignPluginDialogProps {
@@ -40,15 +41,15 @@ export function SignPluginDialog({
 	const router = useRouter();
 	const [privateKey, setPrivateKey] = useState("");
 	const [algorithm, setAlgorithm] = useState<SignatureAlgorithm>("ed25519");
-	const [isLoading, setIsLoading] = useState(false);
 	const [generatedKeyPair, setGeneratedKeyPair] = useState<{
 		publicKey: string;
 		privateKey: string;
 	} | null>(null);
+	const generateSignatureMutation = useGeneratePluginSignature();
+	const generateKeyPairMutation = useGenerateKeyPair();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsLoading(true);
 
 		try {
 			const finalPrivateKey = generatedKeyPair
@@ -57,56 +58,42 @@ export function SignPluginDialog({
 
 			if (!finalPrivateKey.trim()) {
 				toast.error("秘密鍵を入力してください");
-				setIsLoading(false);
 				return;
 			}
 
-			const result = await generatePluginSignature(
+			await generateSignatureMutation.mutateAsync({
 				pluginId,
-				finalPrivateKey,
+				privateKey: finalPrivateKey,
 				algorithm,
-				!!generatedKeyPair,
-			);
+				generateNewKeyPair: !!generatedKeyPair,
+			});
 
-			if (result.success) {
-				toast.success("署名が正常に生成されました");
-				onOpenChange(false);
-				setPrivateKey("");
-				setGeneratedKeyPair(null);
-				router.refresh();
-			} else {
-				toast.error(result.message || "署名の生成に失敗しました");
-			}
+			toast.success("署名が正常に生成されました");
+			onOpenChange(false);
+			setPrivateKey("");
+			setGeneratedKeyPair(null);
+			router.refresh();
 		} catch (error) {
 			toast.error(
 				error instanceof Error
 					? error.message
 					: "署名の生成中にエラーが発生しました",
 			);
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
 	const handleGenerateKeyPair = async () => {
 		try {
-			const { generateKeyPair } = await import(
-				"@/app/_actions/plugin-signatures"
-			);
-			const result = await generateKeyPair(algorithm);
+			const keyPair = await generateKeyPairMutation.mutateAsync({
+				algorithm,
+			});
 
-			if (result.success && result.publicKey && result.privateKey) {
-				setGeneratedKeyPair({
-					publicKey: result.publicKey,
-					privateKey: result.privateKey,
-				});
-				setPrivateKey(result.privateKey);
-				toast.success(
-					"鍵ペアが生成されました。秘密鍵を安全に保存してください。",
-				);
-			} else {
-				toast.error(result.message || "鍵ペアの生成に失敗しました");
-			}
+			setGeneratedKeyPair({
+				publicKey: keyPair.publicKey,
+				privateKey: keyPair.privateKey,
+			});
+			setPrivateKey(keyPair.privateKey);
+			toast.success("鍵ペアが生成されました。秘密鍵を安全に保存してください。");
 		} catch (error) {
 			toast.error(
 				error instanceof Error
@@ -155,7 +142,7 @@ export function SignPluginDialog({
 								variant="outline"
 								size="sm"
 								onClick={handleGenerateKeyPair}
-								disabled={isLoading}
+								disabled={generateKeyPairMutation.isPending}
 							>
 								新しい鍵ペアを生成
 							</Button>
@@ -192,12 +179,17 @@ export function SignPluginDialog({
 								setPrivateKey("");
 								setGeneratedKeyPair(null);
 							}}
-							disabled={isLoading}
+							disabled={generateSignatureMutation.isPending}
 						>
 							キャンセル
 						</Button>
-						<Button type="submit" disabled={isLoading || !privateKey.trim()}>
-							{isLoading ? "生成中..." : "署名を生成"}
+						<Button
+							type="submit"
+							disabled={
+								generateSignatureMutation.isPending || !privateKey.trim()
+							}
+						>
+							{generateSignatureMutation.isPending ? "生成中..." : "署名を生成"}
 						</Button>
 					</DialogFooter>
 				</form>

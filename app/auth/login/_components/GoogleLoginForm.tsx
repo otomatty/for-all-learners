@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { loginWithGoogle } from "@/app/_actions/auth";
 import { Button } from "@/components/ui/button";
 import { loginWithGoogleTauri } from "@/lib/auth/tauri-login";
+import { createClient } from "@/lib/supabase/client";
 
 interface GoogleLoginFormProps {
 	isTauri: boolean;
@@ -21,8 +22,8 @@ interface GoogleLoginFormProps {
  *   └─ app/auth/login/_components/LoginForm.tsx
  *
  * Dependencies (External files that this file imports):
- *   ├─ @/app/_actions/auth
  *   ├─ @/lib/auth/tauri-login
+ *   ├─ @/lib/supabase/client
  *   ├─ @/components/ui/button
  *   └─ sonner
  *
@@ -34,6 +35,8 @@ export function GoogleLoginForm({
 	isSubmitting,
 	onSubmittingChange,
 }: GoogleLoginFormProps) {
+	const t = useTranslations("auth");
+
 	if (isTauri) {
 		return (
 			<form
@@ -42,14 +45,14 @@ export function GoogleLoginForm({
 					onSubmittingChange(true);
 					try {
 						await loginWithGoogleTauri();
-						toast.success("認証ページを開きました");
+						toast.success(t("authPageOpened"));
 					} catch (err) {
 						const errorMessage =
 							err instanceof Error
 								? err.message
 								: typeof err === "string"
 									? err
-									: "エラーが発生しました";
+									: t("errorOccurred");
 						toast.error(errorMessage);
 						onSubmittingChange(false);
 					}
@@ -65,14 +68,41 @@ export function GoogleLoginForm({
 						height={20}
 						className="mr-2"
 					/>
-					<span>Googleでログイン</span>
+					<span>{t("loginWithGoogle")}</span>
 				</Button>
 			</form>
 		);
 	}
 
 	return (
-		<form action={loginWithGoogle} className="grid gap-6">
+		<form
+			onSubmit={async (e) => {
+				e.preventDefault();
+				try {
+					const supabase = createClient();
+					const { data, error } = await supabase.auth.signInWithOAuth({
+						provider: "google",
+						options: {
+							redirectTo: `${window.location.origin}/auth/callback`,
+						},
+					});
+					if (error) {
+						toast.error(`${t("googleAuthFailed")}: ${error.message}`);
+					} else if (data.url) {
+						window.location.href = data.url;
+					}
+				} catch (err) {
+					const errorMessage =
+						err instanceof Error
+							? err.message
+							: typeof err === "string"
+								? err
+								: t("errorOccurred");
+					toast.error(errorMessage);
+				}
+			}}
+			className="grid gap-6"
+		>
 			<Button type="submit" variant="outline">
 				<Image
 					src="/images/google-logo.svg"
@@ -81,7 +111,7 @@ export function GoogleLoginForm({
 					height={20}
 					className="mr-2"
 				/>
-				<span>Googleでログイン</span>
+				<span>{t("loginWithGoogle")}</span>
 			</Button>
 		</form>
 	);

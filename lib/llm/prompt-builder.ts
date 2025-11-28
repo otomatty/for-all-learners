@@ -4,9 +4,6 @@
  * DEPENDENCY MAP:
  *
  * Parents (使用先):
- *   ├─ app/_actions/generatePageInfo.ts
- *   ├─ app/_actions/ai/generateCards.ts
- *   ├─ app/_actions/ai/generateCardsFromPage.ts
  *   └─ lib/gemini.ts
  *
  * Dependencies (依存先):

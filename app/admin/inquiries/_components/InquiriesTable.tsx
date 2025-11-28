@@ -3,7 +3,6 @@
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { FormattedInquiryListItem } from "@/app/_actions/inquiries"; // 型をインポート
 import { Button } from "@/components/ui/button";
 import {
 	Table,
@@ -13,6 +12,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import type { FormattedInquiryListItem } from "@/hooks/inquiries"; // 型をインポート
 import { InquiryPriorityBadge } from "./InquiryPriorityBadge";
 import { InquiryStatusBadge } from "./InquiryStatusBadge";
 

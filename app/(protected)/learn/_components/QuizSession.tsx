@@ -2,7 +2,6 @@
 import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
-import type { QuizMode } from "@/app/_actions/quiz";
 import { Container } from "@/components/layouts/container";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import type {
 	FlashcardQuestion,
 	MultipleChoiceQuestion,
 } from "@/lib/gemini";
+import type { QuizMode } from "@/lib/services/quizService";
 import ClozeQuiz from "./ClozeQuiz";
 import FlashcardQuiz from "./FlashcardQuiz";
 import MultipleChoiceQuiz from "./MultipleChoiceQuiz";

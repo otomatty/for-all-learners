@@ -27,7 +27,6 @@ import { createClient } from "@/lib/supabase/server";
  * }
  *
  * Related Documentation:
- * - Original Server Action: app/_actions/pdfBatchOcr.ts (processDualPdfBatchOcr)
  * - Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 export async function POST(request: NextRequest) {

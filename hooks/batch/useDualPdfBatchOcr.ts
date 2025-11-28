@@ -14,7 +14,6 @@
  * Related Documentation:
  *   ├─ API Route: app/api/batch/pdf/dual-ocr/route.ts
  *   ├─ Tests: hooks/batch/__tests__/useDualPdfBatchOcr.test.tsx
- *   ├─ Original Server Action: app/_actions/pdfBatchOcr.ts (processDualPdfBatchOcr)
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 

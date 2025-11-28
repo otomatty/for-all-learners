@@ -1,12 +1,12 @@
 import { RefreshCw } from "lucide-react";
 import { Suspense } from "react";
-import {
-	getAlertStatistics,
-	getPluginSecurityAlerts,
-	runAnomalyDetection,
-} from "@/app/_actions/plugin-security-alerts";
 import { Button } from "@/components/ui/button";
+import {
+	getAlertStatisticsServer,
+	getPluginSecurityAlertsServer,
+} from "@/lib/services/pluginSecurityService";
 import { SecurityAlertsFilters } from "./_components/SecurityAlertsFilters";
+import { SecurityAlertsPageClient } from "./_components/SecurityAlertsPageClient";
 import { SecurityAlertsPagination } from "./_components/SecurityAlertsPagination";
 import { SecurityAlertsStatsCards } from "./_components/SecurityAlertsStatsCards";
 import { SecurityAlertsTable } from "./_components/SecurityAlertsTable";
@@ -22,11 +22,17 @@ interface SecurityAlertsPageProps {
 export default async function SecurityAlertsPage({
 	searchParams,
 }: SecurityAlertsPageProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <SecurityAlertsPageClient />;
+	}
+
 	const resolvedSearchParams = await searchParams;
 	const parsedParams = parseSecurityAlertsSearchParams(resolvedSearchParams);
 
 	const [alertsResult, statsResult] = await Promise.all([
-		getPluginSecurityAlerts({
+		getPluginSecurityAlertsServer({
 			page: parsedParams.page,
 			limit: parsedParams.limit,
 			sortBy: parsedParams.sortBy,
@@ -39,7 +45,7 @@ export default async function SecurityAlertsPage({
 				searchQuery: parsedParams.searchQuery,
 			},
 		}),
-		getAlertStatistics(),
+		getAlertStatisticsServer(),
 	]);
 
 	if (!alertsResult.success) {
@@ -69,7 +75,13 @@ export default async function SecurityAlertsPage({
 
 	// Wrapper function for form action (form actions must return void)
 	async function handleRunAnomalyDetection(_formData?: FormData) {
-		await runAnomalyDetection();
+		// Call API route for anomaly detection
+		const response = await fetch("/api/plugins/security/alerts/run-detection", {
+			method: "POST",
+		});
+		if (!response.ok) {
+			throw new Error("異常検知の実行に失敗しました");
+		}
 	}
 
 	return (

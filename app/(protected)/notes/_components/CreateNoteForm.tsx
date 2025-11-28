@@ -1,10 +1,9 @@
 "use client";
 
 import { Check, Loader2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { CreateNotePayload } from "@/app/_actions/notes/types";
-import { validateSlug } from "@/app/_actions/slug";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -34,6 +33,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import type { CreateNotePayload } from "@/hooks/notes/useCreateNote";
 import { useCreateNote } from "@/hooks/notes/useCreateNote";
 import { useShareNote } from "@/hooks/notes/useShareNote";
 import { createClient } from "@/lib/supabase/client";
@@ -43,6 +43,8 @@ interface CreateNoteFormProps {
 }
 
 export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
+	const t = useTranslations("notes");
+	const tCommon = useTranslations("common");
 	const createNote = useCreateNote();
 	const shareNote = useShareNote();
 	const methods = useForm<CreateNotePayload>({
@@ -73,14 +75,23 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 		}
 		let isCurrent = true;
 		setSlugStatus("validating");
-		validateSlug(slugValue)
-			.then(({ available }) => {
+		const client = createClient();
+		(async () => {
+			try {
+				const { count, error } = await client
+					.from("notes")
+					.select("id", { count: "exact", head: true })
+					.eq("slug", slugValue);
 				if (!isCurrent) return;
-				setSlugStatus(available ? "available" : "unavailable");
-			})
-			.catch(() => {
+				if (error) {
+					setSlugStatus("unavailable");
+					return;
+				}
+				setSlugStatus(count === 0 ? "available" : "unavailable");
+			} catch {
 				if (isCurrent) setSlugStatus("unavailable");
-			});
+			}
+		})();
 		return () => {
 			isCurrent = false;
 		};
@@ -119,10 +130,10 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 						<FormField
 							name="title"
 							control={methods.control}
-							rules={{ required: "タイトルは必須です" }}
+							rules={{ required: t("form.titleRequired") }}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>タイトル</FormLabel>
+									<FormLabel>{t("noteTitle")}</FormLabel>
 									<FormControl>
 										<Input {...field} />
 									</FormControl>
@@ -134,22 +145,20 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 							name="slug"
 							control={methods.control}
 							rules={{
-								required: "Slugは必須です",
+								required: t("form.slugRequired"),
 								validate: async (value: string) => {
 									const { count, error } = await createClient()
 										.from("notes")
 										.select("id", { count: "exact", head: true })
 										.eq("slug", value);
-									if (error) return "Slugの確認中にエラーが発生しました";
-									return count === 0 || "Slugは既に使用されています";
+									if (error) return t("form.slugValidationError");
+									return count === 0 || t("form.slugTaken");
 								},
 							}}
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Slug</FormLabel>
-									<FormDescription>
-										英数字とハイフンのみを使用してください
-									</FormDescription>
+									<FormDescription>{t("form.slugHint")}</FormDescription>
 									<FormControl>
 										<div className="relative">
 											<Input
@@ -182,7 +191,7 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 							control={methods.control}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>説明</FormLabel>
+									<FormLabel>{t("noteDescription")}</FormLabel>
 									<FormControl>
 										<Textarea {...field} />
 									</FormControl>
@@ -195,20 +204,28 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 							control={methods.control}
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>公開範囲</FormLabel>
+									<FormLabel>{t("visibility.label")}</FormLabel>
 									<FormControl>
 										<Select
 											value={field.value}
 											onValueChange={(value) => field.onChange(value)}
 										>
 											<SelectTrigger className="w-full">
-												<SelectValue placeholder="公開範囲" />
+												<SelectValue placeholder={t("visibility.label")} />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value="public">公開</SelectItem>
-												<SelectItem value="unlisted">限定公開</SelectItem>
-												<SelectItem value="invite">招待制</SelectItem>
-												<SelectItem value="private">非公開</SelectItem>
+												<SelectItem value="public">
+													{t("visibility.public")}
+												</SelectItem>
+												<SelectItem value="unlisted">
+													{t("visibility.unlisted")}
+												</SelectItem>
+												<SelectItem value="invite">
+													{t("visibility.invite")}
+												</SelectItem>
+												<SelectItem value="private">
+													{t("visibility.private")}
+												</SelectItem>
 											</SelectContent>
 										</Select>
 									</FormControl>
@@ -220,7 +237,7 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 								type="submit"
 								disabled={createNote.isPending || formState.isSubmitting}
 							>
-								{createNote.isPending ? "作成中…" : "作成"}
+								{createNote.isPending ? t("form.creating") : t("form.create")}
 							</Button>
 						</div>
 					</form>
@@ -230,10 +247,8 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 				<Sheet defaultOpen>
 					<SheetContent side="right">
 						<SheetHeader>
-							<SheetTitle>ノートを共有</SheetTitle>
-							<SheetDescription>
-								共有するユーザーを選択してください。
-							</SheetDescription>
+							<SheetTitle>{t("share.title")}</SheetTitle>
+							<SheetDescription>{t("share.description")}</SheetDescription>
 						</SheetHeader>
 						<div className="overflow-y-auto flex-1 p-4 space-y-2">
 							{users.map((user) => (
@@ -258,10 +273,10 @@ export default function CreateNoteForm({ onSuccess }: CreateNoteFormProps) {
 						</div>
 						<SheetFooter>
 							<Button variant="outline" onClick={() => setStep("form")}>
-								戻る
+								{tCommon("back")}
 							</Button>
 							<Button onClick={handleShare} disabled={isSharing}>
-								{isSharing ? "共有中..." : "共有する"}
+								{isSharing ? t("share.sharing") : t("share.shareButton")}
 							</Button>
 						</SheetFooter>
 					</SheetContent>

@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { FormattedInquiryListItem } from "@/app/_actions/inquiries";
+import type { FormattedInquiryListItem } from "@/hooks/inquiries";
 import type { Database } from "@/types/database.types";
 
 export function cn(...inputs: ClassValue[]) {

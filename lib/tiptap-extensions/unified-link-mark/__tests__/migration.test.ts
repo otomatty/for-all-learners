@@ -188,7 +188,9 @@ describe("UnifiedLinkMark - Legacy Data Migration", () => {
 
 			editor.commands.setContent(html);
 			const mark = editor.getJSON().content?.[0]?.content?.[0]?.marks?.[0];
-			const textNode = editor.getJSON().content?.[0]?.content?.[0];
+			const textNode = editor.getJSON().content?.[0]?.content?.[0] as
+				| { text?: string }
+				| undefined;
 
 			// Text content is stored in the text node, not mark attributes
 			expect(textNode?.text).toBe("Display Text");

@@ -1,8 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { defaultLocale, locales } from "@/i18n/config";
 import { buildCSPHeader, generateNonce } from "@/lib/utils/csp";
 import type { Database } from "@/types/database.types";
+
+// Create next-intl middleware
+const intlMiddleware = createIntlMiddleware({
+	locales,
+	defaultLocale,
+	localePrefix: "as-needed", // Only add locale prefix when not default
+});
 
 // Define public routes for unauthenticated users
 const PUBLIC_PATHS = [
@@ -16,6 +25,8 @@ const PUBLIC_PATHS = [
 	"/inquiry",
 	"/changelog",
 	"/milestones",
+	"/privacy",
+	"/terms",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -74,8 +85,11 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.redirect(new URL(`/notes/default/${pageId}`, req.url));
 	}
 
+	// Apply i18n middleware first to handle locale routing
+	const intlResponse = intlMiddleware(req);
+
 	// Initialize Supabase auth client with SSR helper
-	const res = NextResponse.next();
+	const res = intlResponse;
 	const supabase = createServerClient<Database>(
 		process.env.NEXT_PUBLIC_SUPABASE_URL || "",
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
@@ -96,8 +110,14 @@ export async function middleware(req: NextRequest) {
 	} = await supabase.auth.getSession();
 	const isAuthenticated = Boolean(session);
 
+	// Strip locale prefix from pathname for route matching
+	const pathnameWithoutLocale =
+		pathname.replace(new RegExp(`^/(${locales.join("|")})`), "") || "/";
+
 	const isPublicPath = PUBLIC_PATHS.some(
-		(path) => pathname === path || pathname.startsWith(`${path}/`),
+		(path) =>
+			pathnameWithoutLocale === path ||
+			pathnameWithoutLocale.startsWith(`${path}/`),
 	);
 
 	// Unauthenticated users trying to access private routes
@@ -128,5 +148,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/:path*"],
+	matcher: ["/((?!_next|.*\\..*).*)"],
 };

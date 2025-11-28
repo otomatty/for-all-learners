@@ -1,0 +1,461 @@
+{
+	"common": {
+		"loading": "読み込み中...",
+		"error": "エラーが発生しました",
+		"save": "保存",
+		"cancel": "キャンセル",
+		"delete": "削除",
+		"edit": "編集",
+		"create": "作成",
+		"close": "閉じる",
+		"confirm": "確認",
+		"back": "戻る",
+		"next": "次へ",
+		"search": "検索",
+		"settings": "設定",
+		"logout": "ログアウト"
+	},
+	"navigation": {
+		"dashboard": "ダッシュボード",
+		"notes": "ノート",
+		"decks": "デッキ",
+		"goals": "目標",
+		"learn": "学習",
+		"search": "検索",
+		"profile": "プロフィール",
+		"settings": "設定"
+	},
+	"auth": {
+		"login": "ログイン",
+		"loginWithGoogle": "Googleでログイン",
+		"loginWithGitHub": "GitHubでログイン",
+		"loginWithEmail": "メールアドレスでログイン",
+		"welcomeBack": "おかえりなさい",
+		"loginDescription": "アカウントにログインしてください",
+		"loginTitle": "アカウントにログイン",
+		"loginSubtitle": "お好みの方法でログインして学習を始めましょう",
+		"magicLinkSent": "指定されたメールアドレスにログインリンクを送信しました。メールを確認してください。",
+		"errorOccurred": "エラーが発生しました",
+		"authPageOpened": "認証ページを開きました",
+		"authEmailSent": "認証メールを送信しました",
+		"googleAuthFailed": "Google認証に失敗しました",
+		"emailAuthFailed": "認証メールの送信に失敗しました",
+		"emailPlaceholder": "メールアドレス",
+		"emailLabel": "メールアドレス",
+		"or": "または"
+	},
+	"dashboard": {
+		"title": "ダッシュボード",
+		"welcomeMessage": "ようこそ、{name}さん",
+		"todayGoal": "今日の目標",
+		"studyStreak": "学習連続日数",
+		"totalCards": "総カード数",
+		"masteredCards": "習得済みカード"
+	},
+	"notes": {
+		"title": "ノート",
+		"myNotes": "マイノート",
+		"recommendedNotes": "おすすめの公開ノート",
+		"createNote": "新しいノートを作成",
+		"newNote": "新規ノート",
+		"noteTitle": "タイトル",
+		"noteDescription": "説明",
+		"noNotes": "ノートがありません",
+		"deleteConfirm": "このノートを削除してもよろしいですか？",
+		"visibility": {
+			"label": "公開範囲",
+			"public": "公開",
+			"unlisted": "限定公開",
+			"invite": "招待制",
+			"private": "非公開"
+		},
+		"form": {
+			"titleRequired": "タイトルは必須です",
+			"slugRequired": "Slugは必須です",
+			"slugValidationError": "Slugの確認中にエラーが発生しました",
+			"slugTaken": "Slugは既に使用されています",
+			"slugHint": "英数字とハイフンのみを使用してください",
+			"creating": "作成中...",
+			"create": "作成"
+		},
+		"share": {
+			"title": "ノートを共有",
+			"description": "共有するユーザーを選択してください。",
+			"sharing": "共有中...",
+			"shareButton": "共有する"
+		},
+		"list": {
+			"pageCount": "ページ数",
+			"participantCount": "参加者数",
+			"lastUpdated": "最終更新日"
+		},
+		"explorer": {
+			"title": "ノートエクスプローラー",
+			"noteList": "ノート一覧",
+			"pageList": "ページ一覧",
+			"selectNote": "左側のノートを選択してください",
+			"items": "{count}件"
+		},
+		"operations": {
+			"preparing": "{action}の準備中...",
+			"processing": "{action}中...",
+			"move": "移動",
+			"copy": "コピー",
+			"moved": "{count}件のページを移動しました",
+			"copied": "{count}件のページをコピーしました",
+			"operationError": "処理中にエラーが発生しました",
+			"operationFailed": "処理に失敗しました",
+			"cancelled": "操作をキャンセルしました"
+		},
+		"trash": {
+			"title": "ゴミ箱",
+			"movingToTrash": "ゴミ箱に移動中...",
+			"deleting": "完全削除中...",
+			"deleteFailed": "削除に失敗しました",
+			"deleteCancelled": "削除をキャンセルしました"
+		}
+	},
+	"decks": {
+		"title": "デッキ",
+		"createDeck": "新しいデッキを作成",
+		"deckName": "デッキ名",
+		"cardCount": "{count}枚のカード",
+		"noDecks": "デッキがありません",
+		"deleteConfirm": "このデッキを削除してもよろしいですか？"
+	},
+	"cards": {
+		"front": "表面",
+		"back": "裏面",
+		"createCard": "カードを作成",
+		"editCard": "カードを編集",
+		"deleteCard": "カードを削除",
+		"deleteConfirm": "このカードを削除してもよろしいですか？"
+	},
+	"learn": {
+		"title": "学習",
+		"startLearning": "学習を開始",
+		"showAnswer": "答えを見る",
+		"again": "もう一度",
+		"hard": "難しい",
+		"good": "良い",
+		"easy": "簡単",
+		"completed": "学習完了",
+		"cardsRemaining": "残り{count}枚"
+	},
+	"goals": {
+		"title": "目標",
+		"createGoal": "目標を作成",
+		"goalTitle": "目標タイトル",
+		"targetCards": "目標カード数",
+		"noGoals": "目標がありません",
+		"progress": "進捗: {current}/{target}"
+	},
+	"settings": {
+		"title": "設定",
+		"language": "言語",
+		"theme": "テーマ",
+		"themeLight": "ライト",
+		"themeDark": "ダーク",
+		"themeSystem": "システム",
+		"notifications": "通知",
+		"account": "アカウント",
+		"privacy": "プライバシー",
+		"about": "このアプリについて"
+	},
+	"profile": {
+		"title": "プロフィール",
+		"displayName": "表示名",
+		"email": "メールアドレス",
+		"bio": "自己紹介",
+		"updateProfile": "プロフィールを更新"
+	},
+	"errors": {
+		"notFound": "ページが見つかりません",
+		"unauthorized": "ログインが必要です",
+		"forbidden": "アクセスが拒否されました",
+		"serverError": "サーバーエラーが発生しました",
+		"networkError": "ネットワークエラーが発生しました"
+	},
+	"sync": {
+		"title": "同期",
+		"status": {
+			"idle": "待機中",
+			"syncing": "同期中...",
+			"error": "同期エラー",
+			"offline": "オフライン",
+			"paused": "一時停止中"
+		},
+		"lastSync": "最終同期: {time}",
+		"pendingChanges": "未同期の変更: {count}件",
+		"syncNow": "今すぐ同期",
+		"autoSync": "自動同期",
+		"syncInterval": "同期間隔",
+		"syncComplete": "同期が完了しました",
+		"syncFailed": "同期に失敗しました",
+		"conflictResolved": "競合を解決しました",
+		"offlineMode": "オフラインモード",
+		"offlineMessage": "インターネット接続がありません。変更はローカルに保存され、オンライン復帰時に同期されます。",
+		"pushComplete": "{count}件の変更をサーバーに送信しました",
+		"pullComplete": "{count}件の変更をサーバーから取得しました"
+	},
+	"pages": {
+		"title": "ページ",
+		"createPage": "新しいページを作成",
+		"newPage": "新規ページ",
+		"pageTitle": "ページタイトル",
+		"noPages": "ページがありません",
+		"deleteConfirm": "このページを削除してもよろしいですか？",
+		"linkedNotes": "リンクされたノート",
+		"attachedDecks": "関連デッキ",
+		"lastEdited": "最終編集: {time}",
+		"wordCount": "{count}文字",
+		"readingTime": "読了時間: {minutes}分"
+	},
+	"milestones": {
+		"title": "マイルストーン",
+		"createMilestone": "マイルストーンを作成",
+		"milestoneTitle": "マイルストーンタイトル",
+		"dueDate": "期限",
+		"completed": "完了",
+		"incomplete": "未完了",
+		"noMilestones": "マイルストーンがありません",
+		"markComplete": "完了にする",
+		"markIncomplete": "未完了にする"
+	},
+	"studyGoals": {
+		"title": "学習目標",
+		"createGoal": "学習目標を作成",
+		"goalDescription": "目標の説明",
+		"deadline": "締め切り",
+		"progressRate": "進捗率",
+		"status": {
+			"notStarted": "未開始",
+			"inProgress": "進行中",
+			"completed": "完了"
+		},
+		"linkedDecks": "関連デッキ",
+		"statistics": {
+			"totalCards": "総カード数",
+			"masteredCards": "習得済み",
+			"dueCards": "復習予定",
+			"accuracy": "正答率"
+		}
+	},
+	"learningLogs": {
+		"title": "学習ログ",
+		"todayStudy": "今日の学習",
+		"weeklyStudy": "週間学習",
+		"monthlyStudy": "月間学習",
+		"practiceMode": {
+			"flashcard": "フラッシュカード",
+			"quiz": "クイズ",
+			"typing": "タイピング",
+			"listening": "リスニング",
+			"reading": "リーディング"
+		},
+		"statistics": {
+			"totalReviews": "総復習回数",
+			"correctRate": "正答率",
+			"averageTime": "平均回答時間",
+			"streak": "連続学習日数"
+		}
+	},
+	"landing": {
+		"hero": {
+			"title1": "AIと科学的アプローチで",
+			"title2": "学習を革新する",
+			"description": "最新のAI技術と科学的な学習メソッドを融合させた学習支援プラットフォーム。効率的な学習と持続的なモチベーション維持を実現し、あなたの学習目標達成をサポートします。",
+			"ctaStart": "無料で始める",
+			"ctaFeatures": "機能を見る",
+			"badge14Days": "14日間無料トライアル",
+			"badgeNoCard": "クレジットカード不要",
+			"badgeCancelAnytime": "いつでもキャンセル可能",
+			"screenshotAlt": "アプリのスクリーンショット"
+		},
+		"valueProposition": {
+			"label": "なぜ選ばれるのか",
+			"title": "効率の良い、継続できる学習",
+			"description": "最新のAI技術と洗練されたゲーミフィケーション要素を高度に融合させることにより、「時間的制約」「継続の困難性」「成果の不明確さ」といった普遍的な課題に対し、個別最適化されたソリューションを提供します。",
+			"aiTitle": "AIによる学習効率の向上",
+			"aiDescription": "AIが教材を解析し、最適な問題形式を自動生成。FSRSアルゴリズムで科学的に最適な復習タイミングを提案します。",
+			"gamificationTitle": "ゲーミフィケーションの活用",
+			"gamificationDescription": "ポイント獲得、バッジ収集、スキルツリーなど多彩な要素で、学習の継続をゲーム感覚で楽しめます。",
+			"seamlessTitle": "シームレスな学習体験",
+			"seamlessDescription": "教材取り込みから問題生成、復習、知識の整理まで、学習に必要なすべてのプロセスを一つのプラットフォームで完結。"
+		},
+		"features": {
+			"label": "主要機能",
+			"title": "あなたの学習をサポートする機能",
+			"description": "AIと科学的アプローチを組み合わせた革新的な機能で、効率的な学習と継続的なモチベーション維持を実現します。",
+			"deckCard": {
+				"label": "デッキ＆カード機能",
+				"title": "多様な教材取り込みとAI問題生成",
+				"description": "音声入力、画像OCR、テキスト入力など様々な方法で教材を取り込み、AIが自動で最適な問題を生成します。FSRSアルゴリズムによる科学的な復習スケジュールで、効率的に記憶を定着させます。",
+				"imageAlt": "デッキ＆カード機能のイメージ",
+				"feature1": "音声入力（音読）での自動文字起こし",
+				"feature2": "画像OCRでテキスト化",
+				"feature3": "Google Gemini APIを活用した多形式の問題自動生成",
+				"feature4": "FSRSアルゴリズムによる最適な復習タイミングの自動計算"
+			},
+			"note": {
+				"label": "ノート機能",
+				"title": "知識を整理し、深める高度なノート機能",
+				"description": "学習中に気になった単語や用語を簡単に登録し、AIによるノート自動生成機能で効率的に知識を整理。ノート間のリンク機能でナレッジグラフを構築し、知識の関連性を視覚的に把握できます。",
+				"imageAlt": "ノート機能のイメージ",
+				"feature1": "学習中の不明語句をワンクリックでノート化",
+				"feature2": "タイトルやキーワード入力でAIによる下書き生成",
+				"feature3": "ノート間を相互リンクしナレッジグラフを構築",
+				"feature4": "Markdown／PDF形式でエクスポート"
+			},
+			"aiOptimization": {
+				"title": "AIによる学習最適化",
+				"description": "AIが学習パターンを分析し、個々のユーザーに最適化された学習プランを提案。苦手分野を特定し、集中的な学習をサポートします。"
+			},
+			"analytics": {
+				"title": "詳細な学習分析",
+				"description": "学習時間、正解率、復習効率などを詳細に分析し、視覚的にわかりやすく表示。学習の進捗を把握し、モチベーション維持に役立ちます。"
+			},
+			"sharing": {
+				"title": "共有と協力学習",
+				"description": "作成したデッキやノートを友人や同僚と共有。共同編集機能で協力して学習コンテンツを作成し、互いに高め合うことができます。"
+			}
+		},
+		"testimonials": {
+			"label": "導入事例",
+			"title": "ユーザーの声",
+			"description": "様々な目標を持つユーザーが、本アプリケーションを活用して学習効率を向上させた事例をご紹介します。",
+			"items": [
+				{
+					"quote": "「以前は苦痛だった専門用語の暗記も、AIが出題してくれるクイズ形式なら楽しく取り組めました。特にFSRSの復習タイミングは絶妙で、知識がしっかり身についていく実感がありました。スキルツリーで自分の成長が見えるのも嬉しかったです」",
+					"imageAlt": "Aさんのプロフィール画像",
+					"name": "Aさん（32歳・会社員・女性）",
+					"title": "PMP資格取得に成功"
+				},
+				{
+					"quote": "「AIが作る問題は、自分の弱点を的確に突いてくるので驚きました。友人との対戦モードは本当に盛り上がり、難しい内容もゲーム感覚で覚えられました。一人でやっていた時よりも格段に効率が上がり、何より楽しかったです」",
+					"imageAlt": "Bさんのプロフィール画像",
+					"name": "Bさん（21歳・大学生・男性）",
+					"title": "複数の定期試験でS評価を獲得"
+				},
+				{
+					"quote": "「このアプリのおかげで、バラバラだった知識が繋がり、まるで自分だけの百科事典を作っているようです。『今日の発見』カードは毎日の楽しみで、孫に話して聞かせるネタも増えました。操作も簡単で、新しいことを学ぶのがますます楽しくなりました」",
+					"imageAlt": "Cさんのプロフィール画像",
+					"name": "Cさん（68歳・退職後・女性）",
+					"title": "世界遺産検定2級に合格"
+				},
+				{
+					"quote": "「仕事で必要なITスキルを効率的に学びたくて利用しました。AIが私の理解度に合わせて難易度を調整してくれるので、無駄なく学習を進められました。特に、実践的な問題形式が多く、実際の業務で役立つ知識が身についたと感じています」",
+					"imageAlt": "Dさんのプロフィール画像",
+					"name": "Dさん（29歳・エンジニア・男性）",
+					"title": "新しいプログラミング言語を習得"
+				},
+				{
+					"quote": "「簿記の勉強で挫折しそうになっていましたが、このアプリのゲーム感覚の学習方法で楽しく続けられました。特に、他の学習者と競い合えるランキング機能がモチベーション維持に繋がりました。おかげで、苦手だった仕訳問題も克服できました」",
+					"imageAlt": "Eさんのプロフィール画像",
+					"name": "Eさん（25歳・経理事務・女性）",
+					"title": "日商簿記2級に合格"
+				},
+				{
+					"quote": "「資格試験の直前対策として利用しました。過去問をAIが分析し、頻出分野や自分の苦手な部分に特化した問題を出してくれるのが非常に効率的でした。短期間で集中的に学習できたおかげで、自信を持って試験に臨めました」",
+					"imageAlt": "Fさんのプロフィール画像",
+					"name": "Fさん（35歳・公務員・男性）",
+					"title": "国家資格に一発合格"
+				},
+				{
+					"quote": "「趣味で始めた歴史の勉強が、このアプリでさらに深まりました。AIが関連情報や豆知識を教えてくれるので、ただ暗記するだけでなく、背景にあるストーリーまで理解できるようになりました。『今日の発見』機能で、毎日新しい驚きがあります」",
+					"imageAlt": "Gさんのプロフィール画像",
+					"name": "Gさん（58歳・歴史愛好家・男性）",
+					"title": "歴史能力検定に挑戦中"
+				}
+			]
+		},
+		"pricing": {
+			"label": "料金プラン",
+			"title": "あなたに合ったプランを選択",
+			"description": "より多くの方にご利用いただき、その効果を実感していただくために、複数のプランをご用意しています。",
+			"free": {
+				"name": "フリープラン",
+				"description": "まずは気軽に試してみたい方向け",
+				"price": "¥0",
+				"priceUnit": "/月",
+				"cta": "無料で始める",
+				"features": {
+					"aiGeneration": "AI問題自動生成（月間3回まで）",
+					"fsrsBasic": "FSRSアルゴリズム（基本機能）",
+					"deckLimit": "デッキ数上限：5デッキ",
+					"cardLimit": "カード総数上限：100カード",
+					"noteLimit": "ノート機能（月間3ノートまで）",
+					"shareReadOnly": "閲覧専用リンク共有",
+					"noAiAssist": "AIノートアシスト",
+					"noAdvancedShare": "高度な共有機能",
+					"noAdFree": "広告非表示"
+				}
+			},
+			"premium": {
+				"name": "プレミアムプラン",
+				"description": "全機能を活用して学習効果を最大化",
+				"recommended": "おすすめ",
+				"price": "¥1,280",
+				"priceUnit": "/月",
+				"yearlyNote": "年額プラン：¥12,800（約2ヶ月分お得）",
+				"cta": "14日間無料トライアル",
+				"features": {
+					"aiGeneration": "AI問題自動生成（無制限）",
+					"fsrsAdvanced": "FSRSアルゴリズム（高度機能）",
+					"deckUnlimited": "デッキ数：無制限",
+					"cardUnlimited": "カード総数：無制限",
+					"noteUnlimited": "ノート機能（無制限、AIアシスト付き）",
+					"advancedShare": "高度な共有機能（共同編集、チーム共有）",
+					"gamification": "全てのゲーミフィケーション要素",
+					"adFree": "広告非表示",
+					"prioritySupport": "優先カスタマーサポート"
+				}
+			},
+			"footer": "すべてのプランは、いつでもキャンセル可能です。詳細な機能比較は",
+			"footerLink": "こちら",
+			"footerEnd": "をご覧ください。"
+		},
+		"faq": {
+			"label": "よくある質問",
+			"title": "お客様からよく寄せられる質問",
+			"description": "本アプリケーションのご利用にあたり、お客様から多く寄せられるご質問とその回答をまとめました。",
+			"items": [
+				{
+					"question": "AIによる問題自動生成は、どのような教材から可能ですか？",
+					"answer": "テキスト入力、音声入力（マイクを利用した音読など）、画像ファイル（OCR機能によりテキストを抽出）からの問題生成に対応しております。PDFファイル内のテキスト情報も、コピー＆ペーストでテキスト入力としてご利用いただけます。"
+				},
+				{
+					"question": "FSRSアルゴリズムとは何ですか？どのように学習に役立ちますか？",
+					"answer": "FSRS（Free Spaced Repetition Scheduler）は、科学的な忘却曲線理論に基づき、個々のユーザーの記憶度に合わせて最適な復習タイミングを計算するアルゴリズムです。本アプリケーションでは、このアルゴリズムを用いて、学習した内容が長期記憶として定着しやすくなるよう、効率的な復習スケジュールを自動で提案します。"
+				},
+				{
+					"question": "ノート機能では、どのようなことができますか？",
+					"answer": "学習中に気になった単語や内容を簡単に記録できるだけでなく、AIによる下書き生成（プレミアムプラン）、タグ付けによる整理、ノート間の双方向リンクによる知識の関連付け、画像やファイルの添付などが可能です。これにより、多角的な知識の整理と深化をサポートします。"
+				},
+				{
+					"question": "フリープランとプレミアムプランの主な違いは何ですか？",
+					"answer": "フリープランでは、AI問題生成の回数や作成可能なデッキ・カード数、ノート作成数などに制限がございます。また、一部の高度な機能（AIノートアシスト、詳細な共有設定、広告非表示など）はプレミアムプランでのみご利用いただけます。詳細な機能比較は「価格プラン」のページをご確認ください。"
+				},
+				{
+					"question": "プレミアムプランの無料トライアルはありますか？",
+					"answer": "はい、初めてプレミアムプランをご利用になる方を対象に、14日間の無料トライアル期間を設けております。トライアル期間中はプレミアムプランの全機能をご利用いただけます。トライアル期間終了後は、自動的にフリープランに移行します（自動課金はされません）。"
+				},
+				{
+					"question": "どのデバイスで利用できますか？",
+					"answer": "Webブラウザ（PC、スマートフォン、タブレット対応のレスポンシブデザイン）でのご利用を基本とし、将来的にはiOSおよびAndroidのネイティブアプリの提供も計画しております。"
+				},
+				{
+					"question": "学習データは安全に保管されますか？",
+					"answer": "お客様の学習データは、セキュリティ対策を施したクラウドサーバーに安全に保管されます。データの暗号化やアクセス制御など、情報セキュリティには最大限配慮しております。詳細は「プライバシーポリシー」をご確認ください。"
+				}
+			]
+		},
+		"cta": {
+			"title": "あなたの学習を革新する時が来ました",
+			"description": "AIと科学的アプローチを組み合わせた革新的な学習体験を、今すぐ始めてみませんか？14日間の無料トライアルで、プレミアムプランのすべての機能をお試しいただけます。",
+			"ctaStart": "無料で始める",
+			"ctaDetails": "詳細を見る",
+			"footer": "クレジットカード不要・いつでもキャンセル可能"
+		}
+	}
+}

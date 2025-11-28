@@ -249,34 +249,33 @@ describe("PluginFilters", () => {
 			"editor" | "ai" | "ui" | "dataProcessor" | "integration"
 		> = ["editor", "ai", "ui", "dataProcessor", "integration"];
 
-		it.each(extensionPoints)(
-			"TC-012: should handle extension point selection for %s",
-			async (extensionPoint) => {
-				const user = userEvent.setup();
-				const onExtensionPointChange = vi.fn();
-				render(
-					<PluginFilters
-						isOfficial={null}
-						isReviewed={null}
-						extensionPoint={null}
-						sort="popular"
-						onOfficialChange={mockCallbacks.onOfficialChange}
-						onReviewedChange={mockCallbacks.onReviewedChange}
-						onExtensionPointChange={onExtensionPointChange}
-						onSortChange={mockCallbacks.onSortChange}
-					/>,
-				);
+		it.each(
+			extensionPoints,
+		)("TC-012: should handle extension point selection for %s", async (extensionPoint) => {
+			const user = userEvent.setup();
+			const onExtensionPointChange = vi.fn();
+			render(
+				<PluginFilters
+					isOfficial={null}
+					isReviewed={null}
+					extensionPoint={null}
+					sort="popular"
+					onOfficialChange={mockCallbacks.onOfficialChange}
+					onReviewedChange={mockCallbacks.onReviewedChange}
+					onExtensionPointChange={onExtensionPointChange}
+					onSortChange={mockCallbacks.onSortChange}
+				/>,
+			);
 
-				const select = screen.getByRole("combobox", {
-					name: "拡張ポイント",
-				});
-				await user.click(select);
+			const select = screen.getByRole("combobox", {
+				name: "拡張ポイント",
+			});
+			await user.click(select);
 
-				// Note: Select content is rendered in a portal, which may not be accessible in test environment
-				// Instead, we test that the callback can be called programmatically
-				onExtensionPointChange(extensionPoint);
-				expect(onExtensionPointChange).toHaveBeenCalledWith(extensionPoint);
-			},
-		);
+			// Note: Select content is rendered in a portal, which may not be accessible in test environment
+			// Instead, we test that the callback can be called programmatically
+			onExtensionPointChange(extensionPoint);
+			expect(onExtensionPointChange).toHaveBeenCalledWith(extensionPoint);
+		});
 	});
 });

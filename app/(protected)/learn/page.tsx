@@ -1,10 +1,20 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { getQuizQuestions, type QuizParams } from "@/app/_actions/quiz";
 import { Container } from "@/components/layouts/container";
+import {
+	getQuizQuestionsServer,
+	type QuizParams,
+} from "@/lib/services/quizService";
+import { LearnPageClient } from "./_components/LearnPageClient";
 import QuizSession from "./_components/QuizSession";
 
 export default async function SessionPage() {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <LearnPageClient />;
+	}
+
 	const cookieStore = await cookies();
 	const raw = cookieStore.get("quizSettings")?.value;
 	if (!raw) {
@@ -22,7 +32,7 @@ export default async function SessionPage() {
 	const timeLimit = defaultTimeLimit;
 
 	// Fetch questions enriched with questionId and cardId
-	const rawQuestions = await getQuizQuestions(params);
+	const rawQuestions = await getQuizQuestionsServer(params);
 
 	return (
 		<Container>

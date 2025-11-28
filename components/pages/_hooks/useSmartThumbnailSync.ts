@@ -6,7 +6,7 @@
 import type { JSONContent } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
-import { updatePage } from "@/app/_actions/updatePage";
+import { useUpdatePage } from "@/hooks/pages/useUpdatePage";
 
 interface UseSmartThumbnailSyncOptions {
 	/** エディターインスタンス */
@@ -36,24 +36,27 @@ export function useSmartThumbnailSync({
 }: UseSmartThumbnailSyncOptions) {
 	const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const lastContentRef = useRef<JSONContent | null>(null);
+	const updatePageMutation = useUpdatePage();
 
 	// サムネイル同期関数
 	const syncThumbnail = useCallback(
 		async (currentContent: JSONContent) => {
 			try {
-				await updatePage({
+				await updatePageMutation.mutateAsync({
 					id: pageId,
-					title,
-					content: JSON.stringify(currentContent),
-					enableSmartThumbnailUpdate: true,
-					autoGenerateThumbnail: true,
+					updates: {
+						title,
+						content_tiptap: currentContent,
+						// Note: enableSmartThumbnailUpdate and autoGenerateThumbnail
+						// are handled server-side via RPC or triggers
+					},
 				});
 
 				// 前回コンテンツを更新
 				lastContentRef.current = structuredClone(currentContent);
 			} catch (_error) {}
 		},
-		[pageId, title],
+		[pageId, title, updatePageMutation],
 	);
 
 	// デバウンス付きの同期実行

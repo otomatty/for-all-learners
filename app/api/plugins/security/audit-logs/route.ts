@@ -7,29 +7,19 @@
  *   └─ (Future: hooks/plugins/useSecurityAuditLogs.ts)
  *
  * Dependencies (External files that this route uses):
- *   ├─ lib/supabase/server.ts (createClient)
- *   └─ app/_actions/admin.ts (isAdmin)
+ *   └─ lib/supabase/server.ts (createClient)
  *
  * Related Documentation:
- *   ├─ Original Server Action: app/_actions/plugin-security-audit-logs.ts
  *   └─ Plan: docs/03_plans/tauri-migration/20251109_01_implementation-plan.md
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { isAdmin } from "@/app/_actions/admin";
 import logger from "@/lib/logger";
+import type { SecurityAuditLogEntry } from "@/lib/plugins/plugin-security/types";
 import { createClient } from "@/lib/supabase/server";
 
-export interface SecurityAuditLogEntry {
-	id: string;
-	pluginId: string;
-	userId: string | null;
-	eventType: string;
-	severity: "low" | "medium" | "high" | "critical";
-	eventData: Record<string, unknown>;
-	context: Record<string, unknown>;
-	createdAt: string;
-}
+// Re-export type for backward compatibility
+export type { SecurityAuditLogEntry };
 
 /**
  * GET /api/plugins/security/audit-logs - Get security audit logs (admin only)
@@ -55,8 +45,35 @@ export interface SecurityAuditLogEntry {
  */
 export async function GET(request: NextRequest) {
 	try {
+		const supabase = await createClient();
+
 		// Check admin permission
-		const admin = await isAdmin();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json(
+				{
+					error: "Unauthorized",
+					message: "認証が必要です",
+					success: false,
+				},
+				{ status: 401 },
+			);
+		}
+
+		const { data: adminData } = await supabase
+			.from("admin_users")
+			.select("role, is_active")
+			.eq("user_id", user.id)
+			.maybeSingle();
+
+		const admin = Boolean(
+			adminData?.is_active &&
+				(adminData.role === "superadmin" || adminData.role === "admin"),
+		);
+
 		if (!admin) {
 			return NextResponse.json(
 				{
@@ -67,8 +84,6 @@ export async function GET(request: NextRequest) {
 				{ status: 403 },
 			);
 		}
-
-		const supabase = await createClient();
 		const { searchParams } = new URL(request.url);
 
 		const page = Number.parseInt(searchParams.get("page") || "1", 10);

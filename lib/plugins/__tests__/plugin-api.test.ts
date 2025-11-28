@@ -5,6 +5,24 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Mock Supabase client - must be before imports
+vi.mock("@/lib/supabase/client", () => ({
+	createClient: vi.fn(() => ({
+		auth: {
+			getUser: vi.fn().mockResolvedValue({
+				data: { user: null },
+				error: new Error("Not authenticated"),
+			}),
+		},
+		from: vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			single: vi.fn().mockRejectedValue(new Error("Database error")),
+		}),
+	})),
+}));
+
 import * as aiRegistry from "../ai-registry";
 import * as calendarRegistry from "../calendar-registry";
 import * as dataProcessorRegistry from "../data-processor-registry";

@@ -8,12 +8,12 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { isAdmin } from "@/app/_actions/admin";
 import { createAdminClient } from "@/lib/supabase/adminClient";
+import { createClient } from "@/lib/supabase/server";
 import { GET } from "../route";
 
 // Mock dependencies
-vi.mock("@/app/_actions/admin");
+vi.mock("@/lib/supabase/server");
 vi.mock("@/lib/supabase/adminClient");
 vi.mock("@/lib/logger");
 
@@ -29,6 +29,29 @@ function createMockRequest(searchParams?: Record<string, string>): Request {
 	return {
 		url: url.toString(),
 	} as Request;
+}
+
+// Helper: Create mock Supabase client
+function createMockSupabaseClient() {
+	return {
+		auth: {
+			getUser: vi.fn().mockResolvedValue({
+				data: { user: { id: "test-user-id" } },
+				error: null,
+			}),
+		},
+		from: vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: {
+					role: "admin",
+					is_active: true,
+				},
+				error: null,
+			}),
+		}),
+	};
 }
 
 // Helper: Create mock Admin client
@@ -73,7 +96,9 @@ describe("GET /api/plugins/security/alerts", () => {
 
 	// TC-001: 正常系 - アラートの取得成功
 	it("TC-001: Should get security alerts successfully", async () => {
-		vi.mocked(isAdmin).mockResolvedValue(true);
+		vi.mocked(createClient).mockResolvedValue(
+			createMockSupabaseClient() as never,
+		);
 		vi.mocked(createAdminClient).mockReturnValue(
 			createMockAdminClient() as never,
 		);
@@ -91,7 +116,16 @@ describe("GET /api/plugins/security/alerts", () => {
 
 	// TC-002: 異常系 - 管理者権限なし
 	it("TC-002: Should return 403 when user is not admin", async () => {
-		vi.mocked(isAdmin).mockResolvedValue(false);
+		const mockSupabase = createMockSupabaseClient();
+		mockSupabase.from = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnThis(),
+			eq: vi.fn().mockReturnThis(),
+			maybeSingle: vi.fn().mockResolvedValue({
+				data: null,
+				error: null,
+			}),
+		});
+		vi.mocked(createClient).mockResolvedValue(mockSupabase as never);
 
 		const request = createMockRequest();
 
@@ -105,7 +139,9 @@ describe("GET /api/plugins/security/alerts", () => {
 
 	// TC-003: 正常系 - フィルター付き取得
 	it("TC-003: Should get alerts with filters", async () => {
-		vi.mocked(isAdmin).mockResolvedValue(true);
+		vi.mocked(createClient).mockResolvedValue(
+			createMockSupabaseClient() as never,
+		);
 		vi.mocked(createAdminClient).mockReturnValue(
 			createMockAdminClient() as never,
 		);

@@ -8,7 +8,6 @@
  * Parents: app/(protected)/settings/layout.tsx
  *
  * Dependencies:
- *   ├─ app/_actions/plugins.ts
  *   ├─ components/ui/* (Button, Card, Switch, etc.)
  *   ├─ types/plugin.ts
  *   └─ ./_components/PluginFiltersClient.tsx
@@ -18,15 +17,16 @@
  */
 
 import { Package } from "lucide-react";
-import {
-	getAvailablePlugins,
-	getInstalledPluginsWithUpdates,
-} from "@/app/_actions/plugins";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	getAvailablePluginsServer,
+	getInstalledPluginsWithUpdatesServer,
+} from "@/lib/services/pluginsService";
 import { InstalledPluginCard } from "./_components/InstalledPluginCard";
 import { MarketplacePluginCard } from "./_components/MarketplacePluginCard";
 import { PluginFiltersClient } from "./_components/PluginFiltersClient";
+import { PluginsPageClient } from "./_components/PluginsPageClient";
 
 /**
  * Plugin Settings Page Component
@@ -43,6 +43,12 @@ export default async function PluginsPage({
 		tab?: string;
 	}>;
 }) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <PluginsPageClient />;
+	}
+
 	const params = await searchParams;
 	const search = params.search ?? "";
 	const isOfficial = params.official === "true" ? true : null;
@@ -55,8 +61,8 @@ export default async function PluginsPage({
 
 	// Fetch data
 	const [installedPlugins, availablePlugins] = await Promise.all([
-		getInstalledPluginsWithUpdates().catch(() => []),
-		getAvailablePlugins({
+		getInstalledPluginsWithUpdatesServer().catch(() => []),
+		getAvailablePluginsServer({
 			search: search || undefined,
 			isOfficial: isOfficial ?? undefined,
 			isReviewed: isReviewed ?? undefined,

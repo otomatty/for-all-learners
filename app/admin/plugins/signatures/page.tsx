@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import {
-	getPluginSignatures,
-	getSignatureVerificationLogs,
-} from "@/app/_actions/plugin-signatures";
+	getPluginSignaturesServer,
+	getSignatureVerificationLogsServer,
+} from "@/lib/services/pluginSignaturesService";
+import { PluginSignaturesPageClient } from "./_components/PluginSignaturesPageClient";
 import { PluginSignaturesTable } from "./_components/PluginSignaturesTable";
 import { SignatureFilters } from "./_components/SignatureFilters";
 import { SignatureStatsCards } from "./_components/SignatureStatsCards";
@@ -16,11 +17,17 @@ interface PluginSignaturesPageProps {
 export default async function PluginSignaturesPage({
 	searchParams,
 }: PluginSignaturesPageProps) {
+	// 静的エクスポート時はクライアントコンポーネントを使用
+	const isStaticExport = Boolean(process.env.ENABLE_STATIC_EXPORT);
+	if (isStaticExport) {
+		return <PluginSignaturesPageClient />;
+	}
+
 	const resolvedSearchParams = await searchParams;
 	const parsedParams = parseSignatureSearchParams(resolvedSearchParams);
 
 	const [pluginsResult, logsResult] = await Promise.all([
-		getPluginSignatures({
+		getPluginSignaturesServer({
 			page: parsedParams.page,
 			limit: parsedParams.limit,
 			sortBy: parsedParams.sortBy,
@@ -31,7 +38,7 @@ export default async function PluginSignaturesPage({
 				searchQuery: parsedParams.searchQuery,
 			},
 		}),
-		getSignatureVerificationLogs({
+		getSignatureVerificationLogsServer({
 			page: 1,
 			limit: 10,
 			sortBy: "verified_at",
