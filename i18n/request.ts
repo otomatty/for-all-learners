@@ -14,9 +14,21 @@
 import { getRequestConfig } from "next-intl/server";
 import { type Locale, locales } from "./config";
 
-export default getRequestConfig(async ({ requestLocale }) => {
+// 静的エクスポート時はheaders()を使用しないため、デフォルトロケールを使用
+const isStaticExport = process.env.ENABLE_STATIC_EXPORT === "true";
+
+export default getRequestConfig(async (params) => {
+	// 静的エクスポート時は固定のロケールを使用
+	// requestLocaleをawaitするとheaders()が呼び出されるため、完全にスキップ
+	if (isStaticExport) {
+		return {
+			locale: "ja",
+			messages: (await import("../messages/ja.json")).default,
+		};
+	}
+
 	// This typically corresponds to the `[locale]` segment
-	let locale = await requestLocale;
+	let locale = await params.requestLocale;
 
 	// Ensure that a valid locale is used
 	if (!locale || !locales.includes(locale as Locale)) {

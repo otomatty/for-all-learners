@@ -54,14 +54,10 @@ export default async function RootLayout({
 	}
 
 	// Get locale and messages for i18n
-	// 静的エクスポート時はgetLocale/getMessagesが使用できないため、デフォルト値を使用
-	let locale = "ja";
-	let messages: Record<string, unknown> = {};
-
-	if (!isStaticExport) {
-		locale = await getLocale();
-		messages = await getMessages();
-	}
+	// 静的エクスポート時のgetLocale/getMessagesの動作はi18n/request.tsで制御
+	// i18n/request.tsでENABLE_STATIC_EXPORT時はrequestLocaleをawaitしない
+	const locale = await getLocale();
+	const messages = await getMessages();
 
 	const themeClass = `theme-${theme}`;
 	const darkClass = mode === "dark" ? "dark" : "";
