@@ -103,47 +103,59 @@ export class NotesRepository extends BaseRepository<
 	/**
 	 * デフォルトノートを作成
 	 *
+	 * ベースクラスの create() メソッドを使用し、
+	 * is_default_note フラグを true に設定します。
+	 *
 	 * @param userId ユーザーID
 	 * @returns 作成されたデフォルトノート
 	 */
 	async createDefaultNote(userId: string): Promise<LocalNote> {
-		try {
-			const client = await this.getEntityClient();
+		const defaultNotePayload: CreateNotePayload = {
+			slug: "all-pages",
+			title: "すべてのページ",
+			description: "ユーザーが作成したすべてのページを含むデフォルトノート",
+			visibility: "private",
+		};
 
-			const now = new Date().toISOString();
-			const newNote = {
-				id: crypto.randomUUID(),
-				owner_id: userId,
-				slug: "all-pages",
-				title: "すべてのページ",
-				description: "ユーザーが作成したすべてのページを含むデフォルトノート",
-				visibility: "private" as const,
-				created_at: now,
-				updated_at: now,
-				page_count: 0,
-				participant_count: 1,
-				is_default_note: true,
-				sync_status: "pending" as const,
-				synced_at: null,
-				local_updated_at: now,
-				server_updated_at: null,
-			};
+		// ベースクラスの create() を使用
+		const note = await this.create(userId, defaultNotePayload);
 
-			const result = await client.create(
-				userId,
-				newNote as unknown as CreateNotePayload,
-			);
+		// is_default_note フラグを true に更新
+		return await this.update(note.id, {
+			is_default_note: true,
+		} as Partial<LocalNote>);
+	}
 
-			// バックグラウンドで同期をトリガー
-			this.triggerBackgroundSync();
+	/**
+	 * ノートを削除
+	 *
+	 * デフォルトノートは削除できません。
+	 * 削除操作はベースクラスの delete() にビジネスロジックを追加しています。
+	 *
+	 * @param id ノートID
+	 * @throws RepositoryError デフォルトノートを削除しようとした場合
+	 */
+	async delete(id: string): Promise<void> {
+		// 削除対象のノートを取得
+		const note = await this.getById(id);
 
-			return result as LocalNote;
-		} catch (error) {
-			throw new RepositoryError("DB_ERROR", "Failed to create default note", {
+		if (!note) {
+			throw new RepositoryError("NOT_FOUND", `Note not found: ${id}`, {
+				entityId: id,
 				entityName: this.entityName,
-				originalError: error instanceof Error ? error : undefined,
 			});
 		}
+
+		// デフォルトノートは削除不可
+		if (note.is_default_note) {
+			throw new RepositoryError("FORBIDDEN", "Cannot delete the default note", {
+				entityId: id,
+				entityName: this.entityName,
+			});
+		}
+
+		// ベースクラスの delete() を呼び出し
+		await super.delete(id);
 	}
 }
 

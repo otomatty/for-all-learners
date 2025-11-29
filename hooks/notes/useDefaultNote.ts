@@ -9,8 +9,7 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   ├─ app/(protected)/notes/layout.tsx
- *   └─ hooks/notes/useLinkPageToDefaultNote.ts
+ *   └─ (Currently unused - exported for future use)
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/notes-repository.ts

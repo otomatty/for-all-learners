@@ -9,11 +9,10 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ app/(protected)/notes/[slug]/page.tsx
+ *   └─ (Currently unused - exported for future use)
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/pages-repository.ts
- *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -23,7 +22,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { pagesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 /**
  * ノート内のページ一覧を取得します。
@@ -32,18 +30,9 @@ import { createClient } from "@/lib/supabase/client";
  * - バックグラウンドでサーバーと同期
  */
 export function usePagesByNote(noteId: string) {
-	const supabase = createClient();
-
 	return useQuery({
 		queryKey: ["pages", "by-note", noteId],
 		queryFn: async () => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// ローカルDBからノートに紐づくページを取得
 			return await pagesRepository.getByNoteId(noteId);
 		},

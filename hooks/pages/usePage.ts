@@ -9,11 +9,10 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ app/(protected)/pages/[id]/page.tsx
+ *   └─ (Currently unused - exported for future use)
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/pages-repository.ts
- *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -23,7 +22,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { pagesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 /**
  * ページ詳細を取得します。
@@ -32,18 +30,9 @@ import { createClient } from "@/lib/supabase/client";
  * - バックグラウンドでサーバーと同期
  */
 export function usePage(id: string) {
-	const supabase = createClient();
-
 	return useQuery({
 		queryKey: ["pages", id],
 		queryFn: async () => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// ローカルDBからページを取得
 			const page = await pagesRepository.getById(id);
 

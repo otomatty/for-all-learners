@@ -134,6 +134,7 @@ export const DEFAULT_REPOSITORY_OPTIONS: Required<RepositoryOptions> = {
  */
 export type RepositoryErrorCode =
 	| "NOT_FOUND"
+	| "FORBIDDEN"
 	| "VALIDATION_ERROR"
 	| "DB_ERROR"
 	| "SYNC_ERROR";

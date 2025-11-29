@@ -9,11 +9,11 @@
  * DEPENDENCY MAP:
  *
  * Parents (Files that import this file):
- *   └─ app/(protected)/pages/[id]/_components/PageSettings.tsx
+ *   ├─ components/pages/_hooks/usePageSaver.ts
+ *   └─ components/pages/_hooks/useSmartThumbnailSync.ts
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/pages-repository.ts
- *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -24,7 +24,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdatePagePayload } from "@/lib/db/types";
 import { pagesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 /**
  * ページを更新します。
@@ -36,7 +35,6 @@ import { createClient } from "@/lib/supabase/client";
  * このフックではメタデータのみを更新します。
  */
 export function useUpdatePage() {
-	const supabase = createClient();
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -47,13 +45,6 @@ export function useUpdatePage() {
 			id: string;
 			updates: UpdatePagePayload;
 		}) => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// Repositoryを使ってローカルDBを更新
 			return await pagesRepository.updateMetadata(id, updates);
 		},
