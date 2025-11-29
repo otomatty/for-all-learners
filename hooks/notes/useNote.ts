@@ -14,7 +14,6 @@
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/notes-repository.ts
- *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -67,7 +66,7 @@ function toNoteDetail(note: LocalNote): NoteDetail {
  */
 export function useNote(slug: string, userId: string) {
 	return useQuery({
-		queryKey: ["note", slug],
+		queryKey: ["note", slug, userId],
 		queryFn: async (): Promise<{ note: NoteDetail }> => {
 			// ローカルDBからスラッグでノートを取得
 			const note = await notesRepository.getBySlug(userId, slug);

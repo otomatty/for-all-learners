@@ -4,7 +4,8 @@
  * useUpdatePage フック
  *
  * ページを更新します。
- * Repositoryパターンを使用してローカルDBに保存し、バックグラウンドで同期を行います。
+ * - メタデータ: Repositoryパターンを使用してローカルDBに保存
+ * - content_tiptap: サーバーに直接保存（リアルタイム同期用）
  *
  * DEPENDENCY MAP:
  *
@@ -14,6 +15,7 @@
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/pages-repository.ts
+ *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -24,18 +26,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdatePagePayload } from "@/lib/db/types";
 import { pagesRepository } from "@/lib/repositories";
+import { createClient } from "@/lib/supabase/client";
+import type { Json } from "@/types/database.types";
 
 /**
  * ページを更新します。
  *
- * - ローカルDBに保存（オフライン対応）
- * - バックグラウンドでサーバーと同期
- *
- * 注意: content_tiptap はリアルタイム同期（Yjs）で管理されるため、
- * このフックではメタデータのみを更新します。
+ * - メタデータ（title, note_id, is_public, thumbnail_url）: ローカルDBに保存
+ * - content_tiptap: サーバーに直接保存（リアルタイム同期用のため）
  */
 export function useUpdatePage() {
 	const queryClient = useQueryClient();
+	const supabase = createClient();
 
 	return useMutation({
 		mutationFn: async ({
@@ -45,8 +47,32 @@ export function useUpdatePage() {
 			id: string;
 			updates: UpdatePagePayload;
 		}) => {
-			// Repositoryを使ってローカルDBを更新
-			return await pagesRepository.updateMetadata(id, updates);
+			const { content_tiptap, ...metadataUpdates } = updates;
+
+			// content_tiptap がある場合はサーバーに直接保存
+			if (content_tiptap !== undefined) {
+				const { error } = await supabase
+					.from("pages")
+					.update({ content_tiptap: content_tiptap as Json })
+					.eq("id", id);
+
+				if (error) {
+					throw new Error(`Failed to update content: ${error.message}`);
+				}
+			}
+
+			// メタデータがある場合はローカルDBを更新
+			const hasMetadataUpdates = Object.keys(metadataUpdates).length > 0;
+			if (hasMetadataUpdates) {
+				return await pagesRepository.updateMetadata(id, metadataUpdates);
+			}
+
+			// content_tiptap のみの更新の場合は、ローカルDBから現在のページを返す
+			const page = await pagesRepository.getById(id);
+			if (!page) {
+				throw new Error("Page not found");
+			}
+			return page;
 		},
 		onSuccess: (data) => {
 			// キャッシュを無効化して再フェッチ

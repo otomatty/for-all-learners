@@ -133,9 +133,10 @@ export class NotesRepository extends BaseRepository<
 	 * 削除操作はベースクラスの delete() にビジネスロジックを追加しています。
 	 *
 	 * @param id ノートID
+	 * @returns 削除成功時に true
 	 * @throws RepositoryError デフォルトノートを削除しようとした場合
 	 */
-	async delete(id: string): Promise<void> {
+	async delete(id: string): Promise<boolean> {
 		// 削除対象のノートを取得
 		const note = await this.getById(id);
 
@@ -155,7 +156,7 @@ export class NotesRepository extends BaseRepository<
 		}
 
 		// ベースクラスの delete() を呼び出し
-		await super.delete(id);
+		return await super.delete(id);
 	}
 }
 

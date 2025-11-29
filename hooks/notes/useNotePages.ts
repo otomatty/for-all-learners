@@ -47,6 +47,7 @@ export function useNotePages(params: UseNotePagesParams) {
 		queryKey: [
 			"note-pages",
 			params.slug,
+			params.userId,
 			params.limit,
 			params.offset,
 			params.sortBy,
