@@ -1,6 +1,29 @@
 "use client";
 
+/**
+ * useDefaultNote フック
+ *
+ * ユーザーのデフォルトノートを取得します。
+ * Repositoryパターンを使用してローカルDBから取得し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ (Currently unused - exported for future use)
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/notes-repository.ts
+ *   ├─ lib/supabase/client.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/notes/notes.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/204
+ */
+
 import { useQuery } from "@tanstack/react-query";
+import type { LocalNote } from "@/lib/db/types";
+import { notesRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 
 export interface DefaultNote {
@@ -17,24 +40,31 @@ export interface DefaultNote {
 	is_default_note: boolean;
 }
 
-type VisibilityValue = "public" | "unlisted" | "invite" | "private";
-
 /**
- * Validates that a string is a valid visibility value.
- * This is a type guard function that narrows the type.
+ * LocalNote から DefaultNote へのマッピング
  */
-function isValidVisibility(value: string): value is VisibilityValue {
-	return (
-		value === "public" ||
-		value === "unlisted" ||
-		value === "invite" ||
-		value === "private"
-	);
+function toDefaultNote(note: LocalNote): DefaultNote {
+	return {
+		id: note.id,
+		slug: note.slug,
+		title: note.title,
+		description: note.description,
+		visibility: note.visibility,
+		created_at: note.created_at,
+		updated_at: note.updated_at,
+		page_count: note.page_count,
+		participant_count: note.participant_count,
+		owner_id: note.owner_id,
+		is_default_note: note.is_default_note ?? false,
+	};
 }
 
 /**
  * ユーザーのデフォルトノートを取得します。
  * デフォルトノートは is_default_note フラグで識別されます。
+ *
+ * - ローカルDBから取得（オフライン対応）
+ * - バックグラウンドでサーバーと同期
  */
 export function useDefaultNote() {
 	const supabase = createClient();
@@ -42,23 +72,15 @@ export function useDefaultNote() {
 	return useQuery({
 		queryKey: ["default-note"],
 		queryFn: async (): Promise<DefaultNote> => {
+			// 認証ユーザーを取得
 			const {
 				data: { user },
 				error: userError,
 			} = await supabase.auth.getUser();
 			if (userError || !user) throw new Error("User not authenticated");
 
-			// is_default_note フラグでデフォルトノートを取得
-			const { data: defaultNote, error: fetchError } = await supabase
-				.from("notes")
-				.select(
-					"id, slug, title, description, visibility, created_at, updated_at, page_count, participant_count, owner_id, is_default_note",
-				)
-				.eq("owner_id", user.id)
-				.eq("is_default_note", true)
-				.maybeSingle();
-
-			if (fetchError) throw fetchError;
+			// ローカルDBからデフォルトノートを取得
+			const defaultNote = await notesRepository.getDefaultNote(user.id);
 
 			if (!defaultNote) {
 				throw new Error(
@@ -66,25 +88,7 @@ export function useDefaultNote() {
 				);
 			}
 
-			// Map database result to DefaultNote type
-			// visibility is validated by database CHECK constraint, but TypeScript needs explicit validation
-			if (!isValidVisibility(defaultNote.visibility)) {
-				throw new Error(`Invalid visibility value: ${defaultNote.visibility}`);
-			}
-
-			return {
-				id: defaultNote.id,
-				slug: defaultNote.slug,
-				title: defaultNote.title,
-				description: defaultNote.description,
-				visibility: defaultNote.visibility,
-				created_at: defaultNote.created_at,
-				updated_at: defaultNote.updated_at,
-				page_count: defaultNote.page_count,
-				participant_count: defaultNote.participant_count,
-				owner_id: defaultNote.owner_id,
-				is_default_note: defaultNote.is_default_note ?? false,
-			};
+			return toDefaultNote(defaultNote);
 		},
 	});
 }

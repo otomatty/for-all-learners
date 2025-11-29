@@ -18,7 +18,7 @@
  */
 
 import type { CreateNotePayload, LocalNote } from "@/lib/db/types";
-import { BaseRepository } from "./base-repository";
+import { BaseRepository, RepositoryError } from "./base-repository";
 import type { EntityName, RepositoryOptions } from "./types";
 
 /**
@@ -98,6 +98,64 @@ export class NotesRepository extends BaseRepository<
 	async getDefaultNote(userId: string): Promise<LocalNote | undefined> {
 		const notes = await this.getAll(userId);
 		return notes.find((note) => note.is_default_note === true);
+	}
+
+	/**
+	 * デフォルトノートを作成
+	 *
+	 * ベースクラスの create() メソッドを使用し、
+	 * is_default_note フラグを true に設定します。
+	 *
+	 * @param userId ユーザーID
+	 * @returns 作成されたデフォルトノート
+	 */
+	async createDefaultNote(userId: string): Promise<LocalNote> {
+		const defaultNotePayload: CreateNotePayload = {
+			slug: "all-pages",
+			title: "すべてのページ",
+			description: "ユーザーが作成したすべてのページを含むデフォルトノート",
+			visibility: "private",
+		};
+
+		// ベースクラスの create() を使用
+		const note = await this.create(userId, defaultNotePayload);
+
+		// is_default_note フラグを true に更新
+		return await this.update(note.id, {
+			is_default_note: true,
+		} as Partial<LocalNote>);
+	}
+
+	/**
+	 * ノートを削除
+	 *
+	 * デフォルトノートは削除できません。
+	 * 削除操作はベースクラスの delete() にビジネスロジックを追加しています。
+	 *
+	 * @param id ノートID
+	 * @throws RepositoryError デフォルトノートを削除しようとした場合
+	 */
+	async delete(id: string): Promise<void> {
+		// 削除対象のノートを取得
+		const note = await this.getById(id);
+
+		if (!note) {
+			throw new RepositoryError("NOT_FOUND", `Note not found: ${id}`, {
+				entityId: id,
+				entityName: this.entityName,
+			});
+		}
+
+		// デフォルトノートは削除不可
+		if (note.is_default_note) {
+			throw new RepositoryError("FORBIDDEN", "Cannot delete the default note", {
+				entityId: id,
+				entityName: this.entityName,
+			});
+		}
+
+		// ベースクラスの delete() を呼び出し
+		await super.delete(id);
 	}
 }
 

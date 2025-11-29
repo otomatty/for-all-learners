@@ -1,6 +1,29 @@
 "use client";
 
+/**
+ * useUpdateNote フック
+ *
+ * ノートを更新します。
+ * Repositoryパターンを使用してローカルDBに保存し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ app/(protected)/notes/[slug]/_components/NoteSettings.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/notes-repository.ts
+ *   ├─ lib/supabase/client.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/notes/notes.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/204
+ */
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UpdateNotePayload as RepoUpdatePayload } from "@/lib/db/types";
+import { notesRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -14,6 +37,10 @@ export type UpdateNotePayload = {
 
 /**
  * ノートを更新します。
+ *
+ * - ローカルDBに保存（オフライン対応）
+ * - バックグラウンドでサーバーと同期
+ * - 公開設定変更時は共有情報もクリア（サーバー同期時に実行）
  */
 export function useUpdateNote() {
 	const supabase = createClient();
@@ -27,50 +54,25 @@ export function useUpdateNote() {
 			id: string;
 			payload: UpdateNotePayload;
 		}) => {
+			// 認証ユーザーを取得
 			const {
 				data: { user },
 				error: userError,
 			} = await supabase.auth.getUser();
 			if (userError || !user) throw new Error("User not authenticated");
 
-			const { data: existing, error: fetchError } = await supabase
-				.from("notes")
-				.select("visibility")
-				.eq("id", id)
-				.single();
-			if (fetchError || !existing) throw fetchError;
+			// Repositoryのペイロード型に変換
+			const repoPayload: RepoUpdatePayload = {
+				title: payload.title,
+				description: payload.description,
+				visibility: payload.visibility,
+			};
 
-			const oldVisibility = existing.visibility;
-			const newVisibility = payload.visibility;
-
-			const { data: updated, error: updateError } = await supabase
-				.from("notes")
-				.update(payload)
-				.eq("id", id)
-				.select("*")
-				.single();
-			if (updateError) throw updateError;
-
-			// If visibility changed, clear existing shares and links
-			if (newVisibility && newVisibility !== oldVisibility) {
-				const { error: delSharesError } = await supabase
-					.from("note_shares")
-					.delete()
-					.eq("note_id", id)
-					.neq("shared_with_user_id", user.id);
-				if (delSharesError) throw delSharesError;
-
-				const { error: delLinksError } = await supabase
-					.from("share_links")
-					.delete()
-					.eq("resource_type", "note")
-					.eq("resource_id", id);
-				if (delLinksError) throw delLinksError;
-			}
-
-			return updated;
+			// Repositoryを使ってローカルDBを更新
+			return await notesRepository.update(id, repoPayload);
 		},
 		onSuccess: (_, variables) => {
+			// キャッシュを無効化して再フェッチ
 			queryClient.invalidateQueries({ queryKey: ["notes"] });
 			queryClient.invalidateQueries({ queryKey: ["note", variables.id] });
 		},
