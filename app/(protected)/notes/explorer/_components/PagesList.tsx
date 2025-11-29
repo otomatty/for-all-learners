@@ -13,12 +13,14 @@ import DraggablePageItem from "./DraggablePageItem";
 interface PagesListProps {
 	noteId: string;
 	noteSlug: string;
+	userId: string;
 	selectedPageIds: string[];
 	onSelectPages: (pageIds: string[]) => void;
 }
 
 export default function PagesList({
 	noteSlug,
+	userId,
 	selectedPageIds,
 	onSelectPages,
 }: PagesListProps) {
@@ -29,6 +31,7 @@ export default function PagesList({
 	// ページデータを取得（既存のフックを使用）
 	const { data, isLoading: loading } = useNotePages({
 		slug: noteSlug,
+		userId,
 		limit: 100, // TODO: ページネーション実装
 		offset: 0,
 		sortBy,

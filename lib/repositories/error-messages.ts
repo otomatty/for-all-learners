@@ -55,6 +55,7 @@ const ENTITY_NAME_EN: Record<EntityName, string> = {
  */
 const ERROR_MESSAGE_JA: Record<RepositoryErrorCode, string> = {
 	NOT_FOUND: "データが見つかりません",
+	FORBIDDEN: "アクセス権限がありません",
 	VALIDATION_ERROR: "入力内容に問題があります",
 	DB_ERROR: "データベースエラーが発生しました",
 	SYNC_ERROR: "同期エラーが発生しました",
@@ -66,6 +67,7 @@ const ERROR_MESSAGE_JA: Record<RepositoryErrorCode, string> = {
  */
 const ERROR_MESSAGE_EN: Record<RepositoryErrorCode, string> = {
 	NOT_FOUND: "Data not found",
+	FORBIDDEN: "Access denied",
 	VALIDATION_ERROR: "There is an issue with the input",
 	DB_ERROR: "Database error occurred",
 	SYNC_ERROR: "Sync error occurred",

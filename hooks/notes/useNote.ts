@@ -14,7 +14,6 @@
  *
  * Dependencies (External files that this file imports):
  *   ├─ lib/repositories/notes-repository.ts
- *   ├─ lib/supabase/client.ts
  *   └─ @tanstack/react-query
  *
  * Related Documentation:
@@ -25,7 +24,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { LocalNote } from "@/lib/db/types";
 import { notesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 export interface NoteDetail {
 	id: string;
@@ -66,21 +64,12 @@ function toNoteDetail(note: LocalNote): NoteDetail {
  * - ローカルDBから取得（オフライン対応）
  * - バックグラウンドでサーバーと同期
  */
-export function useNote(slug: string) {
-	const supabase = createClient();
-
+export function useNote(slug: string, userId: string) {
 	return useQuery({
-		queryKey: ["note", slug],
+		queryKey: ["note", slug, userId],
 		queryFn: async (): Promise<{ note: NoteDetail }> => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// ローカルDBからスラッグでノートを取得
-			const note = await notesRepository.getBySlug(user.id, slug);
+			const note = await notesRepository.getBySlug(userId, slug);
 
 			if (!note) {
 				throw new Error("Note not found");

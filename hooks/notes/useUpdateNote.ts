@@ -24,7 +24,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdateNotePayload as RepoUpdatePayload } from "@/lib/db/types";
 import { notesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 /**
  * ノート更新用のペイロード型
@@ -43,7 +42,6 @@ export type UpdateNotePayload = {
  * - 公開設定変更時は共有情報もクリア（サーバー同期時に実行）
  */
 export function useUpdateNote() {
-	const supabase = createClient();
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -54,13 +52,6 @@ export function useUpdateNote() {
 			id: string;
 			payload: UpdateNotePayload;
 		}) => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// Repositoryのペイロード型に変換
 			const repoPayload: RepoUpdatePayload = {
 				title: payload.title,

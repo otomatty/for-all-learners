@@ -28,6 +28,7 @@ import type { Database } from "@/types/database.types";
 
 export interface UseNotePagesParams {
 	slug: string;
+	userId: string;
 	limit: number;
 	offset: number;
 	sortBy: "updated" | "created";
@@ -40,12 +41,13 @@ export interface UseNotePagesParams {
  * - ページ一覧: サーバーのRPCで取得（将来的にローカル対応予定）
  */
 export function useNotePages(params: UseNotePagesParams) {
-	const supabase = createClient();
+	const supabase = createClient(); // TODO: RPC移行後に削除
 
 	return useQuery({
 		queryKey: [
 			"note-pages",
 			params.slug,
+			params.userId,
 			params.limit,
 			params.offset,
 			params.sortBy,
@@ -54,23 +56,20 @@ export function useNotePages(params: UseNotePagesParams) {
 			pages: Database["public"]["Tables"]["pages"]["Row"][];
 			totalCount: number;
 		}> => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-			if (!user) throw new Error("User not authenticated");
-
 			let noteId: string;
 
 			// Handle special "default" slug
 			if (params.slug === "default") {
 				// ローカルDBからデフォルトノートを取得
-				const defaultNote = await notesRepository.getDefaultNote(user.id);
+				const defaultNote = await notesRepository.getDefaultNote(params.userId);
 				if (!defaultNote) throw new Error("Default note not found");
 				noteId = defaultNote.id;
 			} else {
 				// ローカルDBからスラッグでノートを取得
-				const note = await notesRepository.getBySlug(user.id, params.slug);
+				const note = await notesRepository.getBySlug(
+					params.userId,
+					params.slug,
+				);
 				if (!note) throw new Error("Note not found");
 				noteId = note.id;
 			}

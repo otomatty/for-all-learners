@@ -140,12 +140,15 @@ export interface CreatePagePayload {
 
 /**
  * ページ更新時のペイロード
+ * 注意: content_tiptap はサーバー側のSupabaseに保存され、ローカルDBには保存されない
  */
 export interface UpdatePagePayload {
 	title?: string;
 	note_id?: string | null;
 	is_public?: boolean;
 	thumbnail_url?: string | null;
+	/** TipTap エディタコンテンツ（サーバー同期用） */
+	content_tiptap?: unknown;
 }
 
 // ============================================================================
