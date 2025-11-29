@@ -17,14 +17,14 @@ import { createWrapper, mockNote } from "./helpers";
 
 // Create hoisted mock functions
 const { mockUpdate } = vi.hoisted(() => ({
-mockUpdate: vi.fn(),
+	mockUpdate: vi.fn(),
 }));
 
 // Mock repositories module
 vi.mock("@/lib/repositories", () => ({
-notesRepository: {
-update: mockUpdate,
-getAll: vi.fn(),
+	notesRepository: {
+		update: mockUpdate,
+		getAll: vi.fn(),
 		getById: vi.fn(),
 		create: vi.fn(),
 		delete: vi.fn(),
@@ -65,10 +65,10 @@ describe("useUpdateNote", () => {
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.title).toBe(payload.title);
 		expect(mockUpdate).toHaveBeenCalledWith(noteId, {
-title: payload.title,
-description: payload.description,
-visibility: undefined,
-});
+			title: payload.title,
+			description: payload.description,
+			visibility: undefined,
+		});
 	});
 
 	// TC-002: 異常系 - データベースエラー
@@ -155,10 +155,10 @@ visibility: undefined,
 		});
 
 		expect(mockUpdate).toHaveBeenCalledWith(noteId, {
-title: payload.title,
-description: undefined,
-visibility: undefined,
-});
+			title: payload.title,
+			description: undefined,
+			visibility: undefined,
+		});
 	});
 
 	// TC-006: 正常系 - 可視性変更
@@ -181,9 +181,9 @@ visibility: undefined,
 
 		expect(result.current.data?.visibility).toBe("public");
 		expect(mockUpdate).toHaveBeenCalledWith(noteId, {
-title: undefined,
-description: undefined,
-visibility: "public",
-});
+			title: undefined,
+			description: undefined,
+			visibility: "public",
+		});
 	});
 });
