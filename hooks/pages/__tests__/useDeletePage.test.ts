@@ -15,15 +15,15 @@ import { createWrapper, mockPage } from "./helpers";
 
 // Create hoisted mock functions
 const { mockDelete, mockDeleteLinkOccurrences } = vi.hoisted(() => ({
-mockDelete: vi.fn(),
+	mockDelete: vi.fn(),
 	mockDeleteLinkOccurrences: vi.fn(),
 }));
 
 // Mock repositories module
 vi.mock("@/lib/repositories", () => ({
-pagesRepository: {
-delete: mockDelete,
-getAll: vi.fn(),
+	pagesRepository: {
+		delete: mockDelete,
+		getAll: vi.fn(),
 		getById: vi.fn(),
 		create: vi.fn(),
 		update: vi.fn(),
@@ -36,13 +36,13 @@ getAll: vi.fn(),
 
 // Mock link group service
 vi.mock("@/lib/services/linkGroupService", () => ({
-deleteLinkOccurrencesByPage: mockDeleteLinkOccurrences,
+	deleteLinkOccurrencesByPage: mockDeleteLinkOccurrences,
 }));
 
 // Mock Supabase client (still needed for linkGroupService)
 vi.mock("@/lib/supabase/client", () => ({
-createClient: vi.fn(() => ({
-auth: { getUser: vi.fn() },
+	createClient: vi.fn(() => ({
+		auth: { getUser: vi.fn() },
 		from: vi.fn(),
 	})),
 }));
@@ -146,8 +146,8 @@ describe("useDeletePage", () => {
 
 		// Mock link group deletion to throw error
 		mockDeleteLinkOccurrences.mockRejectedValue(
-new Error("Link group deletion failed"),
-);
+			new Error("Link group deletion failed"),
+		);
 
 		const { result } = renderHook(() => useDeletePage(), {
 			wrapper: createWrapper(),

@@ -11,6 +11,7 @@
  *
  * Dependencies:
  *   ├─ lib/plugins/types.ts (Calendar extension types)
+ *   ├─ ./plugin-loader/plugin-loader (getPluginLoader for Worker context)
  *   └─ lib/logger
  *
  * Related Documentation:
@@ -19,6 +20,7 @@
 
 import logger from "@/lib/logger";
 import { logPluginMessage } from "./debug-tools";
+import { getPluginLoader } from "./plugin-loader/plugin-loader";
 import type { CalendarExtensionData, CalendarExtensionOptions } from "./types";
 
 // ============================================================================
@@ -34,6 +36,8 @@ export interface CalendarExtensionEntry {
 	name: string;
 	description?: string;
 	getDailyData: (date: string) => Promise<CalendarExtensionData | null>;
+	/** Whether this extension was registered from Worker context (functions are proxied) */
+	isWorkerContext: boolean;
 }
 
 // ============================================================================
@@ -71,10 +75,71 @@ export function registerCalendarExtension(
 		);
 	}
 
-	if (typeof options.getDailyData !== "function") {
+	// Check if getDailyData function is missing (Worker context)
+	// In Worker context, functions cannot be serialized via postMessage, so getDailyData is undefined
+	// However, if getDailyData is provided but not a function, that's an error
+	const isWorkerContext = options.getDailyData === undefined;
+
+	// Validate getDailyData when provided
+	if (
+		options.getDailyData !== undefined &&
+		typeof options.getDailyData !== "function"
+	) {
 		throw new Error(
 			`Calendar extension ${options.id} must provide a getDailyData function`,
 		);
+	}
+
+	logger.debug(
+		{
+			pluginId,
+			extensionId: options.id,
+			hasGetDailyData: !!options.getDailyData,
+			getDailyDataType: typeof options.getDailyData,
+			isWorkerContext,
+		},
+		"[registerCalendarExtension] Registering calendar extension",
+	);
+
+	// Create getDailyData function wrapper for Worker context
+	let getDailyDataFunction: CalendarExtensionEntry["getDailyData"];
+	if (isWorkerContext) {
+		// Create a wrapper that calls the Worker's getDailyData method
+		getDailyDataFunction = async (
+			date: string,
+		): Promise<CalendarExtensionData | null> => {
+			const loader = getPluginLoader();
+
+			// Call the plugin's getDailyData method via CALL_METHOD message
+			// The method name follows the pattern: __calendar_getDailyData_${extensionId}
+			const methodName = `__calendar_getDailyData_${options.id}`;
+
+			try {
+				const result = await loader.callPluginMethod(
+					pluginId,
+					methodName,
+					date,
+				);
+				return result as CalendarExtensionData | null;
+			} catch (error) {
+				logger.error(
+					{
+						pluginId,
+						extensionId: options.id,
+						date,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					"Failed to get daily data from Worker",
+				);
+				throw error;
+			}
+		};
+	} else {
+		// getDailyData is a function (already validated above)
+		// This assertion is safe because we validated that getDailyData is a function
+		getDailyDataFunction = options.getDailyData as (
+			date: string,
+		) => Promise<CalendarExtensionData | null>;
 	}
 
 	const entry: CalendarExtensionEntry = {
@@ -82,7 +147,8 @@ export function registerCalendarExtension(
 		extensionId: options.id,
 		name: options.name,
 		description: options.description,
-		getDailyData: options.getDailyData,
+		getDailyData: getDailyDataFunction,
+		isWorkerContext,
 	};
 
 	pluginExtensions.push(entry);

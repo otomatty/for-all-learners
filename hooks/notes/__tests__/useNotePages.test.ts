@@ -25,16 +25,16 @@ vi.mock("@/lib/supabase/client");
 
 // Create hoisted mock functions
 const { mockGetBySlug, mockGetDefaultNote } = vi.hoisted(() => ({
-mockGetBySlug: vi.fn(),
+	mockGetBySlug: vi.fn(),
 	mockGetDefaultNote: vi.fn(),
 }));
 
 // Mock repositories module
 vi.mock("@/lib/repositories", () => ({
-notesRepository: {
-getBySlug: mockGetBySlug,
-getDefaultNote: mockGetDefaultNote,
-getAll: vi.fn(),
+	notesRepository: {
+		getBySlug: mockGetBySlug,
+		getDefaultNote: mockGetDefaultNote,
+		getAll: vi.fn(),
 		getById: vi.fn(),
 		create: vi.fn(),
 		update: vi.fn(),
@@ -53,7 +53,7 @@ describe("useNotePages", () => {
 		vi.clearAllMocks();
 		mockSupabaseClient = createMockSupabaseClient();
 		vi.mocked(createClient).mockReturnValue(
-mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 		);
 	});
 
@@ -73,14 +73,14 @@ mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 
 		// Mock RPC call for pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-data: [
-{
-pages: [mockPage],
-total_count: 1,
-},
-],
-error: null,
-});
+			data: [
+				{
+					pages: [mockPage],
+					total_count: 1,
+				},
+			],
+			error: null,
+		});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -138,9 +138,9 @@ error: null,
 
 		// Mock RPC call returning empty pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-data: [{ pages: [], total_count: 0 }],
-error: null,
-});
+			data: [{ pages: [], total_count: 0 }],
+			error: null,
+		});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -170,9 +170,9 @@ error: null,
 
 		// Mock RPC call for pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-data: [{ pages: [mockPage], total_count: 1 }],
-error: null,
-});
+			data: [{ pages: [mockPage], total_count: 1 }],
+			error: null,
+		});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
