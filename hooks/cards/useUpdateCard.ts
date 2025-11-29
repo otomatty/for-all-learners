@@ -1,19 +1,55 @@
 "use client";
 
+/**
+ * useUpdateCard フック
+ *
+ * カードを更新します。
+ * Repositoryパターンを使用してローカルDBを更新し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ app/(protected)/decks/[deckId]/cards/[cardId]/edit/page.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/cards-repository.ts
+ *   ├─ lib/supabase/client.ts
+ *   ├─ hooks/cards/utils.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/cards/cards.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/206
+ */
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+	LocalCard,
+	UpdateCardPayload as RepoUpdateCardPayload,
+} from "@/lib/db/types";
+import { cardsRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
 import { triggerQuestionGeneration } from "./utils";
 
-export type Card = Database["public"]["Tables"]["cards"]["Row"];
+/**
+ * カードの型（後方互換性のため）
+ */
+export type Card = LocalCard;
+
+/**
+ * カード更新用のペイロード型
+ */
 export type UpdateCardPayload = {
 	id: string;
-	updates: Database["public"]["Tables"]["cards"]["Update"];
+	updates: RepoUpdateCardPayload;
 };
 
 /**
  * カードを更新します。
- * 有料ユーザーの場合、バックグラウンドで問題プリジェネレーションを実行します。
+ *
+ * - ローカルDBを更新（オフライン対応）
+ * - バックグラウンドでサーバーと同期
+ * - 有料ユーザーの場合、バックグラウンドで問題プリジェネレーションを実行
  */
 export function useUpdateCard() {
 	const supabase = createClient();
@@ -21,26 +57,20 @@ export function useUpdateCard() {
 
 	return useMutation({
 		mutationFn: async ({ id, updates }: UpdateCardPayload): Promise<Card> => {
+			// 認証ユーザーを取得
 			const {
 				data: { user },
 				error: userError,
 			} = await supabase.auth.getUser();
 			if (userError || !user) throw new Error("User not authenticated");
 
-			const { data, error } = await supabase
-				.from("cards")
-				.update(updates)
-				.eq("id", id)
-				.select()
-				.single();
-
-			if (error) throw error;
-			if (!data) throw new Error("updateCard: no data returned");
+			// Repositoryを使ってローカルDBを更新
+			const updatedCard = await cardsRepository.update(id, updates);
 
 			// バックグラウンドで問題プリジェネをキック（有料ユーザーのみ）
-			await triggerQuestionGeneration(supabase, data);
+			await triggerQuestionGeneration(supabase, updatedCard);
 
-			return data;
+			return updatedCard;
 		},
 		onSuccess: (data) => {
 			// 関連するクエリを無効化

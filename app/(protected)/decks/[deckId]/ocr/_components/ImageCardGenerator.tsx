@@ -202,25 +202,24 @@ export function ImageCardGenerator({
 		try {
 			const cardsToInsert = selected.map((card) => {
 				const frontJson = {
-					type: "doc",
+					type: "doc" as const,
 					content: [
 						{
 							type: "paragraph",
 							content: [{ type: "text", text: card.front_content }],
 						},
-					],
+					] as unknown[],
 				};
 				const backJson = {
-					type: "doc",
+					type: "doc" as const,
 					content: [
 						{
 							type: "paragraph",
 							content: [{ type: "text", text: card.back_content }],
 						},
-					],
+					] as unknown[],
 				};
 				return {
-					user_id: userId,
 					deck_id: deckId,
 					front_content: frontJson,
 					back_content: backJson,

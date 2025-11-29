@@ -9,50 +9,29 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createClient } from "@/lib/supabase/client";
+import { cardsRepository } from "@/lib/repositories/cards-repository";
 import { useDueCardsByDeck } from "../useDueCardsByDeck";
-import {
-	createMockSupabaseClient,
-	createWrapper,
-	mockCard,
-	mockUser,
-} from "./helpers";
+import { createWrapper, mockLocalCard } from "./helpers";
 
-// Mock Supabase client
-vi.mock("@/lib/supabase/client");
+// Mock the cards repository
+vi.mock("@/lib/repositories/cards-repository", () => ({
+	cardsRepository: {
+		getDueCardsByDeck: vi.fn(),
+	},
+}));
 
 describe("useDueCardsByDeck", () => {
-	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
-
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockSupabaseClient = createMockSupabaseClient();
-		vi.mocked(createClient).mockReturnValue(
-			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
-		);
 	});
 
 	// TC-001: 正常系 - 期限切れカード取得成功
 	test("TC-001: Should fetch due cards by deck successfully", async () => {
-		const cards = [mockCard];
+		const cards = [mockLocalCard];
 		const deckId = "deck-123";
 		const userId = "user-123";
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			lte: vi.fn().mockResolvedValue({
-				data: cards,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(cardsRepository.getDueCardsByDeck).mockResolvedValue(cards);
 
 		const { result } = renderHook(() => useDueCardsByDeck(deckId, userId), {
 			wrapper: createWrapper(),
@@ -64,9 +43,10 @@ describe("useDueCardsByDeck", () => {
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.length).toBe(1);
-		expect(mockQuery.eq).toHaveBeenCalledWith("deck_id", deckId);
-		expect(mockQuery.eq).toHaveBeenCalledWith("user_id", userId);
-		expect(mockQuery.lte).toHaveBeenCalled();
+		expect(cardsRepository.getDueCardsByDeck).toHaveBeenCalledWith(
+			deckId,
+			userId,
+		);
 	});
 
 	// TC-002: 異常系 - データベースエラー
@@ -74,21 +54,9 @@ describe("useDueCardsByDeck", () => {
 		const deckId = "deck-123";
 		const userId = "user-123";
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			lte: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "PGRST116" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(cardsRepository.getDueCardsByDeck).mockRejectedValue(
+			new Error("Database error"),
+		);
 
 		const { result } = renderHook(() => useDueCardsByDeck(deckId, userId), {
 			wrapper: createWrapper(),
@@ -106,21 +74,7 @@ describe("useDueCardsByDeck", () => {
 		const deckId = "deck-123";
 		const userId = "user-123";
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			lte: vi.fn().mockResolvedValue({
-				data: [],
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(cardsRepository.getDueCardsByDeck).mockResolvedValue([]);
 
 		const { result } = renderHook(() => useDueCardsByDeck(deckId, userId), {
 			wrapper: createWrapper(),

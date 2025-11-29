@@ -10,6 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
+import type { LocalDeck } from "@/lib/db/types";
 
 // Mock user data
 export const mockUser = {
@@ -32,6 +33,21 @@ export const mockDeck = {
 	updated_at: "2025-01-01T00:00:00Z",
 	// 同期メタデータ
 	sync_status: "synced" as const,
+	synced_at: "2025-01-01T00:00:00Z",
+	local_updated_at: "2025-01-01T00:00:00Z",
+	server_updated_at: "2025-01-01T00:00:00Z",
+};
+
+// Mock LocalDeck data for Repository tests
+export const mockLocalDeck: LocalDeck = {
+	id: "deck-123",
+	title: "Test Deck",
+	description: "Test description",
+	user_id: "user-123",
+	is_public: false,
+	created_at: "2025-01-01T00:00:00Z",
+	updated_at: "2025-01-01T00:00:00Z",
+	sync_status: "synced",
 	synced_at: "2025-01-01T00:00:00Z",
 	local_updated_at: "2025-01-01T00:00:00Z",
 	server_updated_at: "2025-01-01T00:00:00Z",

@@ -253,6 +253,7 @@ export interface CreateCardPayload {
 	back_content: TiptapContent;
 	source_audio_url?: string | null;
 	source_ocr_image_url?: string | null;
+	source_pdf_url?: string | null;
 }
 
 /**

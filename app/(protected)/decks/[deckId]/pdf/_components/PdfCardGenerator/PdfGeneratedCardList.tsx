@@ -29,7 +29,7 @@ export function PdfGeneratedCardList({
 	onSelectAll,
 	onDeselectAll,
 	deckId,
-	userId,
+	userId: _userId,
 }: Omit<GeneratedCardListProps, "onSaveCards" | "isSaving">) {
 	const router = useRouter();
 	const createCardsMutation = useCreateCards();
@@ -51,11 +51,44 @@ export function PdfGeneratedCardList({
 			// TiptapJSON形式のカードデータに変換
 			const cardsToInsert = selectedCardsList.map((card) => {
 				const pdfCard = card as unknown as GeneratedPdfCard;
+				// front_content と back_content が既にオブジェクト形式の場合はそのまま使用
+				// string形式の場合はTiptapContent形式に変換
+				const frontContent =
+					typeof card.front_content === "object" &&
+					card.front_content !== null &&
+					"type" in card.front_content
+						? (card.front_content as { type: "doc"; content: unknown[] })
+						: {
+								type: "doc" as const,
+								content: [
+									{
+										type: "paragraph",
+										content: [
+											{ type: "text", text: String(card.front_content) },
+										],
+									},
+								] as unknown[],
+							};
+				const backContent =
+					typeof card.back_content === "object" &&
+					card.back_content !== null &&
+					"type" in card.back_content
+						? (card.back_content as { type: "doc"; content: unknown[] })
+						: {
+								type: "doc" as const,
+								content: [
+									{
+										type: "paragraph",
+										content: [
+											{ type: "text", text: String(card.back_content) },
+										],
+									},
+								] as unknown[],
+							};
 				return {
-					user_id: userId,
 					deck_id: deckId,
-					front_content: card.front_content,
-					back_content: card.back_content,
+					front_content: frontContent,
+					back_content: backContent,
 					source_pdf_url: pdfCard.source_pdf_url,
 				};
 			});
