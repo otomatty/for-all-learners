@@ -24,7 +24,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { LocalPage } from "@/lib/db/types";
 import { pagesRepository } from "@/lib/repositories";
-import { createClient } from "@/lib/supabase/client";
 
 export type UserPageSummary = {
 	id: string;
@@ -48,18 +47,9 @@ function toUserPageSummary(page: LocalPage): UserPageSummary {
  * - バックグラウンドでサーバーと同期
  */
 export function useUserPages(userId: string) {
-	const supabase = createClient();
-
 	return useQuery({
 		queryKey: ["pages", "user", userId],
 		queryFn: async (): Promise<UserPageSummary[]> => {
-			// 認証ユーザーを確認
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// ローカルDBからユーザーのページを取得
 			const pages = await pagesRepository.getAll(userId);
 			return pages.map(toUserPageSummary);

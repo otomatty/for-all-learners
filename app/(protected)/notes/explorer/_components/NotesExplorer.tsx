@@ -38,9 +38,10 @@ import { TrashPanel } from "./TrashPanel";
 
 interface NotesExplorerProps {
 	notes: NoteSummary[];
+	userId: string;
 }
 
-export default function NotesExplorer({ notes }: NotesExplorerProps) {
+export default function NotesExplorer({ notes, userId }: NotesExplorerProps) {
 	const t = useTranslations("notes");
 	const [selectedNoteId, setSelectedNoteId] = useState<string | null>(
 		notes.length > 0 ? notes[0].id : null,
@@ -359,6 +360,7 @@ export default function NotesExplorer({ notes }: NotesExplorerProps) {
 									<PagesList
 										noteId={selectedNote.id}
 										noteSlug={selectedNote.slug}
+										userId={userId}
 										selectedPageIds={selectedPageIds}
 										onSelectPages={setSelectedPageIds}
 									/>

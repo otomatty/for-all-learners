@@ -2,6 +2,7 @@
 
 import { Container } from "@/components/layouts/container";
 import { useNotes } from "@/hooks/notes/useNotes";
+import { useAuth } from "@/lib/hooks/use-auth";
 import NotesExplorer from "./NotesExplorer";
 
 /**
@@ -14,15 +15,17 @@ import NotesExplorer from "./NotesExplorer";
  *
  * Dependencies (External files that this file imports):
  *   ├─ hooks/notes/useNotes.ts
+ *   ├─ lib/hooks/use-auth.ts
  *   └─ components/layouts/container.tsx
  *
  * Related Documentation:
  *   └─ Plan: docs/03_plans/tauri-migration/20250124_01_static-export-client-side-auth-implementation-plan.md
  */
 export function NotesExplorerPageClient() {
+	const { user, loading: authLoading } = useAuth();
 	const { data: notes = [], isLoading } = useNotes();
 
-	if (isLoading) {
+	if (authLoading || isLoading) {
 		return (
 			<Container className="h-full">
 				<div className="flex items-center justify-center min-h-screen">
@@ -40,7 +43,7 @@ export function NotesExplorerPageClient() {
 					ドラッグ&ドロップでページを整理できます
 				</p>
 			</div>
-			<NotesExplorer notes={notes} />
+			<NotesExplorer notes={notes} userId={user?.id ?? ""} />
 		</Container>
 	);
 }

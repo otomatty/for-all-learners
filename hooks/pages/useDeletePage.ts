@@ -25,7 +25,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { pagesRepository } from "@/lib/repositories";
 import { deleteLinkOccurrencesByPage } from "@/lib/services/linkGroupService";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client"; // TODO: linkGroupService移行後に削除
 
 /**
  * ページを削除します。
@@ -35,18 +35,11 @@ import { createClient } from "@/lib/supabase/client";
  * - バックグラウンドでサーバーと同期
  */
 export function useDeletePage() {
-	const supabase = createClient();
+	const supabase = createClient(); // TODO: linkGroupService移行後に削除
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: async (id: string) => {
-			// 認証ユーザーを取得
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
 			// Delete link group occurrences for this page (サーバーから)
 			// TODO: これもローカルDBに移行する必要がある
 			await deleteLinkOccurrencesByPage(supabase, id);

@@ -3,7 +3,7 @@
  *
  * Test Coverage:
  * - TC-001: 正常系 - データ取得成功
- * - TC-002: 異常系 - データベースエラー
+ * - TC-002: 異常系 - ノートが存在しない場合
  * - TC-003: エッジケース - 空の結果セット
  * - TC-004: デフォルトノートの処理
  */
@@ -20,17 +20,40 @@ import {
 	mockUser,
 } from "./helpers";
 
-// Mock Supabase client
+// Mock Supabase client (for RPC calls)
 vi.mock("@/lib/supabase/client");
+
+// Create hoisted mock functions
+const { mockGetBySlug, mockGetDefaultNote } = vi.hoisted(() => ({
+mockGetBySlug: vi.fn(),
+	mockGetDefaultNote: vi.fn(),
+}));
+
+// Mock repositories module
+vi.mock("@/lib/repositories", () => ({
+notesRepository: {
+getBySlug: mockGetBySlug,
+getDefaultNote: mockGetDefaultNote,
+getAll: vi.fn(),
+		getById: vi.fn(),
+		create: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn(),
+		getPendingSync: vi.fn(),
+		markSynced: vi.fn(),
+		syncFromServer: vi.fn(),
+	},
+}));
 
 describe("useNotePages", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
+	const mockUserId = mockUser.id;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockSupabaseClient = createMockSupabaseClient();
 		vi.mocked(createClient).mockReturnValue(
-			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
+mockSupabaseClient as unknown as ReturnType<typeof createClient>,
 		);
 	});
 
@@ -39,36 +62,25 @@ describe("useNotePages", () => {
 		const slug = "test-note";
 		const params = {
 			slug,
+			userId: mockUserId,
 			limit: 10,
 			offset: 0,
 			sortBy: "updated" as const,
 		};
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
+		// Mock repository.getBySlug to return mockNote
+		mockGetBySlug.mockResolvedValue(mockNote);
 
-		const mockNoteQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: { id: mockNote.id },
-				error: null,
-			}),
-		};
-
+		// Mock RPC call for pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-			data: [
-				{
-					pages: [mockPage],
-					total_count: 1,
-				},
-			],
-			error: null,
-		});
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockNoteQuery);
+data: [
+{
+pages: [mockPage],
+total_count: 1,
+},
+],
+error: null,
+});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -81,33 +93,22 @@ describe("useNotePages", () => {
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.pages.length).toBe(1);
 		expect(result.current.data?.totalCount).toBe(1);
+		expect(mockGetBySlug).toHaveBeenCalledWith(mockUserId, slug);
 	});
 
-	// TC-002: 異常系 - データベースエラー
-	test("TC-002: Should handle database error", async () => {
+	// TC-002: 異常系 - ノートが存在しない場合
+	test("TC-002: Should handle note not found", async () => {
 		const slug = "test-note";
 		const params = {
 			slug,
+			userId: mockUserId,
 			limit: 10,
 			offset: 0,
 			sortBy: "updated" as const,
 		};
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockNoteQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Note not found", code: "PGRST116" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockNoteQuery);
+		// Mock repository.getBySlug to return null (not found)
+		mockGetBySlug.mockResolvedValue(null);
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -118,6 +119,7 @@ describe("useNotePages", () => {
 		});
 
 		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toBe("Note not found");
 	});
 
 	// TC-003: エッジケース - 空の結果セット
@@ -125,31 +127,20 @@ describe("useNotePages", () => {
 		const slug = "test-note";
 		const params = {
 			slug,
+			userId: mockUserId,
 			limit: 10,
 			offset: 0,
 			sortBy: "updated" as const,
 		};
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
+		// Mock repository.getBySlug to return mockNote
+		mockGetBySlug.mockResolvedValue(mockNote);
 
-		const mockNoteQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: { id: mockNote.id },
-				error: null,
-			}),
-		};
-
+		// Mock RPC call returning empty pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-			data: [{ pages: [], total_count: 0 }],
-			error: null,
-		});
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockNoteQuery);
+data: [{ pages: [], total_count: 0 }],
+error: null,
+});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -168,31 +159,20 @@ describe("useNotePages", () => {
 		const slug = "default";
 		const params = {
 			slug,
+			userId: mockUserId,
 			limit: 10,
 			offset: 0,
 			sortBy: "updated" as const,
 		};
 
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
+		// Mock repository.getDefaultNote to return mockNote
+		mockGetDefaultNote.mockResolvedValue(mockNote);
 
-		const mockNoteQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			maybeSingle: vi.fn().mockResolvedValue({
-				data: { id: mockNote.id },
-				error: null,
-			}),
-		};
-
+		// Mock RPC call for pages
 		mockSupabaseClient.rpc = vi.fn().mockResolvedValue({
-			data: [{ pages: [mockPage], total_count: 1 }],
-			error: null,
-		});
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockNoteQuery);
+data: [{ pages: [mockPage], total_count: 1 }],
+error: null,
+});
 
 		const { result } = renderHook(() => useNotePages(params), {
 			wrapper: createWrapper(),
@@ -203,6 +183,8 @@ describe("useNotePages", () => {
 		});
 
 		expect(result.current.data).toBeDefined();
-		expect(mockNoteQuery.eq).toHaveBeenCalledWith("is_default_note", true);
+		expect(mockGetDefaultNote).toHaveBeenCalledWith(mockUserId);
+		// getBySlug should NOT be called for default slug
+		expect(mockGetBySlug).not.toHaveBeenCalled();
 	});
 });
