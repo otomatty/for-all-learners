@@ -33,9 +33,10 @@ export default async function ServerGoalDecksSection({
 	const _userId = user.id;
 
 	// 目標に紐づくデッキを取得
+	// Note: cards count is fetched through the decks relationship since goal_deck_links doesn't have a direct FK to cards
 	const { data: goalDeckLinks, error: linksError } = await supabase
 		.from("goal_deck_links")
-		.select("decks(*), card_count:cards(count)")
+		.select("decks(*, cards(count))")
 		.eq("goal_id", goalId);
 
 	if (linksError) throw linksError;
@@ -43,7 +44,7 @@ export default async function ServerGoalDecksSection({
 	// Transform the data structure
 	const decks: Deck[] = (goalDeckLinks || []).map((link: any) => ({
 		...link.decks,
-		card_count: link.card_count?.[0]?.count || 0,
+		card_count: link.decks?.cards?.[0]?.count || 0,
 	})) as Deck[];
 
 	// 親から渡された dueMap を用いて復習対象件数をマージ
