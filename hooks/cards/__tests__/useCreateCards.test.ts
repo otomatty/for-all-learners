@@ -4,12 +4,14 @@
  * Test Coverage:
  * - TC-001: 正常系 - カード一括作成成功
  * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - データベースエラー
+ * - TC-003: 異常系 - Repository エラー
  * - TC-004: 正常系 - キャッシュの無効化
  */
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { CreateCardPayload, LocalCard } from "@/lib/db/types";
+import { cardsRepository } from "@/lib/repositories";
 import { createClient } from "@/lib/supabase/client";
 import { useCreateCards } from "../useCreateCards";
 import {
@@ -21,6 +23,32 @@ import {
 
 // Mock Supabase client
 vi.mock("@/lib/supabase/client");
+
+// Mock cardsRepository
+vi.mock("@/lib/repositories", () => ({
+	cardsRepository: {
+		createBatch: vi.fn(),
+	},
+}));
+
+// LocalCard型のモックデータ
+const mockLocalCard: LocalCard = {
+	...mockCard,
+	front_content: { type: "doc" as const, content: [] },
+	back_content: { type: "doc" as const, content: [] },
+	sync_status: "synced",
+	local_updated_at: "2025-01-01T00:00:00Z",
+	synced_at: "2025-01-01T00:00:00Z",
+	server_updated_at: "2025-01-01T00:00:00Z",
+	ease_factor: 2.5,
+	repetition_count: 0,
+	review_interval: 0,
+	stability: 0,
+	difficulty: 0,
+	last_reviewed_at: null,
+	source_audio_url: null,
+	source_ocr_image_url: null,
+};
 
 describe("useCreateCards", () => {
 	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
@@ -40,36 +68,26 @@ describe("useCreateCards", () => {
 			error: null,
 		});
 
-		const newCards = [
-			{ ...mockCard, id: "new-card-1" },
-			{ ...mockCard, id: "new-card-2" },
+		const newCards: LocalCard[] = [
+			{ ...mockLocalCard, id: "new-card-1" },
+			{ ...mockLocalCard, id: "new-card-2" },
 		];
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockResolvedValue({
-				data: newCards,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(cardsRepository.createBatch).mockResolvedValue(newCards);
 
 		const { result } = renderHook(() => useCreateCards(), {
 			wrapper: createWrapper(),
 		});
 
-		const payload = [
+		const payload: CreateCardPayload[] = [
 			{
-				user_id: mockUser.id,
 				deck_id: "deck-123",
-				front_content: { type: "doc", content: [] },
-				back_content: { type: "doc", content: [] },
+				front_content: { type: "doc" as const, content: [] },
+				back_content: { type: "doc" as const, content: [] },
 			},
 			{
-				user_id: mockUser.id,
 				deck_id: "deck-123",
-				front_content: { type: "doc", content: [] },
-				back_content: { type: "doc", content: [] },
+				front_content: { type: "doc" as const, content: [] },
+				back_content: { type: "doc" as const, content: [] },
 			},
 		];
 
@@ -81,7 +99,10 @@ describe("useCreateCards", () => {
 
 		expect(result.current.data).toBeDefined();
 		expect(result.current.data?.length).toBe(2);
-		expect(mockQuery.insert).toHaveBeenCalledWith(payload);
+		expect(cardsRepository.createBatch).toHaveBeenCalledWith(
+			mockUser.id,
+			payload,
+		);
 	});
 
 	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
@@ -95,12 +116,11 @@ describe("useCreateCards", () => {
 			wrapper: createWrapper(),
 		});
 
-		const payload = [
+		const payload: CreateCardPayload[] = [
 			{
-				user_id: "user-123",
 				deck_id: "deck-123",
-				front_content: { type: "doc", content: [] },
-				back_content: { type: "doc", content: [] },
+				front_content: { type: "doc" as const, content: [] },
+				back_content: { type: "doc" as const, content: [] },
 			},
 		];
 
@@ -112,35 +132,30 @@ describe("useCreateCards", () => {
 
 		expect(result.current.error).toBeDefined();
 		expect(result.current.error?.message).toContain("not authenticated");
+		// Repository は呼ばれない
+		expect(cardsRepository.createBatch).not.toHaveBeenCalled();
 	});
 
-	// TC-003: 異常系 - データベースエラー
-	test("TC-003: Should handle database error", async () => {
+	// TC-003: 異常系 - Repository エラー
+	test("TC-003: Should handle repository error", async () => {
 		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
 		});
 
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "23505" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(cardsRepository.createBatch).mockRejectedValue(
+			new Error("Database error"),
+		);
 
 		const { result } = renderHook(() => useCreateCards(), {
 			wrapper: createWrapper(),
 		});
 
-		const payload = [
+		const payload: CreateCardPayload[] = [
 			{
-				user_id: mockUser.id,
 				deck_id: "deck-123",
-				front_content: { type: "doc", content: [] },
-				back_content: { type: "doc", content: [] },
+				front_content: { type: "doc" as const, content: [] },
+				back_content: { type: "doc" as const, content: [] },
 			},
 		];
 
@@ -151,6 +166,7 @@ describe("useCreateCards", () => {
 		});
 
 		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toBe("Database error");
 	});
 
 	// TC-004: 正常系 - キャッシュの無効化
@@ -160,27 +176,18 @@ describe("useCreateCards", () => {
 			error: null,
 		});
 
-		const newCards = [{ ...mockCard, id: "new-card-1" }];
-		const mockQuery = {
-			insert: vi.fn().mockReturnThis(),
-			select: vi.fn().mockResolvedValue({
-				data: newCards,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		const newCards: LocalCard[] = [{ ...mockLocalCard, id: "new-card-1" }];
+		vi.mocked(cardsRepository.createBatch).mockResolvedValue(newCards);
 
 		const { result } = renderHook(() => useCreateCards(), {
 			wrapper: createWrapper(),
 		});
 
-		const payload = [
+		const payload: CreateCardPayload[] = [
 			{
-				user_id: mockUser.id,
 				deck_id: "deck-123",
-				front_content: { type: "doc", content: [] },
-				back_content: { type: "doc", content: [] },
+				front_content: { type: "doc" as const, content: [] },
+				back_content: { type: "doc" as const, content: [] },
 			},
 		];
 

@@ -23,18 +23,16 @@ import {
 	ContextMenuSeparator,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import type { LocalCard } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types"; // Database 型をインポート
 import { CardForm } from "../../CardForm"; // CardForm をインポート
 
 interface CardContextMenuProps {
-	card: Database["public"]["Tables"]["cards"]["Row"];
+	card: LocalCard;
 	deckId: string;
 	userId: string | null;
 	canEdit: boolean;
-	onCardUpdated: (
-		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
-	) => void; // カード更新通知用コールバック
+	onCardUpdated: (updatedCard: LocalCard) => void; // カード更新通知用コールバック
 	children: React.ReactNode;
 }
 
@@ -61,9 +59,7 @@ export function CardContextMenu({
 		}
 	};
 
-	const handleEditSuccess = (
-		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
-	) => {
+	const handleEditSuccess = (updatedCard: LocalCard) => {
 		setIsEditDialogOpen(false);
 		onCardUpdated(updatedCard); // 親コンポーネントに更新を通知
 		// router.refresh(); // オプティミスティックアップデートが主なら不要になることも

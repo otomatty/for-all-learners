@@ -1,6 +1,5 @@
 "use client";
 
-import type { JSONContent } from "@tiptap/core";
 import { Loader2, Mic, MicOff, Save, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -231,28 +230,27 @@ export function AudioCardGenerator({
 		}
 
 		try {
-			// 選択されたカードをデータベースに保存 (JSONContent にラップ)
+			// 選択されたカードをデータベースに保存 (TiptapContent にラップ)
 			const cardsToInsert = selectedCardsList.map((card) => {
-				const frontJson: JSONContent = {
-					type: "doc",
+				const frontJson = {
+					type: "doc" as const,
 					content: [
 						{
 							type: "paragraph",
 							content: [{ type: "text", text: card.front_content }],
 						},
-					],
+					] as unknown[],
 				};
-				const backJson: JSONContent = {
-					type: "doc",
+				const backJson = {
+					type: "doc" as const,
 					content: [
 						{
 							type: "paragraph",
 							content: [{ type: "text", text: card.back_content }],
 						},
-					],
+					] as unknown[],
 				};
 				return {
-					user_id: userId,
 					deck_id: deckId,
 					front_content: frontJson,
 					back_content: backJson,

@@ -44,7 +44,7 @@ async function getMonthlyActivitySummary(
 		supabase
 			.from("pages")
 			.select("*")
-			.eq("owner_id", userId)
+			.eq("user_id", userId) // pages table uses user_id, not owner_id
 			.or(`created_at.gte.${startDateISO},updated_at.gte.${startDateISO}`),
 	]);
 

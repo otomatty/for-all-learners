@@ -36,10 +36,11 @@ export function useDayActivityDetail(userId: string, date: Date) {
 			if (learningError) throw learningError;
 
 			// Fetch pages for the day
+			// Note: pages table uses user_id, not owner_id
 			const { data: pages, error: pagesError } = await supabase
 				.from("pages")
 				.select("*")
-				.eq("owner_id", userId)
+				.eq("user_id", userId)
 				.or(
 					`created_at.gte.${startDate.toISOString()},updated_at.gte.${startDate.toISOString()}`,
 				)

@@ -1,36 +1,53 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
+/**
+ * useDeleteCard フック
+ *
+ * カードを削除します。
+ * Repositoryパターンを使用してローカルDBで論理削除し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ app/(protected)/decks/[deckId]/cards/[cardId]/page.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/cards-repository.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/cards/cards.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/206
+ */
 
-export type Card = Database["public"]["Tables"]["cards"]["Row"];
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { LocalCard } from "@/lib/db/types";
+import { cardsRepository } from "@/lib/repositories";
+
+/**
+ * カードの型（後方互換性のため）
+ */
+export type Card = LocalCard;
 
 /**
  * カードを削除します。
+ *
+ * - ローカルDBで論理削除（オフライン対応）
+ * - バックグラウンドでサーバーと同期
  */
 export function useDeleteCard() {
-	const supabase = createClient();
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Card> => {
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
+			// まずカードを取得して情報を保持
+			const card = await cardsRepository.getById(id);
+			if (!card) throw new Error("Card not found");
 
-			const { data, error } = await supabase
-				.from("cards")
-				.delete()
-				.eq("id", id)
-				.select()
-				.single();
+			// Repositoryを使って論理削除
+			await cardsRepository.delete(id);
 
-			if (error) throw error;
-			if (!data) throw new Error("deleteCard: no data returned");
-			return data;
+			return card;
 		},
 		onSuccess: (data) => {
 			// 関連するクエリを無効化

@@ -34,10 +34,11 @@ export function useMonthlyActivitySummary(
 			if (learningError) throw learningError;
 
 			// Fetch pages created/updated in the month
+			// Note: pages table uses user_id, not owner_id
 			const { data: pages, error: pagesError } = await supabase
 				.from("pages")
 				.select("*")
-				.eq("owner_id", userId)
+				.eq("user_id", userId)
 				.or(`created_at.gte.${startDateISO},updated_at.gte.${startDateISO}`);
 
 			if (pagesError) throw pagesError;

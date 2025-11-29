@@ -197,6 +197,68 @@ export class CardsRepository extends BaseRepository<
 			});
 		}
 	}
+
+	/**
+	 * デッキ内の復習対象カードを取得
+	 *
+	 * next_review_at が現在時刻より前のカードを取得（デッキ単位）
+	 *
+	 * @param deckId デッキID
+	 * @param userId ユーザーID
+	 * @returns 復習対象カードの配列
+	 */
+	async getDueCardsByDeck(
+		deckId: string,
+		userId: string,
+	): Promise<LocalCard[]> {
+		try {
+			const db = await this.getDB();
+			const cards = await db.cards.getByDeck(deckId);
+			const now = new Date().toISOString();
+			return cards.filter(
+				(card) =>
+					card.user_id === userId &&
+					card.next_review_at &&
+					card.next_review_at <= now,
+			);
+		} catch (error) {
+			throw new RepositoryError("DB_ERROR", `Failed to get due cards by deck`, {
+				entityName: this.entityName,
+				originalError: error instanceof Error ? error : undefined,
+			});
+		}
+	}
+
+	/**
+	 * ユーザーの全デッキごとの復習対象カード数を取得
+	 *
+	 * @param userId ユーザーID
+	 * @returns デッキIDをキーとした復習対象カード数のマップ
+	 */
+	async getDueCountsByUser(userId: string): Promise<Record<string, number>> {
+		try {
+			const db = await this.getDB();
+			const allCards = await db.cards.getAll(userId);
+			const now = new Date().toISOString();
+
+			const map: Record<string, number> = {};
+			for (const card of allCards) {
+				if (card.next_review_at && card.next_review_at <= now) {
+					map[card.deck_id] = (map[card.deck_id] ?? 0) + 1;
+				}
+			}
+			return map;
+		} catch (error) {
+			throw new RepositoryError(
+				"DB_ERROR",
+				`Failed to get due counts by user`,
+				{
+					entityName: this.entityName,
+					originalError: error instanceof Error ? error : undefined,
+				},
+			);
+		}
+	}
 }
 
 /**

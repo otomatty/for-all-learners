@@ -16,14 +16,14 @@ import {
 	FormMessage, // FormMessageを追加
 } from "@/components/ui/form";
 import { useCreateCard, useUpdateCard } from "@/hooks/cards";
+import type { LocalCard } from "@/lib/db/types";
 import logger from "@/lib/logger";
-import type { Database } from "@/types/database.types"; // Database 型をインポート
 
 interface CardFormProps {
 	deckId: string;
 	userId: string;
-	cardToEdit?: Database["public"]["Tables"]["cards"]["Row"]; // 編集対象のカード情報
-	onSuccess?: (card: Database["public"]["Tables"]["cards"]["Row"]) => void; // 作成または更新されたカードを受け取る
+	cardToEdit?: LocalCard; // 編集対象のカード情報
+	onSuccess?: (card: LocalCard) => void; // 作成または更新されたカードを受け取る
 	onCancel?: () => void; // キャンセル時のコールバック
 }
 
@@ -107,7 +107,6 @@ export function CardForm({
 			} else {
 				// 新規作成処理
 				const newCardData = await createCardMutation.mutateAsync({
-					user_id: userId,
 					deck_id: deckId,
 					front_content: JSON.parse(frontContent),
 					back_content: JSON.parse(backContent),

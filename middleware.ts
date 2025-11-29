@@ -1,17 +1,42 @@
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import createIntlMiddleware from "next-intl/middleware";
-import { defaultLocale, locales } from "@/i18n/config";
+import { defaultLocale, type Locale, locales } from "@/i18n/config";
 import { buildCSPHeader, generateNonce } from "@/lib/utils/csp";
 import type { Database } from "@/types/database.types";
 
-// Create next-intl middleware
-const intlMiddleware = createIntlMiddleware({
-	locales,
-	defaultLocale,
-	localePrefix: "as-needed", // Only add locale prefix when not default
-});
+// Tauri静的エクスポート対応のため、next-intlのミドルウェアは使用しない
+// 動的ルート（[locale]）は静的エクスポートで使用できないため、
+// ロケール情報はCookieとAccept-Languageヘッダーで管理し、
+// URLリライトは行わない
+
+/**
+ * Accept-Languageヘッダーからロケールを検出
+ */
+function detectLocaleFromHeader(acceptLanguage: string | null): Locale {
+	if (!acceptLanguage) return defaultLocale;
+
+	// Accept-Languageヘッダーをパースして優先度順にソート
+	const languages = acceptLanguage
+		.split(",")
+		.map((lang) => {
+			const [code, qValue] = lang.trim().split(";q=");
+			return {
+				code: code.split("-")[0].toLowerCase(), // "en-US" -> "en"
+				q: qValue ? Number.parseFloat(qValue) : 1,
+			};
+		})
+		.sort((a, b) => b.q - a.q);
+
+	// 対応するロケールを探す
+	for (const lang of languages) {
+		if (locales.includes(lang.code as Locale)) {
+			return lang.code as Locale;
+		}
+	}
+
+	return defaultLocale;
+}
 
 // Define public routes for unauthenticated users
 const PUBLIC_PATHS = [
@@ -85,11 +110,28 @@ export async function middleware(req: NextRequest) {
 		return NextResponse.redirect(new URL(`/notes/default/${pageId}`, req.url));
 	}
 
-	// Apply i18n middleware first to handle locale routing
-	const intlResponse = intlMiddleware(req);
+	// ロケール検出: Cookie優先、なければAccept-Languageヘッダーから検出
+	const cookieLocale = req.cookies.get("NEXT_LOCALE")?.value as
+		| Locale
+		| undefined;
+	const detectedLocale =
+		cookieLocale && locales.includes(cookieLocale)
+			? cookieLocale
+			: detectLocaleFromHeader(req.headers.get("accept-language"));
+
+	// 認証チェック用にSupabaseクライアントを初期化
+	// intlMiddlewareを使用せず、NextResponse.next()をベースにする
+	const res = NextResponse.next();
+
+	// ロケールをCookieに保存（未設定または変更があった場合）
+	if (!cookieLocale || cookieLocale !== detectedLocale) {
+		res.cookies.set("NEXT_LOCALE", detectedLocale, {
+			path: "/",
+			sameSite: "lax",
+		});
+	}
 
 	// Initialize Supabase auth client with SSR helper
-	const res = intlResponse;
 	const supabase = createServerClient<Database>(
 		process.env.NEXT_PUBLIC_SUPABASE_URL || "",
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",

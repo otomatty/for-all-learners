@@ -1,34 +1,50 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
+/**
+ * useDeck フック
+ *
+ * 指定されたIDのデッキを取得します。
+ * Repositoryパターンを使用してローカルDBから取得し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ app/(protected)/decks/[deckId]/*.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/decks-repository.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/decks/decks.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/206
+ */
 
-export type Deck = Database["public"]["Tables"]["decks"]["Row"];
+import { useQuery } from "@tanstack/react-query";
+import type { LocalDeck } from "@/lib/db/types";
+import { decksRepository } from "@/lib/repositories";
+
+/**
+ * デッキの型（後方互換性のため）
+ */
+export type Deck = LocalDeck;
 
 /**
  * 指定されたIDのデッキを取得します。
+ *
+ * - ローカルDBから取得（オフライン対応）
+ * - バックグラウンドでサーバーと同期
+ *
+ * @param id デッキID
  */
 export function useDeck(id: string) {
-	const supabase = createClient();
-
 	return useQuery({
 		queryKey: ["deck", id],
 		queryFn: async (): Promise<Deck> => {
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
-			const { data, error } = await supabase
-				.from("decks")
-				.select("*")
-				.eq("id", id)
-				.single();
-
-			if (error) throw error;
-			return data;
+			// Repositoryを使ってローカルDBから取得
+			const deck = await decksRepository.getById(id);
+			if (!deck) throw new Error("Deck not found");
+			return deck;
 		},
 		enabled: !!id,
 	});

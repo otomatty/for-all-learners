@@ -1,62 +1,59 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
+/**
+ * useDeleteDeck フック
+ *
+ * デッキを削除します。
+ * Repositoryパターンを使用してローカルDBで論理削除し、バックグラウンドで同期を行います。
+ *
+ * DEPENDENCY MAP:
+ *
+ * Parents (Files that import this file):
+ *   └─ app/(protected)/decks/[deckId]/settings/page.tsx
+ *
+ * Dependencies (External files that this file imports):
+ *   ├─ lib/repositories/decks-repository.ts
+ *   └─ @tanstack/react-query
+ *
+ * Related Documentation:
+ *   ├─ Spec: hooks/decks/decks.spec.md
+ *   └─ Issue: https://github.com/otomatty/for-all-learners/issues/206
+ */
 
-export type Deck = Database["public"]["Tables"]["decks"]["Row"];
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { LocalDeck } from "@/lib/db/types";
+import { decksRepository } from "@/lib/repositories";
+
+/**
+ * デッキの型（後方互換性のため）
+ */
+export type Deck = LocalDeck;
 
 /**
  * デッキを削除します。
- * 関連データ（cards, goal_deck_links, note_deck_links, deck_shares, deck_study_logs, audio_transcriptions）も削除されます。
+ *
+ * - ローカルDBで論理削除（オフライン対応）
+ * - バックグラウンドでサーバーと同期
+ * - 関連データ（cards等）は同期時にサーバー側で削除
  */
 export function useDeleteDeck() {
-	const supabase = createClient();
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: async (id: string): Promise<Deck> => {
-			const {
-				data: { user },
-				error: userError,
-			} = await supabase.auth.getUser();
-			if (userError || !user) throw new Error("User not authenticated");
-
-			// デッキの所有者であることを確認
-			const { data: deck, error: deckFetchError } = await supabase
-				.from("decks")
-				.select("user_id")
-				.eq("id", id)
-				.single();
-
-			if (deckFetchError || !deck) {
+			// まずデッキを取得
+			const deck = await decksRepository.getById(id);
+			if (!deck) {
 				throw new Error("デッキが見つかりません");
 			}
 
-			if (deck.user_id !== user.id) {
-				throw new Error("このデッキを削除する権限がありません");
-			}
+			// Repositoryを使って論理削除
+			await decksRepository.delete(id);
 
-			// RPC関数を使用してトランザクション内で削除
-			const { data, error } = await supabase.rpc(
-				"delete_deck_with_transaction",
-				{
-					p_deck_id: id,
-				},
-			);
-
-			if (error) {
-				throw new Error(`デッキの削除に失敗しました: ${error.message}`);
-			}
-
-			if (!data) {
-				throw new Error("デッキの削除に失敗しました");
-			}
-
-			// RPC関数は単一のdecks行を返す
-			return data as Deck;
+			return deck;
 		},
 		onSuccess: () => {
+			// キャッシュを無効化して再フェッチ
 			queryClient.invalidateQueries({ queryKey: ["decks"] });
 		},
 	});

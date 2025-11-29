@@ -3,12 +3,12 @@
 import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Database } from "@/types/database.types";
+import type { LocalCard } from "@/lib/db/types";
 import { RichContent } from "../RichContent";
 import { CardContextMenu } from "./CardContextMenu";
 
 interface CardItemProps {
-	card?: Database["public"]["Tables"]["cards"]["Row"]; // オプショナルに変更
+	card?: LocalCard; // オプショナルに変更
 	isBlurred: boolean;
 	onMouseEnter?: () => void;
 	onMouseLeave?: () => void;
@@ -18,9 +18,7 @@ interface CardItemProps {
 	deckId: string;
 	userId: string | null;
 	canEdit: boolean;
-	onCardUpdated?: (
-		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
-	) => void;
+	onCardUpdated?: (updatedCard: LocalCard) => void;
 	isLoading?: boolean;
 }
 
