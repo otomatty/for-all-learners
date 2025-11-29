@@ -34,7 +34,7 @@ export default async function NotesExplorerPage() {
 					ドラッグ&ドロップでページを整理できます
 				</p>
 			</div>
-			<NotesExplorer notes={notes} />
+			<NotesExplorer notes={notes} userId={user.id} />
 		</Container>
 	);
 }
