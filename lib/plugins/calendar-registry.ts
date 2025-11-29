@@ -11,7 +11,7 @@
  *
  * Dependencies:
  *   ├─ lib/plugins/types.ts (Calendar extension types)
- *   ├─ lib/plugins/plugin-loader/plugin-loader.ts (getPluginLoader for Worker context)
+ *   ├─ ./plugin-loader/plugin-loader (getPluginLoader for Worker context)
  *   └─ lib/logger
  *
  * Related Documentation:
