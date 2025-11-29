@@ -1,6 +1,6 @@
 # 開発スケジュール（2025年11月〜2026年1月）
 
-> **最終更新**: 2025-11-26 13:55
+> **最終更新**: 2025-11-29 更新
 > **対象マイルストーン**: v0.4.0 - Tauri移行 & 国際化対応
 
 ## 📋 概要
@@ -11,6 +11,15 @@
 |--------|--------------|------|
 | **Hybrid DB Strategy** | [#189](https://github.com/otomatty/for-all-learners/issues/189) | 約7週間 |
 | **国際化対応 (i18n)** | [#119](https://github.com/otomatty/for-all-learners/issues/119) | 2025-11 ~ 2026-01 |
+
+### Phase D 細分化 Issue 一覧
+
+| Issue | タイトル | 対象 | 期間 |
+|-------|----------|------|------|
+| [#204](https://github.com/otomatty/for-all-learners/issues/204) | [Phase D-2] Notes/Pages フックの Repository 移行 | Notes/Pages 12件 | Week 6-1 |
+| [#205](https://github.com/otomatty/for-all-learners/issues/205) | [Phase D-3] Decks/Cards フックの Repository 移行 | Decks/Cards 12件 | Week 6-2 |
+| [#206](https://github.com/otomatty/for-all-learners/issues/206) | [Phase D-4] StudyGoals/LearningLogs/Milestones フックの移行 | 学習系 19件 | Week 7-1 |
+| [#207](https://github.com/otomatty/for-all-learners/issues/207) | [Phase D-5] Notes/Decks 共有・管理フックの移行 | 共有・管理 27件 | Week 7-2 |
 
 ---
 
@@ -269,28 +278,220 @@
 
 ---
 
-### Week 6: 2025/12/31 〜 2026/01/06
+### Week 6-1: 2025/12/03 〜 2025/12/06 ✅ 完了
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Hybrid DB: Phase D 継続                                        │
-│  └─ #198 残りのフック移行                                        │
+│  Hybrid DB: Phase D-2 (#204)                                    │
+│  ├─ Notes 基本CRUD フック移行 ✅                                  │
+│  │   ├─ useNote.ts → notesRepository.getBySlug() ✅              │
+│  │   ├─ useUpdateNote.ts → notesRepository.update() ✅           │
+│  │   ├─ useDeleteNote.ts → notesRepository.delete() ✅           │
+│  │   ├─ useDefaultNote.ts → notesRepository.getDefaultNote() ✅  │
+│  │   └─ useCreateDefaultNote.ts → notesRepository.create() ✅    │
+│  │                                                               │
+│  └─ Pages 基本CRUD フック移行 ✅                                  │
+│      ├─ usePage.ts → pagesRepository.getById() ✅                │
+│      ├─ useCreatePage.ts → ⏳ Phase D-5へ延期（複雑ロジック）     │
+│      ├─ useUpdatePage.ts → pagesRepository.updateMetadata() ✅   │
+│      ├─ useDeletePage.ts → pagesRepository.delete() ✅           │
+│      ├─ usePagesByNote.ts → pagesRepository.getByNoteId() ✅     │
+│      ├─ useUserPages.ts → pagesRepository.getAll() ✅            │
+│      └─ useNotePages.ts → 部分移行（RPC pagination維持）✅        │
 │                                                                  │
-│  i18n: Phase 3 開始                                              │
-│  ├─ プラグイン API へのロケールコンテキスト注入                   │
-│  └─ Tauri コマンドでの翻訳利用                                   │
-│                                                                  │
-│  状態: 並行開発可能                                               │
+│  状態: ✅ 完了（テスト更新は Week 6-2 で対応）                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**今週のゴール**:
-- [ ] 全フックの Repository 移行完了
-- [ ] プラグインi18n対応開始
+**Week 6-1 のゴール**:
+- [x] Notes 基本 CRUD フック移行完了（5/5件）✅
+- [x] Pages 基本 CRUD フック移行完了（6/7件、1件は Phase D-5 へ延期）✅
+- [ ] テスト更新 → Week 6-2 で対応
+
+<details>
+<summary>📝 Week 6-1 完了作業詳細</summary>
+
+#### Notes フック移行
+- `hooks/notes/useNote.ts` - `notesRepository.getBySlug()` を使用
+- `hooks/notes/useUpdateNote.ts` - `notesRepository.update()` を使用
+- `hooks/notes/useDeleteNote.ts` - `notesRepository.getById()` + `delete()` を使用
+- `hooks/notes/useDefaultNote.ts` - `notesRepository.getDefaultNote()` を使用
+- `hooks/notes/useCreateDefaultNote.ts` - `notesRepository.createDefaultNote()` を使用
+
+#### Pages フック移行
+- `hooks/pages/usePage.ts` - `pagesRepository.getById()` を使用
+- `hooks/pages/useUpdatePage.ts` - `pagesRepository.updateMetadata()` を使用
+- `hooks/pages/useDeletePage.ts` - `pagesRepository.delete()` を使用
+- `hooks/pages/usePagesByNote.ts` - `pagesRepository.getByNoteId()` を使用
+- `hooks/pages/useUserPages.ts` - `pagesRepository.getAll()` + `toUserPageSummary()` マッピング
+- `hooks/notes/useNotePages.ts` - Note解決のみ Repository化（RPC paginationは維持）
+
+#### Repository 更新
+- `lib/repositories/notes-repository.ts` - `createDefaultNote()` メソッド追加
+
+#### 延期対応
+- `hooks/pages/useCreatePage.ts` - Link Groups同期ロジックが複雑なため Phase D-5 へ延期
+
+#### テスト更新（次週対応）
+- Notes/Pages フックテストの Repository モック化が必要
+- テストは Supabase モックから Repository モックへの更新が必要
+
+</details>
 
 ---
 
-### Week 7: 2026/01/07 〜 2026/01/13
+### Week 6-2: 2025/12/07 〜 2025/12/09 🔄 進行中
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hybrid DB: Phase D-3 (#205)                                    │
+│  ├─ Notes/Pages テスト更新（Week 6-1 の残作業）                  │
+│  │   ├─ useNote.test.ts → Repository モック化                    │
+│  │   ├─ useUpdateNote.test.ts → Repository モック化              │
+│  │   ├─ useDeleteNote.test.ts → Repository モック化              │
+│  │   ├─ useDefaultNote.test.ts → Repository モック化             │
+│  │   ├─ useCreateDefaultNote.test.ts → Repository モック化       │
+│  │   └─ Pages関連テスト → Repository モック化                    │
+│  │                                                               │
+│  ├─ Decks 残りCRUD フック移行                                    │
+│  │   ├─ useDeck.ts → decksRepository.getById()                   │
+│  │   ├─ useDeleteDeck.ts → decksRepository.delete()              │
+│  │   └─ useDuplicateDeck.ts → decksRepository.create()           │
+│  │                                                               │
+│  └─ Cards 全CRUD フック移行                                      │
+│      ├─ useCardsByDeck.ts → cardsRepository.getByDeckId()        │
+│      ├─ useCard.ts → cardsRepository.getById()                   │
+│      ├─ useCreateCard.ts → cardsRepository.create()              │
+│      ├─ useCreateCards.ts → cardsRepository.createBatch()        │
+│      ├─ useUpdateCard.ts → cardsRepository.update()              │
+│      ├─ useDeleteCard.ts → cardsRepository.delete()              │
+│      ├─ useDueCardsByDeck.ts → cardsRepository.getDueCards()     │
+│      ├─ useCardsByUser.ts → cardsRepository.getAll()             │
+│      └─ useAllDueCountsByUser.ts → 新規メソッド追加              │
+│                                                                  │
+│  i18n: Phase 3 開始                                              │
+│  └─ プラグイン API へのロケールコンテキスト注入                   │
+│                                                                  │
+│  状態: ⬜ 未着手                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Week 6-2 のゴール**:
+- [ ] Notes/Pages テスト更新（Repository モック化）
+- [ ] Decks 残り CRUD フック移行完了（3件）
+- [ ] Cards 全 CRUD フック移行完了（9件）
+- [ ] プラグイン i18n 対応開始
+
+---
+
+### Week 7-1: 2025/12/31 〜 2026/01/03
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hybrid DB: Phase D-4 (#206)                                    │
+│  ├─ Repository 新規作成                                          │
+│  │   ├─ StudyGoalsRepository 作成                                │
+│  │   ├─ LearningLogsRepository 作成                              │
+│  │   └─ MilestonesRepository 作成                                │
+│  │                                                               │
+│  ├─ StudyGoals フック移行（7件）                                 │
+│  │   ├─ useStudyGoals.ts                                         │
+│  │   ├─ useCreateStudyGoal.ts                                    │
+│  │   ├─ useUpdateStudyGoal.ts                                    │
+│  │   ├─ useDeleteStudyGoal.ts                                    │
+│  │   ├─ useCompleteStudyGoal.ts                                  │
+│  │   ├─ useUpdateGoalsPriority.ts                                │
+│  │   └─ useGoalLimits.ts                                         │
+│  │                                                               │
+│  ├─ LearningLogs フック移行（8件）                               │
+│  │   ├─ useLearningLogs.ts                                       │
+│  │   ├─ useLearningLog.ts                                        │
+│  │   ├─ useCreateLearningLog.ts                                  │
+│  │   ├─ useUpdateLearningLog.ts                                  │
+│  │   ├─ useDeleteLearningLog.ts                                  │
+│  │   ├─ useRecentActivity.ts                                     │
+│  │   ├─ useReviewCards.ts                                        │
+│  │   └─ useTodayReviewCountsByDeck.ts                            │
+│  │                                                               │
+│  └─ Milestones フック移行（4件）                                 │
+│      ├─ useMilestones.ts                                         │
+│      ├─ useCreateMilestone.ts                                    │
+│      ├─ useUpdateMilestone.ts                                    │
+│      └─ useDeleteMilestone.ts                                    │
+│                                                                  │
+│  i18n: Phase 3 継続                                              │
+│  └─ Tauri コマンドでの翻訳利用                                   │
+│                                                                  │
+│  状態: ⬜ 未着手                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Week 7-1 のゴール**:
+- [ ] 3つの Repository クラス新規作成
+- [ ] StudyGoals フック移行完了（7件）
+- [ ] LearningLogs フック移行完了（8件）
+- [ ] Milestones フック移行完了（4件）
+
+---
+
+### Week 7-2: 2026/01/04 〜 2026/01/06
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hybrid DB: Phase D-5 (#207)                                    │
+│  ├─ Notes 共有関連（8件）                                        │
+│  │   ├─ useShareNote.ts                                          │
+│  │   ├─ useUnshareNote.ts                                        │
+│  │   ├─ useNoteShares.ts                                         │
+│  │   ├─ useNoteShareLinks.ts                                     │
+│  │   ├─ useGenerateNoteShareLink.ts                              │
+│  │   ├─ useRevokeNoteShareLink.ts                                │
+│  │   ├─ useJoinNoteByLink.ts                                     │
+│  │   └─ useJoinNotePublic.ts                                     │
+│  │                                                               │
+│  ├─ Notes ゴミ箱関連（4件）                                      │
+│  │   ├─ useMoveNoteToTrash.ts                                    │
+│  │   ├─ useRestoreNoteFromTrash.ts                               │
+│  │   ├─ useTrashItems.ts                                         │
+│  │   └─ useDeletePagesPermanently.ts                             │
+│  │                                                               │
+│  ├─ Notes ページリンク関連（8件）                                │
+│  │   ├─ useLinkPageToNote.ts                                     │
+│  │   ├─ useLinkPageToDefaultNote.ts                              │
+│  │   ├─ useUnlinkPageFromNote.ts                                 │
+│  │   ├─ useBatchMovePages.ts                                     │
+│  │   ├─ useCheckBatchConflicts.ts                                │
+│  │   ├─ useCheckPageConflict.ts                                  │
+│  │   ├─ useMigrateOrphanedPages.ts                               │
+│  │   └─ useAllUserPages.ts                                       │
+│  │                                                               │
+│  ├─ Decks 共有関連（4件）                                        │
+│  │   ├─ useSharedDecks.ts                                        │
+│  │   ├─ useDeckPermissions.ts                                    │
+│  │   ├─ useNoteDeckLinks.ts                                      │
+│  │   └─ useSyncDeckLinks.ts                                      │
+│  │                                                               │
+│  └─ Pages 追加機能（3件）                                        │
+│      ├─ useSharedPages.ts                                        │
+│      ├─ usePageVisits.ts                                         │
+│      └─ usePageBacklinks.ts                                      │
+│                                                                  │
+│  i18n: Phase 3 継続                                              │
+│  └─ 通知・ダイアログの多言語化                                   │
+│                                                                  │
+│  状態: ⬜ 未着手                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Week 7-2 のゴール**:
+- [ ] Notes 共有・ゴミ箱・ページリンク関連フック移行（20件）
+- [ ] Decks 共有関連フック移行（4件）
+- [ ] Pages 追加機能フック移行（3件）
+- [ ] 通知・ダイアログのi18n対応
+
+---
+
+### Week 8: 2026/01/07 〜 2026/01/13
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -312,7 +513,29 @@
 
 ---
 
-### Week 8: 2026/01/14 〜 2026/01/20
+### Week 8: 2026/01/07 〜 2026/01/13
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hybrid DB: Phase E 開始                                        │
+│  ├─ #199 Yjs + Supabase Realtime 統合                            │
+│  └─ #200 Tiptap Collaboration Extension                          │
+│                                                                  │
+│  i18n: Phase 3 継続                                              │
+│  └─ リアルタイム編集UIのi18n対応                                 │
+│                                                                  │
+│  ⚠️ 同期ポイント: 接続ステータス表示でi18n適用                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Week 8 のゴール**:
+- [ ] Yjs + Supabase Realtime 接続確立
+- [ ] Tiptap Collaboration 基本動作確認
+- [ ] 接続ステータス表示のi18n対応
+
+---
+
+### Week 9: 2026/01/14 〜 2026/01/20
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -333,7 +556,28 @@
 
 ---
 
-### Week 9: 2026/01/21 〜 2026/01/31
+### Week 9: 2026/01/14 〜 2026/01/20
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hybrid DB: Phase E 継続                                        │
+│  └─ #201 プレゼンス・カーソル共有                                │
+│                                                                  │
+│  i18n: Phase 3 完了                                              │
+│  └─ sandbox worker 用翻訳ブリッジ完成                            │
+│                                                                  │
+│  ⚠️ 同期ポイント: 「〇〇さんが編集中」等の表示でi18n適用          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Week 9 のゴール**:
+- [ ] プレゼンス機能完成
+- [ ] カーソル共有実装
+- [ ] 「{name}さんが編集中」の翻訳対応
+
+---
+
+### Week 10: 2026/01/21 〜 2026/01/31
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -351,7 +595,7 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**今週のゴール**:
+**Week 10 のゴール**:
 - [ ] v0.4.0 リリース候補完成
 - [ ] 全機能の統合テスト完了
 - [ ] 日本語・英語翻訳完了
@@ -383,7 +627,7 @@
 
 ## ⚡ クイックリファレンス
 
-### 今すぐ着手可能（i18n待ち不要）
+### Phase A〜C 完了済み（i18n待ち不要）
 
 ```
 ✅ #190 IndexedDB Client     → 完了 (2025-11-26)
@@ -396,19 +640,47 @@
 ✅ #197 Decks/Cards Repo     → 完了 (2025-11-26) ※DecksRepository, CardsRepository実装済み
 ```
 
-### 完了済み（Phase D）
+### Phase D 進行状況
 
 ```
-✅ #198 Hook Migration       → 完了 (2025-11-26) ※useNotes, useDecks, useCreateNote, useCreateDeck, useUpdateDeck移行済み
+✅ #198 Hook Migration (Part 1) → 完了 (2025-11-26)
+   - useNotes, useCreateNote, useDecks, useCreateDeck, useUpdateDeck 移行済み
+
+🔄 #204 Phase D-2 Notes/Pages   → Week 6-1 (2025/12/03〜12/06)
+   - Notes 基本CRUD: useNote, useUpdateNote, useDeleteNote, useDefaultNote, useCreateDefaultNote
+   - Pages 基本CRUD: usePage, useCreatePage, useUpdatePage, useDeletePage, usePagesByNote, useUserPages, useNotePages
+
+⬜ #205 Phase D-3 Decks/Cards   → Week 6-2 (2025/12/07〜12/09)
+   - Decks 残り: useDeck, useDeleteDeck, useDuplicateDeck
+   - Cards 全件: useCardsByDeck, useCard, useCreateCard, useCreateCards, useUpdateCard, useDeleteCard, useDueCardsByDeck, useCardsByUser, useAllDueCountsByUser
+
+⬜ #206 Phase D-4 学習系        → Week 7-1 (2025/12/31〜01/03)
+   - Repository新規作成: StudyGoalsRepository, LearningLogsRepository, MilestonesRepository
+   - StudyGoals: 7件, LearningLogs: 8件, Milestones: 4件
+
+⬜ #207 Phase D-5 共有・管理    → Week 7-2 (2026/01/04〜01/06)
+   - Notes共有: 8件, ゴミ箱: 4件, ページリンク: 8件
+   - Decks共有: 4件, Pages追加: 3件
 ```
 
-### 次フェーズ（i18n Phase 3 以降と並行）
+### Phase E（i18n Phase 3 以降と並行）
 
 ```
-#199 Yjs + Realtime          → 接続ステータスのi18n
-#200 Tiptap Collaboration    → オフラインインジケーターのi18n
-#201 Presence & Cursor       → 「編集中」表示のi18n
+⬜ #199 Yjs + Realtime          → Week 8 (2026/01/07〜01/13)
+⬜ #200 Tiptap Collaboration    → Week 8 (2026/01/07〜01/13)
+⬜ #201 Presence & Cursor       → Week 9 (2026/01/14〜01/20)
 ```
+
+### フック移行 全体サマリー
+
+| Phase | Issue | 対象フック数 | 状態 |
+|-------|-------|-------------|------|
+| D-1 | #198 | 5件 | ✅ 完了 |
+| D-2 | #204 | 12件 | 🔄 Week 6-1 |
+| D-3 | #205 | 12件 | ⬜ Week 6-2 |
+| D-4 | #206 | 19件 | ⬜ Week 7-1 |
+| D-5 | #207 | 27件 | ⬜ Week 7-2 |
+| **合計** | - | **75件** | 約6.7%完了 |
 
 ---
 
@@ -416,6 +688,11 @@
 
 - [Hybrid DB Epic Issue #189](https://github.com/otomatty/for-all-learners/issues/189)
 - [国際化対応 Issue #119](https://github.com/otomatty/for-all-learners/issues/119)
+- **Phase D 細分化 Issue**:
+  - [#204 Phase D-2 Notes/Pages](https://github.com/otomatty/for-all-learners/issues/204)
+  - [#205 Phase D-3 Decks/Cards](https://github.com/otomatty/for-all-learners/issues/205)
+  - [#206 Phase D-4 StudyGoals/LearningLogs/Milestones](https://github.com/otomatty/for-all-learners/issues/206)
+  - [#207 Phase D-5 共有・管理フック](https://github.com/otomatty/for-all-learners/issues/207)
 - [Tauri移行計画](docs/03_plans/tauri-migration/20251109_01_implementation-plan.md)
 - [国際化実装計画](docs/03_plans/internationalization/20251109_01_internationalization-plan.md)
 - [Supabase-Tauri統合リサーチ](docs/02_research/2025_11/20251109_02_supabase-tauri-integration.md)
@@ -433,4 +710,6 @@
 | 2025-11-26 | Week 4 Phase C完了: Repository基盤、Notes/Pages/Decks/Cards Repository（#195, #196, #197） |
 | 2025-11-26 | Week 4 i18n完了: 公開ページ（Landing / Auth）翻訳対応完了 |
 | 2025-11-26 | Week 5 Phase D完了: フックのRepository移行、i18nエラーメッセージ対応（#198） |
+| 2025-11-29 | Week 6〜7 スケジュール細分化: Phase D を D-2〜D-5 に分割 |
+| 2025-11-29 | 新規Issue作成: #204, #205, #206, #207（残タスク整理） |
 

@@ -18,7 +18,7 @@
  */
 
 import type { CreateNotePayload, LocalNote } from "@/lib/db/types";
-import { BaseRepository } from "./base-repository";
+import { BaseRepository, RepositoryError } from "./base-repository";
 import type { EntityName, RepositoryOptions } from "./types";
 
 /**
@@ -98,6 +98,52 @@ export class NotesRepository extends BaseRepository<
 	async getDefaultNote(userId: string): Promise<LocalNote | undefined> {
 		const notes = await this.getAll(userId);
 		return notes.find((note) => note.is_default_note === true);
+	}
+
+	/**
+	 * デフォルトノートを作成
+	 *
+	 * @param userId ユーザーID
+	 * @returns 作成されたデフォルトノート
+	 */
+	async createDefaultNote(userId: string): Promise<LocalNote> {
+		try {
+			const client = await this.getEntityClient();
+
+			const now = new Date().toISOString();
+			const newNote = {
+				id: crypto.randomUUID(),
+				owner_id: userId,
+				slug: "all-pages",
+				title: "すべてのページ",
+				description: "ユーザーが作成したすべてのページを含むデフォルトノート",
+				visibility: "private" as const,
+				created_at: now,
+				updated_at: now,
+				page_count: 0,
+				participant_count: 1,
+				is_default_note: true,
+				sync_status: "pending" as const,
+				synced_at: null,
+				local_updated_at: now,
+				server_updated_at: null,
+			};
+
+			const result = await client.create(
+				userId,
+				newNote as unknown as CreateNotePayload,
+			);
+
+			// バックグラウンドで同期をトリガー
+			this.triggerBackgroundSync();
+
+			return result as LocalNote;
+		} catch (error) {
+			throw new RepositoryError("DB_ERROR", "Failed to create default note", {
+				entityName: this.entityName,
+				originalError: error instanceof Error ? error : undefined,
+			});
+		}
 	}
 }
 
