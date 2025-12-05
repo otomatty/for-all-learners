@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { useCardsByDeck } from "@/hooks/cards";
 import { useUserPages } from "@/hooks/pages";
+import type { TiptapContent } from "@/lib/db/types";
 import logger from "@/lib/logger";
 import { CardsListClient } from "./CardsListClient";
 import { CardsListSkeleton } from "./CardsListSkeleton";
@@ -67,7 +68,9 @@ export function CardsList({ deckId, canEdit, userId }: CardsListProps) {
 
 		return fetchedCards.map((card) => ({
 			...card,
-			front_content: transformPageLinks(card.front_content as JSONContent),
+			front_content: transformPageLinks(
+				card.front_content as JSONContent,
+			) as TiptapContent,
 		}));
 	}, [fetchedCards, pagesMap]);
 

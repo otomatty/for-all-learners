@@ -17,13 +17,13 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTextSelection } from "@/hooks/use-text-selection";
+import type { LocalCard, TiptapContent } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
 import { CardItem } from "./CardItem/CardItem"; // CardItem をインポート
 import { RichContent } from "./RichContent";
 
 interface CardsListClientProps {
-	cards: Database["public"]["Tables"]["cards"]["Row"][];
+	cards: LocalCard[];
 	deckId: string;
 	canEdit: boolean;
 }
@@ -37,11 +37,8 @@ export function CardsListClient({
 	const supabase = createClient();
 	const router = useRouter();
 	// local state to manage cards for optimistic updates
-	const [localCards, setLocalCards] =
-		useState<Database["public"]["Tables"]["cards"]["Row"][]>(cards);
-	const [detailCard, setDetailCard] = useState<
-		Database["public"]["Tables"]["cards"]["Row"] | null
-	>(null);
+	const [localCards, setLocalCards] = useState<LocalCard[]>(cards);
+	const [detailCard, setDetailCard] = useState<LocalCard | null>(null);
 	// card id for link conversion after text selection drag
 	const [selectionCardId, setSelectionCardId] = useState<string | null>(null);
 	// refs to track drag for selection vs click
@@ -141,7 +138,9 @@ export function CardsListClient({
 				// Optimistically update local state to show link styling immediately
 				setLocalCards((prev) =>
 					prev.map((c) =>
-						c.id === cardId ? { ...c, front_content: updatedDoc } : c,
+						c.id === cardId
+							? { ...c, front_content: updatedDoc as TiptapContent }
+							: c,
 					),
 				);
 				// No router.refresh needed
@@ -228,7 +227,7 @@ export function CardsListClient({
 
 	const handleCardMouseUp = (
 		e: React.MouseEvent<HTMLDivElement>,
-		card: Database["public"]["Tables"]["cards"]["Row"],
+		card: LocalCard,
 	) => {
 		if (e.button !== 0) return;
 		if (!isDraggingRef.current) {
@@ -241,9 +240,7 @@ export function CardsListClient({
 		isDraggingRef.current = false;
 	};
 
-	const handleCardUpdated = (
-		updatedCard: Database["public"]["Tables"]["cards"]["Row"],
-	) => {
+	const handleCardUpdated = (updatedCard: LocalCard) => {
 		setLocalCards((prevCards) =>
 			prevCards.map((card) =>
 				card.id === updatedCard.id ? updatedCard : card,
@@ -252,9 +249,7 @@ export function CardsListClient({
 		router.refresh(); // データの整合性を保つためにバックグラウンドで再フェッチ
 	};
 
-	const _handleCreateCardSuccess = (
-		newCard: Database["public"]["Tables"]["cards"]["Row"],
-	) => {
+	const _handleCreateCardSuccess = (newCard: LocalCard) => {
 		setLocalCards((prevCards) => [newCard, ...prevCards]); // 新しいカードをリストの先頭に追加
 		setIsCreateCardDialogOpen(false); // ダイアログを閉じる
 		router.refresh(); // データの整合性を保つためにバックグラウンドで再フェッチ

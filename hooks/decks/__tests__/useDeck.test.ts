@@ -3,55 +3,31 @@
  *
  * Test Coverage:
  * - TC-001: 正常系 - データ取得成功
- * - TC-002: 異常系 - 認証エラー（未認証ユーザー）
- * - TC-003: 異常系 - データベースエラー
- * - TC-004: 異常系 - デッキが見つからない
+ * - TC-002: 異常系 - データベースエラー
+ * - TC-003: 異常系 - デッキが見つからない
  */
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createClient } from "@/lib/supabase/client";
+import { decksRepository } from "@/lib/repositories/decks-repository";
 import { useDeck } from "../useDeck";
-import {
-	createMockSupabaseClient,
-	createWrapper,
-	mockDeck,
-	mockUser,
-} from "./helpers";
+import { createWrapper, mockLocalDeck } from "./helpers";
 
-// Mock Supabase client
-vi.mock("@/lib/supabase/client");
+// Mock the decks repository
+vi.mock("@/lib/repositories/decks-repository", () => ({
+	decksRepository: {
+		getById: vi.fn(),
+	},
+}));
 
 describe("useDeck", () => {
-	let mockSupabaseClient: ReturnType<typeof createMockSupabaseClient>;
-
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockSupabaseClient = createMockSupabaseClient();
-		vi.mocked(createClient).mockReturnValue(
-			mockSupabaseClient as unknown as ReturnType<typeof createClient>,
-		);
 	});
 
 	// TC-001: 正常系 - データ取得成功
 	test("TC-001: Should fetch deck successfully", async () => {
-		// Mock auth.getUser
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		// Mock deck query
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: mockDeck,
-				error: null,
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+		vi.mocked(decksRepository.getById).mockResolvedValue(mockLocalDeck);
 
 		const { result } = renderHook(() => useDeck("deck-123"), {
 			wrapper: createWrapper(),
@@ -62,46 +38,16 @@ describe("useDeck", () => {
 		});
 
 		expect(result.current.data).toBeDefined();
-		expect(result.current.data?.id).toBe(mockDeck.id);
-		expect(result.current.data?.title).toBe(mockDeck.title);
+		expect(result.current.data?.id).toBe(mockLocalDeck.id);
+		expect(result.current.data?.title).toBe(mockLocalDeck.title);
+		expect(decksRepository.getById).toHaveBeenCalledWith("deck-123");
 	});
 
-	// TC-002: 異常系 - 認証エラー（未認証ユーザー）
-	test("TC-002: Should throw error when user is not authenticated", async () => {
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: null },
-			error: { message: "Not authenticated" },
-		});
-
-		const { result } = renderHook(() => useDeck("deck-123"), {
-			wrapper: createWrapper(),
-		});
-
-		await waitFor(() => {
-			expect(result.current.isError).toBe(true);
-		});
-
-		expect(result.current.error).toBeDefined();
-		expect(result.current.error?.message).toContain("not authenticated");
-	});
-
-	// TC-003: 異常系 - データベースエラー
-	test("TC-003: Should handle database error", async () => {
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "Database error", code: "PGRST116" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+	// TC-002: 異常系 - データベースエラー
+	test("TC-002: Should handle database error", async () => {
+		vi.mocked(decksRepository.getById).mockRejectedValue(
+			new Error("Database error"),
+		);
 
 		const { result } = renderHook(() => useDeck("deck-123"), {
 			wrapper: createWrapper(),
@@ -114,23 +60,9 @@ describe("useDeck", () => {
 		expect(result.current.error).toBeDefined();
 	});
 
-	// TC-004: 異常系 - デッキが見つからない
-	test("TC-004: Should handle deck not found", async () => {
-		mockSupabaseClient.auth.getUser = vi.fn().mockResolvedValue({
-			data: { user: mockUser },
-			error: null,
-		});
-
-		const mockQuery = {
-			select: vi.fn().mockReturnThis(),
-			eq: vi.fn().mockReturnThis(),
-			single: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "No rows returned", code: "PGRST116" },
-			}),
-		};
-
-		mockSupabaseClient.from = vi.fn().mockReturnValue(mockQuery);
+	// TC-003: 異常系 - デッキが見つからない
+	test("TC-003: Should handle deck not found", async () => {
+		vi.mocked(decksRepository.getById).mockResolvedValue(undefined);
 
 		const { result } = renderHook(() => useDeck("non-existent-deck"), {
 			wrapper: createWrapper(),
@@ -140,6 +72,8 @@ describe("useDeck", () => {
 			expect(result.current.isError).toBe(true);
 		});
 
+		// エラーが発生することを確認
 		expect(result.current.error).toBeDefined();
+		expect(result.current.error?.message).toBe("Deck not found");
 	});
 });
